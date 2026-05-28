@@ -1,0 +1,17 @@
+{
+  "name": "@cmms/localization-qa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Localization quality assurance for CMMS (rw, en, fr)",
+  "scripts": {
+    "validate": "node run-all.js",
+    "validate:arb": "node validate-arb.js",
+    "validate:placeholders": "node validate-placeholders.js",
+    "validate:glossary": "node validate-glossary.js",
+    "validate:backend": "node validate-backend-i18n.js",
+    "validate:enums": "node validate-enum-mapping.js",
+    "validate:flutter-strings": "node scan-flutter-strings.js",
+    "validate:offline": "node validate-offline.js",
+    "validate:tone": "node validate-tone-metadata.js"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "cmms",
+  "private": true,
+  "scripts": {
+    "dev:web": "npm run dev --prefix web",
+    "build:web": "npm run build --prefix web",
+    "lint:web": "npm run lint --prefix web",
+    "localization:validate": "npm run validate --prefix tools/localization",
+    "localization:arb": "npm run validate:arb --prefix tools/localization",
+    "localization:flutter-strings": "npm run validate:flutter-strings --prefix tools/localization",
+    "prebuild:mobile": "npm run localization:validate"
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "$schema": "Forbidden patterns in Kinyarwanda (rw) ARB string values — literal English/leaky terms",
+  "patterns": [
+    {
+      "id": "english_attendance",
+      "regex": "\\battendance\\b",
+      "flags": "i",
+      "message": "Do not use English 'attendance' in rw copy. Use church term: Uko witabiriye.",
+      "except_keys": []
+    },
+    {
+      "id": "english_discipline",
+      "regex": "\\bdiscipline\\b",
+      "flags": "i",
+      "message": "Do not use English 'discipline' in rw copy. Use: Imyitwarire.",
+      "except_keys": []
+    },
+    {
+      "id": "english_swap",
+      "regex": "\\bswap\\b",
+      "flags": "i",
+      "message": "Do not use English 'swap' in rw copy. Use: Gusimburana.",
+      "except_keys": []
+    },
+    {
+      "id": "deprecated_kwitabira_nav",
+      "regex": "^Kwitabira$",
+      "message": "Deprecated standalone 'Kwitabira'. Use: Uko witabiriye.",
+      "except_keys": []
+    },
+    {
+      "id": "deprecated_indangagaciro",
+      "regex": "Indangagaciro",
+      "message": "Deprecated discipline label 'Indangagaciro'. Use: Imyitwarire.",
+      "except_keys": []
+    },
+    {
+      "id": "deprecated_guhindurana_module",
+      "regex": "^Guhindurana$",
+      "message": "Use Gusimburana for swap module titles (not Guhindurana).",
+      "except_keys": ["swap_with_member_label"]
+    },
+    {
+      "id": "literal_present_absent_en",
+      "regex": "\\b(Present|Absent|Late)\\b",
+      "message": "English attendance status leaked into rw. Use Yitabiriye / Ntiyitabiriye / Yakererewe.",
+      "except_keys": []
+    }
+  ],
+  "required_values": {
+    "nav_attendance": ["Uko witabiriye"],
+    "nav_discipline": ["Imyitwarire"],
+    "nav_swaps": ["Gusimburana"],
+    "discipline_title": ["Imyitwarire"],
+    "member_attendance_label": ["Uko witabiriye"]
+  }
+}

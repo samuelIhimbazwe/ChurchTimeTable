@@ -1,0 +1,62 @@
+name: Localization QA
+
+on:
+  push:
+    branches: [main, master, develop]
+    paths:
+      - 'mobile/lib/l10n/**'
+      - 'mobile/lib/**'
+      - 'backend/src/i18n/**'
+      - 'tools/localization/**'
+      - 'docs/localization/**'
+      - '.github/workflows/localization.yml'
+  pull_request:
+    paths:
+      - 'mobile/lib/l10n/**'
+      - 'mobile/lib/**'
+      - 'backend/src/i18n/**'
+      - 'tools/localization/**'
+      - 'docs/localization/**'
+      - '.github/workflows/localization.yml'
+
+jobs:
+  localization-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run localization QA pipeline
+        run: npm run localization:validate
+        working-directory: tools/localization
+
+      - name: Backend i18n unit tests
+        working-directory: backend
+        run: |
+          npm ci
+          npx jest src/i18n/i18n.service.spec.ts
+
+  flutter-localization-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Run localization tests
+        working-directory: mobile
+        run: flutter test test/localization/
+
+      - name: Run design system tests
+        working-directory: mobile
+        run: flutter test test/design/

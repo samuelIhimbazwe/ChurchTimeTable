@@ -1,0 +1,63 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.*
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Logs & debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.pem
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Test / coverage
+coverage/
+.nyc_output/
+test-results/
+.playwright-*.json
+
+# Prisma / databases (local dev)
+*.db
+*.db-journal
+
+# Flutter / mobile
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+mobile/build/
+mobile/.gradle/
+
+# Firebase / keys (keep example configs only)
+**/google-services.json
+**/GoogleService-Info.plist
+!**/google-services.json.example
+
+# Vercel
+.vercel
+
+# Misc
+*.log

@@ -1,0 +1,237 @@
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
+import { PrismaService } from '../prisma/prisma.service';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
+import { ROLES } from '../common/constants/roles';
+import { MemberStatus } from '@prisma/client';
+import { PermissionsResolver } from './permissions.resolver';
+import { durationToMs } from './auth.constants';
+
+export interface AuthTokenResponse {
+  accessToken: string;
+  tokenType: 'Bearer';
+  expiresIn: string;
+}
+
+interface AuthSessionResult {
+  response: AuthTokenResponse;
+  refreshToken: string;
+  refreshTokenExpiresAt: Date;
+}
+
+@Injectable()
+export class AuthService {
+  constructor(
+    private prisma: PrismaService,
+    private jwt: JwtService,
+    private config: ConfigService,
+    private permissionsResolver: PermissionsResolver,
+  ) {}
+
+  async register(dto: RegisterDto) {
+    const existing = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+    if (existing) {
+      throw new ConflictException('Email already registered');
+    }
+
+    const memberRole = await this.prisma.role.findUnique({
+      where: { name: ROLES.MEMBER },
+    });
+    if (!memberRole) {
+      throw new ConflictException('System roles not seeded. Run prisma seed.');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.password, 10);
+    const user = await this.prisma.user.create({
+      data: {
+        email: dto.email,
+        passwordHash,
+        member: {
+          create: {
+            firstName: dto.firstName,
+            lastName: dto.lastName,
+            phone: dto.phone,
+            ministry: dto.ministry ?? 'CHOIR',
+            status: MemberStatus.PENDING,
+          },
+        },
+        userRoles: { create: { roleId: memberRole.id } },
+      },
+      include: { member: true },
+    });
+
+    return this.issueSession(user.id, user.email);
+  }
+
+  async login(dto: LoginDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const valid = await bcrypt.compare(dto.password, user.passwordHash);
+    if (!valid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    return this.issueSession(user.id, user.email);
+  }
+
+  async refresh(refreshToken: string) {
+    const payload = await this.verifyRefreshToken(refreshToken);
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: {
+        id: true,
+        email: true,
+        isActive: true,
+        refreshTokenHash: true,
+        refreshTokenExpiresAt: true,
+      },
+    });
+
+    if (
+      !user ||
+      !user.isActive ||
+      !user.refreshTokenHash ||
+      !user.refreshTokenExpiresAt ||
+      user.refreshTokenExpiresAt.getTime() <= Date.now()
+    ) {
+      throw new UnauthorizedException('Invalid session');
+    }
+
+    const matches = await bcrypt.compare(refreshToken, user.refreshTokenHash);
+    if (!matches) {
+      throw new UnauthorizedException('Invalid session');
+    }
+
+    return this.issueSession(user.id, user.email);
+  }
+
+  async logout(refreshToken?: string) {
+    if (!refreshToken) {
+      return { loggedOut: true as const };
+    }
+
+    try {
+      const payload = await this.jwt.verifyAsync<{ sub: string }>(refreshToken, {
+        secret: this.refreshJwtSecret,
+        ignoreExpiration: true,
+      });
+
+      await this.prisma.user.update({
+        where: { id: payload.sub },
+        data: {
+          refreshTokenHash: null,
+          refreshTokenExpiresAt: null,
+        },
+      });
+    } catch (_) {
+      // Clearing an invalid cookie is still safe; ignore malformed tokens.
+    }
+
+    return { loggedOut: true as const };
+  }
+
+  async me(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        preferredLanguage: true,
+        member: true,
+        userRoles: { include: { role: true } },
+      },
+    });
+    if (!user) return null;
+
+    const { roles, permissions } =
+      await this.permissionsResolver.resolveForUser(userId);
+
+    return {
+      ...user,
+      roles,
+      permissions,
+    };
+  }
+
+  private get accessTokenExpiresIn() {
+    return this.config.get<string>('JWT_EXPIRES_IN', '7d');
+  }
+
+  private get refreshTokenExpiresIn() {
+    return this.config.get<string>('JWT_REFRESH_EXPIRES_IN', '30d');
+  }
+
+  private get refreshJwtSecret() {
+    return this.config.get<string>(
+      'JWT_REFRESH_SECRET',
+      this.config.get<string>('JWT_SECRET', 'dev-secret'),
+    );
+  }
+
+  private async verifyRefreshToken(refreshToken: string) {
+    try {
+      return await this.jwt.verifyAsync<{ sub: string; email: string; type: string }>(
+        refreshToken,
+        {
+          secret: this.refreshJwtSecret,
+        },
+      );
+    } catch (_) {
+      throw new UnauthorizedException('Invalid session');
+    }
+  }
+
+  private async issueSession(userId: string, email: string): Promise<AuthSessionResult> {
+    const accessToken = await this.jwt.signAsync(
+      { sub: userId, email },
+      {
+        secret: this.config.get<string>('JWT_SECRET', 'dev-secret'),
+        expiresIn: this.accessTokenExpiresIn as never,
+      },
+    );
+
+    const refreshToken = await this.jwt.signAsync(
+      { sub: userId, email, type: 'refresh' },
+      {
+        secret: this.refreshJwtSecret,
+        expiresIn: this.refreshTokenExpiresIn as never,
+      },
+    );
+
+    const refreshTokenExpiresAt = new Date(
+      Date.now() + durationToMs(this.refreshTokenExpiresIn, 30 * 24 * 60 * 60 * 1000),
+    );
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        refreshTokenHash: await bcrypt.hash(refreshToken, 10),
+        refreshTokenExpiresAt,
+      },
+    });
+
+    return {
+      response: {
+        accessToken,
+        tokenType: 'Bearer',
+        expiresIn: this.accessTokenExpiresIn,
+      },
+      refreshToken,
+      refreshTokenExpiresAt,
+    };
+  }
+}

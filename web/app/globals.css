@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --surface: #ffffff;
+  --surface-muted: #eef2ff;
+  --surface-subtle: #f8fafc;
+  --border: #e2e8f0;
+  --primary: #1e3a8a;
+  --primary-foreground: #ffffff;
+  --muted-foreground: #475569;
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-sm: 0 12px 30px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 30px 80px rgba(15, 23, 42, 0.18);
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-pill: 999px;
+  --space-page-x: 1.5rem;
+  --space-page-y: 1.5rem;
+  --content-max-width: 1600px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-subtle: var(--surface-subtle);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+.dark {
+  --background: #020617;
+  --foreground: #e2e8f0;
+  --surface: #0f172a;
+  --surface-muted: #111827;
+  --surface-subtle: #020617;
+  --border: #1e293b;
+  --primary: #60a5fa;
+  --primary-foreground: #0f172a;
+  --muted-foreground: #94a3b8;
+  --shadow-xs: 0 1px 2px rgba(2, 6, 23, 0.35);
+  --shadow-sm: 0 12px 30px rgba(2, 6, 23, 0.45);
+  --shadow-lg: 0 30px 80px rgba(2, 6, 23, 0.65);
+}
+
+* {
+  box-sizing: border-box;
+  border-color: var(--border);
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(circle at top, rgba(30, 58, 138, 0.08), transparent 30%),
+    var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  line-height: 1.5;
+}
+
+::selection {
+  background: rgba(37, 99, 235, 0.18);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+input,
+textarea,
+select {
+  min-width: 0;
+}
+
+.cmms-page {
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--content-max-width);
+  padding-inline: var(--space-page-x);
+  padding-block: var(--space-page-y);
+}
+
+.cmms-panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --space-page-x: 2rem;
+    --space-page-y: 2rem;
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "$schema": "Tone category per key prefix — pastoral | administrative | operational | disciplinary | celebratory",
+  "default_tone": "operational",
+  "prefix_tones": {
+    "auth_": "administrative",
+    "nav_": "operational",
+    "attendance_": "operational",
+    "swap_": "operational",
+    "replacement_": "operational",
+    "discipline_": "disciplinary",
+    "finance_": "administrative",
+    "budget_": "administrative",
+    "choir_": "celebratory",
+    "term_worship": "pastoral",
+    "term_": "operational",
+    "error_": "administrative",
+    "settings_": "administrative",
+    "language_": "administrative",
+    "common_": "operational",
+    "sync_": "operational",
+    "assignment_": "operational",
+    "event_": "operational",
+    "notifications_": "operational",
+    "dashboard_": "operational"
+  },
+  "required_tones_by_prefix": {
+    "discipline_": "disciplinary",
+    "choir_": "celebratory"
+  }
+}
