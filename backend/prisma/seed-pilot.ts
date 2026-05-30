@@ -9,6 +9,7 @@ import { ROLES } from '../src/common/constants/roles';
 const prisma = new PrismaClient();
 
 const PILOT_PASSWORD = 'Pilot@123';
+const DEFAULT_PROTOCOL_MINISTRY = 'protocol-ministry';
 
 async function upsertPilotUser(
   email: string,
@@ -18,9 +19,11 @@ async function upsertPilotUser(
     lastName: string;
     ministry: 'CHOIR' | 'PROTOCOL' | 'BOTH';
   },
+  options?: { status?: 'ACTIVE' | 'PENDING' },
 ) {
   const role = await prisma.role.findUniqueOrThrow({ where: { name: roleName } });
   const passwordHash = await bcrypt.hash(PILOT_PASSWORD, 10);
+  const status = options?.status ?? 'ACTIVE';
   const user = await prisma.user.upsert({
     where: { email },
     create: {
@@ -30,11 +33,29 @@ async function upsertPilotUser(
       member: {
         create: {
           ...member,
-          status: 'ACTIVE',
+          status,
+          onboardingCompleted: status === 'ACTIVE',
         },
       },
     },
-    update: { passwordHash, preferredLanguage: 'rw' },
+    update: {
+      passwordHash,
+      preferredLanguage: 'rw',
+      member: {
+        upsert: {
+          create: {
+            ...member,
+            status,
+            onboardingCompleted: status === 'ACTIVE',
+          },
+          update: {
+            ...member,
+            status,
+            onboardingCompleted: status === 'ACTIVE',
+          },
+        },
+      },
+    },
     include: { member: true },
   });
 
@@ -43,8 +64,14 @@ async function upsertPilotUser(
       data: {
         userId: user.id,
         ...member,
-        status: 'ACTIVE',
+        status,
+        onboardingCompleted: status === 'ACTIVE',
       },
+    });
+  } else if (user.member.status !== status) {
+    await prisma.member.update({
+      where: { id: user.member.id },
+      data: { status, onboardingCompleted: status === 'ACTIVE' },
     });
   }
 
@@ -56,6 +83,45 @@ async function upsertPilotUser(
   return prisma.user.findUniqueOrThrow({
     where: { email },
     include: { member: true },
+  });
+}
+
+async function assignProtocolCommitteeRole(
+  email: string,
+  committeeRoleName: string,
+) {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { email },
+    include: { member: true },
+  });
+  if (!user.member) {
+    throw new Error(`Pilot user ${email} has no member profile`);
+  }
+
+  const role = await prisma.protocolCommitteeRole.findUniqueOrThrow({
+    where: {
+      ministryId_name: {
+        ministryId: DEFAULT_PROTOCOL_MINISTRY,
+        name: committeeRoleName,
+      },
+    },
+  });
+
+  await prisma.protocolCommitteeMember.upsert({
+    where: {
+      ministryId_memberId_roleId: {
+        ministryId: DEFAULT_PROTOCOL_MINISTRY,
+        memberId: user.member.id,
+        roleId: role.id,
+      },
+    },
+    create: {
+      ministryId: DEFAULT_PROTOCOL_MINISTRY,
+      memberId: user.member.id,
+      roleId: role.id,
+      assignedBy: 'seed-pilot',
+    },
+    update: {},
   });
 }
 
@@ -100,6 +166,60 @@ async function main() {
     ROLES.PROTOCOL_LEADER,
     { firstName: 'Marie', lastName: 'Uwera', ministry: 'PROTOCOL' },
   );
+  await upsertPilotUser(
+    'protocol.president@church.local',
+    ROLES.MEMBER,
+    { firstName: 'Pauline', lastName: 'Mukamana', ministry: 'PROTOCOL' },
+  );
+  await upsertPilotUser(
+    'protocol.coordinator@church.local',
+    ROLES.MEMBER,
+    { firstName: 'Olivier', lastName: 'Ndayisaba', ministry: 'PROTOCOL' },
+  );
+  await upsertPilotUser(
+    'protocol.teamhead@church.local',
+    ROLES.MEMBER,
+    { firstName: 'Sandrine', lastName: 'Uwase', ministry: 'PROTOCOL' },
+  );
+
+  await assignProtocolCommitteeRole(
+    'protocol.president@church.local',
+    'protocol_president',
+  );
+  await assignProtocolCommitteeRole(
+    'protocol.coordinator@church.local',
+    'protocol_coordinator',
+  );
+  await assignProtocolCommitteeRole(
+    'protocol.teamhead@church.local',
+    'protocol_team_head',
+  );
+  await upsertPilotUser(
+    'protocol.treasurer@church.local',
+    ROLES.MEMBER,
+    { firstName: 'Innocent', lastName: 'Bizimana', ministry: 'PROTOCOL' },
+  );
+  await assignProtocolCommitteeRole(
+    'protocol.treasurer@church.local',
+    'protocol_treasurer',
+  );
+
+  const teamHeadUser = await prisma.user.findUniqueOrThrow({
+    where: { email: 'protocol.teamhead@church.local' },
+    include: { member: true },
+  });
+  if (teamHeadUser.member) {
+    const existingTeam = await prisma.protocolServiceTeam.findFirst({
+      where: { status: 'ACTIVE' },
+      orderBy: { createdAt: 'asc' },
+    });
+    if (existingTeam) {
+      await prisma.protocolServiceTeam.update({
+        where: { id: existingTeam.id },
+        data: { teamHeadId: teamHeadUser.member.id },
+      });
+    }
+  }
 
   const members = await Promise.all(
     [
@@ -114,6 +234,19 @@ async function main() {
         ministry: m.ministry,
       }),
     ),
+  );
+
+  await upsertPilotUser(
+    'pending.choir@church.local',
+    ROLES.MEMBER,
+    { firstName: 'Ange', lastName: 'Mukamana', ministry: 'CHOIR' },
+    { status: 'PENDING' },
+  );
+  await upsertPilotUser(
+    'pending.protocol@church.local',
+    ROLES.MEMBER,
+    { firstName: 'Eric', lastName: 'Niyonsaba', ministry: 'PROTOCOL' },
+    { status: 'PENDING' },
   );
 
   const now = new Date();
@@ -200,7 +333,12 @@ async function main() {
   console.log('  CHOIR_LOGISTICS:          choir.logistics@church.local');
   console.log('  CHOIR_COMMITTEE:          choir.committee@church.local');
   console.log('  PROTOCOL_LEADER:          protocol.leader@church.local');
+  console.log('  PROTOCOL_PRESIDENT:       protocol.president@church.local');
+  console.log('  PROTOCOL_COORDINATOR:     protocol.coordinator@church.local');
+  console.log('  PROTOCOL_TEAM_HEAD:       protocol.teamhead@church.local');
+  console.log('  PROTOCOL_TREASURER:       protocol.treasurer@church.local');
   console.log('  MEMBER (singers):         member1@church.local, member2@church.local');
+  console.log('  PENDING (QA onboarding):  pending.choir@church.local, pending.protocol@church.local');
   console.log('  Admin:                    admin@church.local / Admin@123');
   console.log('  Events:', choirEvent.title, '|', protocolEvent.title);
 }

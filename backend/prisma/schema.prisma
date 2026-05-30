@@ -53,6 +53,19 @@ enum AttendanceOperationalStatus {
   EXCUSED_ABSENCE
   UNEXCUSED_ABSENCE
   REPLACEMENT_SERVED
+  VOLUNTARY_EXTRA_SERVICE
+}
+
+enum AttendanceReplacementType {
+  OFFICIAL
+  LEADER_ASSIGNED
+  VOLUNTARY
+}
+
+enum AttendanceEscalationLevel {
+  TEAM_HEAD
+  COORDINATOR
+  PRESIDENT
 }
 
 enum ReasonCategory {
@@ -82,6 +95,35 @@ enum ReplacementStatus {
 enum ReplacementKind {
   VOLUNTARY
   LEADER_ASSIGNED
+  EMERGENCY
+}
+
+enum CoverageOperationalType {
+  MUTUAL_SWAP
+  VOLUNTARY_REPLACEMENT
+  OFFICIAL_REPLACEMENT
+  EMERGENCY_REPLACEMENT
+}
+
+enum CoverageApprovalLevel {
+  MEMBER
+  TEAM_HEAD
+  COORDINATOR
+  PRESIDENT
+}
+
+enum OperationalPriority {
+  NORMAL
+  ELEVATED
+  CRITICAL
+}
+
+enum ServiceReadinessStatus {
+  FULLY_READY
+  REPLACEMENT_PENDING
+  ATTENDANCE_RISK
+  STAFFING_SHORTAGE
+  OPERATIONAL_DANGER
 }
 
 enum ProtocolTeamStatus {
@@ -108,7 +150,44 @@ enum FinanceCategory {
   DONATION
   UNIFORM
   TRANSPORT
+  EVENT
+  PROJECT
+  CONCERT
+  OPERATIONAL_SUPPORT
   OTHER
+}
+
+enum DueStatus {
+  UNPAID
+  PARTIAL
+  PAID
+  WAIVED
+}
+
+enum DueType {
+  MONTHLY_DUES
+  UNIFORM
+  EVENT
+  PROJECT
+  CONCERT
+  OPERATIONAL_SUPPORT
+  SPECIAL_DRIVE
+  OTHER
+}
+
+enum FinanceApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum BudgetKind {
+  OPERATIONAL
+  EVENT
+  CONCERT
+  RECORDING
+  PROJECT
+  MONTHLY
 }
 
 enum NotificationType {
@@ -184,8 +263,9 @@ model Member {
   lastName        String
   phone           String?
   ministry        MinistryScope @default(CHOIR)
-  status          MemberStatus  @default(PENDING)
-  isChildrenChoir Boolean       @default(false)
+  status              MemberStatus  @default(PENDING)
+  onboardingCompleted Boolean       @default(false)
+  isChildrenChoir     Boolean       @default(false)
   serviceNumber   Int?
   clientUpdatedAt DateTime?
   createdAt       DateTime      @default(now())
@@ -262,7 +342,19 @@ model Attendance {
   reasonType      String?
   approvedById    String?
   notes           String?
+  /// Sprint 5 attendance_status — stored as operationalStatus for backward compatibility
   operationalStatus AttendanceOperationalStatus?
+  excuseReason    String?
+  replacementType AttendanceReplacementType?
+  countsAsOfficial Boolean       @default(true)
+  voluntaryExtra  Boolean         @default(false)
+  lateMinutes     Int?
+  escalated       Boolean         @default(false)
+  escalationLevel AttendanceEscalationLevel?
+  escalationNotes String?
+  excuseEvidenceUrl String?
+  swapId          String?
+  replacementId   String?
   lockedAt        DateTime?
   clientUpdatedAt DateTime?
   createdAt       DateTime       @default(now())
@@ -274,6 +366,8 @@ model Attendance {
   @@unique([eventId, memberId])
   @@index([eventId])
   @@index([memberId])
+  @@index([operationalStatus])
+  @@index([escalated])
 }
 
 model Swap {
@@ -282,9 +376,21 @@ model Swap {
   requesterId     String
   targetId        String
   status          SwapStatus @default(REQUESTED)
+  coverageType    CoverageOperationalType @default(MUTUAL_SWAP)
+  reason          String?
+  initiatedByUserId String?
+  approvalLevel   CoverageApprovalLevel @default(TEAM_HEAD)
   requiresLeader  Boolean    @default(true)
   leaderApprovedById String?
   leaderNotes     String?
+  escalated       Boolean    @default(false)
+  escalationReason String?
+  escalationLevel AttendanceEscalationLevel?
+  countsOfficialQuota Boolean @default(true)
+  voluntaryExtraService Boolean @default(false)
+  operationalPriority OperationalPriority @default(NORMAL)
+  resolvedAt      DateTime?
+  resolutionNotes String?
   finalizedAt     DateTime?
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
@@ -296,6 +402,8 @@ model Swap {
   @@index([requesterId])
   @@index([targetId])
   @@index([status])
+  @@index([escalated])
+  @@index([approvalLevel])
 }
 
 model Replacement {
@@ -306,8 +414,17 @@ model Replacement {
   status          ReplacementStatus @default(REQUESTED)
   selfFound       Boolean           @default(false)
   kind            ReplacementKind   @default(LEADER_ASSIGNED)
+  reason          String?
+  initiatedByUserId String?
+  approvalLevel   CoverageApprovalLevel @default(TEAM_HEAD)
   countsOfficialQuota Boolean       @default(true)
   voluntaryExtraService Boolean     @default(false)
+  escalated       Boolean           @default(false)
+  escalationReason String?
+  escalationLevel AttendanceEscalationLevel?
+  operationalPriority OperationalPriority @default(NORMAL)
+  resolvedAt      DateTime?
+  resolutionNotes String?
   approvedById    String?
   notes           String?
   finalizedAt     DateTime?
@@ -320,6 +437,8 @@ model Replacement {
   @@index([eventId])
   @@index([absentMemberId])
   @@index([status])
+  @@index([escalated])
+  @@index([approvalLevel])
 }
 
 model ChoirCommitteeRole {
@@ -442,47 +561,72 @@ model DisciplineCase {
 }
 
 model FinanceTransaction {
-  id          String          @id @default(uuid())
-  type        TransactionType
-  category    FinanceCategory
-  amount      Decimal         
-  description String?
-  memberId    String?
-  recordedById String
-  transactionDate DateTime    @default(now())
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  id               String                 @id @default(uuid())
+  ministryScope    MinistryScope          @default(CHOIR)
+  type             TransactionType
+  category         FinanceCategory
+  amount           Decimal
+  currency         String                 @default("RWF")
+  description      String?
+  memberId         String?
+  recordedById     String
+  approvedById     String?
+  approvalStatus   FinanceApprovalStatus  @default(APPROVED)
+  receiptUrl       String?
+  relatedEventId   String?
+  transactionDate  DateTime               @default(now())
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
 
+  @@index([ministryScope])
   @@index([type])
   @@index([transactionDate])
   @@index([memberId])
+  @@index([relatedEventId])
+  @@index([approvalStatus])
 }
 
 model Budget {
-  id          String   @id @default(uuid())
-  name        String
-  amount      Decimal  
-  periodStart DateTime
-  periodEnd   DateTime
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String       @id @default(uuid())
+  ministryScope MinistryScope @default(CHOIR)
+  name          String
+  kind          BudgetKind   @default(MONTHLY)
+  amount        Decimal
+  actualAmount  Decimal      @default(0)
+  periodStart   DateTime
+  periodEnd     DateTime
+  relatedEventId String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
+  @@index([ministryScope])
   @@index([periodStart, periodEnd])
+  @@index([relatedEventId])
 }
 
 model MemberDues {
-  id        String   @id @default(uuid())
-  memberId  String
-  amount    Decimal  
-  period    String
-  paid      Boolean  @default(false)
-  paidAt    DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  id              String       @id @default(uuid())
+  ministryScope   MinistryScope @default(CHOIR)
+  memberId        String
+  dueType         DueType      @default(MONTHLY_DUES)
+  amount          Decimal
+  amountDue       Decimal?
+  amountPaid      Decimal      @default(0)
+  period          String
+  status          DueStatus    @default(UNPAID)
+  paid            Boolean      @default(false)
+  paidAt          DateTime?
+  recordedById    String?
+  approvedById    String?
+  waivedReason    String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  member          Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
-  @@unique([memberId, period])
+  @@unique([memberId, period, ministryScope, dueType])
   @@index([memberId])
+  @@index([ministryScope])
+  @@index([status])
 }
 
 model AuditLog {

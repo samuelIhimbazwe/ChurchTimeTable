@@ -68,7 +68,9 @@ test("super admins can switch locale and open admin console inside the shell", a
 
   await page.getByRole("link", { name: "Console admin" }).click();
   await expect(page).toHaveURL(/\/fr\/dashboard\/admin$/, { timeout: 30_000 });
-  await expect(page.getByText("Tableau de bord super admin")).toBeVisible({
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Console admin" }),
+  ).toBeVisible({
     timeout: 30_000,
   });
   await expect(page.getByText("Espace super admin")).toBeVisible({ timeout: 30_000 });

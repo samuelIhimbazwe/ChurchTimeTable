@@ -1,10 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ReplacementKind, ReplacementStatus } from '@prisma/client';
+import {
+  CoverageApprovalLevel,
+  ReplacementKind,
+  ReplacementStatus,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConflictDetectionService } from '../assignments/conflict-detection.service';
 import { AuditService } from '../audit/audit.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateReplacementDto } from './dto/create-replacement.dto';
 import { BusinessRuleException } from '../common/exceptions/business.exception';
+import { deriveReplacementFlags } from '../coverage/coverage.constants';
 
 @Injectable()
 export class ReplacementsService {
@@ -12,6 +18,7 @@ export class ReplacementsService {
     private prisma: PrismaService,
     private conflict: ConflictDetectionService,
     private audit: AuditService,
+    private notifications: NotificationsService,
   ) {}
 
   async create(dto: CreateReplacementDto, userId: string) {
@@ -22,24 +29,30 @@ export class ReplacementsService {
       });
     }
 
+    const kind =
+      dto.kind ??
+      (dto.selfFound ? ReplacementKind.VOLUNTARY : ReplacementKind.LEADER_ASSIGNED);
+    const flags = deriveReplacementFlags(kind);
+
     const replacement = await this.prisma.replacement.create({
       data: {
         eventId: dto.eventId,
         absentMemberId: dto.absentMemberId,
         coverMemberId: dto.coverMemberId,
         selfFound: dto.selfFound ?? false,
-        kind: dto.kind ?? (dto.selfFound ? ReplacementKind.VOLUNTARY : ReplacementKind.LEADER_ASSIGNED),
-        countsOfficialQuota:
-          (dto.kind ?? (dto.selfFound ? ReplacementKind.VOLUNTARY : ReplacementKind.LEADER_ASSIGNED)) ===
-          ReplacementKind.LEADER_ASSIGNED,
-        voluntaryExtraService:
-          (dto.kind ?? (dto.selfFound ? ReplacementKind.VOLUNTARY : ReplacementKind.LEADER_ASSIGNED)) ===
-          ReplacementKind.VOLUNTARY,
+        kind,
+        reason: dto.reason,
+        initiatedByUserId: userId,
+        approvalLevel: CoverageApprovalLevel.TEAM_HEAD,
+        countsOfficialQuota: flags.countsOfficialQuota,
+        voluntaryExtraService: flags.voluntaryExtraService,
+        operationalPriority: flags.operationalPriority,
         notes: dto.notes,
         status: dto.coverMemberId
           ? ReplacementStatus.LEADER_PENDING
           : ReplacementStatus.REQUESTED,
       },
+      include: { absentMember: true, coverMember: true, event: true },
     });
 
     await this.audit.log({
@@ -50,10 +63,47 @@ export class ReplacementsService {
       newValue: replacement,
     });
 
+    await this.notifications.notifyReplacement(replacement, 'requested');
+    if (replacement.status === ReplacementStatus.LEADER_PENDING) {
+      await this.notifications.notifyReplacementPendingLeader(replacement);
+    }
+
     return replacement;
   }
 
-  async approve(id: string, userId: string) {
+  async assignCover(id: string, coverMemberId: string, userId: string) {
+    const replacement = await this.getOrThrow(id);
+    await this.conflict.validateAssignment({
+      eventId: replacement.eventId,
+      memberId: coverMemberId,
+    });
+
+    const updated = await this.prisma.replacement.update({
+      where: { id },
+      data: {
+        coverMemberId,
+        status: ReplacementStatus.LEADER_PENDING,
+        selfFound: true,
+        kind: ReplacementKind.VOLUNTARY,
+        countsOfficialQuota: false,
+        voluntaryExtraService: true,
+      },
+      include: { absentMember: true, coverMember: true, event: true },
+    });
+
+    await this.audit.log({
+      userId,
+      action: 'REPLACEMENT_COVER_ASSIGNED',
+      entity: 'Replacement',
+      entityId: id,
+      newValue: updated,
+    });
+
+    await this.notifications.notifyReplacement(updated, 'cover_assigned');
+    return updated;
+  }
+
+  async approve(id: string, userId: string, notes?: string) {
     const replacement = await this.getOrThrow(id);
     if (replacement.status !== ReplacementStatus.LEADER_PENDING) {
       throw new BusinessRuleException('Replacement is not pending approval');
@@ -64,7 +114,10 @@ export class ReplacementsService {
       data: {
         status: ReplacementStatus.APPROVED,
         approvedById: userId,
+        notes: notes ?? replacement.notes,
+        approvalLevel: CoverageApprovalLevel.TEAM_HEAD,
       },
+      include: { absentMember: true, coverMember: true, event: true },
     });
 
     await this.audit.log({
@@ -75,6 +128,38 @@ export class ReplacementsService {
       newValue: updated,
     });
 
+    await this.notifications.notifyReplacement(updated, 'approved');
+    return updated;
+  }
+
+  async reject(id: string, userId: string, notes?: string) {
+    const replacement = await this.getOrThrow(id);
+    if (
+      replacement.status !== ReplacementStatus.LEADER_PENDING &&
+      replacement.status !== ReplacementStatus.REQUESTED
+    ) {
+      throw new BusinessRuleException('Replacement cannot be rejected');
+    }
+
+    const updated = await this.prisma.replacement.update({
+      where: { id },
+      data: {
+        status: ReplacementStatus.REJECTED,
+        resolutionNotes: notes,
+        resolvedAt: new Date(),
+      },
+      include: { absentMember: true, coverMember: true, event: true },
+    });
+
+    await this.audit.log({
+      userId,
+      action: 'REPLACEMENT_REJECTED',
+      entity: 'Replacement',
+      entityId: id,
+      newValue: updated,
+    });
+
+    await this.notifications.notifyReplacement(updated, 'rejected');
     return updated;
   }
 
@@ -110,6 +195,10 @@ export class ReplacementsService {
         },
       });
 
+      const operationalStatus = replacement.voluntaryExtraService
+        ? 'VOLUNTARY_EXTRA_SERVICE'
+        : 'REPLACEMENT_SERVED';
+
       await tx.attendance.upsert({
         where: {
           eventId_memberId: {
@@ -121,11 +210,17 @@ export class ReplacementsService {
           eventId: replacement.eventId,
           memberId: replacement.coverMemberId!,
           physicalStatus: 'PRESENT',
-          operationalStatus: 'REPLACEMENT_SERVED',
+          operationalStatus,
+          replacementId: replacement.id,
+          countsAsOfficial: replacement.countsOfficialQuota,
+          voluntaryExtra: replacement.voluntaryExtraService,
           notes: 'Auto-marked from finalized replacement flow',
         },
         update: {
-          operationalStatus: 'REPLACEMENT_SERVED',
+          operationalStatus,
+          replacementId: replacement.id,
+          countsAsOfficial: replacement.countsOfficialQuota,
+          voluntaryExtra: replacement.voluntaryExtraService,
         },
       });
 
@@ -134,12 +229,14 @@ export class ReplacementsService {
         data: {
           status: ReplacementStatus.FINALIZED,
           finalizedAt: new Date(),
+          resolvedAt: new Date(),
         },
       });
     });
 
     const finalized = await this.prisma.replacement.findUniqueOrThrow({
       where: { id },
+      include: { absentMember: true, coverMember: true, event: true },
     });
 
     await this.audit.log({
@@ -150,6 +247,7 @@ export class ReplacementsService {
       newValue: finalized,
     });
 
+    await this.notifications.notifyReplacement(finalized, 'finalized');
     return finalized;
   }
 
@@ -181,6 +279,15 @@ export class ReplacementsService {
         totalPages: Math.ceil(total / limit) || 1,
       },
     };
+  }
+
+  async findOne(id: string) {
+    const r = await this.prisma.replacement.findUnique({
+      where: { id },
+      include: { absentMember: true, coverMember: true, event: true },
+    });
+    if (!r) throw new NotFoundException('Replacement not found');
+    return r;
   }
 
   private async getOrThrow(id: string) {

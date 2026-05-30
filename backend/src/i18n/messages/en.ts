@@ -64,11 +64,79 @@ export const enMessages: Record<string, string> = {
 
     'Swap finalized for {eventName}',
 
+  NOTIFICATION_SWAP_PENDING_LEADER_TITLE: 'Swap awaiting review',
+
+  NOTIFICATION_SWAP_PENDING_LEADER_BODY:
+
+    'A swap request needs team-head review for {eventName}',
+
+  NOTIFICATION_REPLACEMENT_TITLE: 'Replacement update',
+
+  NOTIFICATION_REPLACEMENT_REQUESTED_BODY:
+
+    'Replacement request submitted for {eventName}',
+
+  NOTIFICATION_REPLACEMENT_COVER_ASSIGNED_BODY:
+
+    '{memberName} volunteered to cover for {eventName}',
+
+  NOTIFICATION_REPLACEMENT_APPROVED_BODY:
+
+    'Replacement approved for {eventName}',
+
+  NOTIFICATION_REPLACEMENT_REJECTED_BODY:
+
+    'Replacement request declined for {eventName}',
+
+  NOTIFICATION_REPLACEMENT_FINALIZED_BODY:
+
+    'Replacement finalized for {eventName}',
+
+  NOTIFICATION_REPLACEMENT_PENDING_LEADER_TITLE: 'Replacement awaiting review',
+
+  NOTIFICATION_REPLACEMENT_PENDING_LEADER_BODY:
+
+    'A replacement request needs review for {eventName}',
+
+  NOTIFICATION_COVERAGE_ESCALATION_TITLE: 'Coverage escalation ({level})',
+
+  NOTIFICATION_COVERAGE_ESCALATION_BODY:
+
+    '{memberName} — {eventName}. {notes}',
+
+  NOTIFICATION_READINESS_WARNING_TITLE: 'Service readiness warning',
+
+  NOTIFICATION_READINESS_WARNING_BODY:
+
+    '{eventName} readiness: {status}',
+
   NOTIFICATION_ATTENDANCE_TITLE: 'Attendance recorded',
 
   NOTIFICATION_ATTENDANCE_BODY:
 
     'Your attendance for {eventName} was recorded',
+
+  NOTIFICATION_ATTENDANCE_ABSENCE_TITLE: 'Attendance follow-up needed',
+
+  NOTIFICATION_ATTENDANCE_ABSENCE_BODY:
+
+    'A team member absence was recorded for {eventName}',
+
+  NOTIFICATION_ATTENDANCE_ESCALATION_TITLE: 'Attendance escalation ({level})',
+
+  NOTIFICATION_ATTENDANCE_ESCALATION_BODY:
+
+    '{memberName} — {eventName}. {notes}',
+
+  NOTIFICATION_EXCUSED_REVIEW_TITLE: 'Excuse review update',
+
+  NOTIFICATION_EXCUSED_APPROVED_BODY:
+
+    'Your excused absence for {eventName} was approved',
+
+  NOTIFICATION_EXCUSED_REJECTED_BODY:
+
+    'Your excused absence for {eventName} was not approved',
 
   NOTIFICATION_DISCIPLINE_TITLE: 'Discipline case',
 
@@ -79,6 +147,20 @@ export const enMessages: Record<string, string> = {
   NOTIFICATION_DUES_TITLE: 'Choir finance',
 
   NOTIFICATION_DUES_BODY: 'Remaining balance: {amount}',
+
+  INVALID_CREDENTIALS: 'Invalid email or password.',
+  INVALID_SESSION: 'Your session has expired. Please sign in again.',
+  EMAIL_ALREADY_REGISTERED: 'This email is already registered.',
+  ACCOUNT_INACTIVE: 'This account is inactive. Contact your ministry leader.',
+  MEMBER_PENDING_APPROVAL:
+    'Your registration is awaiting leader approval.',
+  TOO_MANY_REQUESTS: 'Too many attempts. Please wait a moment and try again.',
+  NOTIFICATION_MEMBER_APPROVED_TITLE: 'Registration approved',
+  NOTIFICATION_MEMBER_APPROVED_BODY:
+    'Welcome! Your ministry registration has been approved. You now have full access.',
+  NOTIFICATION_MEMBER_REJECTED_TITLE: 'Registration update',
+  NOTIFICATION_MEMBER_REJECTED_BODY:
+    'Your registration was not approved. Contact your ministry leader for help.',
 
 };
 

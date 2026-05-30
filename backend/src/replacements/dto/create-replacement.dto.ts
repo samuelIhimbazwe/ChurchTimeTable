@@ -18,6 +18,10 @@ export class CreateReplacementDto {
 
   @IsOptional()
   @IsString()
+  reason?: string;
+
+  @IsOptional()
+  @IsString()
   notes?: string;
 
   @IsOptional()

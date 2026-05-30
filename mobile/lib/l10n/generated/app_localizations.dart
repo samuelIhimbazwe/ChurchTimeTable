@@ -28,6 +28,33 @@ class AppLocalizations {
       'auth_email_invalid': 'Andika imeri yemewe',
       'auth_password_min_length': 'Ijambo banga rigomba kugira inyuguti 6',
       'auth_login_failed': 'Kwinjira byanze',
+      'validation_required': 'Uyu murandiko urakeneka',
+      'onboarding_signup_title': 'Kwiyandikisha mu murimo',
+      'onboarding_signup_first_name': "Izina ry'ibanze",
+      'onboarding_signup_last_name': "Izina ry'umuryango",
+      'onboarding_signup_phone': 'Telefone (si ngombwa)',
+      'onboarding_signup_ministry': 'Umurimo',
+      'onboarding_signup_ministry_choir': 'Korali',
+      'onboarding_signup_ministry_protocol': 'Protocol',
+      'onboarding_signup_ministry_both': 'Imirimo ibiri',
+      'onboarding_signup_ministry_choir_desc': 'Gukorera mu gusenga binyuze mu ndirimbo n\'imyiteguro.',
+      'onboarding_signup_ministry_protocol_desc': 'Kwakira no gukurikirana serivisi z\'itorero.',
+      'onboarding_signup_ministry_both_desc': 'Ukora mu korali na protocol.',
+      'onboarding_signup_confirm_password': 'Emeza ijambo banga',
+      'onboarding_signup_password_mismatch': 'Amagambo y\'ibanga ntahura.',
+      'onboarding_signup_approval_note': 'Nyuma yo kohereza, umuyobozi azasuzuma kwiyandikisha kwawe.',
+      'onboarding_signup_back': 'Subira inyuma',
+      'onboarding_signup_continue': 'Komeza',
+      'onboarding_signup_submit': 'Ohereza kwiyandikisha',
+      'onboarding_signup_have_account': 'Usanzwe ufite konti? Injira',
+      'onboarding_pending_eyebrow': 'Kwiyandikisha kwakiriwe',
+      'onboarding_pending_title': 'Icyifuzo cyawe gisuzumwa',
+      'onboarding_pending_greeting': 'Murakoze, {name}.',
+      'onboarding_pending_body': 'Kwiyandikisha kwawe mu murimo kwakiriwe.',
+      'onboarding_pending_step_review': 'Umuyobozi azasuzuma amakuru yawe.',
+      'onboarding_pending_step_notify': 'Uzakira ubutumwa igihe icyemezo cyakozwe.',
+      'onboarding_pending_step_access': 'Niyo wemewe, uzabona gahunda n\'amakuru y\'umurimo.',
+      'onboarding_pending_help': 'Vugana n\'umuyobozi wa korali cyangwa wa protocol niba ukeneye ubufasha.',
       'dashboard_member_title': 'Ikibaho cyanjye',
       'dashboard_leader_title': "Ikibaho cy'umuyobozi",
       'nav_calendar': "Kalendari y'ibikorwa",
@@ -108,6 +135,7 @@ class AppLocalizations {
       'finance_income_label': 'Inyungu',
       'finance_expense_label': 'Amafaranga yasohotse',
       'finance_balance_label': 'Asigaye',
+      'finance_unpaid_label': 'Ideni risigaye',
       'budget_name_label': "Izina ry'ingengo",
       'budget_amount_label': 'Amafaranga',
       'budget_create_action': 'Kurema ingengo',
@@ -215,6 +243,7 @@ class AppLocalizations {
       'member_availability_title': "Kuboneka kw'umunyamuryango",
       'member_unavailable_dates_label': 'Iminsi adaboneka',
       'common_create': 'Kurema',
+      'common_retry': 'Ongera ugerageze',
       'sync_result_applied': 'Byakoreshejwe: {applied}, Byanze: {rejected}',
       'budget_amount_subtitle': 'Amafaranga: {amount}',
       'choir_eligible_members_label': 'Abemerewe: {count}',
@@ -224,6 +253,91 @@ class AppLocalizations {
       'assignment_queue_title': 'Urutonde ({count})',
       'assignment_members_assigned_message':
           'Byashyizwe ku banyamuryango {count}',
+      'nav_coverage': 'Coverage',
+      'attendance_governance_title': 'Gukurikirana attendance',
+      'attendance_mark_all_present': 'Bose bashyireho ko baje',
+      'attendance_excuse_review_title': 'Gusuzuma excuses',
+      'attendance_excuse_no_reason': 'Nta mpamvu yatanzwe',
+      'attendance_select_event_hint': 'Hitamo igikorwa kugira ngo urutonde rupakire',
+      'attendance_roster_empty': 'Nta munyamuryango ufite inshingano',
+      'attendance_reliability_title': 'Ubwitange',
+      'attendance_reliability_subtitle': '{percentage}% · {band}',
+      'attendance_excuse_request_title': 'Saba absence yemewe',
+      'attendance_excuse_request_subtitle': 'Ohereza excuse ku murimo uri imbere.',
+      'attendance_excuse_reason_label': 'Impamvu',
+      'attendance_excuse_submit_action': 'Ohereza excuse',
+      'attendance_excuse_submitted': 'Excuse yoherejwe kuri {eventName}',
+      'attendance_recent_title': 'Attendance ya vuba',
+      'attendance_recent_empty': 'Nta mateka',
+      'attendance_status_attended': 'Yitabiriye',
+      'attendance_status_replacement': 'Yakuyemo undi',
+      'attendance_status_voluntary': "Serivisi y'ubushake",
+      'attendance_excuse_illness': 'Indwara',
+      'attendance_excuse_travel': 'Urugendo',
+      'attendance_excuse_work_school': 'Akazi cyangwa ishuri',
+      'attendance_excuse_emergency': 'Ubwoba',
+      'attendance_excuse_family': 'Umuryango',
+      'attendance_excuse_approved_leave': 'Uruhushya rwemewe',
+      'attendance_excuse_conflict': 'Impaka itiruka',
+      'attendance_excuse_unknown': 'Ntibizwi',
+      'coverage_analytics_title': 'Analytics za coverage',
+      'coverage_analytics_swaps': 'Swaps',
+      'coverage_analytics_replacements': 'Replacements',
+      'coverage_analytics_voluntary': "Serivisi y'ubushake",
+      'coverage_analytics_unresolved': 'Swaps zitarakemuka',
+      'coverage_readiness_title': 'Readiness',
+      'coverage_readiness_empty': 'Nta burira',
+      'coverage_team_head_title': 'Team head',
+      'coverage_team_head_empty': 'Nta ikibazo cya coverage',
+      'coverage_coordinator_title': 'Coordinator',
+      'coverage_coordinator_empty': 'Nta case y\'escalade',
+      'coverage_escalated_title': 'Escalade',
+      'coverage_open_swaps': 'Gucunga swaps',
+      'coverage_open_replacements': 'Gucunga replacements',
+      'coverage_swaps_empty': 'Nta swap',
+      'coverage_readiness_ready': 'Byiteguye',
+      'coverage_readiness_replacement_pending': 'Replacement itegekereje',
+      'coverage_readiness_attendance_risk': 'Risk ya attendance',
+      'coverage_readiness_staffing_shortage': 'Abantu bake',
+      'coverage_readiness_operational_danger': 'Danger',
+      'attendance_tab_marking': 'Gushyira ikimenyetso',
+      'attendance_tab_choir': 'Choir',
+      'attendance_tab_oversight': 'Kugenzura',
+      'attendance_choir_title': 'Attendance ya choir',
+      'attendance_choir_marked': 'Byashyizweho',
+      'attendance_choir_excused': 'Byirengagijwe',
+      'attendance_choir_unexcused': 'Nta mpamvu',
+      'attendance_choir_lateness': 'Gutinda',
+      'attendance_choir_pending_review': 'Bitegereje isuzuma',
+      'attendance_discipline_title': 'Ibyifuzo by\'ubunyangamugayo',
+      'attendance_discipline_subtitle':
+          'Isuzuma rya pastoral risaba — ntabwo ari ibihano byikora.',
+      'attendance_discipline_empty': 'Nta byifuzo ubu.',
+      'attendance_discipline_create': 'Fungura urubanza rw\'ubunyangamugayo',
+      'attendance_discipline_created':
+          'Urubanza rw\'ubunyangamugayo rwashyizweho.',
+      'coverage_escalate_team_head': 'Ohereza ku team head',
+      'coverage_escalate_coordinator': 'Ohereza ku coordinator',
+      'coverage_escalate_president': 'Ohereza ku president',
+      'nav_operational': 'Operational center',
+      'operational_title': 'Operational center',
+      'operational_unauthorized': 'Nta burenganzira bwo kuyobora ufite.',
+      'operational_subtitle_president': 'Protocol president — incamake y\'ubuyobozi.',
+      'operational_subtitle_coordinator': 'Protocol coordinator — imikorere y\'amatsinda.',
+      'operational_subtitle_team_head': 'Protocol team head — urwego rw\'itsinda ryawe.',
+      'operational_subtitle_choir_leader': 'Choir operations — koresha attendance.',
+      'operational_workflows_title': 'Imikorere y\'ingenzi',
+      'operational_open_attendance': 'Attendance governance',
+      'operational_open_coverage': 'Coverage management',
+      'operational_choir_summary_title': 'Imikorere ya Korali',
+      'operational_choir_summary_hint': 'Fungura attendance kugira ngo ubone incamake.',
+      'operational_stat_active_teams': 'Amatsinda akora',
+      'operational_stat_escalated': 'Ibyatevye imbere',
+      'operational_stat_pending_replacements': 'Replacements zitegereje',
+      'operational_stat_discipline_risk': 'Ibyago bya discipline',
+      'operational_stat_readiness': 'Iburira rya readiness',
+      'operational_stat_teams': 'Amatsinda yawe',
+      'operational_stat_pending_absences': 'Absences zitegereje',
     },
     'en': {
       'app_title': 'CMMS',
@@ -233,6 +347,34 @@ class AppLocalizations {
       'auth_email_invalid': 'Enter a valid email address',
       'auth_password_min_length': 'Password must be at least 6 characters',
       'auth_login_failed': 'Sign in failed',
+      'auth_create_account': 'Create an account',
+      'validation_required': 'This field is required',
+      'onboarding_signup_title': 'Ministry registration',
+      'onboarding_signup_first_name': 'First name',
+      'onboarding_signup_last_name': 'Last name',
+      'onboarding_signup_phone': 'Phone (optional)',
+      'onboarding_signup_ministry': 'Ministry',
+      'onboarding_signup_ministry_choir': 'Choir',
+      'onboarding_signup_ministry_protocol': 'Protocol',
+      'onboarding_signup_ministry_both': 'Both ministries',
+      'onboarding_signup_ministry_choir_desc': 'Serve in worship through singing, rehearsals, and scheduled services.',
+      'onboarding_signup_ministry_protocol_desc': 'Welcome, guide, and coordinate hospitality during church services.',
+      'onboarding_signup_ministry_both_desc': 'You participate in both choir and protocol ministries.',
+      'onboarding_signup_confirm_password': 'Confirm password',
+      'onboarding_signup_password_mismatch': 'Passwords do not match.',
+      'onboarding_signup_approval_note': 'After you submit, a leader will review your registration before full access is granted.',
+      'onboarding_signup_back': 'Back',
+      'onboarding_signup_continue': 'Continue',
+      'onboarding_signup_submit': 'Submit registration',
+      'onboarding_signup_have_account': 'Already have an account? Sign in',
+      'onboarding_pending_eyebrow': 'Registration received',
+      'onboarding_pending_title': 'Your request is being reviewed',
+      'onboarding_pending_greeting': 'Thank you, {name}.',
+      'onboarding_pending_body': 'Your ministry registration has been received. Leaders are reviewing your request.',
+      'onboarding_pending_step_review': 'A ministry leader will review your details.',
+      'onboarding_pending_step_notify': 'You will receive a notification when a decision is made.',
+      'onboarding_pending_step_access': 'Once approved, you can view schedules and ministry updates.',
+      'onboarding_pending_help': 'If you need help, contact your choir or protocol leader.',
       'dashboard_member_title': 'My dashboard',
       'dashboard_leader_title': 'Leader dashboard',
       'nav_calendar': 'Event calendar',
@@ -311,6 +453,7 @@ class AppLocalizations {
       'finance_income_label': 'Income',
       'finance_expense_label': 'Expense',
       'finance_balance_label': 'Balance',
+      'finance_unpaid_label': 'Outstanding',
       'budget_name_label': 'Budget name',
       'budget_amount_label': 'Amount',
       'budget_create_action': 'Create budget',
@@ -423,6 +566,92 @@ class AppLocalizations {
       'member_availability_title': 'Member availability',
       'member_unavailable_dates_label': 'Unavailable dates',
       'common_create': 'Create',
+      'common_retry': 'Retry',
+      'nav_coverage': 'Coverage',
+      'attendance_governance_title': 'Attendance governance',
+      'attendance_mark_all_present': 'Mark all present',
+      'attendance_excuse_review_title': 'Excuse review',
+      'attendance_excuse_no_reason': 'No reason provided',
+      'attendance_select_event_hint': 'Select an event to load the roster',
+      'attendance_roster_empty': 'No members assigned to this event',
+      'attendance_reliability_title': 'Reliability score',
+      'attendance_reliability_subtitle': '{percentage}% · {band}',
+      'attendance_excuse_request_title': 'Request excused absence',
+      'attendance_excuse_request_subtitle':
+          'Submit an excuse for an upcoming assignment. A leader will review it.',
+      'attendance_excuse_reason_label': 'Reason',
+      'attendance_excuse_submit_action': 'Submit excuse',
+      'attendance_excuse_submitted': 'Excuse submitted for {eventName}',
+      'attendance_recent_title': 'Recent attendance',
+      'attendance_recent_empty': 'No attendance history yet',
+      'attendance_status_attended': 'Attended',
+      'attendance_status_replacement': 'Replacement served',
+      'attendance_status_voluntary': 'Voluntary service',
+      'attendance_excuse_illness': 'Illness',
+      'attendance_excuse_travel': 'Travel',
+      'attendance_excuse_work_school': 'Work or school',
+      'attendance_excuse_emergency': 'Emergency',
+      'attendance_excuse_family': 'Family issue',
+      'attendance_excuse_approved_leave': 'Approved leave',
+      'attendance_excuse_conflict': 'Unavoidable conflict',
+      'attendance_excuse_unknown': 'Unknown',
+      'coverage_analytics_title': 'Coverage analytics',
+      'coverage_analytics_swaps': 'Swaps',
+      'coverage_analytics_replacements': 'Replacements',
+      'coverage_analytics_voluntary': 'Voluntary service',
+      'coverage_analytics_unresolved': 'Unresolved swaps',
+      'coverage_readiness_title': 'Readiness',
+      'coverage_readiness_empty': 'No readiness warnings',
+      'coverage_team_head_title': 'Team head',
+      'coverage_team_head_empty': 'No pending coverage issues',
+      'coverage_coordinator_title': 'Coordinator',
+      'coverage_coordinator_empty': 'No escalated coverage cases',
+      'coverage_escalated_title': 'Escalated',
+      'coverage_open_swaps': 'Manage swaps',
+      'coverage_open_replacements': 'Manage replacements',
+      'coverage_swaps_empty': 'No swap requests',
+      'coverage_readiness_ready': 'Fully ready',
+      'coverage_readiness_replacement_pending': 'Replacement pending',
+      'coverage_readiness_attendance_risk': 'Attendance risk',
+      'coverage_readiness_staffing_shortage': 'Staffing shortage',
+      'coverage_readiness_operational_danger': 'Operational danger',
+      'attendance_tab_marking': 'Marking',
+      'attendance_tab_choir': 'Choir',
+      'attendance_tab_oversight': 'Oversight',
+      'attendance_choir_title': 'Choir attendance',
+      'attendance_choir_marked': 'Marked',
+      'attendance_choir_excused': 'Excused',
+      'attendance_choir_unexcused': 'Unexcused',
+      'attendance_choir_lateness': 'Lateness',
+      'attendance_choir_pending_review': 'Pending review',
+      'attendance_discipline_title': 'Discipline recommendations',
+      'attendance_discipline_subtitle':
+          'Pastoral review suggested — not automatic discipline.',
+      'attendance_discipline_empty': 'No recommendations right now.',
+      'attendance_discipline_create': 'Open discipline case',
+      'attendance_discipline_created': 'Discipline case created.',
+      'coverage_escalate_team_head': 'Escalate to team head',
+      'coverage_escalate_coordinator': 'Escalate to coordinator',
+      'coverage_escalate_president': 'Escalate to president',
+      'nav_operational': 'Operational center',
+      'operational_title': 'Operational center',
+      'operational_unauthorized': 'You do not have operational governance access.',
+      'operational_subtitle_president': 'Protocol president — ministry-wide executive summary.',
+      'operational_subtitle_coordinator': 'Protocol coordinator — team operations overview.',
+      'operational_subtitle_team_head': 'Protocol team head — your team scope.',
+      'operational_subtitle_choir_leader': 'Choir operations — use attendance for detail.',
+      'operational_workflows_title': 'Operational workflows',
+      'operational_open_attendance': 'Attendance governance',
+      'operational_open_coverage': 'Coverage management',
+      'operational_choir_summary_title': 'Choir operations',
+      'operational_choir_summary_hint': 'Open attendance for choir marking and summaries.',
+      'operational_stat_active_teams': 'Active teams',
+      'operational_stat_escalated': 'Escalated',
+      'operational_stat_pending_replacements': 'Pending replacements',
+      'operational_stat_discipline_risk': 'Discipline risks',
+      'operational_stat_readiness': 'Readiness warnings',
+      'operational_stat_teams': 'Your teams',
+      'operational_stat_pending_absences': 'Pending absences',
     },
     'fr': {
       'app_title': 'CMMS',
@@ -433,6 +662,33 @@ class AppLocalizations {
       'auth_password_min_length':
           'Le mot de passe doit contenir au moins 6 caractères',
       'auth_login_failed': 'Échec de la connexion',
+      'validation_required': 'Ce champ est obligatoire',
+      'onboarding_signup_title': 'Inscription au ministère',
+      'onboarding_signup_first_name': 'Prénom',
+      'onboarding_signup_last_name': 'Nom',
+      'onboarding_signup_phone': 'Téléphone (facultatif)',
+      'onboarding_signup_ministry': 'Ministère',
+      'onboarding_signup_ministry_choir': 'Chorale',
+      'onboarding_signup_ministry_protocol': 'Protocol',
+      'onboarding_signup_ministry_both': 'Les deux ministères',
+      'onboarding_signup_ministry_choir_desc': 'Servir dans la louange par le chant, les répétitions et les offices.',
+      'onboarding_signup_ministry_protocol_desc': 'Accueillir, guider et coordonner l\'hospitalité pendant les offices.',
+      'onboarding_signup_ministry_both_desc': 'Vous participez à la chorale et au protocol.',
+      'onboarding_signup_confirm_password': 'Confirmer le mot de passe',
+      'onboarding_signup_password_mismatch': 'Les mots de passe ne correspondent pas.',
+      'onboarding_signup_approval_note': 'Après envoi, un responsable examinera votre inscription.',
+      'onboarding_signup_back': 'Retour',
+      'onboarding_signup_continue': 'Continuer',
+      'onboarding_signup_submit': 'Envoyer l\'inscription',
+      'onboarding_signup_have_account': 'Déjà un compte ? Se connecter',
+      'onboarding_pending_eyebrow': 'Inscription reçue',
+      'onboarding_pending_title': 'Votre demande est en cours d\'examen',
+      'onboarding_pending_greeting': 'Merci, {name}.',
+      'onboarding_pending_body': 'Votre inscription au ministère a bien été reçue.',
+      'onboarding_pending_step_review': 'Un responsable examinera vos informations.',
+      'onboarding_pending_step_notify': 'Vous recevrez une notification lors de la décision.',
+      'onboarding_pending_step_access': 'Une fois approuvé, vous pourrez consulter horaires et actualités.',
+      'onboarding_pending_help': 'Contactez votre responsable de chorale ou de protocol si besoin.',
       'dashboard_member_title': 'Mon tableau de bord',
       'dashboard_leader_title': 'Tableau de bord responsable',
       'nav_calendar': 'Calendrier des événements',
@@ -512,6 +768,7 @@ class AppLocalizations {
       'finance_income_label': 'Revenus',
       'finance_expense_label': 'Dépenses',
       'finance_balance_label': 'Solde',
+      'finance_unpaid_label': 'Impaye',
       'budget_name_label': 'Nom du budget',
       'budget_amount_label': 'Montant',
       'budget_create_action': 'Créer un budget',
@@ -622,6 +879,7 @@ class AppLocalizations {
       'member_availability_title': 'Disponibilité du membre',
       'member_unavailable_dates_label': 'Dates indisponibles',
       'common_create': 'Créer',
+      'common_retry': 'Réessayer',
       'sync_result_applied': 'Appliqués : {applied}, Rejetés : {rejected}',
       'budget_amount_subtitle': 'Montant : {amount}',
       'choir_eligible_members_label': 'Membres éligibles : {count}',
@@ -629,6 +887,92 @@ class AppLocalizations {
       'choir_assigned_count_message': '{count} membres affectés',
       'assignment_queue_title': 'File ({count})',
       'assignment_members_assigned_message': '{count} membres affectés',
+      'nav_coverage': 'Couverture',
+      'attendance_governance_title': 'Gouvernance de présence',
+      'attendance_mark_all_present': 'Tout marquer présent',
+      'attendance_excuse_review_title': 'Revue des excuses',
+      'attendance_excuse_no_reason': 'Aucune raison fournie',
+      'attendance_select_event_hint':
+          'Sélectionnez un événement pour charger la liste',
+      'attendance_roster_empty': 'Aucun membre affecté à cet événement',
+      'attendance_reliability_title': 'Score de fiabilité',
+      'attendance_reliability_subtitle': '{percentage}% · {band}',
+      'attendance_excuse_request_title': 'Demander une absence excusée',
+      'attendance_excuse_request_subtitle':
+          'Soumettez une excuse pour une affectation à venir.',
+      'attendance_excuse_reason_label': 'Motif',
+      'attendance_excuse_submit_action': "Envoyer l'excuse",
+      'attendance_excuse_submitted': 'Excuse envoyée pour {eventName}',
+      'attendance_recent_title': 'Présence récente',
+      'attendance_recent_empty': 'Aucun historique de présence',
+      'attendance_status_attended': 'Présent',
+      'attendance_status_replacement': 'Remplacement servi',
+      'attendance_status_voluntary': 'Service volontaire',
+      'attendance_excuse_illness': 'Maladie',
+      'attendance_excuse_travel': 'Voyage',
+      'attendance_excuse_work_school': 'Travail ou école',
+      'attendance_excuse_emergency': 'Urgence',
+      'attendance_excuse_family': 'Famille',
+      'attendance_excuse_approved_leave': 'Congé approuvé',
+      'attendance_excuse_conflict': 'Conflit inévitable',
+      'attendance_excuse_unknown': 'Inconnu',
+      'coverage_analytics_title': 'Analyses de couverture',
+      'coverage_analytics_swaps': 'Échanges',
+      'coverage_analytics_replacements': 'Remplacements',
+      'coverage_analytics_voluntary': 'Service volontaire',
+      'coverage_analytics_unresolved': 'Échanges non résolus',
+      'coverage_readiness_title': 'Préparation',
+      'coverage_readiness_empty': 'Aucune alerte de préparation',
+      'coverage_team_head_title': "Chef d'équipe",
+      'coverage_team_head_empty': 'Aucun problème de couverture',
+      'coverage_coordinator_title': 'Coordinateur',
+      'coverage_coordinator_empty': 'Aucun cas escaladé',
+      'coverage_escalated_title': 'Escaladé',
+      'coverage_open_swaps': 'Gérer les échanges',
+      'coverage_open_replacements': 'Gérer les remplacements',
+      'coverage_swaps_empty': 'Aucun échange',
+      'coverage_readiness_ready': 'Prêt',
+      'coverage_readiness_replacement_pending': 'Remplacement en attente',
+      'coverage_readiness_attendance_risk': 'Risque de présence',
+      'coverage_readiness_staffing_shortage': 'Effectif insuffisant',
+      'coverage_readiness_operational_danger': 'Danger opérationnel',
+      'attendance_tab_marking': 'Marquage',
+      'attendance_tab_choir': 'Chœur',
+      'attendance_tab_oversight': 'Supervision',
+      'attendance_choir_title': 'Présence du chœur',
+      'attendance_choir_marked': 'Marqué',
+      'attendance_choir_excused': 'Excusé',
+      'attendance_choir_unexcused': 'Non excusé',
+      'attendance_choir_lateness': 'Retard',
+      'attendance_choir_pending_review': 'En attente de révision',
+      'attendance_discipline_title': 'Recommandations disciplinaires',
+      'attendance_discipline_subtitle':
+          'Révision pastorale suggérée — pas de discipline automatique.',
+      'attendance_discipline_empty': 'Aucune recommandation pour le moment.',
+      'attendance_discipline_create': 'Ouvrir un dossier disciplinaire',
+      'attendance_discipline_created': 'Dossier disciplinaire créé.',
+      'coverage_escalate_team_head': 'Escalader au chef d\'équipe',
+      'coverage_escalate_coordinator': 'Escalader au coordinateur',
+      'coverage_escalate_president': 'Escalader au président',
+      'nav_operational': 'Centre opérationnel',
+      'operational_title': 'Centre opérationnel',
+      'operational_unauthorized': 'Accès opérationnel refusé.',
+      'operational_subtitle_president': 'Président protocol — vue exécutive.',
+      'operational_subtitle_coordinator': 'Coordinateur protocol — vue équipes.',
+      'operational_subtitle_team_head': 'Chef d\'équipe protocol — votre périmètre.',
+      'operational_subtitle_choir_leader': 'Opérations chorales — voir présence.',
+      'operational_workflows_title': 'Flux opérationnels',
+      'operational_open_attendance': 'Gouvernance de présence',
+      'operational_open_coverage': 'Gestion de couverture',
+      'operational_choir_summary_title': 'Opérations chorales',
+      'operational_choir_summary_hint': 'Ouvrez la présence pour le détail.',
+      'operational_stat_active_teams': 'Équipes actives',
+      'operational_stat_escalated': 'Escaladés',
+      'operational_stat_pending_replacements': 'Remplacements en attente',
+      'operational_stat_discipline_risk': 'Risques discipline',
+      'operational_stat_readiness': 'Alertes préparation',
+      'operational_stat_teams': 'Vos équipes',
+      'operational_stat_pending_absences': 'Absences en attente',
     },
   };
 
@@ -714,6 +1058,35 @@ class AppLocalizations {
   String get auth_email_invalid => _t('auth_email_invalid');
   String get auth_password_min_length => _t('auth_password_min_length');
   String get auth_login_failed => _t('auth_login_failed');
+  String get auth_create_account => _t('auth_create_account');
+  String get validation_required => _t('validation_required');
+  String get onboarding_signup_title => _t('onboarding_signup_title');
+  String get onboarding_signup_first_name => _t('onboarding_signup_first_name');
+  String get onboarding_signup_last_name => _t('onboarding_signup_last_name');
+  String get onboarding_signup_phone => _t('onboarding_signup_phone');
+  String get onboarding_signup_ministry => _t('onboarding_signup_ministry');
+  String get onboarding_signup_ministry_choir => _t('onboarding_signup_ministry_choir');
+  String get onboarding_signup_ministry_protocol => _t('onboarding_signup_ministry_protocol');
+  String get onboarding_signup_ministry_both => _t('onboarding_signup_ministry_both');
+  String get onboarding_signup_ministry_choir_desc => _t('onboarding_signup_ministry_choir_desc');
+  String get onboarding_signup_ministry_protocol_desc => _t('onboarding_signup_ministry_protocol_desc');
+  String get onboarding_signup_ministry_both_desc => _t('onboarding_signup_ministry_both_desc');
+  String get onboarding_signup_confirm_password => _t('onboarding_signup_confirm_password');
+  String get onboarding_signup_password_mismatch => _t('onboarding_signup_password_mismatch');
+  String get onboarding_signup_approval_note => _t('onboarding_signup_approval_note');
+  String get onboarding_signup_back => _t('onboarding_signup_back');
+  String get onboarding_signup_continue => _t('onboarding_signup_continue');
+  String get onboarding_signup_submit => _t('onboarding_signup_submit');
+  String get onboarding_signup_have_account => _t('onboarding_signup_have_account');
+  String get onboarding_pending_eyebrow => _t('onboarding_pending_eyebrow');
+  String get onboarding_pending_title => _t('onboarding_pending_title');
+  String onboarding_pending_greeting(String name) =>
+      _p('onboarding_pending_greeting', {'name': name});
+  String get onboarding_pending_body => _t('onboarding_pending_body');
+  String get onboarding_pending_step_review => _t('onboarding_pending_step_review');
+  String get onboarding_pending_step_notify => _t('onboarding_pending_step_notify');
+  String get onboarding_pending_step_access => _t('onboarding_pending_step_access');
+  String get onboarding_pending_help => _t('onboarding_pending_help');
   String get dashboard_member_title => _t('dashboard_member_title');
   String get dashboard_leader_title => _t('dashboard_leader_title');
   String get nav_calendar => _t('nav_calendar');
@@ -797,6 +1170,7 @@ class AppLocalizations {
   String get finance_income_label => _t('finance_income_label');
   String get finance_expense_label => _t('finance_expense_label');
   String get finance_balance_label => _t('finance_balance_label');
+  String get finance_unpaid_label => _t('finance_unpaid_label');
   String get budget_name_label => _t('budget_name_label');
   String get budget_amount_label => _t('budget_amount_label');
   String get budget_create_action => _t('budget_create_action');
@@ -899,6 +1273,115 @@ class AppLocalizations {
   String get member_unavailable_dates_label =>
       _t('member_unavailable_dates_label');
   String get common_create => _t('common_create');
+  String get common_retry => _t('common_retry');
+  String get nav_coverage => _t('nav_coverage');
+  String get attendance_governance_title => _t('attendance_governance_title');
+  String get attendance_mark_all_present => _t('attendance_mark_all_present');
+  String get attendance_excuse_review_title =>
+      _t('attendance_excuse_review_title');
+  String get attendance_excuse_no_reason => _t('attendance_excuse_no_reason');
+  String get attendance_select_event_hint => _t('attendance_select_event_hint');
+  String get attendance_roster_empty => _t('attendance_roster_empty');
+  String get attendance_reliability_title => _t('attendance_reliability_title');
+  String attendance_reliability_subtitle(String percentage, String band) =>
+      _p('attendance_reliability_subtitle', {
+        'percentage': percentage,
+        'band': band,
+      });
+  String get attendance_excuse_request_title =>
+      _t('attendance_excuse_request_title');
+  String get attendance_excuse_request_subtitle =>
+      _t('attendance_excuse_request_subtitle');
+  String get attendance_excuse_reason_label =>
+      _t('attendance_excuse_reason_label');
+  String get attendance_excuse_submit_action =>
+      _t('attendance_excuse_submit_action');
+  String attendance_excuse_submitted(String eventName) =>
+      _p('attendance_excuse_submitted', {'eventName': eventName});
+  String get attendance_recent_title => _t('attendance_recent_title');
+  String get attendance_recent_empty => _t('attendance_recent_empty');
+  String get attendance_status_attended => _t('attendance_status_attended');
+  String get attendance_status_replacement =>
+      _t('attendance_status_replacement');
+  String get attendance_status_voluntary => _t('attendance_status_voluntary');
+  String get attendance_excuse_illness => _t('attendance_excuse_illness');
+  String get attendance_excuse_travel => _t('attendance_excuse_travel');
+  String get attendance_excuse_work_school => _t('attendance_excuse_work_school');
+  String get attendance_excuse_emergency => _t('attendance_excuse_emergency');
+  String get attendance_excuse_family => _t('attendance_excuse_family');
+  String get attendance_excuse_approved_leave =>
+      _t('attendance_excuse_approved_leave');
+  String get attendance_excuse_conflict => _t('attendance_excuse_conflict');
+  String get attendance_excuse_unknown => _t('attendance_excuse_unknown');
+  String get coverage_analytics_title => _t('coverage_analytics_title');
+  String get coverage_analytics_swaps => _t('coverage_analytics_swaps');
+  String get coverage_analytics_replacements =>
+      _t('coverage_analytics_replacements');
+  String get coverage_analytics_voluntary => _t('coverage_analytics_voluntary');
+  String get coverage_analytics_unresolved => _t('coverage_analytics_unresolved');
+  String get coverage_readiness_title => _t('coverage_readiness_title');
+  String get coverage_readiness_empty => _t('coverage_readiness_empty');
+  String get coverage_team_head_title => _t('coverage_team_head_title');
+  String get coverage_team_head_empty => _t('coverage_team_head_empty');
+  String get coverage_coordinator_title => _t('coverage_coordinator_title');
+  String get coverage_coordinator_empty => _t('coverage_coordinator_empty');
+  String get coverage_escalated_title => _t('coverage_escalated_title');
+  String get coverage_open_swaps => _t('coverage_open_swaps');
+  String get coverage_open_replacements => _t('coverage_open_replacements');
+  String get coverage_swaps_empty => _t('coverage_swaps_empty');
+  String get coverage_readiness_ready => _t('coverage_readiness_ready');
+  String get coverage_readiness_replacement_pending =>
+      _t('coverage_readiness_replacement_pending');
+  String get coverage_readiness_attendance_risk =>
+      _t('coverage_readiness_attendance_risk');
+  String get coverage_readiness_staffing_shortage =>
+      _t('coverage_readiness_staffing_shortage');
+  String get coverage_readiness_operational_danger =>
+      _t('coverage_readiness_operational_danger');
+  String get attendance_tab_marking => _t('attendance_tab_marking');
+  String get attendance_tab_choir => _t('attendance_tab_choir');
+  String get attendance_tab_oversight => _t('attendance_tab_oversight');
+  String get attendance_choir_title => _t('attendance_choir_title');
+  String get attendance_choir_marked => _t('attendance_choir_marked');
+  String get attendance_choir_excused => _t('attendance_choir_excused');
+  String get attendance_choir_unexcused => _t('attendance_choir_unexcused');
+  String get attendance_choir_lateness => _t('attendance_choir_lateness');
+  String get attendance_choir_pending_review =>
+      _t('attendance_choir_pending_review');
+  String get attendance_discipline_title => _t('attendance_discipline_title');
+  String get attendance_discipline_subtitle =>
+      _t('attendance_discipline_subtitle');
+  String get attendance_discipline_empty => _t('attendance_discipline_empty');
+  String get attendance_discipline_create => _t('attendance_discipline_create');
+  String get attendance_discipline_created =>
+      _t('attendance_discipline_created');
+  String get coverage_escalate_team_head => _t('coverage_escalate_team_head');
+  String get coverage_escalate_coordinator =>
+      _t('coverage_escalate_coordinator');
+  String get coverage_escalate_president => _t('coverage_escalate_president');
+  String get nav_operational => _t('nav_operational');
+  String get operational_title => _t('operational_title');
+  String get operational_unauthorized => _t('operational_unauthorized');
+  String get operational_subtitle_president => _t('operational_subtitle_president');
+  String get operational_subtitle_coordinator =>
+      _t('operational_subtitle_coordinator');
+  String get operational_subtitle_team_head => _t('operational_subtitle_team_head');
+  String get operational_subtitle_choir_leader =>
+      _t('operational_subtitle_choir_leader');
+  String get operational_workflows_title => _t('operational_workflows_title');
+  String get operational_open_attendance => _t('operational_open_attendance');
+  String get operational_open_coverage => _t('operational_open_coverage');
+  String get operational_choir_summary_title => _t('operational_choir_summary_title');
+  String get operational_choir_summary_hint => _t('operational_choir_summary_hint');
+  String get operational_stat_active_teams => _t('operational_stat_active_teams');
+  String get operational_stat_escalated => _t('operational_stat_escalated');
+  String get operational_stat_pending_replacements =>
+      _t('operational_stat_pending_replacements');
+  String get operational_stat_discipline_risk => _t('operational_stat_discipline_risk');
+  String get operational_stat_readiness => _t('operational_stat_readiness');
+  String get operational_stat_teams => _t('operational_stat_teams');
+  String get operational_stat_pending_absences =>
+      _t('operational_stat_pending_absences');
 }
 
 class _AppLocalizationsDelegate

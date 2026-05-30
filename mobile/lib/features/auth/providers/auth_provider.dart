@@ -4,6 +4,7 @@ import '../../../core/api/api_response.dart';
 import '../../../core/localization/api_error_localizer.dart';
 import '../../../core/localization/locale_provider.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/auth/governance_permissions.dart' as gov;
 
 class AuthState {
   const AuthState({
@@ -12,6 +13,7 @@ class AuthState {
     this.profile,
     this.errorCode,
     this.errorMessage,
+    this.sessionExpired = false,
   });
 
   final bool initialized;
@@ -19,9 +21,23 @@ class AuthState {
   final Map<String, dynamic>? profile;
   final String? errorCode;
   final String? errorMessage;
+  final bool sessionExpired;
 
   bool get isAuthenticated => profile != null;
   String? get userId => profile?['id'] as String?;
+
+  String? get memberStatus =>
+      profile?['member']?['status'] as String? ??
+      profile?['member']?['status']?.toString();
+
+  bool get isPendingApproval => memberStatus == 'PENDING';
+
+  bool get needsOnboardingWelcome {
+    if (!isAuthenticated || isPendingApproval) return false;
+    final completed = profile?['onboardingCompleted'] == true ||
+        profile?['member']?['onboardingCompleted'] == true;
+    return !completed;
+  }
 
   List<String> get permissions {
     final raw = profile?['permissions'] as List?;
@@ -42,16 +58,19 @@ class AuthState {
         .toList();
   }
 
-  bool hasPermission(String code) => permissions.contains(code);
+  bool hasPermission(String code) =>
+      gov.hasEffectivePermission(permissions, code);
 
-  /// Staff / officer dashboard (president, secretary, treasurer, leaders, admin).
+  bool get hasOperationalLeaderDashboard =>
+      gov.hasOperationalLeaderDashboard(permissions);
+
   bool get isStaff {
-    if (hasPermission('event:write') ||
+    if (hasOperationalLeaderDashboard ||
+        hasPermission('event:write') ||
         hasPermission('assignment:write') ||
-        hasPermission('attendance:write') ||
+        gov.canMarkAttendance(permissions) ||
         hasPermission('swap:manage') ||
         hasPermission('finance:write') ||
-        hasPermission('report:export') ||
         hasPermission('discipline:manage')) {
       return true;
     }
@@ -68,7 +87,6 @@ class AuthState {
     );
   }
 
-  /// @deprecated Use [isStaff] — kept for existing screens.
   bool get isLeader => isStaff;
 }
 
@@ -99,7 +117,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
         return;
       }
     } catch (_) {
-      // Fall through to initialized unauthenticated state.
+      final refreshed = await _api.refreshAccessToken();
+      if (refreshed != null) {
+        return bootstrap();
+      }
     }
     state = const AuthState(initialized: true);
   }
@@ -123,8 +144,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         );
         return false;
       }
-      await _api.setToken(parsed.data!['accessToken'] as String);
-      await bootstrap();
+      await _applySession(parsed.data!);
       return state.isAuthenticated;
     } catch (e) {
       state = AuthState(
@@ -135,9 +155,82 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<bool> register({
+    required String email,
+    required String password,
+    required String firstName,
+    required String lastName,
+    String? phone,
+    String ministry = 'CHOIR',
+    String? preferredLanguage,
+  }) async {
+    state = AuthState(initialized: true, loading: true);
+    try {
+      final res = await _api.dio.post(
+        '/auth/register',
+        data: {
+          'email': email,
+          'password': password,
+          'firstName': firstName,
+          'lastName': lastName,
+          if (phone != null && phone.isNotEmpty) 'phone': phone,
+          'ministry': ministry,
+          if (preferredLanguage != null) 'preferredLanguage': preferredLanguage,
+        },
+      );
+      final parsed = ApiResponse<Map<String, dynamic>>.fromJson(
+        res.data as Map<String, dynamic>,
+        (d) => Map<String, dynamic>.from(d as Map),
+      );
+      if (!parsed.success || parsed.data == null) {
+        state = AuthState(
+          initialized: true,
+          errorCode: parsed.error?.code,
+          errorMessage: parsed.error?.message,
+        );
+        return false;
+      }
+      await _applySession(parsed.data!);
+      return state.isAuthenticated;
+    } catch (e) {
+      state = AuthState(
+        initialized: true,
+        errorMessage: e.toString(),
+      );
+      return false;
+    }
+  }
+
+  Future<void> completeOnboarding() async {
+    await _api.dio.patch('/auth/onboarding-complete');
+    if (state.profile == null) return;
+    final profile = Map<String, dynamic>.from(state.profile!);
+    profile['onboardingCompleted'] = true;
+    final member = profile['member'];
+    if (member is Map<String, dynamic>) {
+      profile['member'] = {
+        ...member,
+        'onboardingCompleted': true,
+      };
+    }
+    state = AuthState(
+      initialized: true,
+      profile: profile,
+    );
+  }
+
   Future<void> logout() async {
-    await _api.setToken(null);
+    await _api.logoutRemote();
     state = const AuthState(initialized: true);
+  }
+
+  Future<void> _applySession(Map<String, dynamic> session) async {
+    await _api.setToken(session['accessToken'] as String);
+    final refreshToken = session['refreshToken'] as String?;
+    if (refreshToken != null) {
+      await _api.setRefreshToken(refreshToken);
+    }
+    await bootstrap();
   }
 
   String localizedError(AppLocalizations l10n) {

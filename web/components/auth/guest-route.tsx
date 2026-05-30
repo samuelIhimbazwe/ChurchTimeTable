@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 
 import { useRouter } from "@/i18n/routing";
+import { getPostAuthPath, isPendingMember } from "@/core/auth/member-access";
 import { useSessionStore } from "@/core/auth/session-store";
 
 export function GuestRoute({
@@ -14,13 +15,14 @@ export function GuestRoute({
   const t = useTranslations("common");
   const router = useRouter();
   const accessToken = useSessionStore((state) => state.accessToken);
+  const profile = useSessionStore((state) => state.profile);
   const status = useSessionStore((state) => state.status);
 
   useEffect(() => {
-    if (status === "ready" && accessToken) {
-      router.replace("/dashboard");
+    if (status === "ready" && accessToken && profile) {
+      router.replace(getPostAuthPath(profile));
     }
-  }, [accessToken, router, status]);
+  }, [accessToken, profile, router, status]);
 
   if (status !== "ready") {
     return (
@@ -30,7 +32,7 @@ export function GuestRoute({
     );
   }
 
-  if (accessToken) {
+  if (accessToken && profile) {
     return null;
   }
 

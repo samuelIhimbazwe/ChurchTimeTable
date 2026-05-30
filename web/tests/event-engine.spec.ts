@@ -6,13 +6,18 @@ async function loginAsLeader(page: import("@playwright/test").Page) {
   await page.getByLabel("Password").fill("Pilot@123");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/en\/dashboard$/, { timeout: 60_000 });
+  await expect(
+    page.getByRole("heading", { name: "Attendance trend" }),
+  ).toBeVisible({ timeout: 30_000 });
 }
 
 test("event engine route renders with calendar controls", async ({ page }) => {
   await loginAsLeader(page);
   await page.goto("/en/dashboard/events");
-
   await expect(page).toHaveURL(/\/en\/dashboard\/events$/, { timeout: 60_000 });
+  await expect(page.getByRole("link", { name: "Event engine" })).toBeVisible({
+    timeout: 30_000,
+  });
   await expect(
     page.getByRole("heading", { level: 1, name: "Event engine" }),
   ).toBeVisible({ timeout: 30_000 });
@@ -29,8 +34,8 @@ test("leaders can create a scheduled event from the event engine", async ({ page
   await page.getByRole("button", { name: "Create event" }).click();
 
   const now = new Date();
-  const start = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-  start.setHours(18, 0, 0, 0);
+  const start = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+  start.setMinutes(0, 0, 0);
   const end = new Date(start.getTime() + 90 * 60 * 1000);
 
   const stamp = `PW-${Date.now()}`;
@@ -48,6 +53,15 @@ test("leaders can create a scheduled event from the event engine", async ({ page
   await expect(page.getByText(`Playwright Event ${stamp}`)).toBeVisible({
     timeout: 30_000,
   });
+
+  const editedTitle = `Playwright Event ${stamp} edited`;
+  await page
+    .getByRole("row", { name: new RegExp(`Playwright Event ${stamp}`) })
+    .getByRole("button", { name: "Edit" })
+    .click();
+  await page.getByLabel("Title").fill(editedTitle);
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText(editedTitle)).toBeVisible({ timeout: 30_000 });
 });
 
 function toDateTimeLocal(value: Date) {

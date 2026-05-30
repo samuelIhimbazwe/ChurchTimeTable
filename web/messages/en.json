@@ -11,17 +11,198 @@
   },
   "shell": {
     "menu": "Menu",
+    "navGroupToday": "Today",
+    "navGroupPersonal": "My ministry",
+    "navGroupOperations": "Operations",
+    "navGroupStewardship": "Stewardship",
+    "navGroupGovernance": "Governance",
+    "navGroupAdmin": "Administration",
     "navDashboard": "Dashboard",
     "navEvents": "Event engine",
+    "navAttendance": "Attendance governance",
+    "navCoverage": "Coverage management",
+    "navOperational": "Operational center",
+    "navGovernance": "Committee governance",
+    "navPendingMembers": "Pending registrations",
+    "pendingMembersSummary": "Review and approve new ministry member signups.",
+    "navFinance": "Finance stewardship",
+    "navMyContributions": "My contributions",
+    "myContributionsSummary": "Your personal contribution history and obligations.",
     "navAdmin": "Admin console",
     "memberSummary": "Assignments, attendance, notifications, and contribution progress.",
     "leaderSummary": "Operations, attendance trends, ministry analytics, and reliability signals.",
     "adminSummary": "System health, audit activity, and sync diagnostics for platform oversight.",
     "eventsSummary": "Calendar planning, recurring events, assignments, and conflict checks.",
+    "attendanceSummary": "Operational attendance marking, excuses, escalations, and reliability scoring.",
+    "coverageSummary": "Swaps, replacements, service readiness, fairness, and operational continuity.",
+    "operationalSummary": "Permission-scoped operational home for protocol and choir governance leaders.",
+    "governanceSummary": "Assign committee roles and scoped governance permissions to members.",
+    "financeSummary": "Ministry-scoped contributions, budgets, and stewardship analytics.",
     "experience": {
       "member": "Member workspace",
       "leader": "Leader workspace",
       "super-admin": "Super admin workspace"
+    }
+  },
+  "myContributions": {
+    "eyebrow": "Your stewardship",
+    "title": "My contributions",
+    "subtitle": "A personal view of your participation and obligations. This space is for clarity and encouragement — not judgment.",
+    "loading": "Loading your contributions…",
+    "loadError": "We could not load your contribution history.",
+    "emptyTitle": "No contributions recorded yet",
+    "emptyMessage": "When your ministry records contributions or dues, they will appear here with full transparency.",
+    "upToDateTitle": "You are fully up to date",
+    "upToDateMessage": "Thank you for your faithful participation in ministry stewardship.",
+    "consistencyTitle": "Participation",
+    "consistencyHint": "How consistently your recorded obligations are settled.",
+    "consistencyLabel": "Contribution consistency",
+    "consistencyDescription": "{paid} of {total} obligations are settled.",
+    "ministryTitle": "By ministry",
+    "ministryHint": "Only ministries where you have recorded activity.",
+    "ministryOutstanding": "{amount} remaining",
+    "ministryClear": "Up to date",
+    "remindersTitle": "Gentle reminders",
+    "remindersHint": "Outstanding or partial obligations — please reach out to your treasurer if you need support.",
+    "historyTitle": "Contribution history",
+    "historyHint": "Your personal record, newest first.",
+    "noHistory": "No history entries yet.",
+    "viewReceipt": "View receipt",
+    "backToDashboard": "Back to dashboard",
+    "exportCsv": "Download CSV",
+    "exportPdf": "Download PDF",
+    "exporting": "Preparing…",
+    "exportSuccess": "Download started",
+    "stats": {
+      "contributed": "Total contributed",
+      "outstanding": "Outstanding balance"
+    },
+    "ministry": {
+      "choir": "Choir",
+      "protocol": "Protocol",
+      "both": "Both ministries"
+    },
+    "status": {
+      "paid": "Paid",
+      "partial": "Partial",
+      "unpaid": "Outstanding",
+      "waived": "Waived"
+    }
+  },
+  "financeStewardship": {
+    "title": "Finance stewardship",
+    "subtitle": "Ministry-scoped contributions and budgets. Visibility follows your committee permissions.",
+    "unauthorized": "You do not have finance stewardship access.",
+    "loading": "Loading finance summary…",
+    "loadError": "Could not load finance data.",
+    "tabs": { "choir": "Choir", "protocol": "Protocol" },
+    "stats": {
+      "balance": "Ministry balance",
+      "compliance": "Contribution compliance",
+      "unpaid": "Outstanding balance",
+      "unpaidMembers": "Members with balance"
+    },
+    "recentTransactions": "Recent transactions",
+    "recentTransactionsHint": "Approved ministry transactions in your scope.",
+    "outstandingTitle": "Outstanding contributions",
+    "outstandingHint": "Pastoral follow-up — not punitive enforcement.",
+    "budgetsTitle": "Budget health",
+    "overBudget": "Over budget",
+    "noTransactions": "No transactions in scope.",
+    "noTransactionsHint": "Ministry transactions will appear here once recorded.",
+    "noOutstanding": "No outstanding contributions.",
+    "noOutstandingHint": "All tracked members are current on their obligations.",
+    "pendingApprovalsTitle": "Pending approvals",
+    "pendingApprovalsHint": "Review expenses before they affect ministry balances.",
+    "noPendingApprovals": "No transactions awaiting approval",
+    "noPendingApprovalsHint": "New expenses requiring your review will appear here.",
+    "noBudgetsTitle": "No budgets configured",
+    "noBudgetsHint": "Budget plans for this ministry will appear once leaders define them.",
+    "approve": "Approve",
+    "reject": "Reject",
+    "approvalFailed": "Unable to update transaction approval.",
+    "approvalStatus": {
+      "APPROVED": "Approved",
+      "PENDING": "Pending",
+      "REJECTED": "Rejected"
+    },
+    "columns": {
+      "date": "Date",
+      "type": "Type",
+      "amount": "Amount",
+      "member": "Member",
+      "period": "Period",
+      "amountDue": "Due",
+      "status": "Status",
+      "approval": "Approval",
+      "actions": "Actions"
+    },
+    "exportCsv": "Export CSV",
+    "exportPdf": "Export PDF",
+    "exporting": "Exporting…",
+    "exportSuccess": "Export downloaded"
+  },
+  "governanceAdmin": {
+    "title": "Committee governance",
+    "subtitle": "Assign protocol and choir committee roles. Permissions take effect on next login.",
+    "tabs": {
+      "protocol": "Protocol ministry",
+      "choir": "Choir"
+    },
+    "assignTitle": "Assign committee member",
+    "assignDescription": "Select a member and committee role. Existing assignments for the same role are updated.",
+    "memberLabel": "Member",
+    "memberPlaceholder": "Choose member…",
+    "roleLabel": "Committee role",
+    "rolePlaceholder": "Choose role…",
+    "assignAction": "Save assignment",
+    "assigning": "Saving…",
+    "assignSuccess": "Committee assignment saved.",
+    "assignFailed": "Could not save assignment.",
+    "assignValidation": "Select both a member and a role.",
+    "rolesTitle": "Committee roles",
+    "rolesDescription": "Roles defined for this ministry scope (from seed or admin configuration).",
+    "noPermissions": "No permissions configured",
+    "assignmentsTitle": "Current assignments",
+    "assignmentsDescription": "Active committee members and their governance roles.",
+    "noAssignments": "Assign members to committee roles to enable scoped governance.",
+    "noAssignmentsTitle": "No assignments yet",
+    "emptyRolesTitle": "No committee roles configured",
+    "emptyRolesDescription": "Seed or configure roles for this ministry before assigning members.",
+    "loading": "Loading…",
+    "columns": {
+      "member": "Member",
+      "role": "Role",
+      "ministry": "Ministry"
+    }
+  },
+  "operational": {
+    "title": "Operational center",
+    "subtitle": "Executive summary for {role} authority. Open attendance or coverage for operational detail.",
+    "loading": "Loading operational summary…",
+    "loadError": "Could not load operational dashboard.",
+    "unauthorized": "You do not have operational governance permissions.",
+    "openAttendance": "Attendance governance",
+    "openCoverage": "Coverage management",
+    "detailTitle": "Operational workflows",
+    "detailHint": "Mark attendance, resolve escalations, and manage coverage from dedicated workspaces.",
+    "choirSummaryTitle": "Choir operations",
+    "choirSummaryHint": "Choir attendance and roster tools live in the attendance workspace.",
+    "choirUseAttendance": "Use the attendance workspace for choir service marking and summaries.",
+    "roles": {
+      "president": "Protocol president",
+      "coordinator": "Protocol coordinator",
+      "team-head": "Protocol team head",
+      "choir-leader": "Choir operations leader"
+    },
+    "stats": {
+      "activeTeams": "Active teams",
+      "escalated": "Escalated cases",
+      "pendingReplacements": "Pending replacements",
+      "disciplineRisk": "Discipline risks",
+      "readinessWarnings": "Readiness warnings",
+      "teams": "Your teams",
+      "pendingAbsences": "Pending absences"
     }
   },
   "events": {
@@ -42,7 +223,9 @@
     "saving": "Saving...",
     "filters": {
       "allMinistries": "All ministries",
-      "allTypes": "All event types"
+      "allTypes": "All event types",
+      "ministryLabel": "Ministry",
+      "typeLabel": "Event type"
     },
     "views": {
       "month": "Month",
@@ -55,6 +238,7 @@
       "weekTitle": "Week view",
       "agendaTitle": "Agenda view",
       "noEvents": "No events in this range.",
+      "emptyTitle": "No events scheduled",
       "more": "more"
     },
     "actions": {
@@ -85,11 +269,16 @@
       "role": "Role",
       "assignMember": "Assign member",
       "autoAssign": "Auto assign",
+      "autoCountLabel": "Count",
       "poolTitle": "Rotation pool",
       "poolSubtitle": "Use choir rotation candidates to fill quotas quickly.",
       "noPool": "No rotation pool candidates available for this event.",
+      "noPoolDescription": "Schedule a choir rotation or assign members manually by ID.",
+      "assigning": "Assigning…",
+      "autoAssigning": "Auto-assigning…",
       "currentTitle": "Current assignments",
-      "none": "No assignments yet."
+      "none": "No assignments yet.",
+      "noneTitle": "No assignments yet"
     },
     "table": {
       "day": "Day",
@@ -139,6 +328,338 @@
       "MONTHLY": "Monthly"
     }
   },
+  "attendance": {
+    "title": "Attendance governance",
+    "subtitle": "Mark operational attendance, review excuses, escalate risks, and monitor reliability.",
+    "loading": "Loading attendance data...",
+    "markFailed": "Unable to save attendance right now.",
+    "bulkFailed": "Unable to bulk-mark attendance.",
+    "tabs": {
+      "marking": "Mark attendance",
+      "teamHead": "Team head oversight",
+      "coordinator": "Coordinator oversight",
+      "president": "Ministry oversight",
+      "choir": "Choir attendance"
+    },
+    "markingFlow": {
+      "sectionTitle": "Mark attendance",
+      "sectionHint": "Choose a flow — mark today, review excuses, or browse member history.",
+      "today": "Today",
+      "excused": "Excused",
+      "history": "History",
+      "noExcusedTitle": "No pending excuses",
+      "noExcusedDescription": "Excused absences awaiting review will appear here.",
+      "noHistoryTitle": "Select a member",
+      "noHistoryDescription": "Open the Today tab, choose an event, then tap a member name to view history."
+    },
+    "eventPicker": {
+      "title": "Upcoming events",
+      "subtitle": "Select a service or rehearsal to mark attendance for assigned members.",
+      "empty": "No upcoming events in the next 30 days.",
+      "emptyTitle": "Nothing to mark yet"
+    },
+    "roster": {
+      "title": "Assigned roster",
+      "subtitleActive": "{count} members assigned to this event.",
+      "subtitleIdle": "Choose an event to load the roster.",
+      "selectEvent": "Select an event from the list to load the assigned roster.",
+      "selectEventTitle": "Choose an event",
+      "empty": "No members assigned to this event yet."
+    },
+    "table": {
+      "member": "Member",
+      "status": "Status",
+      "score": "Reliability",
+      "actions": "Actions",
+      "notMarked": "Not marked",
+      "event": "Event",
+      "reason": "Reason",
+      "when": "When"
+    },
+    "actions": {
+      "markAllPresent": "Mark all present",
+      "present": "Present",
+      "late": "Late",
+      "excused": "Excused",
+      "unexcused": "Unexcused",
+      "replacement": "Replacement",
+      "voluntary": "Voluntary"
+    },
+    "status": {
+      "ATTENDED": "Attended",
+      "LATE": "Late",
+      "EXCUSED_ABSENCE": "Excused absence",
+      "UNEXCUSED_ABSENCE": "Unexcused absence",
+      "REPLACEMENT_SERVED": "Replacement served",
+      "VOLUNTARY_EXTRA_SERVICE": "Voluntary extra service"
+    },
+    "excuseReview": {
+      "title": "Excuse review",
+      "subtitle": "Approve or reject excused absences and escalate unresolved cases.",
+      "noReason": "No reason provided",
+      "approve": "Approve",
+      "reject": "Reject",
+      "escalate": "Escalate"
+    },
+    "analytics": {
+      "title": "Attendance analytics",
+      "subtitle": "Ministry-wide operational attendance signals.",
+      "total": "Total records",
+      "excusedRatio": "Excused ratio",
+      "voluntary": "Voluntary service",
+      "replacements": "Replacements served"
+    },
+    "panels": {
+      "escalations": "Escalations",
+      "pendingAbsences": "Pending absences",
+      "escalated": "Escalated",
+      "none": "None"
+    },
+    "scoreBands": {
+      "excellent": "Excellent",
+      "good": "Good",
+      "danger": "Needs attention"
+    },
+    "excuseReasons": {
+      "illness": "Illness",
+      "travel": "Travel",
+      "work_school": "Work or school",
+      "emergency": "Emergency",
+      "family_issue": "Family issue",
+      "approved_leave": "Approved leave",
+      "unavoidable_conflict": "Unavoidable conflict",
+      "unknown": "Unknown"
+    },
+    "markDialog": {
+      "excusedTitle": "Record excused absence — {member}",
+      "unexcusedTitle": "Record unexcused absence — {member}",
+      "lateTitle": "Record late arrival — {member}",
+      "replacementTitle": "Record replacement served — {member}",
+      "voluntaryTitle": "Record voluntary service — {member}",
+      "reasonType": "Reason category",
+      "notes": "Explanation",
+      "evidenceUrl": "Evidence link (optional)",
+      "evidenceHint": "Optional link to a document or message for pastoral review.",
+      "lateMinutes": "Minutes late",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving…",
+      "replacementConfirm": "Confirm that this member served as a replacement for this event.",
+      "voluntaryConfirm": "Confirm voluntary extra service — this does not count as an official assignment."
+    },
+    "escalationDialog": {
+      "title": "Escalate absence — {member}",
+      "description": "Route this case to a higher oversight level when local review is insufficient.",
+      "level": "Escalation level",
+      "levels": {
+        "TEAM_HEAD": "Team head",
+        "COORDINATOR": "Coordinator",
+        "PRESIDENT": "President"
+      },
+      "notes": "Notes for reviewers",
+      "notesHint": "Optional context for the receiving leader.",
+      "submit": "Escalate case",
+      "submitting": "Escalating…",
+      "failed": "Unable to escalate this case right now."
+    },
+    "excuseActionDialog": {
+      "approveTitle": "Approve excuse — {member}",
+      "rejectTitle": "Reject excuse — {member}",
+      "confirmApprove": "Approve excuse",
+      "confirmReject": "Reject excuse",
+      "approveHint": "This confirms the excused absence is acceptable for operational records.",
+      "rejectionReason": "Rejection notes",
+      "submitting": "Saving…",
+      "failed": "Unable to complete review right now."
+    },
+    "memberHistory": {
+      "title": "Member attendance history",
+      "subtitle": "Operational reliability, lateness, and voluntary service.",
+      "empty": "No attendance history yet.",
+      "lateness": "{count} late arrivals",
+      "voluntary": "{count} voluntary services"
+    },
+    "choir": {
+      "title": "Choir attendance",
+      "subtitle": "Rehearsal and service attendance for choir ministry.",
+      "totalMarked": "Marked",
+      "excused": "Excused",
+      "unexcused": "Unexcused",
+      "lateness": "Lateness",
+      "pendingReview": "Pending review"
+    },
+    "discipline": {
+      "title": "Discipline review recommendations",
+      "subtitle": "Pastoral review suggested — not automatic discipline.",
+      "createCase": "Open discipline case",
+      "createFailed": "Unable to create discipline case right now.",
+      "emptyTitle": "No discipline recommendations",
+      "emptyDescription": "Reliability scoring has not flagged any members for pastoral review."
+    },
+    "weights": {
+      "title": "Attendance scoring weights",
+      "subtitle": "Configure weighted reliability scoring for operational statuses.",
+      "save": "Save weights",
+      "saving": "Saving...",
+      "saved": "Weights updated successfully.",
+      "saveFailed": "Unable to save weights right now."
+    },
+    "teamHead": {
+      "title": "Team head dashboard",
+      "empty": "No pending attendance risks for your teams.",
+      "emptyDescription": "When absences or escalations need your attention, they will appear here.",
+      "noTeamsTitle": "No teams assigned",
+      "noTeamsDescription": "Protocol teams for your oversight scope will appear once generated.",
+      "teamsTitle": "Your teams",
+      "memberCount": "{count} members"
+    },
+    "coordinator": {
+      "title": "Coordinator dashboard",
+      "empty": "No operational attendance risks right now.",
+      "emptyDescription": "Escalations and pending absences across teams will surface here.",
+      "readiness": "{count} service readiness warnings",
+      "overload": "Overload alerts",
+      "assignments": "official assignments"
+    },
+    "president": {
+      "title": "President dashboard",
+      "empty": "No escalated ministry attendance cases.",
+      "emptyDescription": "Ministry-wide escalations and unresolved absences appear here.",
+      "noTrendTitle": "No trend data yet",
+      "noTrendDescription": "Attendance trends will populate after several months of marking.",
+      "disciplineRisk": "Discipline risk signals",
+      "voluntary": "Voluntary contributions",
+      "pendingReplacements": "Pending replacements",
+      "trendTitle": "Attendance trend (6 months)",
+      "trendPresent": "{count} present",
+      "trendAbsent": "{count} absent"
+    }
+  },
+  "coverage": {
+    "title": "Coverage management",
+    "subtitle": "Swaps, replacements, service readiness, and operational continuity.",
+    "loading": "Loading coverage data...",
+    "actionFailed": "Unable to complete that action right now.",
+    "tabs": {
+      "swaps": "Swaps",
+      "replacements": "Replacements",
+      "teamHead": "Team head oversight",
+      "coordinator": "Coordinator oversight"
+    },
+    "analytics": {
+      "title": "Coverage analytics",
+      "subtitle": "Operational continuity signals for the ministry.",
+      "swaps": "Swaps this month",
+      "replacements": "Replacements this month",
+      "voluntary": "Voluntary service",
+      "unresolved": "Unresolved swaps"
+    },
+    "readiness": {
+      "title": "Service readiness",
+      "subtitle": "Upcoming services and staffing readiness.",
+      "status": {
+        "FULLY_READY": "Fully ready",
+        "REPLACEMENT_PENDING": "Replacement pending",
+        "ATTENDANCE_RISK": "Attendance risk",
+        "STAFFING_SHORTAGE": "Staffing shortage",
+        "OPERATIONAL_DANGER": "Operational danger"
+      }
+    },
+    "swaps": {
+      "title": "Swap requests",
+      "subtitle": "Mutual swaps and assignment exchanges awaiting resolution.",
+      "empty": "No swap requests yet.",
+      "emptyDescription": "When members request assignment swaps, they will appear here for review."
+    },
+    "replacements": {
+      "title": "Replacement requests",
+      "subtitle": "Voluntary, official, and emergency coverage workflows.",
+      "empty": "No replacement requests yet.",
+      "emptyDescription": "Replacement coverage requests will appear here when members need cover.",
+      "noCover": "No cover yet"
+    },
+    "teamHead": {
+      "title": "Team head coverage dashboard",
+      "empty": "No pending coverage issues for your teams.",
+      "emptyDescription": "Swaps and replacements needing team-head review will appear here."
+    },
+    "coordinator": {
+      "title": "Coordinator coverage dashboard",
+      "empty": "No active operational coverage issues.",
+      "emptyDescription": "Escalated swaps, replacements, and staffing risks surface here."
+    },
+    "fairness": {
+      "title": "Fairness alerts",
+      "subtitle": "Overload, dependency, and assignment imbalance signals.",
+      "emptyTitle": "No fairness alerts",
+      "emptyDescription": "Assignment balance looks healthy across the ministry roster."
+    },
+    "dialogs": {
+      "approveTitle": "Approve — {item}",
+      "rejectTitle": "Reject — {item}",
+      "escalateTitle": "Escalate — {item}",
+      "escalateDescription": "Route this coverage case to a higher oversight level.",
+      "escalationLevel": "Escalation level",
+      "levels": {
+        "TEAM_HEAD": "Team head",
+        "COORDINATOR": "Coordinator",
+        "PRESIDENT": "President"
+      },
+      "notes": "Notes",
+      "rejectionNotes": "Rejection notes",
+      "notesHint": "Optional context for audit and pastoral review.",
+      "cancel": "Cancel",
+      "submitting": "Saving…"
+    },
+    "table": {
+      "event": "Event",
+      "members": "Members",
+      "status": "Status",
+      "type": "Type",
+      "actions": "Actions"
+    },
+    "status": {
+      "REQUESTED": "Requested",
+      "TARGET_ACCEPTED": "Target accepted",
+      "TARGET_REJECTED": "Target declined",
+      "LEADER_PENDING": "Awaiting review",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "FINALIZED": "Finalized",
+      "CANCELLED": "Cancelled"
+    },
+    "replacementStatus": {
+      "REQUESTED": "Requested",
+      "LEADER_PENDING": "Awaiting review",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "FINALIZED": "Finalized"
+    },
+    "coverageType": {
+      "MUTUAL_SWAP": "Mutual swap",
+      "VOLUNTARY_REPLACEMENT": "Voluntary replacement",
+      "OFFICIAL_REPLACEMENT": "Official replacement",
+      "EMERGENCY_REPLACEMENT": "Emergency replacement"
+    },
+    "replacementKind": {
+      "VOLUNTARY": "Voluntary",
+      "LEADER_ASSIGNED": "Official",
+      "EMERGENCY": "Emergency"
+    },
+    "actions": {
+      "accept": "Accept",
+      "decline": "Decline",
+      "approve": "Approve",
+      "reject": "Reject",
+      "finalize": "Finalize",
+      "escalate": "Escalate"
+    },
+    "panels": {
+      "pendingSwaps": "Pending swaps",
+      "pendingReplacements": "Pending replacements",
+      "none": "None"
+    }
+  },
   "foundation": {
     "eyebrow": "Sprint 0",
     "title": "Web foundation is ready for production sprints.",
@@ -158,17 +679,121 @@
   },
   "auth": {
     "title": "Sign in",
-    "subtitle": "Authentication sprint will expand this flow with refresh, RBAC, and session hardening.",
+    "subtitle": "Sign in to your church ministry platform to view schedules, attendance, and ministry updates.",
     "email": "Email",
     "password": "Password",
     "submit": "Sign in",
-    "hint": "Use your CMMS account once Sprint 1 is wired to live auth.",
-    "invalidCredentials": "Invalid credentials"
+    "submitting": "Signing in...",
+    "hint": "New members can register and wait for leader approval before full access is granted.",
+    "invalidCredentials": "Invalid credentials",
+    "registerFailed": "Registration could not be completed.",
+    "passwordHint": "Use at least 6 characters.",
+    "showPassword": "Show",
+    "hidePassword": "Hide",
+    "noAccount": "New to the platform?",
+    "haveAccount": "Already have an account?",
+    "createAccount": "Create an account",
+    "sessionExpired": "Your session expired. Please sign in again.",
+    "forgotPassword": "Forgot password?",
+    "forgotPasswordTitle": "Password reset",
+    "forgotPasswordDescription": "We will help you recover access soon.",
+    "forgotPasswordPlaceholder": "Password reset by email is coming in a later release. Please contact your ministry leader if you need help signing in.",
+    "backToSignIn": "Back to sign in"
+  },
+  "onboarding": {
+    "signup": {
+      "eyebrow": "Join your ministry",
+      "pageTitle": "Register with your church",
+      "pageSubtitle": "Tell us who you are and which ministry you serve. A leader will review your request before you receive full access.",
+      "cardTitle": "Ministry registration",
+      "cardSubtitle": "A calm, guided signup for choir and protocol members.",
+      "stepIndicator": "Step {step} of {total}",
+      "stepIdentityTitle": "About you",
+      "stepMinistryTitle": "Your ministry",
+      "stepSecurityTitle": "Secure your account",
+      "stepReviewTitle": "Review and submit",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "phone": "Phone",
+      "phoneOptional": "Optional — helps leaders reach you if needed.",
+      "ministryLabel": "Ministry",
+      "ministryChoir": "Choir",
+      "ministryProtocol": "Protocol",
+      "ministryBoth": "Both ministries",
+      "ministryChoirDescription": "Choir members serve in worship through singing, rehearsals, and scheduled services.",
+      "ministryProtocolDescription": "Protocol members welcome, guide, and coordinate hospitality during church services.",
+      "ministryBothDescription": "You participate in both choir and protocol ministries.",
+      "confirmPassword": "Confirm password",
+      "passwordMismatch": "Passwords do not match.",
+      "reviewName": "Name",
+      "approvalExplanation": "After you submit, your registration will be reviewed by a ministry leader. You can sign in to check your status, but operational tools unlock once you are approved.",
+      "back": "Back",
+      "continue": "Continue",
+      "submit": "Submit registration",
+      "submitting": "Submitting...",
+      "haveAccount": "Already registered?"
+    },
+    "pending": {
+      "eyebrow": "Registration received",
+      "title": "Your request is being reviewed",
+      "greeting": "Thank you, {name}.",
+      "body": "Your ministry registration has been received. Leaders are reviewing your request so you can join the platform with the right access.",
+      "stepReview": "A ministry leader will review your details.",
+      "stepNotify": "You will receive a notification when a decision is made.",
+      "stepAccess": "Once approved, you can view schedules, attendance, and ministry updates.",
+      "helpHint": "If you need help, contact your choir or protocol leader.",
+      "backToLogin": "Return to sign in"
+    },
+    "welcome": {
+      "title": "Welcome",
+      "welcomeChoirMember": "Welcome to the choir ministry platform. Your leaders will assign upcoming responsibilities and rehearsals.",
+      "welcomeProtocolMember": "Welcome to the protocol ministry platform. Your leaders will share service assignments and coordination updates.",
+      "welcomeBothMember": "Welcome. You serve in both choir and protocol — your leaders will guide you through upcoming responsibilities.",
+      "welcomeChoirLeader": "Welcome back. You can review choir operations, attendance, and ministry updates from here.",
+      "welcomeProtocolLeader": "Welcome back. You can review protocol operations, coverage, and ministry updates from here.",
+      "welcomeCommittee": "Welcome. Your committee tools and ministry insights are ready when you need them.",
+      "welcomeSuperAdmin": "Welcome. System administration tools are available from your dashboard.",
+      "nextSteps": "Start with your dashboard overview. Advanced panels will appear as your responsibilities grow.",
+      "continue": "Continue to dashboard",
+      "continuing": "Saving..."
+    }
+  },
+  "members": {
+    "pending": {
+      "title": "Pending registrations",
+      "subtitle": "Review new ministry members before granting full platform access.",
+      "search": "Search members",
+      "ministryFilter": "Ministry",
+      "allMinistries": "All ministries",
+      "ministryChoir": "Choir",
+      "ministryProtocol": "Protocol",
+      "ministryBoth": "Both",
+      "name": "Name",
+      "email": "Email",
+      "ministry": "Ministry",
+      "submitted": "Submitted",
+      "actions": "Actions",
+      "approve": "Approve",
+      "reject": "Decline",
+      "loading": "Loading pending members...",
+      "emptyTitle": "No pending registrations",
+      "emptyDescription": "New signup requests will appear here for review.",
+      "actionFailed": "Unable to update member status."
+    }
   },
   "dashboard": {
     "title": "Protected dashboard foundation",
     "subtitle": "This page is guarded and ready for Sprint 3 widgets.",
     "memberTitle": "Member dashboard",
+    "memberExcuseTitle": "Request excused absence",
+    "memberExcuseDescription": "Submit an excuse request for an upcoming assignment. A leader will review it.",
+    "memberExcuseAction": "Request excuse",
+    "memberExcuseModalTitle": "Excuse request — {event}",
+    "memberExcuseSubmit": "Submit request",
+    "memberExcuseSubmitting": "Submitting...",
+    "memberExcuseFailed": "Unable to submit excuse request right now.",
+    "overviewSectionTitle": "Operational overview",
+    "overviewSectionHint": "What needs your attention right now.",
     "leaderTitle": "Leader dashboard",
     "superAdminTitle": "Super admin dashboard",
     "loadingDashboard": "Loading dashboard data...",
@@ -182,7 +807,7 @@
     "leaderUpcomingEventsHint": "Scheduled activities in the next 7 days.",
     "leaderPendingSwapsHint": "Requests still waiting for review.",
     "leaderPendingReplacementsHint": "Replacements that still need coordination.",
-    "leaderAttendanceHint": "Present records for the current month.",
+    "leaderAttendanceHint": "Weighted operational reliability for the current month.",
     "leaderDisciplineHint": "Open discipline workflows needing follow-up.",
     "attendanceTrendTitle": "Attendance trend",
     "attendanceTrendDescription": "Recent attendance movement across the last six months.",
@@ -191,8 +816,16 @@
     "upcomingEventsCardTitle": "Upcoming events",
     "upcomingEventsCardDescription": "The next scheduled services and ministry commitments.",
     "noUpcomingEvents": "No upcoming events are scheduled yet.",
+    "noUpcomingEventsTitle": "No upcoming events",
+    "openEventsWorkspace": "Open events workspace",
+    "noScheduleTitle": "No upcoming assignments",
+    "noNotificationsTitle": "No notifications",
+    "noContributionDataTitle": "No contribution records",
     "reliabilityTitle": "Reliability indicators",
     "reliabilityDescription": "Attendance-based confidence bands for member follow-up.",
+    "financeStewardshipCardTitle": "Finance stewardship",
+    "financeStewardshipCardDescription": "Ministry-scoped contributions, budgets, and compliance.",
+    "openFinanceStewardship": "Open finance stewardship →",
     "financeCardTitle": "Operational snapshot",
     "financeCardDescription": "A quick read on finance and sync workload.",
     "statsFromTransactions": "{count} finance transactions recorded.",
@@ -224,6 +857,8 @@
     "noAttendanceHistory": "No attendance history is available yet.",
     "contributionTitle": "Contribution progress",
     "contributionDescription": "Track dues completion and recent contribution periods.",
+    "contributionUpToDate": "You are fully up to date — thank you for your faithful participation.",
+    "openMyContributions": "View my contributions →",
     "contributionProgressLabel": "Contribution completion",
     "contributionProgressDescription": "{paid} of {total} periods are settled.",
     "noContributionData": "No contribution data is available yet.",
@@ -265,6 +900,89 @@
       "present": "Present",
       "late": "Late",
       "absent": "Absent"
+    },
+    "alerts": {
+      "title": "Operational alerts",
+      "description": "Actionable issues needing attention — prioritized by urgency.",
+      "severity": {
+        "critical": "Critical",
+        "warning": "Needs attention",
+        "info": "Informational"
+      }
+    },
+    "intelligence": {
+      "title": "Ministry intelligence",
+      "description": "Operational KPIs by ministry scope — attendance, readiness, and trends.",
+      "activeMembers": "Active members",
+      "attendanceRate": "Attendance rate",
+      "pendingReplacements": "Pending replacements",
+      "trend": "Trend",
+      "ministryHealth": "Ministry health",
+      "ministries": {
+        "choir": "Choir",
+        "protocol": "Protocol",
+        "both": "Shared ministry"
+      },
+      "trendDirection": {
+        "up": "Improving",
+        "down": "Declining",
+        "stable": "Stable"
+      },
+      "healthBand": {
+        "excellent": "Excellent operational health",
+        "good": "Good — monitor trends",
+        "attention": "Needs pastoral and operational attention"
+      }
+    },
+    "committee": {
+      "treasurerTitle": "Treasurer workspace",
+      "treasurerDescription": "Contribution compliance, unpaid balances, and financial trends.",
+      "disciplineTitle": "Discipline workspace",
+      "disciplineDescription": "Pastoral review indicators — support-focused, not punitive.",
+      "secretaryTitle": "Secretary workspace",
+      "secretaryDescription": "Communications, events, and ministry records overview.",
+      "operationsTitle": "Operations manager workspace",
+      "operationsDescription": "Concerts, projects, choir development, and operational planning.",
+      "coordinatorTitle": "Protocol coordinator control center",
+      "coordinatorDescription": "Team readiness, escalations, overload alerts, and staffing balance.",
+      "presidentTitle": "Protocol president oversight",
+      "presidentDescription": "Executive ministry intelligence — strategic indicators, not operational clutter.",
+      "choirLeaderTitle": "Choir leader workspace",
+      "choirLeaderDescription": "Choir attendance, rehearsal participation, and participation trends.",
+      "balance": "Balance",
+      "unpaidMembers": "Unpaid members",
+      "complianceRate": "Compliance rate",
+      "openCases": "Open cases",
+      "pastoralReview": "Pastoral review",
+      "repeatedLateness": "Repeated lateness",
+      "upcomingEvents": "Upcoming events",
+      "pendingSwaps": "Pending swaps",
+      "voluntaryService": "Voluntary service",
+      "choirMarked": "Marked this month",
+      "readinessWarnings": "Readiness warnings",
+      "activeTeams": "Active teams",
+      "escalatedCases": "Escalated cases",
+      "overloadAlerts": "Overload alerts",
+      "pendingReplacements": "Pending replacements",
+      "ministryHealth": "Ministry health",
+      "disciplineRisk": "Discipline risk",
+      "workloadImbalance": "Workload imbalance",
+      "overloadedMembers": "Overloaded members",
+      "choirExcused": "Excused absences",
+      "choirUnexcused": "Unexcused absences",
+      "yes": "Yes",
+      "no": "No",
+      "healthBand": {
+        "excellent": "Excellent",
+        "good": "Good",
+        "attention": "Needs attention"
+      }
+    },
+    "personal": {
+      "voluntaryService": "Voluntary service",
+      "replacements": "Replacements served",
+      "lateness": "Lateness count",
+      "contributionCompliance": "Contribution compliance"
     },
     "governance": {
       "teamReliabilityTitle": "Protocol team reliability",

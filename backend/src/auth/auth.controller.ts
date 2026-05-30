@@ -2,20 +2,22 @@ import {
   Body,
   Controller,
   Get,
+  Patch,
   Post,
   Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { RefreshDto } from './dto/refresh.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import {
   CurrentUser,
-  JwtPayload,
 } from '../common/decorators/current-user.decorator';
 import { REFRESH_COOKIE_NAME } from './auth.constants';
 
@@ -27,6 +29,7 @@ export class AuthController {
   ) {}
 
   @Post('register')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   async register(
     @Body() dto: RegisterDto,
     @Res({ passthrough: true }) res: Response,
@@ -37,6 +40,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
@@ -49,10 +53,12 @@ export class AuthController {
   @Post('refresh')
   async refresh(
     @Req() req: Request,
+    @Body() dto: RefreshDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const refreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
-    const session = await this.authService.refresh(refreshToken ?? '');
+    const refreshToken =
+      req.cookies?.[REFRESH_COOKIE_NAME] ?? dto.refreshToken ?? '';
+    const session = await this.authService.refresh(refreshToken);
     this.setRefreshCookie(res, session.refreshToken, session.refreshTokenExpiresAt);
     return session.response;
   }
@@ -60,9 +66,12 @@ export class AuthController {
   @Post('logout')
   async logout(
     @Req() req: Request,
+    @Body() dto: RefreshDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    await this.authService.logout(req.cookies?.[REFRESH_COOKIE_NAME]);
+    const refreshToken =
+      req.cookies?.[REFRESH_COOKIE_NAME] ?? dto.refreshToken;
+    await this.authService.logout(refreshToken);
     res.clearCookie(REFRESH_COOKIE_NAME, this.cookieOptions());
     return { loggedOut: true };
   }
@@ -71,6 +80,12 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   me(@CurrentUser('sub') userId: string) {
     return this.authService.me(userId);
+  }
+
+  @Patch('onboarding-complete')
+  @UseGuards(JwtAuthGuard)
+  completeOnboarding(@CurrentUser('sub') userId: string) {
+    return this.authService.completeOnboarding(userId);
   }
 
   private setRefreshCookie(

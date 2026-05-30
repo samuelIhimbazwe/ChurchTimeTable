@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/login_screen.dart';
+import '../../features/auth/screens/pending_approval_screen.dart';
 
 class AuthGate extends ConsumerWidget {
   const AuthGate({
@@ -26,6 +27,10 @@ class AuthGate extends ConsumerWidget {
 
     if (!auth.isAuthenticated) {
       return LoginScreen(redirectRoute: routeName);
+    }
+
+    if (auth.isPendingApproval) {
+      return const PendingApprovalScreen();
     }
 
     return child;

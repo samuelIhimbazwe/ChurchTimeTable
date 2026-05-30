@@ -3,13 +3,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { SwapStatus } from '@prisma/client';
+import { CoverageApprovalLevel, CoverageOperationalType, SwapStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConflictDetectionService } from '../assignments/conflict-detection.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CreateSwapDto } from './dto/create-swap.dto';
 import { BusinessRuleException } from '../common/exceptions/business.exception';
+import { deriveSwapFlags } from '../coverage/coverage.constants';
 
 @Injectable()
 export class SwapsService {
@@ -20,8 +21,15 @@ export class SwapsService {
     private notifications: NotificationsService,
   ) {}
 
-  async request(dto: CreateSwapDto, requesterMemberId: string, userId: string) {
+  async request(
+    dto: CreateSwapDto,
+    requesterMemberId: string,
+    userId: string,
+  ) {
     await this.conflict.validateSwap(dto.eventId, requesterMemberId, dto.targetId);
+
+    const coverageType = dto.coverageType ?? CoverageOperationalType.MUTUAL_SWAP;
+    const flags = deriveSwapFlags(coverageType);
 
     const swap = await this.prisma.swap.create({
       data: {
@@ -29,6 +37,12 @@ export class SwapsService {
         requesterId: requesterMemberId,
         targetId: dto.targetId,
         status: SwapStatus.REQUESTED,
+        coverageType,
+        reason: dto.reason,
+        initiatedByUserId: userId,
+        approvalLevel: CoverageApprovalLevel.MEMBER,
+        countsOfficialQuota: flags.countsOfficialQuota,
+        voluntaryExtraService: flags.voluntaryExtraService,
       },
       include: { requester: true, target: true, event: true },
     });
@@ -60,12 +74,17 @@ export class SwapsService {
     }
 
     const status = accept
-      ? SwapStatus.LEADER_PENDING
+      ? SwapStatus.TARGET_ACCEPTED
       : SwapStatus.TARGET_REJECTED;
 
     const updated = await this.prisma.swap.update({
       where: { id: swapId },
-      data: { status },
+      data: accept
+        ? {
+            status: SwapStatus.LEADER_PENDING,
+            approvalLevel: CoverageApprovalLevel.TEAM_HEAD,
+          }
+        : { status },
     });
 
     await this.audit.log({
@@ -78,6 +97,9 @@ export class SwapsService {
     });
 
     await this.notifications.notifySwap(updated, accept ? 'accepted' : 'rejected');
+    if (accept) {
+      await this.notifications.notifySwapPendingLeader(updated);
+    }
     return updated;
   }
 
@@ -93,6 +115,7 @@ export class SwapsService {
         status: SwapStatus.APPROVED,
         leaderApprovedById: userId,
         leaderNotes: notes,
+        approvalLevel: CoverageApprovalLevel.TEAM_HEAD,
       },
     });
 
@@ -105,6 +128,67 @@ export class SwapsService {
     });
 
     await this.notifications.notifySwap(updated, 'approved');
+    return updated;
+  }
+
+  async reject(swapId: string, userId: string, notes?: string) {
+    const swap = await this.getSwapOrThrow(swapId);
+    if (
+      swap.status !== SwapStatus.LEADER_PENDING &&
+      swap.status !== SwapStatus.REQUESTED
+    ) {
+      throw new BusinessRuleException('Swap cannot be rejected in current state');
+    }
+
+    const updated = await this.prisma.swap.update({
+      where: { id: swapId },
+      data: {
+        status: SwapStatus.REJECTED,
+        leaderNotes: notes,
+        resolvedAt: new Date(),
+        resolutionNotes: notes,
+      },
+    });
+
+    await this.audit.log({
+      userId,
+      action: 'SWAP_REJECTED',
+      entity: 'Swap',
+      entityId: swapId,
+      newValue: updated,
+    });
+
+    await this.notifications.notifySwap(updated, 'rejected');
+    return updated;
+  }
+
+  async cancel(swapId: string, requesterMemberId: string, userId: string) {
+    const swap = await this.getSwapOrThrow(swapId);
+    if (swap.requesterId !== requesterMemberId) {
+      throw new ForbiddenException('Only the requester can cancel');
+    }
+    if (
+      swap.status === SwapStatus.FINALIZED ||
+      swap.status === SwapStatus.CANCELLED
+    ) {
+      throw new BusinessRuleException('Swap cannot be cancelled');
+    }
+
+    const updated = await this.prisma.swap.update({
+      where: { id: swapId },
+      data: {
+        status: SwapStatus.CANCELLED,
+        resolvedAt: new Date(),
+      },
+    });
+
+    await this.audit.log({
+      userId,
+      action: 'SWAP_CANCELLED',
+      entity: 'Swap',
+      entityId: swapId,
+      newValue: updated,
+    });
 
     return updated;
   }
@@ -132,18 +216,51 @@ export class SwapsService {
             eventId: swap.eventId,
             memberId: swap.targetId,
             role: assignment.role,
+            countsOfficialQuota: swap.countsOfficialQuota,
+            voluntaryExtraService: swap.voluntaryExtraService,
           },
         });
       }
 
+      await tx.attendance.upsert({
+        where: {
+          eventId_memberId: {
+            eventId: swap.eventId,
+            memberId: swap.targetId,
+          },
+        },
+        create: {
+          eventId: swap.eventId,
+          memberId: swap.targetId,
+          physicalStatus: 'PRESENT',
+          operationalStatus: swap.voluntaryExtraService
+            ? 'VOLUNTARY_EXTRA_SERVICE'
+            : 'REPLACEMENT_SERVED',
+          swapId: swap.id,
+          countsAsOfficial: swap.countsOfficialQuota,
+          voluntaryExtra: swap.voluntaryExtraService,
+        },
+        update: {
+          operationalStatus: swap.voluntaryExtraService
+            ? 'VOLUNTARY_EXTRA_SERVICE'
+            : 'REPLACEMENT_SERVED',
+          swapId: swap.id,
+        },
+      });
+
       await tx.swap.update({
         where: { id: swapId },
-        data: { status: SwapStatus.FINALIZED, finalizedAt: new Date() },
+        data: {
+          status: SwapStatus.FINALIZED,
+          finalizedAt: new Date(),
+          resolvedAt: new Date(),
+        },
       });
     });
 
     const finalized = await this.prisma.swap.findUniqueOrThrow({
       where: { id: swapId },
+      include: { requester: true, target: true, event: true },
     });
 
     await this.audit.log({
@@ -200,6 +317,15 @@ export class SwapsService {
         totalPages: Math.ceil(total / limit) || 1,
       },
     };
+  }
+
+  async findOne(id: string) {
+    const swap = await this.prisma.swap.findUnique({
+      where: { id },
+      include: { requester: true, target: true, event: true },
+    });
+    if (!swap) throw new NotFoundException('Swap not found');
+    return swap;
   }
 
   private async getSwapOrThrow(id: string) {

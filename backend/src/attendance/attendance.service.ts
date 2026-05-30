@@ -1,12 +1,19 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import {
+  AttendanceOperationalStatus,
+  AttendanceReplacementType,
+  PhysicalStatus,
+  ReasonCategory,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpsertAttendanceDto } from './dto/upsert-attendance.dto';
+import { SubmitSelfExcuseDto } from './dto/submit-self-excuse.dto';
 import { AuditService } from '../audit/audit.service';
 import { BusinessRuleException } from '../common/exceptions/business.exception';
 import { NotificationsService } from '../notifications/notifications.service';
 import { paginate, paginatedResult } from '../common/dto/pagination.dto';
-import { AttendanceOperationalStatus, PhysicalStatus, ReasonCategory } from '@prisma/client';
+import { AttendanceScoringService } from './attendance-scoring.service';
 
 @Injectable()
 export class AttendanceService {
@@ -16,6 +23,7 @@ export class AttendanceService {
     private prisma: PrismaService,
     private audit: AuditService,
     private notifications: NotificationsService,
+    private scoring: AttendanceScoringService,
     config: ConfigService,
   ) {
     this.lockHours = Number(config.get('ATTENDANCE_LOCK_HOURS', 48));
@@ -44,16 +52,43 @@ export class AttendanceService {
       );
     }
 
+    const operationalStatus =
+      dto.operationalStatus ??
+      this.deriveOperationalStatus(
+        dto.physicalStatus,
+        dto.reasonCategory,
+        dto.voluntaryExtra,
+        dto.replacementType,
+      );
+
+    const countsAsOfficial =
+      dto.countsAsOfficial ??
+      (operationalStatus !== AttendanceOperationalStatus.VOLUNTARY_EXTRA_SERVICE &&
+        dto.replacementType !== AttendanceReplacementType.VOLUNTARY);
+
+    const voluntaryExtra =
+      dto.voluntaryExtra ??
+      (operationalStatus === AttendanceOperationalStatus.VOLUNTARY_EXTRA_SERVICE ||
+        dto.replacementType === AttendanceReplacementType.VOLUNTARY);
+
     const data = {
       physicalStatus: dto.physicalStatus,
       reasonCategory: dto.reasonCategory,
       reasonType: dto.reasonType,
+      excuseReason: dto.excuseReason ?? dto.reasonType,
       notes: dto.notes,
-      operationalStatus:
-        dto.operationalStatus ??
-        this.deriveOperationalStatus(dto.physicalStatus, dto.reasonCategory),
+      operationalStatus,
+      replacementType: dto.replacementType,
+      countsAsOfficial,
+      voluntaryExtra,
+      lateMinutes: dto.lateMinutes,
+      excuseEvidenceUrl: dto.excuseEvidenceUrl,
       approvedById:
-        dto.reasonCategory === 'EXCUSED' ? actorUserId : undefined,
+        dto.excuseApproved === true
+          ? actorUserId
+          : operationalStatus === AttendanceOperationalStatus.EXCUSED_ABSENCE
+            ? null
+            : existing?.approvedById,
       clientUpdatedAt: dto.clientUpdatedAt
         ? new Date(dto.clientUpdatedAt)
         : new Date(),
@@ -78,6 +113,13 @@ export class AttendanceService {
     });
 
     await this.notifications.notifyAttendanceUpdate(record);
+
+    if (
+      operationalStatus === AttendanceOperationalStatus.UNEXCUSED_ABSENCE ||
+      operationalStatus === AttendanceOperationalStatus.EXCUSED_ABSENCE
+    ) {
+      await this.notifications.notifyAttendanceAbsenceRisk(record);
+    }
 
     return record;
   }
@@ -111,10 +153,7 @@ export class AttendanceService {
     return paginatedResult(items, total, page, limit);
   }
 
-  async bulkUpsert(
-    records: UpsertAttendanceDto[],
-    actorUserId: string,
-  ) {
+  async bulkUpsert(records: UpsertAttendanceDto[], actorUserId: string) {
     const results: Array<{
       memberId: string;
       status: 'ok' | 'error';
@@ -146,6 +185,9 @@ export class AttendanceService {
       where: { id: attendanceId },
     });
     if (!record) throw new NotFoundException('Attendance not found');
+    if (this.isLocked(record)) {
+      throw new BusinessRuleException('Attendance record is locked and cannot be modified');
+    }
 
     const updated = await this.prisma.attendance.update({
       where: { id: attendanceId },
@@ -167,7 +209,49 @@ export class AttendanceService {
       newValue: updated,
     });
 
+    await this.notifications.notifyExcusedReview(updated, approve);
+
     return updated;
+  }
+
+  async submitSelfExcuse(
+    dto: SubmitSelfExcuseDto,
+    actorUserId: string,
+    memberId?: string,
+  ) {
+    const member = memberId
+      ? await this.prisma.member.findUnique({ where: { id: memberId } })
+      : await this.prisma.member.findFirst({ where: { userId: actorUserId } });
+
+    if (!member) {
+      throw new ForbiddenException('Member profile required to submit an excuse');
+    }
+
+    const assignment = await this.prisma.eventAssignment.findFirst({
+      where: { eventId: dto.eventId, memberId: member.id },
+    });
+    if (!assignment) {
+      throw new BusinessRuleException('You are not assigned to this event');
+    }
+
+    return this.upsert(
+      {
+        eventId: dto.eventId,
+        memberId: member.id,
+        physicalStatus: PhysicalStatus.ABSENT,
+        reasonCategory: ReasonCategory.EXCUSED,
+        operationalStatus: AttendanceOperationalStatus.EXCUSED_ABSENCE,
+        reasonType: dto.reasonType,
+        excuseReason: dto.excuseReason ?? dto.reasonType,
+        excuseEvidenceUrl: dto.excuseEvidenceUrl,
+        notes: dto.notes,
+      },
+      actorUserId,
+    );
+  }
+
+  async memberScore(memberId: string) {
+    return this.scoring.scoreMember(memberId);
   }
 
   async lockExpiredRecords() {
@@ -186,7 +270,15 @@ export class AttendanceService {
   private deriveOperationalStatus(
     physicalStatus: PhysicalStatus,
     reasonCategory?: ReasonCategory,
+    voluntaryExtra?: boolean,
+    replacementType?: AttendanceReplacementType,
   ): AttendanceOperationalStatus {
+    if (voluntaryExtra || replacementType === AttendanceReplacementType.VOLUNTARY) {
+      return AttendanceOperationalStatus.VOLUNTARY_EXTRA_SERVICE;
+    }
+    if (replacementType === AttendanceReplacementType.LEADER_ASSIGNED) {
+      return AttendanceOperationalStatus.REPLACEMENT_SERVED;
+    }
     if (physicalStatus === PhysicalStatus.PRESENT) {
       return AttendanceOperationalStatus.ATTENDED;
     }

@@ -114,6 +114,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               isLoading: auth.loading,
             ),
           ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: auth.loading
+                ? null
+                : () => Navigator.pushNamed(context, AppRouter.signup),
+            child: Text(l10n.auth_create_account),
+          ),
         ],
       ),
     );

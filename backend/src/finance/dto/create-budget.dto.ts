@@ -1,8 +1,24 @@
-import { IsDateString, IsNumber, IsString, Min } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from 'class-validator';
+import { BudgetKind, MinistryScope } from '@prisma/client';
 
 export class CreateBudgetDto {
+  @IsEnum(MinistryScope)
+  ministryScope: MinistryScope;
+
   @IsString()
   name: string;
+
+  @IsOptional()
+  @IsEnum(BudgetKind)
+  kind?: BudgetKind;
 
   @IsNumber()
   @Min(0)
@@ -13,4 +29,8 @@ export class CreateBudgetDto {
 
   @IsDateString()
   periodEnd: string;
+
+  @IsOptional()
+  @IsUUID()
+  relatedEventId?: string;
 }

@@ -13,14 +13,18 @@ export class ReportsController {
 
   @Get('attendance')
   @RequirePermissions(PERMISSIONS.REPORT_EXPORT)
-  attendance(@Query('from') from?: string, @Query('to') to?: string) {
-    return this.reportsService.attendanceSummary(from, to);
+  attendance(
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('ministry') ministry?: string,
+  ) {
+    return this.reportsService.attendanceSummary(from, to, ministry);
   }
 
   @Get('discipline')
   @RequirePermissions(PERMISSIONS.REPORT_EXPORT)
-  discipline() {
-    return this.reportsService.disciplineSummary();
+  discipline(@Query('ministry') ministry?: string) {
+    return this.reportsService.disciplineSummary(ministry);
   }
 
   @Get('finance')

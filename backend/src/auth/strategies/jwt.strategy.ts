@@ -2,14 +2,14 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PermissionsResolver } from '../permissions.resolver';
 import { JwtPayload } from '../../common/decorators/current-user.decorator';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     config: ConfigService,
-    private prisma: PrismaService,
+    private permissionsResolver: PermissionsResolver,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -19,41 +19,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: { sub: string; email: string }): Promise<JwtPayload> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: payload.sub },
-      include: {
-        member: true,
-        userRoles: {
-          include: {
-            role: {
-              include: {
-                rolePermissions: { include: { permission: true } },
-              },
-            },
-          },
-        },
-      },
-    });
-
-    if (!user || !user.isActive) {
+    const resolved = await this.permissionsResolver.resolveForUser(payload.sub);
+    if (!resolved.isActive) {
       throw new UnauthorizedException('Invalid session');
     }
 
-    const roles = user.userRoles.map((ur) => ur.role.name);
-    const permissions = [
-      ...new Set(
-        user.userRoles.flatMap((ur) =>
-          ur.role.rolePermissions.map((rp) => rp.permission.code),
-        ),
-      ),
-    ];
-
     return {
-      sub: user.id,
-      email: user.email,
-      roles,
-      permissions,
-      memberId: user.member?.id,
+      sub: payload.sub,
+      email: payload.email,
+      roles: resolved.roles,
+      permissions: resolved.permissions,
+      memberId: resolved.memberId,
     };
   }
 }

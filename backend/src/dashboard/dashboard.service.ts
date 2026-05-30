@@ -1,21 +1,36 @@
 import { Injectable } from '@nestjs/common';
 import {
+  AttendanceOperationalStatus,
   EventStatus,
-  PhysicalStatus,
   Prisma,
-  ReasonCategory,
   ReplacementStatus,
   SwapStatus,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ReportsService } from '../reports/reports.service';
-import { PERMISSIONS } from '../common/constants/roles';
+import { AttendanceScoringService } from '../attendance/attendance-scoring.service';
+import { AttendanceGovernanceService } from '../attendance/attendance-governance.service';
+import { MinistryIntelligenceService } from './ministry-intelligence.service';
+import { OperationalScopeService } from '../governance/operational-scope.service';
+import { FinanceGovernanceService } from '../finance/finance-governance.service';
+import {
+  ADMIN_WIDGETS,
+  LEADER_WIDGETS,
+  MEMBER_WIDGETS,
+  resolvePermissionFlags,
+  resolveWidgetLayout,
+} from './dashboard-widgets.constants';
 
 @Injectable()
 export class DashboardService {
   constructor(
     private prisma: PrismaService,
     private reports: ReportsService,
+    private attendanceScoring: AttendanceScoringService,
+    private governance: AttendanceGovernanceService,
+    private intelligence: MinistryIntelligenceService,
+    private operationalScope: OperationalScopeService,
+    private financeGovernance: FinanceGovernanceService,
   ) {}
 
   async leaderSummary(userId: string, permissions: string[] = []) {
@@ -33,15 +48,14 @@ export class DashboardService {
       pendingReplacements,
       activeDiscipline,
       attendanceSummary,
-      financeSummary,
       syncConflicts,
       recentAudit,
       upcomingEventList,
       attendanceTrendRows,
-      members,
       reliabilityRows,
       teamRows,
       replacementRows,
+      monthOperationalRows,
     ] = await Promise.all([
       this.prisma.event.count({
         where: {
@@ -70,7 +84,6 @@ export class DashboardService {
         where: { stage: { not: 'CLOSED' } },
       }),
       this.reports.attendanceSummary(monthStart.toISOString(), now.toISOString()),
-      this.reports.financeSummary(),
       this.prisma.syncConflict.count({ where: { userId } }),
       this.prisma.auditLog.findMany({
         take: 5,
@@ -96,19 +109,19 @@ export class DashboardService {
       }),
       this.prisma.attendance.findMany({
         where: { createdAt: { gte: trendStart } },
-        select: { createdAt: true, physicalStatus: true },
+        select: {
+          createdAt: true,
+          operationalStatus: true,
+          voluntaryExtra: true,
+        },
         orderBy: { createdAt: 'asc' },
-      }),
-      this.prisma.member.findMany({
-        where: { status: 'ACTIVE' },
-        select: { ministry: true },
       }),
       this.prisma.attendance.findMany({
         where: { createdAt: { gte: reliabilityStart } },
         select: {
           memberId: true,
-          physicalStatus: true,
-          reasonCategory: true,
+          operationalStatus: true,
+          voluntaryExtra: true,
         },
       }),
       this.prisma.protocolServiceTeam.findMany({
@@ -119,14 +132,37 @@ export class DashboardService {
         where: { createdAt: { gte: trendStart } },
         select: { createdAt: true, voluntaryExtraService: true, countsOfficialQuota: true },
       }),
+      this.prisma.attendance.findMany({
+        where: { createdAt: { gte: monthStart } },
+        select: { operationalStatus: true, voluntaryExtra: true },
+      }),
     ]);
 
-    const attendanceTotal = attendanceSummary.total || 0;
-    const present = attendanceSummary.byStatus?.PRESENT ?? 0;
-    const attendanceRate =
-      attendanceTotal > 0
-        ? Math.round((present / attendanceTotal) * 100)
-        : null;
+    const weights = await this.attendanceScoring.getWeights();
+    const monthScore = this.attendanceScoring.scoreRecords(monthOperationalRows, weights);
+    const attendanceRate = monthOperationalRows.length ? monthScore.percentage : null;
+
+    const [
+      ministryKpis,
+      alerts,
+      workloadAnalytics,
+      operationalAnalytics,
+      financeAnalytics,
+      disciplineAnalytics,
+      ministryHealth,
+      choirSummary,
+    ] = await Promise.all([
+      this.intelligence.ministryKpis(),
+      this.intelligence.generateAlerts(permissions, { userId }),
+      this.intelligence.workloadAnalytics(),
+      this.intelligence.operationalAnalytics(userId),
+      this.intelligence.financeAnalytics({ actorUserId: userId }),
+      this.intelligence.disciplineAnalytics(),
+      this.intelligence.ministryHealthScore(userId),
+      this.governance.choirAttendanceSummary(),
+    ]);
+
+    const permissionWidgets = resolvePermissionFlags(permissions);
 
     return {
       upcomingEvents,
@@ -137,14 +173,32 @@ export class DashboardService {
       attendanceRate,
       attendanceSummary,
       attendanceTrend: this.buildAttendanceTrend(attendanceTrendRows, trendStart, now),
-      ministryAnalytics: this.buildMinistryAnalytics(members),
-      reliabilityBands: this.buildReliabilityBands(reliabilityRows),
+      ministryAnalytics: await this.buildEnhancedMinistryAnalytics(ministryKpis),
+      reliabilityBands: await this.buildReliabilityBands(reliabilityRows),
       teamReliability: this.buildTeamReliability(teamRows),
       replacementFrequency: this.buildReplacementFrequency(replacementRows, trendStart, now),
-      financeSummary,
+      financeSummary: {
+        income: financeAnalytics.income,
+        expense: financeAnalytics.expense,
+        balance: financeAnalytics.balance,
+        count:
+          (financeAnalytics as { recentTransactions?: unknown[] }).recentTransactions
+            ?.length ?? 0,
+      },
       syncConflicts,
       recentAudit,
-      permissionWidgets: this.resolveLeaderWidgets(permissions),
+      permissionWidgets,
+      widgets: resolveWidgetLayout(LEADER_WIDGETS, permissions),
+      alerts,
+      intelligence: {
+        ministryKpis,
+        ministryHealth,
+        workloadAnalytics,
+        operationalAnalytics,
+        financeAnalytics,
+        disciplineAnalytics,
+        choirSummary,
+      },
     };
   }
 
@@ -209,24 +263,13 @@ export class DashboardService {
         }),
       ]);
 
-    const scoreRows = await this.prisma.attendance.findMany({
-      where: { memberId },
-      select: { physicalStatus: true, reasonCategory: true },
-    });
-    const total = scoreRows.length;
-    let attendanceRate: number | null = null;
-    let responsibilityScore: number | null = null;
-    if (total > 0) {
-      const present = scoreRows.filter(
-        (r) => r.physicalStatus === 'PRESENT' || r.physicalStatus === 'LATE',
-      ).length;
-      const excused = scoreRows.filter(
-        (r) =>
-          r.physicalStatus === 'ABSENT' && r.reasonCategory === 'EXCUSED',
-      ).length;
-      attendanceRate = Math.round((present / total) * 100);
-      responsibilityScore = Math.round(((present + excused) / total) * 100);
-    }
+    const [attendanceScore, alerts, personalAnalytics] = await Promise.all([
+      this.attendanceScoring.scoreMember(memberId),
+      this.intelligence.generateAlerts(permissions, { userId, memberId }),
+      this.intelligence.memberPersonalAnalytics(memberId),
+    ]);
+    const attendanceRate = attendanceRecent.length ? attendanceScore.percentage : null;
+    const responsibilityScore = attendanceRate;
 
     const protocolTeamHistory = await this.prisma.protocolServiceTeamMember.findMany({
       where: { memberId },
@@ -242,6 +285,25 @@ export class DashboardService {
       take: 12,
     });
 
+    const permissionWidgets = resolvePermissionFlags(permissions);
+
+    let contributionProgress = this.buildContributionProgress(memberDues);
+    try {
+      const stewardship =
+        await this.financeGovernance.memberContributions(userId);
+      contributionProgress = {
+        ...this.financeGovernance.memberContributionWidget(stewardship),
+        recent: stewardship.history.slice(0, 6).map((h) => ({
+          period: h.period ?? h.date,
+          amount: h.amount,
+          paid: h.status === 'PAID' || h.status === 'WAIVED',
+          paidAt: h.date ? new Date(h.date) : null,
+        })),
+      };
+    } catch {
+      // Non-member actors or missing profile — keep legacy dues slice.
+    }
+
     return {
       upcomingAssignments,
       upcomingSchedule,
@@ -250,12 +312,16 @@ export class DashboardService {
       recentNotifications,
       attendanceRate,
       responsibilityScore,
-      contributionProgress: this.buildContributionProgress(memberDues),
+      attendanceScore,
+      contributionProgress,
       history: {
         protocolTeamHistory,
         committeeRoleHistory,
       },
-      permissionWidgets: this.resolveMemberWidgets(permissions),
+      permissionWidgets,
+      widgets: resolveWidgetLayout(MEMBER_WIDGETS, permissions),
+      alerts,
+      personalAnalytics,
     };
   }
 
@@ -303,6 +369,8 @@ export class DashboardService {
     });
     const myConflicts = await this.prisma.syncConflict.count({ where: { userId } });
 
+    const alerts = await this.intelligence.generateAlerts(permissions, { userId });
+
     return {
       systemStats: {
         users,
@@ -332,8 +400,60 @@ export class DashboardService {
       analytics: {
         choirCompatibilityRate: this.buildChoirCompatibilityRate(teamMembers),
       },
-      permissionWidgets: this.resolveAdminWidgets(permissions),
+      permissionWidgets: resolvePermissionFlags(permissions),
+      widgets: resolveWidgetLayout(ADMIN_WIDGETS, permissions),
+      alerts,
     };
+  }
+
+  async intelligenceSummary(permissions: string[], userId: string) {
+    const [
+      ministryKpis,
+      ministryHealth,
+      workloadAnalytics,
+      operationalAnalytics,
+      financeAnalytics,
+      disciplineAnalytics,
+      alerts,
+    ] = await Promise.all([
+      this.intelligence.ministryKpis(),
+      this.intelligence.ministryHealthScore(userId),
+      this.intelligence.workloadAnalytics(),
+      this.intelligence.operationalAnalytics(userId),
+      this.intelligence.financeAnalytics({ actorUserId: userId }),
+      this.intelligence.disciplineAnalytics(),
+      this.intelligence.generateAlerts(permissions, { userId }),
+    ]);
+
+    return {
+      ministryKpis,
+      ministryHealth,
+      workloadAnalytics,
+      operationalAnalytics,
+      financeAnalytics,
+      disciplineAnalytics,
+      alerts,
+      generatedAt: new Date().toISOString(),
+    };
+  }
+
+  async operationalRoleSummary(
+    role: 'team-head' | 'coordinator' | 'president' | 'choir-leader',
+    userId: string,
+  ) {
+    const ctx = await this.operationalScope.buildForUser(userId);
+    switch (role) {
+      case 'team-head':
+        return this.governance.teamHeadSummary(userId);
+      case 'coordinator':
+        return this.governance.coordinatorSummary(ctx);
+      case 'president':
+        return this.governance.presidentSummary(ctx);
+      case 'choir-leader':
+        return this.governance.choirAttendanceSummary();
+      default:
+        return null;
+    }
   }
 
   private buildTeamReliability(
@@ -383,42 +503,28 @@ export class DashboardService {
     return Math.round((compatible / rows.length) * 100);
   }
 
-  private resolveLeaderWidgets(permissions: string[]) {
-    const can = (claim: string) => permissions.includes(claim);
-    return {
-      treasurer: can(PERMISSIONS.FINANCE_VIEW_SCOPE) || can(PERMISSIONS.FINANCE_READ),
-      discipline: can(PERMISSIONS.DISCIPLINE_REVIEW_SCOPE) || can(PERMISSIONS.DISCIPLINE_MANAGE),
-      secretary: can(PERMISSIONS.EVENT_WRITE),
-      operationsManager:
-        can(PERMISSIONS.CHOIR_EVENTS_MANAGE_SCOPE) || can(PERMISSIONS.EVENT_WRITE),
-      protocolCoordinator:
-        can(PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE) || can(PERMISSIONS.SWAP_MANAGE),
-      protocolPresident:
-        can(PERMISSIONS.PROTOCOL_OVERSIGHT_SCOPE) || can(PERMISSIONS.REPORT_EXPORT),
-    };
-  }
-
-  private resolveMemberWidgets(permissions: string[]) {
-    const can = (claim: string) => permissions.includes(claim);
-    return {
-      replacements: can(PERMISSIONS.SWAP_MANAGE),
-      attendanceTools: can(PERMISSIONS.ATTENDANCE_MARK_SCOPE) || can(PERMISSIONS.ATTENDANCE_WRITE),
-      financeSnapshot: can(PERMISSIONS.FINANCE_VIEW_SCOPE) || can(PERMISSIONS.FINANCE_READ),
-    };
-  }
-
-  private resolveAdminWidgets(permissions: string[]) {
-    const can = (claim: string) => permissions.includes(claim);
-    return {
-      committeeGovernance:
-        can(PERMISSIONS.COMMITTEE_ROLE_MANAGE_SCOPE) || can(PERMISSIONS.COMMITTEE_MEMBER_MANAGE_SCOPE),
-      protocolOversight: can(PERMISSIONS.PROTOCOL_OVERSIGHT_SCOPE) || can(PERMISSIONS.AUDIT_READ),
-      auditInsights: can(PERMISSIONS.AUDIT_READ),
-    };
+  private async buildEnhancedMinistryAnalytics(
+    kpis: Awaited<ReturnType<MinistryIntelligenceService['ministryKpis']>>,
+  ) {
+    return kpis.map((kpi) => ({
+      label: kpi.scope,
+      count: kpi.activeMembers,
+      attendanceRate: kpi.attendanceRate,
+      reliabilityScore: kpi.reliabilityScore,
+      pendingReplacements: kpi.pendingReplacements,
+      pendingSwaps: kpi.pendingSwaps,
+      openDiscipline: kpi.openDiscipline,
+      voluntaryServiceCount: kpi.voluntaryServiceCount,
+      trendDirection: kpi.trendDirection,
+    }));
   }
 
   private buildAttendanceTrend(
-    rows: Array<{ createdAt: Date; physicalStatus: PhysicalStatus }>,
+    rows: Array<{
+      createdAt: Date;
+      operationalStatus: AttendanceOperationalStatus | null;
+      voluntaryExtra?: boolean;
+    }>,
     start: Date,
     end: Date,
   ) {
@@ -435,44 +541,48 @@ export class DashboardService {
       const bucket = series.find((item) => item.key === key);
       if (!bucket) continue;
 
+      const status =
+        row.operationalStatus ?? AttendanceOperationalStatus.UNEXCUSED_ABSENCE;
       bucket.total += 1;
-      if (row.physicalStatus === 'PRESENT') bucket.present += 1;
-      if (row.physicalStatus === 'ABSENT') bucket.absent += 1;
-      if (row.physicalStatus === 'LATE') bucket.late += 1;
+      if (
+        status === AttendanceOperationalStatus.ATTENDED ||
+        status === AttendanceOperationalStatus.REPLACEMENT_SERVED ||
+        status === AttendanceOperationalStatus.VOLUNTARY_EXTRA_SERVICE
+      ) {
+        bucket.present += 1;
+      } else if (status === AttendanceOperationalStatus.LATE) {
+        bucket.late += 1;
+      } else {
+        bucket.absent += 1;
+      }
     }
 
     return series.map(({ key, ...entry }) => entry);
   }
 
-  private buildMinistryAnalytics(rows: Array<{ ministry: string }>) {
-    const counts = rows.reduce<Record<string, number>>((acc, row) => {
-      acc[row.ministry] = (acc[row.ministry] ?? 0) + 1;
-      return acc;
-    }, {});
-
-    return Object.entries(counts).map(([label, count]) => ({ label, count }));
-  }
-
-  private buildReliabilityBands(
+  private async buildReliabilityBands(
     rows: Array<{
       memberId: string;
-      physicalStatus: PhysicalStatus;
-      reasonCategory: ReasonCategory | null;
+      operationalStatus: AttendanceOperationalStatus | null;
+      voluntaryExtra?: boolean;
     }>,
   ) {
-    const memberScores = new Map<string, { score: number; total: number }>();
+    const weights = await this.attendanceScoring.getWeights();
+    const memberRecords = new Map<
+      string,
+      Array<{
+        operationalStatus: AttendanceOperationalStatus | null;
+        voluntaryExtra?: boolean;
+      }>
+    >();
 
     for (const row of rows) {
-      const current = memberScores.get(row.memberId) ?? { score: 0, total: 0 };
-      current.total += 1;
-
-      if (row.physicalStatus === 'PRESENT' || row.physicalStatus === 'LATE') {
-        current.score += 1;
-      } else if (row.reasonCategory === 'EXCUSED') {
-        current.score += 0.5;
-      }
-
-      memberScores.set(row.memberId, current);
+      const current = memberRecords.get(row.memberId) ?? [];
+      current.push({
+        operationalStatus: row.operationalStatus,
+        voluntaryExtra: row.voluntaryExtra,
+      });
+      memberRecords.set(row.memberId, current);
     }
 
     const bands = {
@@ -481,10 +591,10 @@ export class DashboardService {
       watch: 0,
     };
 
-    for (const value of memberScores.values()) {
-      const ratio = value.total ? value.score / value.total : 0;
-      if (ratio >= 0.85) bands.strong += 1;
-      else if (ratio >= 0.6) bands.steady += 1;
+    for (const records of memberRecords.values()) {
+      const score = this.attendanceScoring.scoreRecords(records, weights);
+      if (score.percentage >= 85) bands.strong += 1;
+      else if (score.percentage >= 60) bands.steady += 1;
       else bands.watch += 1;
     }
 

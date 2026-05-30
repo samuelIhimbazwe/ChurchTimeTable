@@ -114,4 +114,61 @@ extension ChurchLocalization on AppLocalizations {
             : enum_status_unknown;
     }
   }
+
+  String attendanceOperationalStatusLabel(String status) {
+    switch (status) {
+      case 'ATTENDED':
+        return attendance_status_attended;
+      case 'LATE':
+        return attendance_status_late;
+      case 'EXCUSED_ABSENCE':
+        return attendance_status_excused;
+      case 'UNEXCUSED_ABSENCE':
+        return attendance_status_unexcused;
+      case 'REPLACEMENT_SERVED':
+        return attendance_status_replacement;
+      case 'VOLUNTARY_EXTRA_SERVICE':
+        return attendance_status_voluntary;
+      default:
+        return enum_status_unknown;
+    }
+  }
+
+  String attendanceExcuseReasonLabel(String reason) {
+    switch (reason) {
+      case 'illness':
+        return attendance_excuse_illness;
+      case 'travel':
+        return attendance_excuse_travel;
+      case 'work_school':
+        return attendance_excuse_work_school;
+      case 'emergency':
+        return attendance_excuse_emergency;
+      case 'family_issue':
+        return attendance_excuse_family;
+      case 'approved_leave':
+        return attendance_excuse_approved_leave;
+      case 'unavoidable_conflict':
+        return attendance_excuse_conflict;
+      default:
+        return attendance_excuse_unknown;
+    }
+  }
+
+  String coverageReadinessStatusLabel(String status) {
+    switch (status) {
+      case 'FULLY_READY':
+        return coverage_readiness_ready;
+      case 'REPLACEMENT_PENDING':
+        return coverage_readiness_replacement_pending;
+      case 'ATTENDANCE_RISK':
+        return coverage_readiness_attendance_risk;
+      case 'STAFFING_SHORTAGE':
+        return coverage_readiness_staffing_shortage;
+      case 'OPERATIONAL_DANGER':
+        return coverage_readiness_operational_danger;
+      default:
+        return enum_status_unknown;
+    }
+  }
 }

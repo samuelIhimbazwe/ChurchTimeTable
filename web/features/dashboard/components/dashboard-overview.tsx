@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 
 import { getDashboardExperience } from "@/core/auth/rbac";
 import { useSessionStore } from "@/core/auth/session-store";
+import { FirstLoginWelcome } from "@/features/auth/components/first-login-welcome";
 import { LeaderDashboard } from "@/features/dashboard/components/leader-dashboard";
 import { MemberDashboard } from "@/features/dashboard/components/member-dashboard";
 import { SuperAdminDashboard } from "@/features/dashboard/components/super-admin-dashboard";
@@ -22,12 +23,27 @@ export function DashboardOverview() {
   }
 
   if (experience === "super-admin") {
-    return <SuperAdminDashboard />;
+    return (
+      <>
+        <FirstLoginWelcome />
+        <SuperAdminDashboard />
+      </>
+    );
   }
 
   if (experience === "leader") {
-    return <LeaderDashboard />;
+    return (
+      <>
+        <FirstLoginWelcome />
+        <LeaderDashboard />
+      </>
+    );
   }
 
-  return <MemberDashboard />;
+  return (
+    <>
+      <FirstLoginWelcome />
+      <MemberDashboard />
+    </>
+  );
 }

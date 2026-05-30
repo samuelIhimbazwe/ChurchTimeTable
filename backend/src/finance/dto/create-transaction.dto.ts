@@ -7,9 +7,12 @@ import {
   IsUUID,
   Min,
 } from 'class-validator';
-import { FinanceCategory, TransactionType } from '@prisma/client';
+import { FinanceCategory, MinistryScope, TransactionType } from '@prisma/client';
 
 export class CreateTransactionDto {
+  @IsEnum(MinistryScope)
+  ministryScope: MinistryScope;
+
   @IsEnum(TransactionType)
   type: TransactionType;
 
@@ -31,4 +34,16 @@ export class CreateTransactionDto {
   @IsOptional()
   @IsDateString()
   transactionDate?: string;
+
+  @IsOptional()
+  @IsUUID()
+  relatedEventId?: string;
+
+  @IsOptional()
+  @IsString()
+  receiptUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  currency?: string;
 }

@@ -28,47 +28,48 @@ export function TopNav({
   const displayName = [profile.member?.firstName, profile.member?.lastName]
     .filter(Boolean)
     .join(" ");
+  const initials = (profile.member?.firstName?.[0] ?? profile.email[0] ?? "?").toUpperCase();
 
   return (
-    <header className="flex flex-col gap-4 rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] px-4 py-4 shadow-[var(--shadow-xs)] lg:px-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <CmmsButton
-              type="button"
-              variant="secondary"
-              size="sm"
-              className="lg:hidden"
-              onClick={onOpenMenu}
-            >
-              {t("shell.menu")}
-            </CmmsButton>
-            <CmmsBadge variant="info">{t(`shell.experience.${experience}`)}</CmmsBadge>
+    <header className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] px-4 py-4 shadow-[var(--shadow-xs)] lg:px-5">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <CmmsButton
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="shrink-0 lg:hidden"
+            onClick={onOpenMenu}
+          >
+            {t("shell.menu")}
+          </CmmsButton>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <CmmsBadge variant="neutral">{t(`shell.experience.${experience}`)}</CmmsBadge>
+            </div>
+            <h1 className="cmms-text-display mt-2 text-[var(--foreground)]">{title}</h1>
+            <p className="cmms-text-body mt-1 max-w-2xl text-[var(--muted-foreground)]">
+              {subtitle}
+            </p>
           </div>
-          <h1 className="mt-3 text-2xl font-semibold tracking-tight text-[var(--foreground)] break-words lg:text-3xl">
-            {title}
-          </h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted-foreground)] break-words">
-            {subtitle}
-          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <div
+            className="hidden items-center gap-2 rounded-[var(--radius-pill)] bg-[var(--surface-subtle)] px-3 py-1.5 sm:flex"
+            title={profile.email}
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--primary)] text-xs font-semibold text-[var(--primary-foreground)]">
+              {initials}
+            </div>
+            <span className="max-w-[140px] truncate text-sm font-medium text-[var(--foreground)]">
+              {displayName || profile.email}
+            </span>
+          </div>
           <LocaleSwitcher />
           <ThemeToggle />
           <CmmsButton type="button" variant="secondary" size="sm" onClick={onLogout}>
             {t("common.logout")}
           </CmmsButton>
-        </div>
-      </div>
-      <div className="flex flex-wrap items-center gap-3 rounded-[var(--radius-xl)] bg-[var(--surface-muted)] px-4 py-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--primary)] text-sm font-semibold text-[var(--primary-foreground)]">
-          {(profile.member?.firstName?.[0] ?? profile.email[0] ?? "?").toUpperCase()}
-        </div>
-        <div className="min-w-0">
-          <p className="font-medium text-[var(--foreground)] break-words">
-            {displayName || profile.email}
-          </p>
-          <p className="text-sm text-[var(--muted-foreground)] break-all">{profile.email}</p>
         </div>
       </div>
     </header>

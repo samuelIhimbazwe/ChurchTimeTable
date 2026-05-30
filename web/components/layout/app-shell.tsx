@@ -9,7 +9,10 @@ import { useSessionStore } from "@/core/auth/session-store";
 import { usePathname, useRouter } from "@/i18n/routing";
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopNav } from "@/components/layout/top-nav";
-import { getShellNavigation, getShellPageMeta } from "@/components/layout/navigation";
+import {
+  getShellNavigationGroups,
+  getShellPageMeta,
+} from "@/components/layout/navigation";
 import { CmmsModal } from "@/components/ui/cmms-modal";
 
 export function AppShell({
@@ -30,7 +33,7 @@ export function AppShell({
   }
 
   const experience = getDashboardExperience(profile);
-  const navigation = getShellNavigation(profile, experience, t);
+  const navigationGroups = getShellNavigationGroups(profile, experience, t);
   const pageMeta = getShellPageMeta(pathname, experience, t);
 
   async function handleLogout() {
@@ -40,9 +43,13 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
-      <div className="mx-auto flex min-h-screen w-full max-w-[1600px] gap-6 px-4 py-4 lg:px-6 lg:py-6">
+      <div className="cmms-content-wide flex min-h-screen gap-4 px-4 py-4 lg:gap-8 lg:px-6 lg:py-6">
         <div className="hidden lg:block lg:w-[280px] lg:shrink-0">
-          <Sidebar items={navigation} activePath={pathname} className="sticky top-6" />
+          <Sidebar
+            groups={navigationGroups}
+            activePath={pathname}
+            className="sticky top-6 max-h-[calc(100vh-3rem)]"
+          />
         </div>
         <div className="min-w-0 flex-1">
           <TopNav
@@ -53,7 +60,7 @@ export function AppShell({
             onOpenMenu={() => setMenuOpen(true)}
             onLogout={handleLogout}
           />
-          <main className="mt-6 min-w-0">{children}</main>
+          <main className="cmms-page-stack mt-6 min-w-0">{children}</main>
         </div>
       </div>
       <CmmsModal
@@ -64,7 +71,7 @@ export function AppShell({
         className="max-w-sm"
       >
         <Sidebar
-          items={navigation}
+          groups={navigationGroups}
           activePath={pathname}
           className="max-w-none border-none bg-transparent p-0 shadow-none"
           onNavigate={() => setMenuOpen(false)}

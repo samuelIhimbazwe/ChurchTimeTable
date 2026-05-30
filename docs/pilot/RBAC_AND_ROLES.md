@@ -13,6 +13,10 @@ A person can be **Protocol ministry** but hold **Choir leader** role only if you
 
 ---
 
+## Finance stewardship (Sprint 8)
+
+Ministry-scoped finance uses `choir.finance.*`, `protocol.finance.*`, and `ministry.finance.oversight` — not `report:export`. See **[FINANCE_STEWARDSHIP.md](./FINANCE_STEWARDSHIP.md)**.
+
 ## Choir officers (president, secretary, treasurer, …)
 
 If the choir has **several leaders** with different duties, do **not** give everyone `CHOIR_LEADER`. Use separate roles (`CHOIR_PRESIDENT`, `CHOIR_SECRETARY`, `CHOIR_TREASURER`, …) — see **[CHOIR_OFFICER_ROLES.md](./CHOIR_OFFICER_ROLES.md)**.
@@ -213,12 +217,44 @@ Example: one person is both `CHOIR_LEADER` and `CHOIR_COMMITTEE` → permissions
 
 ---
 
+## Governance alignment (Sprint 7 patch)
+
+Operational authority for Protocol ministry uses **scoped permissions**, not `report:export` or generic `attendance:write` as stand-ins for president/coordinator/team-head power.
+
+| Authority | Permission claims | Notes |
+|-----------|-------------------|--------|
+| Protocol president | `protocol.oversight` | Ministry-wide executive summaries; committee role `protocol_president` |
+| Protocol coordinator | `protocol.team.manage`, `protocol.operational.monitor` | Team oversight, escalations; role `protocol_coordinator` |
+| Protocol team head | `protocol.team.head`, `protocol.attendance.manage` | Scoped roster/attendance; also granted when assigned `ProtocolServiceTeam.teamHeadId` |
+| Choir operations | `choir.oversight`, `choir.operations.manage`, … | Choir committee / officer bundles |
+
+**Three sources of effective permissions** (merged at login / per request):
+
+1. **System role** → `RolePermission` (e.g. `MEMBER`, `PROTOCOL_LEADER`)
+2. **Committee assignment** → `ProtocolCommitteeRole.permissionsJson` (exposed as `committee:{ministryId}:{claim}`)
+3. **Operational facts** → e.g. active protocol team head auto-adds `protocol.team.head`
+
+Helpers: `backend/src/common/governance/governance-permissions.util.ts` (mirrored on web/mobile).
+
+**Operational visibility** is built via `OperationalScopeService` → `OperationalScopeContext` (`actorUserId`, `scopedMemberIds`, `teamIds`, capability flags). Dashboard widgets, attendance/coverage summaries, and alerts filter through this context.
+
+**Pilot governance users** (after `seed.ts` + `seed-pilot.ts`):
+
+- `protocol.president@church.local` — committee president
+- `protocol.coordinator@church.local` — committee coordinator
+- `protocol.teamhead@church.local` — committee team head (+ optional team head on first active team)
+
+Password: `Pilot@123` (same as other pilot accounts).
+
+**Committee assignment UI (web):** `/dashboard/governance` — requires `committee.member.manage`, `committee.role.manage`, or `member:manage`. Assigns members to protocol (`protocol-ministry`) or choir (`default-choir`) committee roles.
+
+**Mobile operational center:** route `/operational` — mirrors web `/dashboard/operational` using `GET /dashboard/operational/:role`.
+
 ## Roadmap (not built yet)
 
 For day-to-day church admin without developers:
 
 - Admin UI: list roles, tick permissions, assign roles to members
-- Ministry-scoped roles (“leader only for PROTOCOL events”)
 - Custom roles stored only in DB without editing `roles.ts`
 
-Until then, use **seed + assign-user-role script** for pilot and small changes.
+Until then, use **seed + committee assignment + assign-user-role script** for pilot and small changes.

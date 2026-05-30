@@ -11,17 +11,198 @@
   },
   "shell": {
     "menu": "Menu",
+    "navGroupToday": "Aujourd'hui",
+    "navGroupPersonal": "Mon ministere",
+    "navGroupOperations": "Operations",
+    "navGroupStewardship": "Stewardship",
+    "navGroupGovernance": "Gouvernance",
+    "navGroupAdmin": "Administration",
     "navDashboard": "Tableau de bord",
     "navEvents": "Moteur d'evenements",
+    "navAttendance": "Gouvernance de presence",
+    "navCoverage": "Gestion de couverture",
+    "navOperational": "Centre operationnel",
+    "navGovernance": "Gouvernance des comites",
+    "navPendingMembers": "Inscriptions en attente",
+    "pendingMembersSummary": "Examiner et approuver les nouvelles inscriptions.",
+    "navFinance": "Stewardship financier",
+    "navMyContributions": "Mes contributions",
+    "myContributionsSummary": "Votre historique personnel de contributions.",
     "navAdmin": "Console admin",
     "memberSummary": "Affectations, presence, notifications et progression des contributions.",
     "leaderSummary": "Operations, tendances de presence, analyses de ministere et signaux de fiabilite.",
     "adminSummary": "Sante du systeme, activite d'audit et diagnostics de synchronisation.",
     "eventsSummary": "Planification calendrier, recurrence, affectations et controle des conflits.",
+    "attendanceSummary": "Marquage operationnel, excuses, escalades et score de fiabilite.",
+    "coverageSummary": "Echanges, remplacements, preparation culte et continuite operationnelle.",
+    "operationalSummary": "Accueil operationnel selon les permissions de gouvernance protocol et chorale.",
+    "governanceSummary": "Affecter les roles de comite et les permissions de gouvernance.",
+    "financeSummary": "Contributions, budgets et analyses selon le ministere.",
     "experience": {
       "member": "Espace membre",
       "leader": "Espace leader",
       "super-admin": "Espace super admin"
+    }
+  },
+  "myContributions": {
+    "eyebrow": "Votre stewardship",
+    "title": "Mes contributions",
+    "subtitle": "Vue personnelle de votre participation et de vos obligations. Espace de clarte et d'encouragement — pas de jugement.",
+    "loading": "Chargement de vos contributions…",
+    "loadError": "Impossible de charger votre historique de contributions.",
+    "emptyTitle": "Aucune contribution enregistree",
+    "emptyMessage": "Lorsque votre ministere enregistre des contributions ou cotisations, elles apparaitront ici en toute transparence.",
+    "upToDateTitle": "Vous etes a jour",
+    "upToDateMessage": "Merci pour votre participation fidele au stewardship du ministere.",
+    "consistencyTitle": "Participation",
+    "consistencyHint": "Regularite avec laquelle vos obligations enregistrees sont reglees.",
+    "consistencyLabel": "Regularite des contributions",
+    "consistencyDescription": "{paid} sur {total} obligations sont reglees.",
+    "ministryTitle": "Par ministere",
+    "ministryHint": "Uniquement les ministeres ou vous avez une activite enregistree.",
+    "ministryOutstanding": "{amount} restant",
+    "ministryClear": "A jour",
+    "remindersTitle": "Rappels bienveillants",
+    "remindersHint": "Obligations en attente ou partielles — contactez votre tresorier si vous avez besoin d'aide.",
+    "historyTitle": "Historique des contributions",
+    "historyHint": "Votre dossier personnel, du plus recent au plus ancien.",
+    "noHistory": "Aucune entree pour le moment.",
+    "viewReceipt": "Voir le recu",
+    "backToDashboard": "Retour au tableau de bord",
+    "exportCsv": "Telecharger CSV",
+    "exportPdf": "Telecharger PDF",
+    "exporting": "Preparation…",
+    "exportSuccess": "Telechargement demarre",
+    "stats": {
+      "contributed": "Total contribue",
+      "outstanding": "Solde restant"
+    },
+    "ministry": {
+      "choir": "Chorale",
+      "protocol": "Protocol",
+      "both": "Les deux ministeres"
+    },
+    "status": {
+      "paid": "Paye",
+      "partial": "Partiel",
+      "unpaid": "En attente",
+      "waived": "Dispense"
+    }
+  },
+  "financeStewardship": {
+    "title": "Stewardship financier",
+    "subtitle": "Contributions et budgets selon le ministere. La visibilite suit vos permissions de comite.",
+    "unauthorized": "Vous n'avez pas acces au stewardship financier.",
+    "loading": "Chargement du resume financier…",
+    "loadError": "Impossible de charger les donnees financieres.",
+    "tabs": { "choir": "Chorale", "protocol": "Protocol" },
+    "stats": {
+      "balance": "Solde du ministere",
+      "compliance": "Conformite des contributions",
+      "unpaid": "Solde restant",
+      "unpaidMembers": "Membres avec solde"
+    },
+    "recentTransactions": "Transactions recentes",
+    "recentTransactionsHint": "Transactions approuvees du ministere dans votre perimetre.",
+    "outstandingTitle": "Contributions en attente",
+    "outstandingHint": "Suivi pastoral — pas de mesure punitive.",
+    "budgetsTitle": "Sante budgetaire",
+    "overBudget": "Depassement budget",
+    "noTransactions": "Aucune transaction dans le perimetre.",
+    "noTransactionsHint": "Les transactions du ministere apparaitront ici une fois enregistrees.",
+    "noOutstanding": "Aucune contribution en attente.",
+    "noOutstandingHint": "Tous les membres suivis sont a jour.",
+    "pendingApprovalsTitle": "Approbations en attente",
+    "pendingApprovalsHint": "Validez les depenses avant qu'elles affectent les soldes.",
+    "noPendingApprovals": "Aucune transaction en attente",
+    "noPendingApprovalsHint": "Les depenses a valider apparaitront ici.",
+    "noBudgetsTitle": "Aucun budget configure",
+    "noBudgetsHint": "Les budgets du ministere apparaitront une fois definis.",
+    "approve": "Approuver",
+    "reject": "Rejeter",
+    "approvalFailed": "Impossible de mettre a jour l'approbation.",
+    "approvalStatus": {
+      "APPROVED": "Approuve",
+      "PENDING": "En attente",
+      "REJECTED": "Rejete"
+    },
+    "exportCsv": "Exporter CSV",
+    "exportPdf": "Exporter PDF",
+    "exporting": "Export en cours…",
+    "exportSuccess": "Export telecharge",
+    "columns": {
+      "date": "Date",
+      "type": "Type",
+      "amount": "Montant",
+      "member": "Membre",
+      "period": "Periode",
+      "amountDue": "Du",
+      "status": "Statut",
+      "approval": "Approbation",
+      "actions": "Actions"
+    }
+  },
+  "governanceAdmin": {
+    "title": "Gouvernance des comites",
+    "subtitle": "Affectez les roles de comite protocol et chorale. Les permissions s'appliquent a la prochaine connexion.",
+    "tabs": {
+      "protocol": "Ministere protocol",
+      "choir": "Chorale"
+    },
+    "assignTitle": "Affecter un membre de comite",
+    "assignDescription": "Selectionnez un membre et un role. Les affectations existantes pour le meme role sont mises a jour.",
+    "memberLabel": "Membre",
+    "memberPlaceholder": "Choisir un membre…",
+    "roleLabel": "Role de comite",
+    "rolePlaceholder": "Choisir un role…",
+    "assignAction": "Enregistrer l'affectation",
+    "assigning": "Enregistrement…",
+    "assignSuccess": "Affectation de comite enregistree.",
+    "assignFailed": "Impossible d'enregistrer l'affectation.",
+    "assignValidation": "Selectionnez un membre et un role.",
+    "rolesTitle": "Roles de comite",
+    "rolesDescription": "Roles definis pour ce ministere (seed ou configuration admin).",
+    "noPermissions": "Aucune permission configuree",
+    "assignmentsTitle": "Affectations actuelles",
+    "assignmentsDescription": "Membres actifs de comite et leurs roles de gouvernance.",
+    "noAssignments": "Affectez des membres aux roles de comite pour activer la gouvernance.",
+    "noAssignmentsTitle": "Aucune affectation pour le moment",
+    "emptyRolesTitle": "Aucun role de comite configure",
+    "emptyRolesDescription": "Configurez les roles pour ce ministere avant d'affecter des membres.",
+    "loading": "Chargement…",
+    "columns": {
+      "member": "Membre",
+      "role": "Role",
+      "ministry": "Ministere"
+    }
+  },
+  "operational": {
+    "title": "Centre operationnel",
+    "subtitle": "Resume executif pour l'autorite {role}. Ouvrez presence ou couverture pour le detail.",
+    "loading": "Chargement du resume operationnel…",
+    "loadError": "Impossible de charger le tableau operationnel.",
+    "unauthorized": "Vous n'avez pas les permissions operationnelles requises.",
+    "openAttendance": "Gouvernance de presence",
+    "openCoverage": "Gestion de couverture",
+    "detailTitle": "Flux operationnels",
+    "detailHint": "Marquez la presence, resolvez les escalades et gerez la couverture dans les espaces dedies.",
+    "choirSummaryTitle": "Operations chorales",
+    "choirSummaryHint": "Les outils choraux sont dans l'espace presence.",
+    "choirUseAttendance": "Utilisez l'espace presence pour le marquage et les resumes choraux.",
+    "roles": {
+      "president": "President protocol",
+      "coordinator": "Coordinateur protocol",
+      "team-head": "Chef d'equipe protocol",
+      "choir-leader": "Leader operations chorales"
+    },
+    "stats": {
+      "activeTeams": "Equipes actives",
+      "escalated": "Cas escalades",
+      "pendingReplacements": "Remplacements en attente",
+      "disciplineRisk": "Risques discipline",
+      "readinessWarnings": "Alertes preparation",
+      "teams": "Vos equipes",
+      "pendingAbsences": "Absences en attente"
     }
   },
   "events": {
@@ -55,6 +236,7 @@
       "weekTitle": "Vue hebdomadaire",
       "agendaTitle": "Vue agenda",
       "noEvents": "Aucun evenement dans cette periode.",
+      "emptyTitle": "Aucun evenement planifie",
       "more": "plus"
     },
     "actions": {
@@ -85,11 +267,13 @@
       "role": "Role",
       "assignMember": "Affecter membre",
       "autoAssign": "Affectation auto",
+      "autoCountLabel": "Nombre",
       "poolTitle": "Pool de rotation",
       "poolSubtitle": "Utilisez les candidats de rotation pour remplir les quotas.",
       "noPool": "Aucun candidat de rotation disponible.",
       "currentTitle": "Affectations actuelles",
-      "none": "Aucune affectation pour le moment."
+      "none": "Aucune affectation pour le moment.",
+      "noneTitle": "Aucune affectation pour le moment"
     },
     "table": {
       "day": "Jour",
@@ -139,6 +323,280 @@
       "MONTHLY": "Mensuel"
     }
   },
+  "attendance": {
+    "title": "Gouvernance de presence",
+    "subtitle": "Marquez la presence operationnelle, validez les excuses et suivez la fiabilite.",
+    "loading": "Chargement des donnees de presence...",
+    "markFailed": "Impossible d'enregistrer la presence.",
+    "bulkFailed": "Impossible de marquer en masse.",
+    "tabs": {
+      "marking": "Marquer presence",
+      "teamHead": "Suivi chef d'equipe",
+      "coordinator": "Suivi coordinateur",
+      "president": "Suivi president",
+      "choir": "Presence chorale"
+    },
+    "markingFlow": {
+      "sectionTitle": "Marquer la presence",
+      "sectionHint": "Choisissez un flux — aujourd'hui, excuses ou historique membre.",
+      "today": "Aujourd'hui",
+      "excused": "Excuses",
+      "history": "Historique",
+      "noExcusedTitle": "Aucune excuse en attente",
+      "noExcusedDescription": "Les absences excusees en attente de revue apparaitront ici.",
+      "noHistoryTitle": "Selectionnez un membre",
+      "noHistoryDescription": "Ouvrez l'onglet Aujourd'hui, choisissez un evenement, puis un membre pour voir l'historique."
+    },
+    "eventPicker": {
+      "title": "Evenements a venir",
+      "subtitle": "Selectionnez un culte ou une repetition pour marquer la presence.",
+      "empty": "Aucun evenement prevu dans les 30 prochains jours.",
+      "emptyTitle": "Rien a marquer pour le moment"
+    },
+    "roster": {
+      "title": "Liste affectee",
+      "subtitleActive": "{count} membres affectes a cet evenement.",
+      "subtitleIdle": "Choisissez un evenement pour charger la liste.",
+      "selectEvent": "Selectionnez un evenement pour commencer.",
+      "selectEventTitle": "Choisissez un evenement",
+      "empty": "Aucun membre affecte a cet evenement."
+    },
+    "table": {
+      "member": "Membre",
+      "status": "Statut",
+      "score": "Fiabilite",
+      "actions": "Actions",
+      "notMarked": "Non marque",
+      "event": "Evenement",
+      "reason": "Raison",
+      "when": "Date"
+    },
+    "actions": {
+      "markAllPresent": "Tout marquer present",
+      "present": "Present",
+      "late": "En retard",
+      "excused": "Excuse",
+      "unexcused": "Non excuse",
+      "replacement": "Remplacement",
+      "voluntary": "Volontaire"
+    },
+    "status": {
+      "ATTENDED": "Present",
+      "LATE": "En retard",
+      "EXCUSED_ABSENCE": "Absence excusee",
+      "UNEXCUSED_ABSENCE": "Absence non excusee",
+      "REPLACEMENT_SERVED": "Remplacement servi",
+      "VOLUNTARY_EXTRA_SERVICE": "Service volontaire extra"
+    },
+    "excuseReview": {
+      "title": "Revue des excuses",
+      "subtitle": "Approuvez, rejetez ou escaladez les absences excusees.",
+      "noReason": "Aucune raison fournie",
+      "approve": "Approuver",
+      "reject": "Rejeter",
+      "escalate": "Escalader"
+    },
+    "analytics": {
+      "title": "Analyses de presence",
+      "subtitle": "Signaux operationnels du ministere.",
+      "total": "Total enregistrements",
+      "excusedRatio": "Ratio excuses",
+      "voluntary": "Service volontaire",
+      "replacements": "Remplacements servis"
+    },
+    "teamHead": {
+      "title": "Tableau chef d'equipe",
+      "empty": "Aucun risque de presence pour vos equipes.",
+      "teamsTitle": "Vos equipes",
+      "memberCount": "{count} membres"
+    },
+    "coordinator": {
+      "title": "Tableau coordinateur",
+      "empty": "Aucun risque operationnel de presence.",
+      "readiness": "{count} alertes de preparation au culte",
+      "overload": "Alertes surcharge",
+      "assignments": "affectations officielles"
+    },
+    "president": {
+      "title": "Tableau president",
+      "empty": "Aucun cas escalade au niveau ministere.",
+      "disciplineRisk": "Signaux de discipline",
+      "voluntary": "Contributions volontaires",
+      "pendingReplacements": "Remplacements en attente",
+      "trendTitle": "Tendance (6 mois)",
+      "trendPresent": "{count} presents",
+      "trendAbsent": "{count} absents"
+    },
+    "choir": {
+      "title": "Presence chorale",
+      "subtitle": "Repetitions et cultes du choeur.",
+      "totalMarked": "Marques",
+      "excused": "Excuses",
+      "unexcused": "Non excuses",
+      "lateness": "Retards",
+      "pendingReview": "En attente"
+    },
+    "discipline": {
+      "title": "Recommandations discipline",
+      "subtitle": "Revue pastorale suggeree.",
+      "createCase": "Ouvrir un dossier discipline",
+      "createFailed": "Impossible de creer le dossier discipline."
+    },
+    "weights": {
+      "title": "Poids de notation de presence",
+      "subtitle": "Configurer la fiabilite ponderee par statut operationnel.",
+      "save": "Enregistrer les poids",
+      "saving": "Enregistrement...",
+      "saved": "Poids mis a jour.",
+      "saveFailed": "Impossible d'enregistrer les poids."
+    },
+    "memberHistory": {
+      "title": "Historique de presence",
+      "subtitle": "Fiabilite et service volontaire.",
+      "empty": "Aucun historique.",
+      "lateness": "{count} retards",
+      "voluntary": "{count} services volontaires"
+    },
+    "scoreBands": {
+      "excellent": "Excellent",
+      "good": "Bon",
+      "danger": "Attention"
+    },
+    "markDialog": {
+      "excusedTitle": "Absence excusee — {member}",
+      "unexcusedTitle": "Absence non excusee — {member}",
+      "lateTitle": "Retard — {member}",
+      "replacementTitle": "Remplacement — {member}",
+      "voluntaryTitle": "Service volontaire — {member}",
+      "reasonType": "Categorie",
+      "notes": "Explication",
+      "evidenceUrl": "Lien preuve",
+      "evidenceHint": "Lien optionnel vers un document ou message pour revue pastorale.",
+      "lateMinutes": "Minutes de retard",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "replacementConfirm": "Confirmez que ce membre a servi en remplacement pour cet evenement.",
+      "voluntaryConfirm": "Confirmez le service volontaire extra — cela ne compte pas comme affectation officielle."
+    },
+    "excuseReasons": {
+      "illness": "Maladie",
+      "travel": "Voyage",
+      "work_school": "Travail ou ecole",
+      "emergency": "Urgence",
+      "family_issue": "Famille",
+      "approved_leave": "Conge approuve",
+      "unavoidable_conflict": "Conflit inevitable",
+      "unknown": "Inconnu"
+    },
+    "panels": {
+      "escalations": "Escalades",
+      "pendingAbsences": "Absences en attente",
+      "escalated": "Escalade",
+      "none": "Aucun"
+    }
+  },
+  "coverage": {
+    "title": "Gestion de couverture",
+    "subtitle": "Echanges, remplacements, preparation culte et continuite operationnelle.",
+    "loading": "Chargement...",
+    "actionFailed": "Action impossible pour le moment.",
+    "tabs": {
+      "swaps": "Echanges",
+      "replacements": "Remplacements",
+      "teamHead": "Suivi chef d'equipe",
+      "coordinator": "Suivi coordinateur"
+    },
+    "analytics": {
+      "title": "Analyses couverture",
+      "subtitle": "Signaux de continuite operationnelle.",
+      "swaps": "Echanges ce mois",
+      "replacements": "Remplacements ce mois",
+      "voluntary": "Service volontaire",
+      "unresolved": "Echanges non resolus"
+    },
+    "readiness": {
+      "title": "Preparation culte",
+      "subtitle": "Services a venir et effectifs.",
+      "status": {
+        "FULLY_READY": "Pret",
+        "REPLACEMENT_PENDING": "Remplacement en attente",
+        "ATTENDANCE_RISK": "Risque presence",
+        "STAFFING_SHORTAGE": "Effectif insuffisant",
+        "OPERATIONAL_DANGER": "Danger operationnel"
+      }
+    },
+    "swaps": {
+      "title": "Demandes d'echange",
+      "subtitle": "Echanges mutuels en attente.",
+      "empty": "Aucun echange."
+    },
+    "replacements": {
+      "title": "Demandes de remplacement",
+      "subtitle": "Couverture volontaire, officielle et urgente.",
+      "empty": "Aucun remplacement.",
+      "noCover": "Pas de remplacant"
+    },
+    "teamHead": {
+      "title": "Tableau chef d'equipe",
+      "empty": "Aucun probleme de couverture."
+    },
+    "coordinator": {
+      "title": "Tableau coordinateur",
+      "empty": "Aucun probleme actif."
+    },
+    "fairness": {
+      "title": "Alertes equite",
+      "subtitle": "Surcharge et desequilibres."
+    },
+    "table": {
+      "event": "Evenement",
+      "members": "Membres",
+      "status": "Statut",
+      "type": "Type",
+      "actions": "Actions"
+    },
+    "status": {
+      "REQUESTED": "Demande",
+      "TARGET_ACCEPTED": "Accepte",
+      "TARGET_REJECTED": "Refuse",
+      "LEADER_PENDING": "En revue",
+      "APPROVED": "Approuve",
+      "REJECTED": "Rejete",
+      "FINALIZED": "Finalise",
+      "CANCELLED": "Annule"
+    },
+    "replacementStatus": {
+      "REQUESTED": "Demande",
+      "LEADER_PENDING": "En revue",
+      "APPROVED": "Approuve",
+      "REJECTED": "Rejete",
+      "FINALIZED": "Finalise"
+    },
+    "coverageType": {
+      "MUTUAL_SWAP": "Echange mutuel",
+      "VOLUNTARY_REPLACEMENT": "Volontaire",
+      "OFFICIAL_REPLACEMENT": "Officiel",
+      "EMERGENCY_REPLACEMENT": "Urgence"
+    },
+    "replacementKind": {
+      "VOLUNTARY": "Volontaire",
+      "LEADER_ASSIGNED": "Officiel",
+      "EMERGENCY": "Urgence"
+    },
+    "actions": {
+      "accept": "Accepter",
+      "decline": "Refuser",
+      "approve": "Approuver",
+      "reject": "Rejeter",
+      "finalize": "Finaliser",
+      "escalate": "Escalader"
+    },
+    "panels": {
+      "pendingSwaps": "Echanges en attente",
+      "pendingReplacements": "Remplacements en attente",
+      "none": "Aucun"
+    }
+  },
   "foundation": {
     "eyebrow": "Sprint 0",
     "title": "La fondation web est prete pour les sprints de production.",
@@ -158,17 +616,119 @@
   },
   "auth": {
     "title": "Connexion",
-    "subtitle": "Le sprint d'authentification ajoutera les refresh tokens, le RBAC et le durcissement de session.",
+    "subtitle": "Connectez-vous à la plateforme ministérielle de votre église pour consulter horaires, présences et actualités.",
     "email": "E-mail",
     "password": "Mot de passe",
     "submit": "Se connecter",
-    "hint": "Utilisez votre compte CMMS une fois que le Sprint 1 sera relie a l'authentification reelle.",
-    "invalidCredentials": "Identifiants invalides"
+    "submitting": "Connexion...",
+    "hint": "Les nouveaux membres peuvent s'inscrire et attendre l'approbation d'un responsable.",
+    "invalidCredentials": "Identifiants invalides",
+    "registerFailed": "L'inscription n'a pas pu être finalisée.",
+    "passwordHint": "Utilisez au moins 6 caractères.",
+    "showPassword": "Afficher",
+    "hidePassword": "Masquer",
+    "noAccount": "Nouveau sur la plateforme ?",
+    "haveAccount": "Vous avez déjà un compte ?",
+    "createAccount": "Créer un compte",
+    "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
+    "forgotPassword": "Mot de passe oublié ?",
+    "forgotPasswordTitle": "Réinitialisation",
+    "forgotPasswordDescription": "Nous vous aiderons bientôt à retrouver l'accès.",
+    "forgotPasswordPlaceholder": "La réinitialisation par e-mail arrive dans une prochaine version. Contactez votre responsable de ministère si vous avez besoin d'aide.",
+    "backToSignIn": "Retour à la connexion"
+  },
+  "onboarding": {
+    "signup": {
+      "eyebrow": "Rejoindre le ministère",
+      "pageTitle": "S'inscrire auprès de votre église",
+      "pageSubtitle": "Indiquez qui vous êtes et votre ministère. Un responsable examinera votre demande avant l'accès complet.",
+      "cardTitle": "Inscription au ministère",
+      "cardSubtitle": "Un parcours calme pour les membres de chorale et de protocol.",
+      "stepIndicator": "Étape {step} sur {total}",
+      "stepIdentityTitle": "À propos de vous",
+      "stepMinistryTitle": "Votre ministère",
+      "stepSecurityTitle": "Sécuriser votre compte",
+      "stepReviewTitle": "Vérifier et envoyer",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "phone": "Téléphone",
+      "phoneOptional": "Facultatif — aide les responsables à vous joindre.",
+      "ministryLabel": "Ministère",
+      "ministryChoir": "Chorale",
+      "ministryProtocol": "Protocol",
+      "ministryBoth": "Les deux ministères",
+      "ministryChoirDescription": "La chorale sert dans la louange par le chant, les répétitions et les offices programmés.",
+      "ministryProtocolDescription": "Le protocol accueille, guide et coordonne l'hospitalité pendant les offices.",
+      "ministryBothDescription": "Vous participez à la chorale et au protocol.",
+      "confirmPassword": "Confirmer le mot de passe",
+      "passwordMismatch": "Les mots de passe ne correspondent pas.",
+      "reviewName": "Nom",
+      "approvalExplanation": "Après envoi, un responsable examinera votre inscription. Vous pourrez vous connecter pour suivre le statut ; les outils opérationnels s'ouvriront après approbation.",
+      "back": "Retour",
+      "continue": "Continuer",
+      "submit": "Envoyer l'inscription",
+      "submitting": "Envoi...",
+      "haveAccount": "Déjà inscrit ?"
+    },
+    "pending": {
+      "eyebrow": "Inscription reçue",
+      "title": "Votre demande est en cours d'examen",
+      "greeting": "Merci, {name}.",
+      "body": "Votre inscription au ministère a bien été reçue. Les responsables l'examinent pour vous accorder le bon accès.",
+      "stepReview": "Un responsable examinera vos informations.",
+      "stepNotify": "Vous recevrez une notification lors de la décision.",
+      "stepAccess": "Une fois approuvé, vous pourrez consulter horaires, présences et actualités.",
+      "helpHint": "Pour toute aide, contactez votre responsable de chorale ou de protocol.",
+      "backToLogin": "Retour à la connexion"
+    },
+    "welcome": {
+      "title": "Bienvenue",
+      "welcomeChoirMember": "Bienvenue sur la plateforme de la chorale. Vos responsables vous assigneront prochaines répétitions et offices.",
+      "welcomeProtocolMember": "Bienvenue sur la plateforme du protocol. Vos responsables partageront affectations et coordination.",
+      "welcomeBothMember": "Bienvenue. Vous servez dans la chorale et le protocol — vos responsables vous guideront.",
+      "welcomeChoirLeader": "Bon retour. Consultez ici les opérations, présences et actualités de la chorale.",
+      "welcomeProtocolLeader": "Bon retour. Consultez ici les opérations, couverture et actualités du protocol.",
+      "welcomeCommittee": "Bienvenue. Vos outils de comité et indicateurs ministériels sont prêts.",
+      "welcomeSuperAdmin": "Bienvenue. Les outils d'administration système sont disponibles.",
+      "nextSteps": "Commencez par l'aperçu du tableau de bord. Les panneaux avancés apparaîtront selon vos responsabilités.",
+      "continue": "Continuer vers le tableau de bord",
+      "continuing": "Enregistrement..."
+    }
+  },
+  "members": {
+    "pending": {
+      "title": "Inscriptions en attente",
+      "subtitle": "Examinez les nouveaux membres avant d'accorder l'accès complet.",
+      "search": "Rechercher",
+      "ministryFilter": "Ministère",
+      "allMinistries": "Tous les ministères",
+      "ministryChoir": "Chorale",
+      "ministryProtocol": "Protocol",
+      "ministryBoth": "Les deux",
+      "name": "Nom",
+      "email": "E-mail",
+      "ministry": "Ministère",
+      "submitted": "Soumis",
+      "actions": "Actions",
+      "approve": "Approuver",
+      "reject": "Refuser",
+      "loading": "Chargement...",
+      "emptyTitle": "Aucune inscription en attente",
+      "emptyDescription": "Les nouvelles demandes apparaîtront ici.",
+      "actionFailed": "Impossible de mettre à jour le statut."
+    }
   },
   "dashboard": {
     "title": "Fondation du tableau de bord protege",
     "subtitle": "Cette page est protegee et prete pour les widgets du Sprint 3.",
     "memberTitle": "Tableau de bord membre",
+    "memberExcuseTitle": "Demander une absence excusee",
+    "memberExcuseDescription": "Soumettez une excuse pour une affectation a venir. Un responsable la validera.",
+    "memberExcuseAction": "Demander excuse",
+    "memberExcuseModalTitle": "Demande d'excuse — {event}",
+    "memberExcuseSubmit": "Envoyer",
+    "memberExcuseSubmitting": "Envoi...",
+    "memberExcuseFailed": "Impossible d'envoyer la demande d'excuse.",
     "leaderTitle": "Tableau de bord leader",
     "superAdminTitle": "Tableau de bord super admin",
     "loadingDashboard": "Chargement des donnees du tableau de bord...",
@@ -182,7 +742,7 @@
     "leaderUpcomingEventsHint": "Activites planifiees dans les 7 prochains jours.",
     "leaderPendingSwapsHint": "Demandes encore en attente de validation.",
     "leaderPendingReplacementsHint": "Remplacements qui doivent encore etre coordonnes.",
-    "leaderAttendanceHint": "Enregistrements de presence du mois en cours.",
+    "leaderAttendanceHint": "Fiabilite operationnelle ponderee du mois en cours.",
     "leaderDisciplineHint": "Dossiers disciplinaires encore ouverts.",
     "attendanceTrendTitle": "Tendance de presence",
     "attendanceTrendDescription": "Evolution recente de la presence sur les six derniers mois.",
@@ -191,6 +751,11 @@
     "upcomingEventsCardTitle": "Evenements a venir",
     "upcomingEventsCardDescription": "Les prochains services et engagements de ministere.",
     "noUpcomingEvents": "Aucun evenement a venir pour le moment.",
+    "noUpcomingEventsTitle": "Aucun evenement a venir",
+    "openEventsWorkspace": "Ouvrir l'espace evenements",
+    "noScheduleTitle": "Aucune affectation a venir",
+    "noNotificationsTitle": "Aucune notification",
+    "noContributionDataTitle": "Aucune contribution enregistree",
     "reliabilityTitle": "Indicateurs de fiabilite",
     "reliabilityDescription": "Niveaux de confiance bases sur la presence des membres.",
     "financeCardTitle": "Vue operationnelle",
@@ -265,6 +830,89 @@
       "present": "Present",
       "late": "En retard",
       "absent": "Absent"
+    },
+    "alerts": {
+      "title": "Alertes operationnelles",
+      "description": "Points d'attention priorises par urgence.",
+      "severity": {
+        "critical": "Critique",
+        "warning": "A surveiller",
+        "info": "Information"
+      }
+    },
+    "intelligence": {
+      "title": "Intelligence ministerielle",
+      "description": "Indicateurs operationnels par ministere.",
+      "activeMembers": "Membres actifs",
+      "attendanceRate": "Taux de presence",
+      "pendingReplacements": "Remplacements en attente",
+      "trend": "Tendance",
+      "ministryHealth": "Sante ministerielle",
+      "ministries": {
+        "choir": "Chorale",
+        "protocol": "Protocole",
+        "both": "Ministere partage"
+      },
+      "trendDirection": {
+        "up": "En amelioration",
+        "down": "En baisse",
+        "stable": "Stable"
+      },
+      "healthBand": {
+        "excellent": "Excellente sante operationnelle",
+        "good": "Bonne — surveiller les tendances",
+        "attention": "Necessite une attention pastorale"
+      }
+    },
+    "committee": {
+      "treasurerTitle": "Espace tresorier",
+      "treasurerDescription": "Contributions, soldes impayes et tendances financieres.",
+      "disciplineTitle": "Espace discipline",
+      "disciplineDescription": "Indicateurs de suivi pastoral — bienveillants, non punitifs.",
+      "secretaryTitle": "Espace secretaire",
+      "secretaryDescription": "Communications, evenements et archives ministerielles.",
+      "operationsTitle": "Espace responsable operations",
+      "operationsDescription": "Concerts, projets et planification operationnelle.",
+      "coordinatorTitle": "Centre de coordination protocole",
+      "coordinatorDescription": "Equipes, escalades, surcharge et equilibre des affectations.",
+      "presidentTitle": "Supervision president protocole",
+      "presidentDescription": "Indicateurs strategiques — pas de details operationnels.",
+      "choirLeaderTitle": "Espace chef de chorale",
+      "choirLeaderDescription": "Presence chorale et tendances de participation.",
+      "balance": "Solde",
+      "unpaidMembers": "Membres impayes",
+      "complianceRate": "Taux de conformite",
+      "openCases": "Dossiers ouverts",
+      "pastoralReview": "Suivi pastoral",
+      "repeatedLateness": "Retards repetes",
+      "upcomingEvents": "Evenements a venir",
+      "pendingSwaps": "Echanges en attente",
+      "voluntaryService": "Service volontaire",
+      "choirMarked": "Marques ce mois",
+      "readinessWarnings": "Alertes de preparation",
+      "activeTeams": "Equipes actives",
+      "escalatedCases": "Cas escalades",
+      "overloadAlerts": "Alertes de surcharge",
+      "pendingReplacements": "Remplacements en attente",
+      "ministryHealth": "Sante ministerielle",
+      "disciplineRisk": "Risque discipline",
+      "workloadImbalance": "Desequilibre de charge",
+      "overloadedMembers": "Membres surcharges",
+      "choirExcused": "Absences excusees",
+      "choirUnexcused": "Absences non excusees",
+      "yes": "Oui",
+      "no": "Non",
+      "healthBand": {
+        "excellent": "Excellent",
+        "good": "Bon",
+        "attention": "A surveiller"
+      }
+    },
+    "personal": {
+      "voluntaryService": "Service volontaire",
+      "replacements": "Remplacements servis",
+      "lateness": "Nombre de retards",
+      "contributionCompliance": "Conformite des contributions"
     },
     "governance": {
       "teamReliabilityTitle": "Fiabilite des equipes protocole",

@@ -36,6 +36,11 @@ export class ReplacementsController {
     );
   }
 
+  @Get(':id')
+  getOne(@Param('id') id: string) {
+    return this.replacementsService.findOne(id);
+  }
+
   @Post()
   create(
     @Body() dto: CreateReplacementDto,
@@ -44,10 +49,33 @@ export class ReplacementsController {
     return this.replacementsService.create(dto, user.sub);
   }
 
+  @Patch(':id/assign-cover')
+  assignCover(
+    @Param('id') id: string,
+    @Body('coverMemberId') coverMemberId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.replacementsService.assignCover(id, coverMemberId, user.sub);
+  }
+
   @Patch(':id/approve')
   @RequirePermissions(PERMISSIONS.SWAP_MANAGE)
-  approve(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    return this.replacementsService.approve(id, user.sub);
+  approve(
+    @Param('id') id: string,
+    @Body('notes') notes: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.replacementsService.approve(id, user.sub, notes);
+  }
+
+  @Patch(':id/reject')
+  @RequirePermissions(PERMISSIONS.SWAP_MANAGE)
+  reject(
+    @Param('id') id: string,
+    @Body('notes') notes: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.replacementsService.reject(id, user.sub, notes);
   }
 
   @Patch(':id/finalize')

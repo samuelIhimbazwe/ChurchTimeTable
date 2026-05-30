@@ -5,8 +5,11 @@ import '../widgets/auth_gate.dart';
 import '../widgets/app_shell.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/login_screen.dart';
+import '../../features/auth/screens/signup_screen.dart';
+import '../../features/auth/screens/pending_approval_screen.dart';
 import '../../features/dashboard/screens/leader_dashboard_screen.dart';
 import '../../features/dashboard/screens/member_dashboard_screen.dart';
+import '../../features/dashboard/screens/operational_dashboard_screen.dart';
 import '../../features/events/screens/event_calendar_screen.dart';
 import '../../features/attendance/screens/attendance_screen.dart';
 import '../../features/swaps/screens/swap_list_screen.dart';
@@ -20,15 +23,20 @@ import '../../features/choir/screens/choir_rotation_screen.dart';
 import '../../features/finance/screens/budget_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
 import '../../features/settings/screens/language_settings_screen.dart';
+import '../../features/coverage/screens/coverage_screen.dart';
 
 class AppRouter {
   static const splash = '/';
   static const login = '/login';
+  static const signup = '/signup';
+  static const pendingApproval = '/pending-approval';
   static const notFound = '/404';
   static const memberDashboard = '/member';
   static const leaderDashboard = '/leader';
+  static const operational = '/operational';
   static const calendar = '/calendar';
   static const attendance = '/attendance';
+  static const coverage = '/coverage';
   static const swaps = '/swaps';
   static const replacements = '/replacements';
   static const discipline = '/discipline';
@@ -44,11 +52,15 @@ class AppRouter {
   static final Set<String> _knownRoutes = {
     splash,
     login,
+    signup,
+    pendingApproval,
     notFound,
     memberDashboard,
     leaderDashboard,
+    operational,
     calendar,
     attendance,
+    coverage,
     swaps,
     replacements,
     discipline,
@@ -78,6 +90,10 @@ class AppRouter {
     AuthState auth, {
     String? redirectRoute,
   }) {
+    if (auth.isPendingApproval) {
+      return pendingApproval;
+    }
+
     final normalized = redirectRoute == null ? null : _normalizePath(redirectRoute);
     if (normalized != null &&
         normalized != login &&
@@ -89,7 +105,9 @@ class AppRouter {
   }
 
   static bool requiresAuth(String routeName) =>
-      routeName != login && routeName != notFound;
+      routeName != login &&
+      routeName != signup &&
+      routeName != notFound;
 
   static List<Route<dynamic>> generateInitialRoutes(String initialRouteName) {
     return [
@@ -105,16 +123,24 @@ class AppRouter {
     switch (routeName) {
       case login:
         return l10n.auth_sign_in_action;
+      case signup:
+        return l10n.onboarding_signup_title;
+      case pendingApproval:
+        return l10n.onboarding_pending_title;
       case notFound:
         return l10n.error_not_found;
       case memberDashboard:
         return l10n.dashboard_member_title;
       case leaderDashboard:
         return l10n.dashboard_leader_title;
+      case operational:
+        return l10n.operational_title;
       case calendar:
         return l10n.nav_calendar;
       case attendance:
         return l10n.nav_attendance;
+      case coverage:
+        return l10n.nav_coverage;
       case swaps:
         return l10n.nav_swaps;
       case replacements:
@@ -165,14 +191,22 @@ class AppRouter {
     switch (settings.name) {
       case login:
         return _page(const LoginScreen(), routeName: login);
+      case signup:
+        return _page(const SignupScreen(), routeName: signup);
+      case pendingApproval:
+        return _page(const PendingApprovalScreen(), routeName: pendingApproval);
       case memberDashboard:
         return _page(const MemberDashboardScreen(), routeName: memberDashboard);
       case leaderDashboard:
         return _page(const LeaderDashboardScreen(), routeName: leaderDashboard);
+      case operational:
+        return _page(const OperationalDashboardScreen(), routeName: operational);
       case calendar:
         return _page(const EventCalendarScreen(), routeName: calendar);
       case attendance:
         return _page(const AttendanceScreen(), routeName: attendance);
+      case coverage:
+        return _page(const CoverageScreen(), routeName: coverage);
       case swaps:
         return _page(const SwapListScreen(), routeName: swaps);
       case replacements:

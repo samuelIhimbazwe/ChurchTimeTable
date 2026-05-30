@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { EventType } from '@prisma/client';
+import { EventType, MinistryScope, Prisma } from '@prisma/client';
 import PDFDocument from 'pdfkit';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -7,12 +7,21 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ReportsService {
   constructor(private prisma: PrismaService) {}
 
-  async attendanceSummary(from?: string, to?: string) {
-    const where: { createdAt?: { gte?: Date; lte?: Date } } = {};
+  async attendanceSummary(from?: string, to?: string, ministryScope?: string) {
+    const where: Prisma.AttendanceWhereInput = {};
     if (from || to) {
       where.createdAt = {};
       if (from) where.createdAt.gte = new Date(from);
       if (to) where.createdAt.lte = new Date(to);
+    }
+    if (ministryScope && ministryScope !== 'ALL') {
+      const scope = ministryScope as MinistryScope;
+      where.event = {
+        ministryScope:
+          scope === MinistryScope.BOTH
+            ? MinistryScope.BOTH
+            : { in: [scope, MinistryScope.BOTH] },
+      };
     }
 
     const records = await this.prisma.attendance.findMany({ where });
@@ -28,8 +37,12 @@ export class ReportsService {
     };
   }
 
-  async disciplineSummary() {
-    const cases = await this.prisma.disciplineCase.findMany();
+  async disciplineSummary(ministryScope?: string) {
+    const where: Prisma.DisciplineCaseWhereInput = {};
+    if (ministryScope && ministryScope !== 'ALL') {
+      where.ministry = ministryScope as MinistryScope;
+    }
+    const cases = await this.prisma.disciplineCase.findMany({ where });
     const byStage: Record<string, number> = {};
     for (const c of cases) {
       byStage[c.stage] = (byStage[c.stage] ?? 0) + 1;

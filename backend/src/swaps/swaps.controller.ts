@@ -38,6 +38,11 @@ export class SwapsController {
     );
   }
 
+  @Get(':id')
+  getOne(@Param('id') id: string) {
+    return this.swapsService.findOne(id);
+  }
+
   @Post()
   request(
     @Body() dto: CreateSwapDto,
@@ -65,6 +70,22 @@ export class SwapsController {
     @CurrentUser() user: JwtPayload,
   ) {
     return this.swapsService.leaderApprove(id, user.sub, notes);
+  }
+
+  @Patch(':id/reject')
+  @RequirePermissions(PERMISSIONS.SWAP_MANAGE)
+  reject(
+    @Param('id') id: string,
+    @Body('notes') notes: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.swapsService.reject(id, user.sub, notes);
+  }
+
+  @Patch(':id/cancel')
+  cancel(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    if (!user.memberId) throw new Error('Member profile required');
+    return this.swapsService.cancel(id, user.memberId, user.sub);
   }
 
   @Patch(':id/finalize')

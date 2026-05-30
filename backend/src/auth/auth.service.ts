@@ -13,11 +13,18 @@ import { ROLES } from '../common/constants/roles';
 import { MemberStatus } from '@prisma/client';
 import { PermissionsResolver } from './permissions.resolver';
 import { durationToMs } from './auth.constants';
+import {
+  AccountInactiveException,
+  AuthConflictException,
+  AuthUnauthorizedException,
+} from '../common/exceptions/auth.exception';
 
 export interface AuthTokenResponse {
   accessToken: string;
   tokenType: 'Bearer';
   expiresIn: string;
+  refreshToken?: string;
+  refreshTokenExpiresAt?: string;
 }
 
 interface AuthSessionResult {
@@ -40,7 +47,7 @@ export class AuthService {
       where: { email: dto.email },
     });
     if (existing) {
-      throw new ConflictException('Email already registered');
+      throw new AuthConflictException('EMAIL_ALREADY_REGISTERED');
     }
 
     const memberRole = await this.prisma.role.findUnique({
@@ -55,6 +62,7 @@ export class AuthService {
       data: {
         email: dto.email,
         passwordHash,
+        preferredLanguage: dto.preferredLanguage ?? 'rw',
         member: {
           create: {
             firstName: dto.firstName,
@@ -62,6 +70,7 @@ export class AuthService {
             phone: dto.phone,
             ministry: dto.ministry ?? 'CHOIR',
             status: MemberStatus.PENDING,
+            onboardingCompleted: false,
           },
         },
         userRoles: { create: { roleId: memberRole.id } },
@@ -75,20 +84,31 @@ export class AuthService {
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
+      include: { member: true },
     });
-    if (!user || !user.isActive) {
-      throw new UnauthorizedException('Invalid credentials');
+    if (!user) {
+      throw new AuthUnauthorizedException('INVALID_CREDENTIALS');
+    }
+    if (!user.isActive) {
+      throw new AccountInactiveException('ACCOUNT_INACTIVE');
     }
 
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!valid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new AuthUnauthorizedException('INVALID_CREDENTIALS');
     }
 
     return this.issueSession(user.id, user.email);
   }
 
   async refresh(refreshToken: string) {
+    if (!refreshToken) {
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED',
+        messageKey: 'INVALID_SESSION',
+      });
+    }
+
     const payload = await this.verifyRefreshToken(refreshToken);
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
@@ -108,12 +128,18 @@ export class AuthService {
       !user.refreshTokenExpiresAt ||
       user.refreshTokenExpiresAt.getTime() <= Date.now()
     ) {
-      throw new UnauthorizedException('Invalid session');
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED',
+        messageKey: 'INVALID_SESSION',
+      });
     }
 
     const matches = await bcrypt.compare(refreshToken, user.refreshTokenHash);
     if (!matches) {
-      throw new UnauthorizedException('Invalid session');
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED',
+        messageKey: 'INVALID_SESSION',
+      });
     }
 
     return this.issueSession(user.id, user.email);
@@ -151,7 +177,17 @@ export class AuthService {
         id: true,
         email: true,
         preferredLanguage: true,
-        member: true,
+        member: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            ministry: true,
+            status: true,
+            onboardingCompleted: true,
+          },
+        },
         userRoles: { include: { role: true } },
       },
     });
@@ -161,10 +197,31 @@ export class AuthService {
       await this.permissionsResolver.resolveForUser(userId);
 
     return {
-      ...user,
+      id: user.id,
+      email: user.email,
+      preferredLanguage: user.preferredLanguage,
+      member: user.member,
       roles,
       permissions,
+      onboardingCompleted: user.member?.onboardingCompleted ?? false,
     };
+  }
+
+  async completeOnboarding(userId: string) {
+    const member = await this.prisma.member.findFirst({
+      where: { userId },
+    });
+    if (!member) {
+      return { onboardingCompleted: false };
+    }
+
+    const updated = await this.prisma.member.update({
+      where: { id: member.id },
+      data: { onboardingCompleted: true },
+      select: { onboardingCompleted: true },
+    });
+
+    return updated;
   }
 
   private get accessTokenExpiresIn() {
@@ -191,7 +248,10 @@ export class AuthService {
         },
       );
     } catch (_) {
-      throw new UnauthorizedException('Invalid session');
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED',
+        messageKey: 'INVALID_SESSION',
+      });
     }
   }
 
@@ -229,6 +289,8 @@ export class AuthService {
         accessToken,
         tokenType: 'Bearer',
         expiresIn: this.accessTokenExpiresIn,
+        refreshToken,
+        refreshTokenExpiresAt: refreshTokenExpiresAt.toISOString(),
       },
       refreshToken,
       refreshTokenExpiresAt,

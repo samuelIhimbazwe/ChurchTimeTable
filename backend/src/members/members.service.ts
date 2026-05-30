@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { MemberStatus, MinistryScope, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import {
   isValidMemberTransition,
   UpdateMemberStatusDto,
@@ -14,6 +15,7 @@ export class MembersService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
+    private notifications: NotificationsService,
   ) {}
 
   async findAll(
@@ -76,6 +78,27 @@ export class MembersService {
       oldValue: { status: member.status },
       newValue: { status: dto.status },
     });
+
+    if (member.status === MemberStatus.PENDING && dto.status === MemberStatus.ACTIVE) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: member.userId },
+        select: { id: true },
+      });
+      if (user) {
+        await this.notifications.notifyMemberApproved(user.id);
+      }
+    } else if (
+      member.status === MemberStatus.PENDING &&
+      dto.status === MemberStatus.INACTIVE
+    ) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: member.userId },
+        select: { id: true },
+      });
+      if (user) {
+        await this.notifications.notifyMemberRejected(user.id);
+      }
+    }
 
     return updated;
   }

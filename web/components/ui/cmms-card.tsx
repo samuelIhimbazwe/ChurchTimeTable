@@ -18,17 +18,17 @@ export function CmmsCard({
   return (
     <section
       className={cn(
-        "rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow-sm)]",
+        "rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-xs)] sm:p-6",
         className,
       )}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 space-y-1">
-          <h2 className="text-lg font-semibold text-[var(--foreground)] break-words">
+          <h2 className="cmms-text-heading text-[var(--foreground)] break-words">
             {title}
           </h2>
           {description ? (
-            <p className="text-sm leading-6 text-[var(--muted-foreground)] break-words">
+            <p className="cmms-text-body text-[var(--muted-foreground)] break-words">
               {description}
             </p>
           ) : null}

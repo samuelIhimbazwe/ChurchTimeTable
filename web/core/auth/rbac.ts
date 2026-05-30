@@ -1,4 +1,8 @@
 import type { AuthProfile } from "@/core/api/types";
+import {
+  hasEffectivePermission,
+  hasOperationalLeaderDashboard,
+} from "@/core/auth/governance-permissions";
 
 export type DashboardExperience = "member" | "leader" | "super-admin";
 
@@ -28,7 +32,9 @@ export function hasPermission(profile: AuthProfile | null, permissions: string[]
     return false;
   }
 
-  return permissions.some((permission) => profile.permissions.includes(permission));
+  return permissions.some((permission) =>
+    hasEffectivePermission(profile.permissions, permission),
+  );
 }
 
 export function getDashboardExperience(
@@ -43,8 +49,8 @@ export function getDashboardExperience(
   }
 
   if (
-    profile.roles.some((role) => leaderRoles.has(role)) ||
-    hasPermission(profile, ["report:export", "event:write", "finance:read"])
+    hasOperationalLeaderDashboard(profile.permissions) ||
+    profile.roles.some((role) => leaderRoles.has(role))
   ) {
     return "leader";
   }

@@ -1,10 +1,11 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { SuperAdminGuard } from '../common/guards/super-admin.guard';
 import { SuperAdminOnly } from '../common/decorators/super-admin.decorator';
 
 @Controller('system')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, SuperAdminGuard)
 @SuperAdminOnly()
 export class SystemController {
   constructor(private prisma: PrismaService) {}

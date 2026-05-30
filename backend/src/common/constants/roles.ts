@@ -43,6 +43,20 @@ export const PERMISSIONS = {
   COMMITTEE_ROLE_MANAGE_SCOPE: 'committee.role.manage',
   COMMITTEE_MEMBER_MANAGE_SCOPE: 'committee.member.manage',
   PROTOCOL_OVERSIGHT_SCOPE: 'protocol.oversight',
+  PROTOCOL_TEAM_HEAD: 'protocol.team.head',
+  PROTOCOL_OPERATIONAL_MONITOR: 'protocol.operational.monitor',
+  PROTOCOL_ASSIGNMENT_OVERRIDE: 'protocol.assignment.override',
+  PROTOCOL_ATTENDANCE_MANAGE: 'protocol.attendance.manage',
+  PROTOCOL_FINANCE_VIEW: 'protocol.finance.view',
+  PROTOCOL_FINANCE_MANAGE: 'protocol.finance.manage',
+  PROTOCOL_FINANCE_APPROVE: 'protocol.finance.approve',
+  CHOIR_OVERSIGHT: 'choir.oversight',
+  CHOIR_OPERATIONS_MANAGE: 'choir.operations.manage',
+  CHOIR_ATTENDANCE_MANAGE: 'choir.attendance.manage',
+  CHOIR_FINANCE_VIEW: 'choir.finance.view',
+  CHOIR_FINANCE_MANAGE: 'choir.finance.manage',
+  CHOIR_FINANCE_APPROVE: 'choir.finance.approve',
+  MINISTRY_FINANCE_OVERSIGHT: 'ministry.finance.oversight',
 } as const;
 
 /** Choir operational bundle — president / legacy leader */

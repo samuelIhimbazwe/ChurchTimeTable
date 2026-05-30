@@ -8,6 +8,8 @@ export class PermissionsResolver {
   async resolveForUser(userId: string): Promise<{
     roles: string[];
     permissions: string[];
+    memberId?: string;
+    isActive: boolean;
   }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -26,7 +28,7 @@ export class PermissionsResolver {
     });
 
     if (!user) {
-      return { roles: [], permissions: [] };
+      return { roles: [], permissions: [], isActive: false };
     }
 
     const roles = user.userRoles.map((ur) => ur.role.name);
@@ -39,6 +41,10 @@ export class PermissionsResolver {
     ];
 
     if (user.member) {
+      const headTeams = await this.prisma.protocolServiceTeam.findMany({
+        where: { teamHeadId: user.member.id, status: 'ACTIVE' },
+        select: { id: true },
+      });
       const [choirAssignments, protocolAssignments] = await Promise.all([
         this.prisma.choirCommitteeMember.findMany({
           where: { memberId: user.member.id },
@@ -68,6 +74,10 @@ export class PermissionsResolver {
         ),
       ];
 
+      if (headTeams.length > 0) {
+        permissions.push('protocol.team.head');
+      }
+
       permissions.push(
         ...choirAssignments.flatMap((item) =>
           parsePermissions(item.role.permissionsJson),
@@ -79,6 +89,11 @@ export class PermissionsResolver {
       );
     }
 
-    return { roles, permissions: [...new Set(permissions)] };
+    return {
+      roles,
+      permissions: [...new Set(permissions)],
+      memberId: user.member?.id,
+      isActive: user.isActive,
+    };
   }
 }

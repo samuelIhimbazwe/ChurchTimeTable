@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 
 import { CmmsCard } from "@/components/ui/cmms-card";
+import { CmmsEmptyState } from "@/components/ui/cmms-empty-state";
 import { cn } from "@/core/utils/cn";
 
 export function DashboardStatCard({
@@ -26,16 +27,14 @@ export function DashboardStatCard({
   return (
     <div
       className={cn(
-        "rounded-[var(--radius-xl)] border border-[var(--border)] p-5 shadow-[var(--shadow-xs)]",
+        "rounded-[var(--radius-xl)] border border-[var(--border)] p-5 shadow-[var(--shadow-xs)] transition-shadow hover:shadow-[var(--shadow-sm)]",
         toneClass,
       )}
     >
-      <p className="text-sm font-medium text-[var(--muted-foreground)]">{label}</p>
-      <p className="mt-3 text-3xl font-semibold tracking-tight text-[var(--foreground)]">
-        {value}
-      </p>
+      <p className="cmms-text-label text-[var(--muted-foreground)]">{label}</p>
+      <p className="cmms-text-display mt-2 text-[var(--foreground)]">{value}</p>
       {description ? (
-        <p className="mt-2 text-sm leading-6 text-[var(--muted-foreground)]">
+        <p className="cmms-text-caption mt-2 text-[var(--muted-foreground)]">
           {description}
         </p>
       ) : null}
@@ -52,9 +51,7 @@ export function DashboardStateCard({
 }>) {
   return (
     <CmmsCard title={title}>
-      <div className="rounded-[var(--radius-xl)] border border-dashed border-[var(--border)] px-4 py-10 text-center text-sm leading-6 text-[var(--muted-foreground)]">
-        {message}
-      </div>
+      <CmmsEmptyState title={message} />
     </CmmsCard>
   );
 }

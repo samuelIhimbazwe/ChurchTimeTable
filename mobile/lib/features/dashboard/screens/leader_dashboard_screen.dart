@@ -9,7 +9,9 @@ import '../../../core/design/tokens/spacing.dart';
 import '../../../core/localization/l10n.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/routing/app_router.dart';
+import '../../../core/auth/governance_permissions.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../../core/models/dashboard_models.dart';
 import '../providers/dashboard_providers.dart';
 
 class LeaderDashboardScreen extends ConsumerWidget {
@@ -19,9 +21,10 @@ class LeaderDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final auth = ref.watch(authProvider);
-    final summaryAsync = auth.hasPermission('report:export')
+    final showLeaderKpis = auth.hasOperationalLeaderDashboard;
+    final summaryAsync = showLeaderKpis
         ? ref.watch(leaderDashboardProvider)
-        : const AsyncValue<Map<String, dynamic>>.data({});
+        : const AsyncValue<LeaderDashboardSummary?>.data(null);
 
     return Scaffold(
       appBar: AppBar(
@@ -63,7 +66,7 @@ class LeaderDashboardScreen extends ConsumerWidget {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: CmmsSpacing.sm),
-                    if (auth.hasPermission('report:export'))
+                    if (showLeaderKpis)
                       summaryAsync.when(
                         loading: () => Text(l10n.common_loading),
                         error: (_, __) => Text(l10n.error_network),
@@ -104,6 +107,7 @@ class LeaderDashboardScreen extends ConsumerWidget {
     AuthState auth,
     AppLocalizations l10n,
   ) {
+    final perms = auth.permissions;
     final tiles = <Widget>[];
 
     void add(CmmsMinistry ministry, String label, String route, bool show) {
@@ -117,6 +121,8 @@ class LeaderDashboardScreen extends ConsumerWidget {
       );
     }
 
+    add(CmmsMinistry.protocol, l10n.nav_operational, AppRouter.operational,
+        auth.hasOperationalLeaderDashboard);
     add(CmmsMinistry.events, l10n.nav_calendar, AppRouter.calendar,
         auth.hasPermission('event:read'));
     add(CmmsMinistry.general, l10n.nav_assignments, AppRouter.assignments,
@@ -124,7 +130,11 @@ class LeaderDashboardScreen extends ConsumerWidget {
     add(CmmsMinistry.choir, l10n.nav_choir_rotation, AppRouter.choirRotation,
         auth.hasPermission('assignment:write'));
     add(CmmsMinistry.protocol, l10n.nav_attendance, AppRouter.attendance,
-        auth.hasPermission('attendance:write'));
+        canMarkAttendance(perms) || hasProtocolTeamHead(perms));
+    add(CmmsMinistry.general, l10n.nav_coverage, AppRouter.coverage,
+        auth.hasPermission('swap:manage') ||
+            hasProtocolTeamHead(perms) ||
+            hasProtocolCoordination(perms));
     add(CmmsMinistry.general, l10n.nav_swaps, AppRouter.swaps,
         auth.hasPermission('swap:manage'));
     add(CmmsMinistry.general, l10n.nav_replacements, AppRouter.replacements,
@@ -146,13 +156,12 @@ class LeaderDashboardScreen extends ConsumerWidget {
 class _KpiGrid extends StatelessWidget {
   const _KpiGrid({required this.summary, required this.l10n});
 
-  final Map<String, dynamic> summary;
+  final LeaderDashboardSummary summary;
   final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
-    final attendanceRate = summary['attendanceRate'];
-    final finance = summary['financeSummary'] as Map<String, dynamic>?;
+    final finance = summary.raw['financeSummary'] as Map<String, dynamic>?;
     final balance = finance?['balance'];
 
     return GridView.extent(
@@ -166,42 +175,42 @@ class _KpiGrid extends StatelessWidget {
         CmmsCard(
           title: l10n.dashboard_kpi_upcoming_events,
           child: Text(
-            '${summary['upcomingEvents'] ?? 0}',
+            '${summary.upcomingEvents}',
             style: Theme.of(context).textTheme.headlineMedium,
           ),
         ),
         CmmsCard(
           title: l10n.dashboard_kpi_attendance_rate,
           child: Text(
-            attendanceRate != null ? '$attendanceRate%' : '—',
+            summary.attendanceRate != null ? '${summary.attendanceRate}%' : '—',
             style: Theme.of(context).textTheme.headlineMedium,
           ),
         ),
         CmmsCard(
           title: l10n.dashboard_kpi_pending_swaps,
           child: Text(
-            '${summary['pendingSwaps'] ?? 0}',
+            '${summary.pendingSwaps}',
             style: Theme.of(context).textTheme.headlineMedium,
           ),
         ),
         CmmsCard(
           title: l10n.dashboard_kpi_pending_replacements,
           child: Text(
-            '${summary['pendingReplacements'] ?? 0}',
+            '${summary.pendingReplacements}',
             style: Theme.of(context).textTheme.headlineMedium,
           ),
         ),
         CmmsCard(
           title: l10n.dashboard_kpi_active_discipline,
           child: Text(
-            '${summary['activeDiscipline'] ?? 0}',
+            '${summary.raw['activeDiscipline'] ?? 0}',
             style: Theme.of(context).textTheme.headlineMedium,
           ),
         ),
         CmmsCard(
           title: l10n.dashboard_kpi_sync_conflicts,
           child: Text(
-            '${summary['syncConflicts'] ?? 0}',
+            '${summary.raw['syncConflicts'] ?? 0}',
             style: Theme.of(context).textTheme.headlineMedium,
           ),
         ),

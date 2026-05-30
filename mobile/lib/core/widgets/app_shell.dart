@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../auth/governance_permissions.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../localization/l10n.dart';
 import '../routing/app_router.dart';
@@ -22,8 +23,10 @@ class AppShell extends ConsumerWidget {
     switch (routeName) {
       case AppRouter.memberDashboard:
       case AppRouter.leaderDashboard:
+      case AppRouter.operational:
       case AppRouter.calendar:
       case AppRouter.attendance:
+      case AppRouter.coverage:
       case AppRouter.swaps:
       case AppRouter.replacements:
       case AppRouter.discipline:
@@ -240,6 +243,13 @@ class AppShell extends ConsumerWidget {
 
     if (auth.isStaff) {
       add(
+        route: AppRouter.operational,
+        icon: Icons.dashboard_outlined,
+        selectedIcon: Icons.dashboard,
+        label: l10n.nav_operational,
+        show: hasOperationalLeaderDashboard(auth.permissions),
+      );
+      add(
         route: AppRouter.calendar,
         icon: Icons.calendar_month_outlined,
         selectedIcon: Icons.calendar_month,
@@ -265,7 +275,17 @@ class AppShell extends ConsumerWidget {
         icon: Icons.fact_check_outlined,
         selectedIcon: Icons.fact_check,
         label: l10n.nav_attendance,
-        show: auth.hasPermission('attendance:write'),
+        show: canMarkAttendance(auth.permissions) ||
+            hasProtocolTeamHead(auth.permissions),
+      );
+      add(
+        route: AppRouter.coverage,
+        icon: Icons.shield_outlined,
+        selectedIcon: Icons.shield,
+        label: l10n.nav_coverage,
+        show: auth.hasPermission('swap:manage') ||
+            hasProtocolTeamHead(auth.permissions) ||
+            hasProtocolCoordination(auth.permissions),
       );
       add(
         route: AppRouter.swaps,
@@ -330,6 +350,13 @@ class AppShell extends ConsumerWidget {
         icon: Icons.fact_check_outlined,
         selectedIcon: Icons.fact_check,
         label: l10n.nav_attendance,
+        show: true,
+      );
+      add(
+        route: AppRouter.coverage,
+        icon: Icons.shield_outlined,
+        selectedIcon: Icons.shield,
+        label: l10n.nav_coverage,
         show: true,
       );
       add(

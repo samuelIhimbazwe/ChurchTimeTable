@@ -11,17 +11,198 @@
   },
   "shell": {
     "menu": "Ibikubiyemo",
+    "navGroupToday": "Uyu munsi",
+    "navGroupPersonal": "Ministry yanjye",
+    "navGroupOperations": "Imikorere",
+    "navGroupStewardship": "Stewardship",
+    "navGroupGovernance": "Governance",
+    "navGroupAdmin": "Administration",
     "navDashboard": "Ikibaho",
     "navEvents": "Moteri y'ibyabaye",
+    "navAttendance": "Gukurikirana attendance",
+    "navCoverage": "Gucunga coverage",
+    "navOperational": "Operational center",
+    "navGovernance": "Committee governance",
+    "navPendingMembers": "Kwiyandikisha gutegereje",
+    "pendingMembersSummary": "Suzuma ucemeze abanyamuryango bashya.",
+    "navFinance": "Finance stewardship",
+    "navMyContributions": "Imisanzu yanjye",
+    "myContributionsSummary": "Amateka yawe y'imisanzu n'ibisabwa.",
     "navAdmin": "Admin console",
     "memberSummary": "Inshingano, attendance, notifications n'iterambere ry'imisanzu.",
     "leaderSummary": "Imikorere, trends za attendance, analytics za ministry n'ibimenyetso by'ubwitange.",
     "adminSummary": "Ubuzima bwa systeme, audit activity n'ibibazo bya sync.",
     "eventsSummary": "Gutegura kalendari, recurrence, assignments no kugenzura conflict.",
+    "attendanceSummary": "Gushyira attendance, excuses, escalations n'amanota y'ubwitange.",
+    "coverageSummary": "Swaps, replacements, readiness n'ubudahwema bw'imikorere.",
+    "operationalSummary": "Operational home ishingirwaho permissions za protocol na choir.",
+    "governanceSummary": "Shyira abanyamuryango mu nshingano za committee n'uburenganzira.",
+    "financeSummary": "Imisanzu, ingengo y'imari n'analytics zishingirwaho ministry.",
     "experience": {
       "member": "Aho umunyamuryango akorera",
       "leader": "Aho umuyobozi akorera",
       "super-admin": "Aho super admin akorera"
+    }
+  },
+  "myContributions": {
+    "eyebrow": "Stewardship yawe",
+    "title": "Imisanzu yanjye",
+    "subtitle": "Reba uko witabira n'ibyo ugomba. Aha ni ukwiyumvisha no gukurura — si guhanira.",
+    "loading": "Turimo gupakira imisanzu yawe…",
+    "loadError": "Ntitwashoboye gupakira amateka y'imisanzu yawe.",
+    "emptyTitle": "Nta misanzu yanditswe",
+    "emptyMessage": "Ministry iyo wanditse imisanzu cyangwa amafaranga, bizagaragara hano mu mucyo.",
+    "upToDateTitle": "Uri ku murongo",
+    "upToDateMessage": "Urakoze ku kwifatanya mu stewardship y'umuryango.",
+    "consistencyTitle": "Uwitabira",
+    "consistencyHint": "Uburyo ibyo wanditse byishyurwa buri gihe.",
+    "consistencyLabel": "Uburyo bwo kwishyura",
+    "consistencyDescription": "{paid} kuri {total} byishyuwe.",
+    "ministryTitle": "Ku ministry",
+    "ministryHint": "Ministries aho ufite ibikorwa byanditswe gusa.",
+    "ministryOutstanding": "{amount} bisigaye",
+    "ministryClear": "Byarangiye",
+    "remindersTitle": "Ibyibutsa byoroshye",
+    "remindersHint": "Ibyo utarishyura cyangwa byishyuwe igice — vugana na treasurer niba ukeneye ubufasha.",
+    "historyTitle": "Amateka y'imisanzu",
+    "historyHint": "Inyandiko yawe bwite, ibishya mbere.",
+    "noHistory": "Nta mateka arahari.",
+    "viewReceipt": "Reba receipt",
+    "backToDashboard": "Subira ku dashboard",
+    "exportCsv": "Kuramo CSV",
+    "exportPdf": "Kuramo PDF",
+    "exporting": "Turimo gutegura…",
+    "exportSuccess": "Kuramo byatangiye",
+    "stats": {
+      "contributed": "Byose wishyuye",
+      "outstanding": "Amafaranga asigaye"
+    },
+    "ministry": {
+      "choir": "Korali",
+      "protocol": "Protocol",
+      "both": "Ministries zombi"
+    },
+    "status": {
+      "paid": "Byishyuwe",
+      "partial": "Igice",
+      "unpaid": "Bisigaye",
+      "waived": "Byahagaritswe"
+    }
+  },
+  "financeStewardship": {
+    "title": "Finance stewardship",
+    "subtitle": "Imisanzu n'ingengo y'imari ku ministry. Uko ubona biterwa n'permissions za committee.",
+    "unauthorized": "Nta access ya finance stewardship ufite.",
+    "loading": "Turimo gupakira incamake y'imari…",
+    "loadError": "Ntibyashoboye gupakira amakuru y'imari.",
+    "tabs": { "choir": "Korali", "protocol": "Protocol" },
+    "stats": {
+      "balance": "Balance ya ministry",
+      "compliance": "Uko imisanzu ishishurwa",
+      "unpaid": "Amafaranga asigaye",
+      "unpaidMembers": "Abanyamuryango bafite balance"
+    },
+    "recentTransactions": "Transactions za vuba",
+    "recentTransactionsHint": "Transactions zemewe za ministry mu scope yawe.",
+    "outstandingTitle": "Imisanzu isigaye",
+    "outstandingHint": "Gukurikirana pastoral — si guhanira.",
+    "budgetsTitle": "Ubuzima bw'ingengo y'imari",
+    "overBudget": "Hejuru ya budget",
+    "noTransactions": "Nta transaction mu scope.",
+    "noTransactionsHint": "Transactions za ministry zizagaragara iyo zanditswe.",
+    "noOutstanding": "Nta misanzu isigaye.",
+    "noOutstandingHint": "Abanyamuryango bose bishyuye ibyo bateganyijwe.",
+    "pendingApprovalsTitle": "Byategereje kwemezwa",
+    "pendingApprovalsHint": "Suzuma expenses mbere yo gukora ku balance ya ministry.",
+    "noPendingApprovals": "Nta transaction itegereje kwemezwa",
+    "noPendingApprovalsHint": "Expenses nshya zizagaragara hano.",
+    "noBudgetsTitle": "Nta budgets zashyizweho",
+    "noBudgetsHint": "Ingengo y'imari izagaragara iyo abayobozi bazishyiraho.",
+    "approve": "Emeza",
+    "reject": "Wanga",
+    "approvalFailed": "Ntibyashoboye guhindura kwemezwa kwa transaction.",
+    "approvalStatus": {
+      "APPROVED": "Byemejwe",
+      "PENDING": "Bitegereje",
+      "REJECTED": "Byanze"
+    },
+    "exportCsv": "Export CSV",
+    "exportPdf": "Export PDF",
+    "exporting": "Turimo export…",
+    "exportSuccess": "Export yakuwe",
+    "columns": {
+      "date": "Itariki",
+      "type": "Ubwoko",
+      "amount": "Amafaranga",
+      "member": "Umunyamuryango",
+      "period": "Igihe",
+      "amountDue": "Agomba",
+      "status": "Imiterere",
+      "approval": "Kwemezwa",
+      "actions": "Ibikorwa"
+    }
+  },
+  "governanceAdmin": {
+    "title": "Committee governance",
+    "subtitle": "Shyiraho protocol na choir committee roles. Permissions zikora ku login ikurikira.",
+    "tabs": {
+      "protocol": "Protocol ministry",
+      "choir": "Choir"
+    },
+    "assignTitle": "Shyiraho umunyamuryango wa committee",
+    "assignDescription": "Hitamo umunyamuryango na role. Assignments ziriho z'iyo role zavugururwa.",
+    "memberLabel": "Umunyamuryango",
+    "memberPlaceholder": "Hitamo umunyamuryango…",
+    "roleLabel": "Committee role",
+    "rolePlaceholder": "Hitamo role…",
+    "assignAction": "Bika assignment",
+    "assigning": "Birimo kubikwa…",
+    "assignSuccess": "Committee assignment yabitswe.",
+    "assignFailed": "Ntibyashoboye kubika assignment.",
+    "assignValidation": "Hitamo umunyamuryango na role.",
+    "rolesTitle": "Committee roles",
+    "rolesDescription": "Roles zigenewe iyi ministry (seed cyangwa admin config).",
+    "noPermissions": "Nta permissions zashyizweho",
+    "assignmentsTitle": "Assignments ziriho",
+    "assignmentsDescription": "Abanyamuryango ba committee n'imikorere yabo ya governance.",
+    "noAssignments": "Shyiraho abanyamuryango ku committee roles kugira ngo governance ikore.",
+    "noAssignmentsTitle": "Nta assignment irahari",
+    "emptyRolesTitle": "Nta committee roles zashyizweho",
+    "emptyRolesDescription": "Shyiraho roles kuri iyi ministry mbere yo guha abanyamuryango.",
+    "loading": "Birimo gupakira…",
+    "columns": {
+      "member": "Umunyamuryango",
+      "role": "Role",
+      "ministry": "Ministry"
+    }
+  },
+  "operational": {
+    "title": "Operational center",
+    "subtitle": "Incamake y'ubuyobozi bwa {role}. Fungura attendance cyangwa coverage kugira ngo ubone ibisobanuro.",
+    "loading": "Birimo gupakira…",
+    "loadError": "Ntibishoboka gupakira operational dashboard.",
+    "unauthorized": "Nta permissions z'ubuyobozi ufite.",
+    "openAttendance": "Attendance governance",
+    "openCoverage": "Coverage management",
+    "detailTitle": "Imikorere y'ubuyobozi",
+    "detailHint": "Fungura attendance cyangwa coverage kugira ngo ukore imikorere y'ingenzi.",
+    "choirSummaryTitle": "Imikorere ya Korali",
+    "choirSummaryHint": "Ibikoresho bya Korali biri mu attendance workspace.",
+    "choirUseAttendance": "Koresha attendance workspace kugira ngo umark attendance ya Korali.",
+    "roles": {
+      "president": "Protocol president",
+      "coordinator": "Protocol coordinator",
+      "team-head": "Protocol team head",
+      "choir-leader": "Choir operations leader"
+    },
+    "stats": {
+      "activeTeams": "Amatsinda akora",
+      "escalated": "Ibyatevye imbere",
+      "pendingReplacements": "Replacements zitegereje",
+      "disciplineRisk": "Ibyago bya discipline",
+      "readinessWarnings": "Iburira rya readiness",
+      "teams": "Amatsinda yawe",
+      "pendingAbsences": "Absences zitegereje"
     }
   },
   "events": {
@@ -55,6 +236,7 @@
       "weekTitle": "Reba icyumweru",
       "agendaTitle": "Reba gahunda",
       "noEvents": "Nta event muri iki gihe.",
+      "emptyTitle": "Nta event yateguwe",
       "more": "izindi"
     },
     "actions": {
@@ -85,11 +267,16 @@
       "role": "Role",
       "assignMember": "Shyiraho umunyamuryango",
       "autoAssign": "Auto assign",
+      "autoCountLabel": "Umubare",
       "poolTitle": "Rotation pool",
       "poolSubtitle": "Koresha rotation pool kugira ngo wuzuze quotas vuba.",
       "noPool": "Nta rotation pool iboneka kuri iyi event.",
+      "noPoolDescription": "Teganya choir rotation cyangwa shyiraho abanyamuryango ukoresheje ID.",
+      "assigning": "Birimo gushyirwaho...",
+      "autoAssigning": "Auto assign birimo...",
       "currentTitle": "Assignments ziriho",
-      "none": "Nta assignment irahari."
+      "none": "Nta assignment irahari.",
+      "noneTitle": "Nta assignment irahari"
     },
     "table": {
       "day": "Umunsi",
@@ -139,6 +326,338 @@
       "MONTHLY": "Buri kwezi"
     }
   },
+  "attendance": {
+    "title": "Gukurikirana attendance",
+    "subtitle": "Shyira attendance y'imikorere, genzura excuses, escalations n'ubwitange.",
+    "loading": "Turimo gupakira attendance...",
+    "markFailed": "Ntitwashoboye kubika attendance.",
+    "bulkFailed": "Ntitwashoboye gushyira attendance yose icyarimwe.",
+    "tabs": {
+      "marking": "Gushyira attendance",
+      "teamHead": "Kurikirana Team Head",
+      "coordinator": "Kurikirana Coordinator",
+      "president": "Kurikirana President",
+      "choir": "Attendance ya choir"
+    },
+    "markingFlow": {
+      "sectionTitle": "Gushyira attendance",
+      "sectionHint": "Hitamo inzira — uyu munsi, excuses, cyangwa amateka y'umunyamuryango.",
+      "today": "Uyu munsi",
+      "excused": "Excused",
+      "history": "Amateka",
+      "noExcusedTitle": "Nta excuse itegereje",
+      "noExcusedDescription": "Absences zexcused zitegereje review zizagaragara hano.",
+      "noHistoryTitle": "Hitamo umunyamuryango",
+      "noHistoryDescription": "Fungura tab ya Uyu munsi, hitamo event, hanyuma ukande izina ry'umunyamuryango."
+    },
+    "eventPicker": {
+      "title": "Ibyabaye biri imbere",
+      "subtitle": "Hitamo service cyangwa rehearsal wo gushyiraho attendance.",
+      "empty": "Nta byabaye mu minsi 30 iri imbere.",
+      "emptyTitle": "Nta kintu cyo gushyiraho attendance"
+    },
+    "roster": {
+      "title": "Urutonde rw'abafitwe inshingano",
+      "subtitleActive": "Abanyamuryango {count} bafitwe kuri iki gikorwa.",
+      "subtitleIdle": "Hitamo igikorwa kugira ngo urutonde rupakire.",
+      "selectEvent": "Hitamo igikorwa kugira ngo utangire attendance.",
+      "selectEventTitle": "Hitamo event",
+      "empty": "Nta munyamuryango ufite inshingano kuri iki gikorwa."
+    },
+    "table": {
+      "member": "Umunyamuryango",
+      "status": "Imiterere",
+      "score": "Ubwitange",
+      "actions": "Ibikorwa",
+      "notMarked": "Ntibyashyizweho",
+      "event": "Igikorwa",
+      "reason": "Impamvu",
+      "when": "Igihe"
+    },
+    "actions": {
+      "markAllPresent": "Bose bashyireho ko baje",
+      "present": "Yaje",
+      "late": "Yatinze",
+      "excused": "Excused",
+      "unexcused": "Unexcused",
+      "replacement": "Replacement",
+      "voluntary": "Voluntary"
+    },
+    "status": {
+      "ATTENDED": "Yitabiriye",
+      "LATE": "Yatinze",
+      "EXCUSED_ABSENCE": "Absence yemewe",
+      "UNEXCUSED_ABSENCE": "Absence itemewe",
+      "REPLACEMENT_SERVED": "Yakuyemo undi",
+      "VOLUNTARY_EXTRA_SERVICE": "Serivisi y'ubushake"
+    },
+    "excuseReview": {
+      "title": "Gusuzuma excuses",
+      "subtitle": "Emeza cyangwa wange excuses cyangwa escalade.",
+      "noReason": "Nta mpamvu yatanzwe",
+      "approve": "Emeza",
+      "reject": "Wanga",
+      "escalate": "Escalade"
+    },
+    "analytics": {
+      "title": "Analytics za attendance",
+      "subtitle": "Ibimenyetso by'imikorere bya ministry.",
+      "total": "Ibyanditswe byose",
+      "excusedRatio": "Igipimo cya excused",
+      "voluntary": "Serivisi y'ubushake",
+      "replacements": "Abakuyemo abandi"
+    },
+    "teamHead": {
+      "title": "Ikibaho cya Team Head",
+      "empty": "Nta risk ya attendance ku matsinda yawe.",
+      "emptyDescription": "Absences na escalations bizagaragara hano iyo bikeneye kwitabwaho.",
+      "noTeamsTitle": "Nta matsinda yatanzwe",
+      "noTeamsDescription": "Amatsinda ya protocol azagaragara nyuma yo gukorwa.",
+      "teamsTitle": "Amatsinda yawe",
+      "memberCount": "Abanyamuryango {count}"
+    },
+    "coordinator": {
+      "title": "Ikibaho cya Coordinator",
+      "empty": "Nta risk ya attendance muri iki gihe.",
+      "emptyDescription": "Escalations na absences zitegereje bizagaragara hano.",
+      "readiness": "Iburira {count} byo gutegura service",
+      "overload": "Overload alerts",
+      "assignments": "official assignments"
+    },
+    "president": {
+      "title": "Ikibaho cya President",
+      "empty": "Nta case y'escalade ku rwego rwa ministry.",
+      "emptyDescription": "Escalations n'absences zidasubijwe ku rwego rwa ministry bizagaragara hano.",
+      "noTrendTitle": "Nta trend iriho",
+      "noTrendDescription": "Trend izuzura nyuma y'amezi menshi yo kwandika attendance.",
+      "disciplineRisk": "Ibimenyetso bya discipline",
+      "voluntary": "Imisanzu y'ubushake",
+      "pendingReplacements": "Replacements zitegereje",
+      "trendTitle": "Trend (amezi 6)",
+      "trendPresent": "{count} baje",
+      "trendAbsent": "{count} badahari"
+    },
+    "choir": {
+      "title": "Attendance ya choir",
+      "subtitle": "Rehearsal na service za choir.",
+      "totalMarked": "Byanditswe",
+      "excused": "Excused",
+      "unexcused": "Unexcused",
+      "lateness": "Gutinda",
+      "pendingReview": "Bitegereje"
+    },
+    "discipline": {
+      "title": "Discipline recommendations",
+      "subtitle": "Review ya pastoral isabwa.",
+      "createCase": "Fungura discipline case",
+      "createFailed": "Ntitwashoboye gufungura discipline case.",
+      "emptyTitle": "Nta discipline recommendations",
+      "emptyDescription": "Nta munyamuryango wagaragajwe na reliability scoring."
+    },
+    "weights": {
+      "title": "Attendance scoring weights",
+      "subtitle": "Shyiraho ibipimo by'ubwitange buremereye.",
+      "save": "Bika weights",
+      "saving": "Birimo kubikwa...",
+      "saved": "Weights byavuguruwe.",
+      "saveFailed": "Ntitwashoboye kubika weights."
+    },
+    "memberHistory": {
+      "title": "Amateka ya attendance",
+      "subtitle": "Ubwitange n'serivisi y'ubushake.",
+      "empty": "Nta mateka.",
+      "lateness": "{count} gutinda",
+      "voluntary": "{count} voluntary"
+    },
+    "scoreBands": {
+      "excellent": "Excellent",
+      "good": "Good",
+      "danger": "Attention"
+    },
+    "markDialog": {
+      "excusedTitle": "Excused absence — {member}",
+      "unexcusedTitle": "Unexcused absence — {member}",
+      "lateTitle": "Late — {member}",
+      "replacementTitle": "Replacement — {member}",
+      "voluntaryTitle": "Voluntary — {member}",
+      "reasonType": "Impamvu",
+      "notes": "Ibisobanuro",
+      "evidenceUrl": "Evidence link",
+      "evidenceHint": "Link y'ubushake ku document cyangwa ubutumwa bwo kureba na pastoral team.",
+      "lateMinutes": "Iminota yatinze",
+      "cancel": "Hagarika",
+      "save": "Bika",
+      "replacementConfirm": "Emeza ko uyu munyamuryango yakoze replacement kuri iyi event.",
+      "voluntaryConfirm": "Emeza voluntary extra service — ntibibarwa nk'official assignment.",
+      "saving": "Birimo kubikwa..."
+    },
+    "escalationDialog": {
+      "title": "Escalade absence — {member}",
+      "description": "Ohereza iyi case ku rwego rwo hejuru iyo review y'ahantu bidahagije.",
+      "level": "Urwego rwa escalade",
+      "levels": {
+        "TEAM_HEAD": "Team Head",
+        "COORDINATOR": "Coordinator",
+        "PRESIDENT": "President"
+      },
+      "notes": "Inyandiko ku bareba",
+      "notesHint": "Ibisobanuro by'ubushake ku muyobozi wakira iyi case.",
+      "submit": "Escalade",
+      "submitting": "Birimo gukorwa...",
+      "failed": "Ntibyashoboye gu escalade iyi case."
+    },
+    "excuseActionDialog": {
+      "approveTitle": "Emeza excuse — {member}",
+      "rejectTitle": "Wanga excuse — {member}",
+      "confirmApprove": "Emeza",
+      "confirmReject": "Wanga",
+      "approveHint": "Ibi byemeza ko absence y'excuse yemewe mu makuru y'imikorere.",
+      "rejectionReason": "Impamvu yo kwanga",
+      "submitting": "Birimo kubikwa...",
+      "failed": "Ntibyashoboye kurangiza review."
+    },
+    "excuseReasons": {
+      "illness": "Indwara",
+      "travel": "Urugendo",
+      "work_school": "Akazi cyangwa ishuri",
+      "emergency": "Emergency",
+      "family_issue": "Imiryango",
+      "approved_leave": "Leave yemewe",
+      "unavoidable_conflict": "Conflict",
+      "unknown": "Ntibizwi"
+    },
+    "panels": {
+      "escalations": "Escalations",
+      "pendingAbsences": "Absences zitegereje",
+      "escalated": "Byarohotse",
+      "none": "Nta na kimwe"
+    }
+  },
+  "coverage": {
+    "title": "Gucunga coverage",
+    "subtitle": "Swaps, replacements, readiness n'ubudahwema bw'imikorere.",
+    "loading": "Turimo gupakira...",
+    "actionFailed": "Ntibyashoboye gukora iki gikorwa.",
+    "tabs": {
+      "swaps": "Swaps",
+      "replacements": "Replacements",
+      "teamHead": "Team Head",
+      "coordinator": "Coordinator"
+    },
+    "analytics": {
+      "title": "Analytics za coverage",
+      "subtitle": "Ibimenyetso by'ubudahwema bw'imikorere.",
+      "swaps": "Swaps uku kwezi",
+      "replacements": "Replacements uku kwezi",
+      "voluntary": "Serivisi y'ubushake",
+      "unresolved": "Swaps zitasubijwe"
+    },
+    "readiness": {
+      "title": "Readiness ya service",
+      "subtitle": "Services ziri imbere n'aba bakozi.",
+      "status": {
+        "FULLY_READY": "Byiteguye",
+        "REPLACEMENT_PENDING": "Replacement itegereje",
+        "ATTENDANCE_RISK": "Risk ya attendance",
+        "STAFFING_SHORTAGE": "Abakozi bake",
+        "OPERATIONAL_DANGER": "Ikibazo gikomeye"
+      }
+    },
+    "swaps": {
+      "title": "Swaps",
+      "subtitle": "Gusimburana assignments.",
+      "empty": "Nta swap.",
+      "emptyDescription": "Ibyifuzo byo gusimburana bizagaragara hano."
+    },
+    "replacements": {
+      "title": "Replacements",
+      "subtitle": "Voluntary, official na emergency coverage.",
+      "empty": "Nta replacement.",
+      "emptyDescription": "Ibyifuzo bya replacement bizagaragara hano.",
+      "noCover": "Nta muntu ubu"
+    },
+    "teamHead": {
+      "title": "Ikibaho cya Team Head",
+      "empty": "Nta kibazo cya coverage.",
+      "emptyDescription": "Swaps na replacements bitegereje review bizagaragara hano."
+    },
+    "coordinator": {
+      "title": "Ikibaho cya Coordinator",
+      "empty": "Nta kibazo cy'ubu.",
+      "emptyDescription": "Escalations na staffing risks bizagaragara hano."
+    },
+    "fairness": {
+      "title": "Fairness alerts",
+      "subtitle": "Overload n'ubudahwemu.",
+      "emptyTitle": "Nta fairness alerts",
+      "emptyDescription": "Kuringaniza assignments kirasa neza."
+    },
+    "dialogs": {
+      "approveTitle": "Emeza — {item}",
+      "rejectTitle": "Wanga — {item}",
+      "escalateTitle": "Escalade — {item}",
+      "escalateDescription": "Ohereza iyi coverage case ku rwego rwo hejuru.",
+      "escalationLevel": "Urwego rwa escalade",
+      "levels": {
+        "TEAM_HEAD": "Team Head",
+        "COORDINATOR": "Coordinator",
+        "PRESIDENT": "President"
+      },
+      "notes": "Inyandiko",
+      "rejectionNotes": "Impamvu yo kwanga",
+      "notesHint": "Ibisobanuro by'ubushake ku audit.",
+      "cancel": "Hagarika",
+      "submitting": "Birimo kubikwa..."
+    },
+    "table": {
+      "event": "Igikorwa",
+      "members": "Abanyamuryango",
+      "status": "Imiterere",
+      "type": "Ubwoko",
+      "actions": "Ibikorwa"
+    },
+    "status": {
+      "REQUESTED": "Byasabwe",
+      "TARGET_ACCEPTED": "Byemewe",
+      "TARGET_REJECTED": "Byanze",
+      "LEADER_PENDING": "Bitegereje review",
+      "APPROVED": "Byemejwe",
+      "REJECTED": "Byanze",
+      "FINALIZED": "Byarangiye",
+      "CANCELLED": "Byahagaritswe"
+    },
+    "replacementStatus": {
+      "REQUESTED": "Byasabwe",
+      "LEADER_PENDING": "Bitegereje review",
+      "APPROVED": "Byemejwe",
+      "REJECTED": "Byanze",
+      "FINALIZED": "Byarangiye"
+    },
+    "coverageType": {
+      "MUTUAL_SWAP": "Mutual swap",
+      "VOLUNTARY_REPLACEMENT": "Voluntary",
+      "OFFICIAL_REPLACEMENT": "Official",
+      "EMERGENCY_REPLACEMENT": "Emergency"
+    },
+    "replacementKind": {
+      "VOLUNTARY": "Voluntary",
+      "LEADER_ASSIGNED": "Official",
+      "EMERGENCY": "Emergency"
+    },
+    "actions": {
+      "accept": "Emera",
+      "decline": "Wanga",
+      "approve": "Emeza",
+      "reject": "Wanga",
+      "finalize": "Soza",
+      "escalate": "Escalade"
+    },
+    "panels": {
+      "pendingSwaps": "Swaps zitegereje",
+      "pendingReplacements": "Replacements zitegereje",
+      "none": "Nta na kimwe"
+    }
+  },
   "foundation": {
     "eyebrow": "Sprint 0",
     "title": "Urufatiro rwa web rwiteguye ku masprint y'umusaruro.",
@@ -158,17 +677,119 @@
   },
   "auth": {
     "title": "Injira",
-    "subtitle": "Sprint y'auth izongeramo refresh tokens, RBAC n'umutekano wa session.",
+    "subtitle": "Injira kuri platform y'itorero kugira ngo urebe gahunda, attendance n'amakuru y'umurimo.",
     "email": "Imeri",
     "password": "Ijambo banga",
     "submit": "Injira",
-    "hint": "Koresha konti yawe ya CMMS Sprint 1 nirangira guhuza auth nyayo.",
-    "invalidCredentials": "Ntushobora kwinjira"
+    "submitting": "Turimo kwinjiza...",
+    "hint": "Abanyamuryango bashya bashobora kwiyandikisha bakaba bitegereje kwemezwa n'umuyobozi.",
+    "invalidCredentials": "Ntushobora kwinjira",
+    "registerFailed": "Kwiyandikisha byanze.",
+    "passwordHint": "Koresha nibura inyuguti 6.",
+    "showPassword": "Erekana",
+    "hidePassword": "Hisha",
+    "noAccount": "Umusanzwe uri mushya?",
+    "haveAccount": "Usanzwe ufite konti?",
+    "createAccount": "Fungura konti",
+    "sessionExpired": "Session yawe yarangiye. Ongera winjire.",
+    "forgotPassword": "Wibagiwe ijambo banga?",
+    "forgotPasswordTitle": "Guhindura ijambo banga",
+    "forgotPasswordDescription": "Tuzagufasha vuba.",
+    "forgotPasswordPlaceholder": "Guhindura ijambo banga binyuze kuri imeri bizaza mu gihe gito. Vugana n'umuyobozi w'umurimo niba ukeneye ubufasha.",
+    "backToSignIn": "Subira ku kwinjira"
+  },
+  "onboarding": {
+    "signup": {
+      "eyebrow": "Injira mu murimo",
+      "pageTitle": "Iyandikishe mu itorero ryawe",
+      "pageSubtitle": "Tubwire uwo uri n'umurimo ukoramo. Umuyobozi azasuzuma icyifuzo cyawe mbere yo guha uburenganzira bwuzuye.",
+      "cardTitle": "Kwiyandikisha mu murimo",
+      "cardSubtitle": "Uburyo bworoshye bwo kwiyandikisha mu korali na protocol.",
+      "stepIndicator": "Intambwe {step} kuri {total}",
+      "stepIdentityTitle": "Amakuru yawe",
+      "stepMinistryTitle": "Umurimo wawe",
+      "stepSecurityTitle": "Rinda konti yawe",
+      "stepReviewTitle": "Suzuma hanyuma wohereze",
+      "firstName": "Izina ry'ibanze",
+      "lastName": "Izina ry'umuryango",
+      "phone": "Telefone",
+      "phoneOptional": "Si ngombwa — ifasha abayobozi kukuvugisha.",
+      "ministryLabel": "Umurimo",
+      "ministryChoir": "Korali",
+      "ministryProtocol": "Protocol",
+      "ministryBoth": "Imirimo ibiri",
+      "ministryChoirDescription": "Abanyamuryango ba korali bakorera mu gusenga binyuze mu ndirimbo, imyiteguro n'ibikorwa byateganyijwe.",
+      "ministryProtocolDescription": "Abanyamuryango ba protocol bakira, baguha inama kandi bakorana mu gukurikirana serivisi z'itorero.",
+      "ministryBothDescription": "Ukora mu korali no mu protocol.",
+      "confirmPassword": "Emeza ijambo banga",
+      "passwordMismatch": "Amagambo y'ibanga ntahura.",
+      "reviewName": "Amazina",
+      "approvalExplanation": "Nyuma yo kohereza, umuyobozi azasuzuma kwiyandikisha kwawe. Ushobora kwinjira urebe aho ugeze; ibikoresho by'umurimo bizafunguka iyo wemewe.",
+      "back": "Subira inyuma",
+      "continue": "Komeza",
+      "submit": "Ohereza kwiyandikisha",
+      "submitting": "Birimo koherezwa...",
+      "haveAccount": "Usanzwe wiyandikishije?"
+    },
+    "pending": {
+      "eyebrow": "Kwiyandikisha kwakiriwe",
+      "title": "Icyifuzo cyawe gisuzumwa",
+      "greeting": "Murakoze, {name}.",
+      "body": "Kwiyandikisha kwawe mu murimo kwakiriwe. Abayobozi barimo gusuzuma kugira ngo uhabwe uburenganzira bukwiye.",
+      "stepReview": "Umuyobozi azasuzuma amakuru yawe.",
+      "stepNotify": "Uzakira ubutumwa igihe icyemezo cyakozwe.",
+      "stepAccess": "Niyo wemewe, uzashobora kubona gahunda, attendance n'amakuru y'umurimo.",
+      "helpHint": "Niba ukeneye ubufasha, vugana n'umuyobozi wa korali cyangwa wa protocol.",
+      "backToLogin": "Subira ku kwinjira"
+    },
+    "welcome": {
+      "title": "Murakaza neza",
+      "welcomeChoirMember": "Murakaza neza kuri platform ya korali. Abayobozi bazaguha inshingano n'imyiteguro iri imbere.",
+      "welcomeProtocolMember": "Murakaza neza kuri platform ya protocol. Abayobozi bazasangiza gahunda n'amakuru y'umurimo.",
+      "welcomeBothMember": "Murakaza neza. Ukora mu korali na protocol — abayobozi bazagukurikirana.",
+      "welcomeChoirLeader": "Murakaza neza. Reba ibikorwa bya korali, attendance n'amakuru ava hano.",
+      "welcomeProtocolLeader": "Murakaza neza. Reba ibikorwa bya protocol, coverage n'amakuru ava hano.",
+      "welcomeCommittee": "Murakaza neza. Ibikoresho bya komite n'ibipimo by'umurimo biri hano.",
+      "welcomeSuperAdmin": "Murakaza neza. Ibikoresho byo gucunga sisitemu birahari.",
+      "nextSteps": "Tangira ku dashboard. Ibice by'imikorere bizagaragara uko inshingano zikura.",
+      "continue": "Komeza kuri dashboard",
+      "continuing": "Birimo kubika..."
+    }
+  },
+  "members": {
+    "pending": {
+      "title": "Kwiyandikisha gutegereje",
+      "subtitle": "Suzuma abanyamuryango bashya mbere yo guha uburenganzira bwuzuye.",
+      "search": "Shakisha",
+      "ministryFilter": "Umurimo",
+      "allMinistries": "Imirimo yose",
+      "ministryChoir": "Korali",
+      "ministryProtocol": "Protocol",
+      "ministryBoth": "Imirimo ibiri",
+      "name": "Amazina",
+      "email": "Imeri",
+      "ministry": "Umurimo",
+      "submitted": "Yoherejwe",
+      "actions": "Ibikorwa",
+      "approve": "Emeza",
+      "reject": "Wange",
+      "loading": "Turimo gupakurura...",
+      "emptyTitle": "Nta kwiyandikisha gutegereje",
+      "emptyDescription": "Ibyifuzo bishya bizagaragara hano.",
+      "actionFailed": "Ntibyashobotse guhindura status."
+    }
   },
   "dashboard": {
     "title": "Urufatiro rwa dashboard ikingiwe",
     "subtitle": "Uru rupapuro rurarinzwe kandi rwiteguye kwakira widgets za Sprint 3.",
     "memberTitle": "Dashboard y'umunyamuryango",
+    "memberExcuseTitle": "Saba absence yemewe",
+    "memberExcuseDescription": "Ohereza excuse ku murimo uri imbere. Umuyobozi azayigenzura.",
+    "memberExcuseAction": "Saba excuse",
+    "memberExcuseModalTitle": "Excuse — {event}",
+    "memberExcuseSubmit": "Ohereza",
+    "memberExcuseSubmitting": "Birimo koherezwa...",
+    "memberExcuseFailed": "Ntitwashoboye kohereza excuse.",
     "leaderTitle": "Dashboard y'umuyobozi",
     "superAdminTitle": "Dashboard ya super admin",
     "loadingDashboard": "Turimo gupakurura amakuru ya dashboard...",
@@ -182,7 +803,7 @@
     "leaderUpcomingEventsHint": "Ibikorwa biteganyijwe mu minsi 7 iri imbere.",
     "leaderPendingSwapsHint": "Ibisabwa byo gusimburana bitarafata umwanzuro.",
     "leaderPendingReplacementsHint": "Abasimbura bagikeneye gutegurwa.",
-    "leaderAttendanceHint": "Attendance y'ukwezi turimo.",
+    "leaderAttendanceHint": "Ubwitange bwa operational buremereye bw'ukwezi turimo.",
     "leaderDisciplineHint": "Imanza z'imyitwarire zitarafungwa.",
     "attendanceTrendTitle": "Trend ya attendance",
     "attendanceTrendDescription": "Imihindagurikire ya attendance mu mezi atandatu ashize.",
@@ -191,6 +812,11 @@
     "upcomingEventsCardTitle": "Ibikorwa biri imbere",
     "upcomingEventsCardDescription": "Serivisi n'inshingano ziri kuza.",
     "noUpcomingEvents": "Nta gikorwa giteganyijwe ubu.",
+    "noUpcomingEventsTitle": "Nta ibikorwa biri imbere",
+    "openEventsWorkspace": "Fungura events workspace",
+    "noScheduleTitle": "Nta assignments ziri imbere",
+    "noNotificationsTitle": "Nta notifications",
+    "noContributionDataTitle": "Nta mateka y'imisanzu",
     "reliabilityTitle": "Ibipimo by'ubwitange",
     "reliabilityDescription": "Ibyiciro bishingiye kuri attendance y'abanyamuryango.",
     "financeCardTitle": "Incamake y'imikorere",
@@ -265,6 +891,89 @@
       "present": "Present",
       "late": "Late",
       "absent": "Absent"
+    },
+    "alerts": {
+      "title": "Amatangazo y'ibikorwa",
+      "description": "Ibintu bisaba kwitabwaho — byatoranyijwe n'ingufu.",
+      "severity": {
+        "critical": "Byihutirwa cyane",
+        "warning": "Bisaba kwitabwaho",
+        "info": "Amakuru"
+      }
+    },
+    "intelligence": {
+      "title": "Ubumenyi bw'ubutumwa",
+      "description": "Ibipimo by'ibikorwa ku rwego rw'ubutumwa.",
+      "activeMembers": "Abanyamuryango bakora",
+      "attendanceRate": "Igipimo cyo kwitaba",
+      "pendingReplacements": "Abasimbura batindiriwe",
+      "trend": "Imiterere",
+      "ministryHealth": "Ubuzima bw'ubutumwa",
+      "ministries": {
+        "choir": "Korali",
+        "protocol": "Protocol",
+        "both": "Ubutumwa busangiye"
+      },
+      "trendDirection": {
+        "up": "Biragenda neza",
+        "down": "Biragenda hasi",
+        "stable": "Biratunganye"
+      },
+      "healthBand": {
+        "excellent": "Ubuzima bwiza cyane",
+        "good": "Birakomeye — komeza gukurikirana",
+        "attention": "Bisaba kwitabwaho kw'ubuyobozi"
+      }
+    },
+    "committee": {
+      "treasurerTitle": "Urubuga rw'umucungamari",
+      "treasurerDescription": "Umusanzu, amafaranga atishyuwe n'imiterere y'amafaranga.",
+      "disciplineTitle": "Urubuga rw'ubuyobozi",
+      "disciplineDescription": "Ibipimo byo gufasha — bidahitanye abantu.",
+      "secretaryTitle": "Urubuga rw'umwanditsi",
+      "secretaryDescription": "Itumanaho, ibikorwa n'inyandiko z'ubutumwa.",
+      "operationsTitle": "Urubuga rw'umuyobozi w'ibikorwa",
+      "operationsDescription": "Ibirori, imishinga n'igenamigambi ry'ibikorwa.",
+      "coordinatorTitle": "Ikigo cyo gucunga protocol",
+      "coordinatorDescription": "Amakipe, ibibazo byiyongereye n'uburinganire bw'akazi.",
+      "presidentTitle": "Kugenzura kwa perezida wa protocol",
+      "presidentDescription": "Ibipimo by'ingenzi — nta birambuye by'ibikorwa.",
+      "choirLeaderTitle": "Urubuga rw'umuyobozi wa korali",
+      "choirLeaderDescription": "Kwitaba kwa korali n'imiterere y'ugutabira.",
+      "balance": "Asigaye",
+      "unpaidMembers": "Abatishyuye",
+      "complianceRate": "Igipimo cyo gukurikiza",
+      "openCases": "Ibibazo bifunguye",
+      "pastoralReview": "Gusuzuma mu buryo bwo gufasha",
+      "repeatedLateness": "Gutinda kenshi",
+      "upcomingEvents": "Ibikorwa biri imbere",
+      "pendingSwaps": "Guhindurana gutindiriwe",
+      "voluntaryService": "Gukorera ku bw'ubushake",
+      "choirMarked": "Byanditswe uku kwezi",
+      "readinessWarnings": "Iburira ryo kwitegura",
+      "activeTeams": "Amakipe akora",
+      "escalatedCases": "Ibibazo byiyongereye",
+      "overloadAlerts": "Iburira ryo gucumura",
+      "pendingReplacements": "Abasimbura batindiriwe",
+      "ministryHealth": "Ubuzima bw'ubutumwa",
+      "disciplineRisk": "Ikibazo cy'ubuyobozi",
+      "workloadImbalance": "Akazi katari buringaniye",
+      "overloadedMembers": "Abafite akazi kenshi",
+      "choirExcused": "Abababajwe",
+      "choirUnexcused": "Abatbabajwe",
+      "yes": "Yego",
+      "no": "Oya",
+      "healthBand": {
+        "excellent": "Byiza cyane",
+        "good": "Byiza",
+        "attention": "Bisaba kwitabwaho"
+      }
+    },
+    "personal": {
+      "voluntaryService": "Gukorera ku bw'ubushake",
+      "replacements": "Gusimbura",
+      "lateness": "Inshuro zo gutinda",
+      "contributionCompliance": "Uko umusanzu ume"
     },
     "governance": {
       "teamReliabilityTitle": "Uko amakipe ya protocol yitwara",

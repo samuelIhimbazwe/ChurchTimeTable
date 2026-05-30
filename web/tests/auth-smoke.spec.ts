@@ -48,8 +48,13 @@ test("admin login works and refresh restores the session without local auth stor
   expect(authKeys).toEqual([]);
 
   await page.reload();
-  await expect(page).toHaveURL(/\/en\/dashboard$/);
-  await expect(page.getByText("admin@church.local")).toBeVisible();
+  await expect(page).toHaveURL(/\/en\/dashboard$/, { timeout: 60_000 });
+  await expect(page.getByText("Super admin workspace")).toBeVisible({
+    timeout: 30_000,
+  });
+  await expect(page.getByText("admin@church.local")).toBeVisible({
+    timeout: 15_000,
+  });
 });
 
 test("role guards block non-admin users from the admin route", async ({ page }) => {
@@ -62,6 +67,9 @@ test("role guards block non-admin users from the admin route", async ({ page }) 
 
   await page.goto("/en/dashboard/admin");
   await expect(
-    page.getByText("You do not have access to this area."),
+    page.getByRole("heading", { name: "You do not have access to this area." }),
+  ).toBeVisible({ timeout: 30_000 });
+  await expect(
+    page.getByText("Your account is authenticated, but your role does not allow this route."),
   ).toBeVisible({ timeout: 30_000 });
 });

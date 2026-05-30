@@ -1,7 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { EventStatus, Prisma } from '@prisma/client';
+import {
+  AttendanceOperationalStatus,
+  AttendanceReplacementType,
+  EventStatus,
+  Prisma,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AttendanceService } from '../attendance/attendance.service';
+import { UpsertAttendanceDto } from '../attendance/dto/upsert-attendance.dto';
 import { AssignmentsService } from '../assignments/assignments.service';
 import { EventsService } from '../events/events.service';
 import { ReplacementsService } from '../replacements/replacements.service';
@@ -79,6 +85,14 @@ export class SyncService {
         physicalStatus: 'PRESENT' | 'ABSENT' | 'LATE';
         reasonCategory?: 'EXCUSED' | 'UNEXCUSED';
         reasonType?: string;
+        operationalStatus?: string;
+        excuseReason?: string;
+        replacementType?: string;
+        countsAsOfficial?: boolean;
+        voluntaryExtra?: boolean;
+        lateMinutes?: number;
+        excuseEvidenceUrl?: string;
+        excuseApproved?: boolean;
         notes?: string;
       };
 
@@ -99,7 +113,16 @@ export class SyncService {
       }
 
       await this.attendanceService.upsert(
-        { ...payload, clientUpdatedAt: item.clientUpdatedAt },
+        {
+          ...payload,
+          operationalStatus: payload.operationalStatus as
+            | AttendanceOperationalStatus
+            | undefined,
+          replacementType: payload.replacementType as
+            | AttendanceReplacementType
+            | undefined,
+          clientUpdatedAt: item.clientUpdatedAt,
+        } satisfies UpsertAttendanceDto,
         userId,
       );
       return;

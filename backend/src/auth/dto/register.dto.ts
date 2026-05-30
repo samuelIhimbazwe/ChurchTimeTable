@@ -28,4 +28,8 @@ export class RegisterDto {
   @IsOptional()
   @IsEnum(MinistryScope)
   ministry?: MinistryScope;
+
+  @IsOptional()
+  @IsString()
+  preferredLanguage?: string;
 }

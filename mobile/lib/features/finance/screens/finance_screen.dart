@@ -25,7 +25,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   Future<void> _load() async {
     final api = ref.read(apiClientProvider);
     await api.loadToken();
-    final res = await api.dio.get('/finance/summary');
+    final res = await api.dio.get('/finance/stewardship/analytics');
     final parsed = ApiResponse<Map<String, dynamic>>.fromJson(
       res.data as Map<String, dynamic>,
       (d) => Map<String, dynamic>.from(d as Map),
@@ -65,19 +65,26 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                       children: [
                         _StatCard(
                           label: l10n.finance_income_label,
-                          value: _summary!['income'],
+                          value: _summary!['income'] ?? 0,
                           icon: Icons.trending_up,
                         ),
                         _StatCard(
                           label: l10n.finance_expense_label,
-                          value: _summary!['expense'],
+                          value: _summary!['expense'] ?? 0,
                           icon: Icons.trending_down,
                         ),
                         _StatCard(
                           label: l10n.finance_balance_label,
-                          value: _summary!['balance'],
+                          value: _summary!['balance'] ?? 0,
                           icon: Icons.account_balance_wallet,
                         ),
+                        if ((_summary!['unpaidBalance'] as num?) != null &&
+                            (_summary!['unpaidBalance'] as num) > 0)
+                          _StatCard(
+                            label: l10n.finance_unpaid_label,
+                            value: _summary!['unpaidBalance'],
+                            icon: Icons.warning_amber_outlined,
+                          ),
                         CmmsCard(
                           title: l10n.budgets_title,
                           subtitle: l10n.finance_summary_title,

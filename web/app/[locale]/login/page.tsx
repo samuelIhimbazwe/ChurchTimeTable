@@ -37,7 +37,16 @@ export default async function LoginPage({
             <p className="mt-6 text-sm text-[var(--muted-foreground)]">
               {t("auth.hint")}
             </p>
-            <div className="mt-8">
+            <div className="mt-8 flex flex-wrap gap-4">
+              <Link
+                href="/register"
+                className={cmmsButtonStyles({
+                  variant: "secondary",
+                  size: "sm",
+                })}
+              >
+                {t("auth.createAccount")}
+              </Link>
               <Link
                 href="/"
                 className={cmmsButtonStyles({

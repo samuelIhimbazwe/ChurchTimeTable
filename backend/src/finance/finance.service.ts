@@ -1,9 +1,22 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  DueStatus,
+  DueType,
+  FinanceApprovalStatus,
+  MinistryScope,
+  Prisma,
+  TransactionType,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { CreateBudgetDto } from './dto/create-budget.dto';
+import { UpsertMemberDuesDto } from './dto/upsert-member-dues.dto';
+import { FinanceGovernanceService } from './finance-governance.service';
+import {
+  canAccessMinistryFinance,
+  ministryScopeFilter,
+} from '../common/governance/finance-scope.util';
 import { paginate, paginatedResult } from '../common/dto/pagination.dto';
 
 @Injectable()
@@ -11,20 +24,40 @@ export class FinanceService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
+    private financeGovernance: FinanceGovernanceService,
   ) {}
 
   async createTransaction(dto: CreateTransactionDto, userId: string) {
+    const ctx = await this.financeGovernance.scopeForUser(userId);
+    if (!canAccessMinistryFinance(ctx, dto.ministryScope)) {
+      throw new ForbiddenException('Cannot record transactions for this ministry');
+    }
+
+    const needsApproval =
+      dto.type === TransactionType.EXPENSE &&
+      Number(dto.amount) >= 500 &&
+      !ctx.canApproveChoir &&
+      !ctx.canApproveProtocol;
+
     const tx = await this.prisma.financeTransaction.create({
       data: {
+        ministryScope: dto.ministryScope,
         type: dto.type,
         category: dto.category,
         amount: dto.amount,
+        currency: dto.currency ?? 'RWF',
         description: dto.description,
         memberId: dto.memberId,
         recordedById: userId,
+        relatedEventId: dto.relatedEventId,
+        receiptUrl: dto.receiptUrl,
         transactionDate: dto.transactionDate
           ? new Date(dto.transactionDate)
           : new Date(),
+        approvalStatus: needsApproval
+          ? FinanceApprovalStatus.PENDING
+          : FinanceApprovalStatus.APPROVED,
+        approvedById: needsApproval ? undefined : userId,
       },
     });
 
@@ -39,43 +72,85 @@ export class FinanceService {
     return tx;
   }
 
-  async listTransactions(page = 1, limit = 20) {
+  async listTransactions(
+    userId: string,
+    page = 1,
+    limit = 20,
+    ministryScope?: MinistryScope,
+  ) {
+    const ctx = await this.financeGovernance.scopeForUser(userId);
+    const scopes = ministryScope
+      ? ctx.ministryScopes.filter((s) => s === ministryScope)
+      : ctx.ministryScopes;
     const { skip, take } = paginate(page, limit);
+    const where = ministryScopeFilter(scopes);
+
     const [items, total] = await Promise.all([
       this.prisma.financeTransaction.findMany({
+        where,
         skip,
         take,
         orderBy: { transactionDate: 'desc' },
       }),
-      this.prisma.financeTransaction.count(),
+      this.prisma.financeTransaction.count({ where }),
     ]);
     return paginatedResult(items, total, page, limit);
   }
 
-  async summary() {
-    const transactions = await this.prisma.financeTransaction.findMany();
-    let income = 0;
-    let expense = 0;
-
-    for (const t of transactions) {
-      const amount = Number(t.amount);
-      if (t.type === 'INCOME') income += amount;
-      else expense += amount;
-    }
-
-    return { income, expense, balance: income - expense, count: transactions.length };
+  async summary(userId: string, ministryScope?: MinistryScope) {
+    const analytics = await this.financeGovernance.analytics(userId, ministryScope);
+    return {
+      income: analytics.income,
+      expense: analytics.expense,
+      balance: analytics.balance,
+      count: analytics.transactionCount,
+      ministryScopes: analytics.ministryScopes,
+    };
   }
 
-  async upsertMemberDues(
-    memberId: string,
-    period: string,
-    amount: number,
-    userId: string,
-  ) {
+  async upsertMemberDues(dto: UpsertMemberDuesDto, userId: string) {
+    const ctx = await this.financeGovernance.scopeForUser(userId);
+    if (!canAccessMinistryFinance(ctx, dto.ministryScope)) {
+      throw new ForbiddenException('Cannot manage dues for this ministry');
+    }
+
+    const amountPaid = dto.amountPaid ?? 0;
+    const status = this.resolveDueStatus(dto.amountDue, amountPaid, dto.waivedReason);
+    const paid = status === DueStatus.PAID || status === DueStatus.WAIVED;
+
     const dues = await this.prisma.memberDues.upsert({
-      where: { memberId_period: { memberId, period } },
-      create: { memberId, period, amount },
-      update: { amount },
+      where: {
+        memberId_period_ministryScope_dueType: {
+          memberId: dto.memberId,
+          period: dto.period,
+          ministryScope: dto.ministryScope,
+          dueType: dto.dueType,
+        },
+      },
+      create: {
+        memberId: dto.memberId,
+        period: dto.period,
+        ministryScope: dto.ministryScope,
+        dueType: dto.dueType,
+        amount: dto.amountDue,
+        amountDue: dto.amountDue,
+        amountPaid,
+        status,
+        paid,
+        paidAt: paid ? new Date() : undefined,
+        recordedById: userId,
+        waivedReason: dto.waivedReason,
+      },
+      update: {
+        amount: dto.amountDue,
+        amountDue: dto.amountDue,
+        amountPaid,
+        status,
+        paid,
+        paidAt: paid ? new Date() : undefined,
+        recordedById: userId,
+        waivedReason: dto.waivedReason,
+      },
     });
 
     await this.audit.log({
@@ -90,12 +165,21 @@ export class FinanceService {
   }
 
   async createBudget(dto: CreateBudgetDto, userId: string) {
+    const ctx = await this.financeGovernance.scopeForUser(userId);
+    if (!canAccessMinistryFinance(ctx, dto.ministryScope)) {
+      throw new ForbiddenException('Cannot create budgets for this ministry');
+    }
+
     const budget = await this.prisma.budget.create({
       data: {
+        ministryScope: dto.ministryScope,
         name: dto.name,
+        kind: dto.kind ?? 'MONTHLY',
         amount: dto.amount,
+        actualAmount: 0,
         periodStart: new Date(dto.periodStart),
         periodEnd: new Date(dto.periodEnd),
+        relatedEventId: dto.relatedEventId,
       },
     });
 
@@ -110,15 +194,22 @@ export class FinanceService {
     return budget;
   }
 
-  async listBudgets(page = 1, limit = 20) {
+  async listBudgets(userId: string, page = 1, limit = 20, ministryScope?: MinistryScope) {
+    const ctx = await this.financeGovernance.scopeForUser(userId);
+    const scopes = ministryScope
+      ? ctx.ministryScopes.filter((s) => s === ministryScope)
+      : ctx.ministryScopes;
     const { skip, take } = paginate(page, limit);
+    const where = ministryScopeFilter(scopes);
+
     const [items, total] = await Promise.all([
       this.prisma.budget.findMany({
+        where,
         skip,
         take,
         orderBy: { periodStart: 'desc' },
       }),
-      this.prisma.budget.count(),
+      this.prisma.budget.count({ where }),
     ]);
     return paginatedResult(items, total, page, limit);
   }
@@ -131,13 +222,20 @@ export class FinanceService {
     const existing = await this.prisma.budget.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Budget not found');
 
+    const ctx = await this.financeGovernance.scopeForUser(userId);
+    if (!canAccessMinistryFinance(ctx, existing.ministryScope)) {
+      throw new ForbiddenException('Cannot update this budget');
+    }
+
     const budget = await this.prisma.budget.update({
       where: { id },
       data: {
         name: dto.name,
         amount: dto.amount,
+        kind: dto.kind,
         periodStart: dto.periodStart ? new Date(dto.periodStart) : undefined,
         periodEnd: dto.periodEnd ? new Date(dto.periodEnd) : undefined,
+        relatedEventId: dto.relatedEventId,
       },
     });
 
@@ -157,6 +255,11 @@ export class FinanceService {
     const existing = await this.prisma.budget.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Budget not found');
 
+    const ctx = await this.financeGovernance.scopeForUser(userId);
+    if (!canAccessMinistryFinance(ctx, existing.ministryScope)) {
+      throw new ForbiddenException('Cannot delete this budget');
+    }
+
     await this.prisma.budget.delete({ where: { id } });
 
     await this.audit.log({
@@ -170,10 +273,40 @@ export class FinanceService {
     return { deleted: true };
   }
 
-  async markDuesPaid(memberId: string, period: string, userId: string) {
+  async markDuesPaid(
+    memberId: string,
+    period: string,
+    ministryScope: MinistryScope,
+    dueType: DueType,
+    userId: string,
+  ) {
+    const ctx = await this.financeGovernance.scopeForUser(userId);
+    if (!canAccessMinistryFinance(ctx, ministryScope)) {
+      throw new ForbiddenException('Cannot update dues for this ministry');
+    }
+
+    const existing = await this.prisma.memberDues.findUnique({
+      where: {
+        memberId_period_ministryScope_dueType: {
+          memberId,
+          period,
+          ministryScope,
+          dueType,
+        },
+      },
+    });
+    if (!existing) throw new NotFoundException('Dues record not found');
+
+    const amountDue = Number(existing.amountDue ?? existing.amount);
     const dues = await this.prisma.memberDues.update({
-      where: { memberId_period: { memberId, period } },
-      data: { paid: true, paidAt: new Date() },
+      where: { id: existing.id },
+      data: {
+        amountPaid: amountDue,
+        status: DueStatus.PAID,
+        paid: true,
+        paidAt: new Date(),
+        approvedById: userId,
+      },
     });
 
     await this.audit.log({
@@ -185,5 +318,16 @@ export class FinanceService {
     });
 
     return dues;
+  }
+
+  private resolveDueStatus(
+    amountDue: number,
+    amountPaid: number,
+    waivedReason?: string,
+  ): DueStatus {
+    if (waivedReason) return DueStatus.WAIVED;
+    if (amountPaid <= 0) return DueStatus.UNPAID;
+    if (amountPaid >= amountDue) return DueStatus.PAID;
+    return DueStatus.PARTIAL;
   }
 }

@@ -5,8 +5,9 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PERMISSIONS_KEY, ROLES_KEY } from '../decorators/roles.decorator';
+import { PERMISSIONS_KEY, ROLES_KEY, ANY_PERMISSIONS_KEY } from '../decorators/roles.decorator';
 import { JwtPayload } from '../decorators/current-user.decorator';
+import { hasEffectivePermission } from '../governance/governance-permissions.util';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -21,8 +22,12 @@ export class RolesGuard implements CanActivate {
       PERMISSIONS_KEY,
       [context.getHandler(), context.getClass()],
     );
+    const anyPermissions = this.reflector.getAllAndOverride<string[]>(
+      ANY_PERMISSIONS_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
-    if (!requiredRoles?.length && !requiredPermissions?.length) {
+    if (!requiredRoles?.length && !requiredPermissions?.length && !anyPermissions?.length) {
       return true;
     }
 
@@ -40,9 +45,18 @@ export class RolesGuard implements CanActivate {
 
     if (requiredPermissions?.length) {
       const hasPermission = requiredPermissions.every((p) =>
-        user.permissions.includes(p),
+        hasEffectivePermission(user.permissions, p),
       );
       if (!hasPermission) {
+        throw new ForbiddenException('Insufficient permissions');
+      }
+    }
+
+    if (anyPermissions?.length) {
+      const hasAny = anyPermissions.some((p) =>
+        hasEffectivePermission(user.permissions, p),
+      );
+      if (!hasAny) {
         throw new ForbiddenException('Insufficient permissions');
       }
     }

@@ -12,6 +12,9 @@ import {
   formatDateTime,
 } from "@/features/dashboard/components/dashboard-primitives";
 import { useAdminDashboardQuery } from "@/features/dashboard/hooks/use-dashboard-queries";
+import { DashboardAlertsPanel } from "@/features/dashboard/components/dashboard-alerts-panel";
+import { hasWidget } from "@/features/dashboard/hooks/use-dashboard-widgets";
+import { AttendanceWeightsPanel } from "@/features/attendance/components/attendance-weights-panel";
 import { useSessionStore } from "@/core/auth/session-store";
 
 export function SuperAdminDashboard({
@@ -42,9 +45,15 @@ export function SuperAdminDashboard({
   }
 
   const data = query.data;
+  const widgets = data.widgets;
 
   return (
-    <div className="space-y-6">
+    <div className="cmms-page-stack">
+      {hasWidget(widgets, "alertsPanel") && data.alerts?.length > 0 ? (
+        <DashboardAlertsPanel alerts={data.alerts} />
+      ) : null}
+
+      {hasWidget(widgets, "systemKpis") ? (
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <DashboardStatCard
           label={t("stats.users")}
@@ -74,7 +83,9 @@ export function SuperAdminDashboard({
           tone={data.systemStats.syncConflicts > 0 ? "warning" : "default"}
         />
       </div>
+      ) : null}
 
+      {hasWidget(widgets, "systemHealth") ? (
       <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
         <CmmsCard
           title={t("systemHealthTitle")}
@@ -118,7 +129,13 @@ export function SuperAdminDashboard({
           items={data.roleDistribution}
         />
       </div>
+      ) : null}
 
+      {hasWidget(widgets, "attendanceWeights") && profile?.permissions.includes("sync:admin") ? (
+        <AttendanceWeightsPanel />
+      ) : null}
+
+      {hasWidget(widgets, "governanceAnalytics") ? (
       <div className="grid gap-6 xl:grid-cols-2">
         <DashboardStatCard
           label={t("governance.choirCompatibilityRate")}
@@ -139,7 +156,9 @@ export function SuperAdminDashboard({
           </div>
         </CmmsCard>
       </div>
+      ) : null}
 
+      {(hasWidget(widgets, "auditTrend") || hasWidget(widgets, "syncDiagnostics")) ? (
       <div className="grid gap-6 xl:grid-cols-2">
         <DistributionChart
           title={t("auditTrendTitle")}
@@ -187,7 +206,9 @@ export function SuperAdminDashboard({
           )}
         </CmmsCard>
       </div>
+      ) : null}
 
+      {hasWidget(widgets, "auditActivity") ? (
       <CmmsCard title={t("auditCardTitle")} description={t("auditCardDescription")}>
         <CmmsTable
           rows={data.recentAudit}
@@ -216,6 +237,7 @@ export function SuperAdminDashboard({
           ]}
         />
       </CmmsCard>
+      ) : null}
 
       {showAccessSnapshot && profile ? (
         <div className="grid gap-6 xl:grid-cols-2">

@@ -66,6 +66,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       404: 'NOT_FOUND',
       409: 'CONFLICT',
       422: 'BUSINESS_RULE_VIOLATION',
+      429: 'TOO_MANY_REQUESTS',
     };
     return map[status] ?? 'INTERNAL_ERROR';
   }

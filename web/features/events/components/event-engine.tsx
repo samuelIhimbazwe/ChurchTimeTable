@@ -6,9 +6,16 @@ import { useTranslations } from "next-intl";
 import { CmmsBadge } from "@/components/ui/cmms-badge";
 import { CmmsButton } from "@/components/ui/cmms-button";
 import { CmmsCard } from "@/components/ui/cmms-card";
+import { CmmsEmptyState } from "@/components/ui/cmms-empty-state";
+import { CmmsFormField } from "@/components/ui/cmms-form-field";
 import { CmmsInput } from "@/components/ui/cmms-input";
 import { CmmsModal } from "@/components/ui/cmms-modal";
+import { CmmsSelect } from "@/components/ui/cmms-select";
+import { CmmsSkeleton } from "@/components/ui/cmms-skeleton";
 import { CmmsTable } from "@/components/ui/cmms-table";
+import { CmmsTabs } from "@/components/ui/cmms-tabs";
+import { OperationalScreen } from "@/components/ui/operational-screen";
+import { CmmsAlert } from "@/components/ui/cmms-alert";
 import { getApiErrorMessage } from "@/core/api/errors";
 import type { EventFormInput, EventItem, EventStatus, EventType, MinistryScope } from "@/core/api/types";
 import { useEventAssignmentsQuery, useEventsQuery, useCreateEventMutation, useUpdateEventMutation, useCancelEventMutation, useValidateAssignmentMutation, useCreateAssignmentMutation, useBulkAssignMutation, useChoirRotationPoolQuery, useAutoAssignChoirRotationMutation } from "@/features/events/hooks/use-event-engine";
@@ -159,7 +166,7 @@ export function EventEngine() {
   }
 
   return (
-    <div className="space-y-6">
+    <OperationalScreen error={error}>
       <CmmsCard
         title={t("title")}
         description={t("subtitle")}
@@ -175,34 +182,44 @@ export function EventEngine() {
           </CmmsButton>
         }
       >
-        <div className="flex flex-wrap items-center gap-3">
-          <ViewToggle view={view} onChange={setView} labels={t} />
-          <select
-            value={ministryFilter}
-            onChange={(event) =>
-              setMinistryFilter(event.target.value as MinistryScope | "ALL")
-            }
-            className="min-h-10 rounded-[var(--radius-pill)] border border-[var(--border)] bg-[var(--surface)] px-3 text-sm"
-          >
-            <option value="ALL">{t("filters.allMinistries")}</option>
-            {ministryValues.map((value) => (
-              <option key={value} value={value}>
-                {t(`ministry.${value}`)}
-              </option>
-            ))}
-          </select>
-          <select
-            value={typeFilter}
-            onChange={(event) => setTypeFilter(event.target.value as EventType | "ALL")}
-            className="min-h-10 rounded-[var(--radius-pill)] border border-[var(--border)] bg-[var(--surface)] px-3 text-sm"
-          >
-            <option value="ALL">{t("filters.allTypes")}</option>
-            {eventTypeValues.map((value) => (
-              <option key={value} value={value}>
-                {t(`eventType.${value}`)}
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-wrap items-center gap-4">
+          <CmmsTabs
+            items={[
+              { id: "month", label: t("views.month") },
+              { id: "week", label: t("views.week") },
+              { id: "agenda", label: t("views.agenda") },
+            ]}
+            activeId={view}
+            onChange={(id) => setView(id as CalendarView)}
+          />
+          <CmmsFormField label={t("filters.ministryLabel")} className="min-w-[160px]">
+            <CmmsSelect
+              value={ministryFilter}
+              onChange={(event) =>
+                setMinistryFilter(event.target.value as MinistryScope | "ALL")
+              }
+            >
+              <option value="ALL">{t("filters.allMinistries")}</option>
+              {ministryValues.map((value) => (
+                <option key={value} value={value}>
+                  {t(`ministry.${value}`)}
+                </option>
+              ))}
+            </CmmsSelect>
+          </CmmsFormField>
+          <CmmsFormField label={t("filters.typeLabel")} className="min-w-[160px]">
+            <CmmsSelect
+              value={typeFilter}
+              onChange={(event) => setTypeFilter(event.target.value as EventType | "ALL")}
+            >
+              <option value="ALL">{t("filters.allTypes")}</option>
+              {eventTypeValues.map((value) => (
+                <option key={value} value={value}>
+                  {t(`eventType.${value}`)}
+                </option>
+              ))}
+            </CmmsSelect>
+          </CmmsFormField>
           <div className="ml-auto flex items-center gap-2">
             <CmmsButton
               variant="secondary"
@@ -229,20 +246,25 @@ export function EventEngine() {
         </div>
       </CmmsCard>
 
-      {error ? (
-        <div className="rounded-[var(--radius-xl)] bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:bg-rose-950/30 dark:text-rose-200">
-          {error}
-        </div>
-      ) : null}
-
       {eventsQuery.isLoading ? (
         <CmmsCard title={t("calendar.title")}>
-          <p className="text-sm text-[var(--muted-foreground)]">{t("loading")}</p>
+          <CmmsSkeleton className="h-64" />
         </CmmsCard>
       ) : eventsQuery.isError ? (
         <CmmsCard title={t("calendar.title")}>
-          <p className="text-sm text-rose-600">{t("loadFailed")}</p>
+          <CmmsAlert variant="error">{t("loadFailed")}</CmmsAlert>
         </CmmsCard>
+      ) : events.length === 0 ? (
+        <CmmsEmptyState
+          title={t("calendar.emptyTitle")}
+          description={t("calendar.noEvents")}
+          actionLabel={t("createEvent")}
+          onAction={() => {
+            setEditingEvent(null);
+            setError(null);
+            setEditorOpen(true);
+          }}
+        />
       ) : view === "month" ? (
         <MonthGrid
           t={t}
@@ -309,40 +331,12 @@ export function EventEngine() {
         loading={assignmentsQuery.isLoading}
         labels={t}
         error={assignmentError}
+        assigning={createAssignmentMutation.isPending}
+        autoAssigning={bulkAssignMutation.isPending || autoAssignMutation.isPending}
         onAssignMember={onAssignMember}
         onAutoAssign={onAutoAssign}
       />
-    </div>
-  );
-}
-
-function ViewToggle({
-  view,
-  onChange,
-  labels,
-}: {
-  view: CalendarView;
-  onChange: (next: CalendarView) => void;
-  labels: (key: string) => string;
-}) {
-  const options: CalendarView[] = ["month", "week", "agenda"];
-  return (
-    <div className="inline-flex rounded-[var(--radius-pill)] border border-[var(--border)] bg-[var(--surface)] p-1">
-      {options.map((option) => (
-        <button
-          key={option}
-          type="button"
-          onClick={() => onChange(option)}
-          className={`rounded-[var(--radius-pill)] px-3 py-1.5 text-sm ${
-            view === option
-              ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
-              : "text-[var(--muted-foreground)]"
-          }`}
-        >
-          {labels(`views.${option}`)}
-        </button>
-      ))}
-    </div>
+    </OperationalScreen>
   );
 }
 
@@ -599,9 +593,20 @@ function EventEditorModal({
       onClose={onClose}
       title={editingEvent ? labels("editor.editTitle") : labels("editor.createTitle")}
       className="max-w-2xl"
+      footer={
+        <div className="flex justify-end gap-2">
+          <CmmsButton type="button" variant="secondary" onClick={onClose} disabled={submitting}>
+            {labels("actions.close")}
+          </CmmsButton>
+          <CmmsButton type="submit" form="event-editor-form" disabled={submitting}>
+            {submitting ? labels("saving") : labels("actions.save")}
+          </CmmsButton>
+        </div>
+      }
     >
       <form
-        className="grid gap-4 md:grid-cols-2"
+        id="event-editor-form"
+        className="cmms-section-stack md:grid md:grid-cols-2 md:gap-4"
         onSubmit={async (event) => {
           event.preventDefault();
           await onSubmit({
@@ -618,30 +623,20 @@ function EventEditorModal({
           });
         }}
       >
-        <CmmsInput
-          label={labels("editor.title")}
-          value={title}
-          onChange={(event) => setTitle(event.target.value)}
-          required
-        />
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium">{labels("editor.type")}</span>
-          <select
-            className="min-h-11 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] px-3"
-            value={type}
-            onChange={(event) => setType(event.target.value as EventType)}
-          >
+        <CmmsFormField label={labels("editor.title")} required>
+          <CmmsInput value={title} onChange={(event) => setTitle(event.target.value)} required />
+        </CmmsFormField>
+        <CmmsFormField label={labels("editor.type")}>
+          <CmmsSelect value={type} onChange={(event) => setType(event.target.value as EventType)}>
             {eventTypeValues.map((value) => (
               <option key={value} value={value}>
                 {labels(`eventType.${value}`)}
               </option>
             ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium">{labels("editor.ministryScope")}</span>
-          <select
-            className="min-h-11 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] px-3"
+          </CmmsSelect>
+        </CmmsFormField>
+        <CmmsFormField label={labels("editor.ministryScope")}>
+          <CmmsSelect
             value={ministryScope}
             onChange={(event) => setMinistryScope(event.target.value as MinistryScope)}
           >
@@ -650,76 +645,56 @@ function EventEditorModal({
                 {labels(`ministry.${value}`)}
               </option>
             ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium">{labels("editor.status")}</span>
-          <select
-            className="min-h-11 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] px-3"
-            value={status}
-            onChange={(event) => setStatus(event.target.value as EventStatus)}
-          >
+          </CmmsSelect>
+        </CmmsFormField>
+        <CmmsFormField label={labels("editor.status")}>
+          <CmmsSelect value={status} onChange={(event) => setStatus(event.target.value as EventStatus)}>
             {statusValues.map((value) => (
               <option key={value} value={value}>
                 {labels(`status.${value}`)}
               </option>
             ))}
-          </select>
-        </label>
-        <CmmsInput
-          label={labels("editor.startTime")}
-          type="datetime-local"
-          value={startTime}
-          onChange={(event) => setStartTime(event.target.value)}
-          required
-        />
-        <CmmsInput
-          label={labels("editor.endTime")}
-          type="datetime-local"
-          value={endTime}
-          onChange={(event) => setEndTime(event.target.value)}
-          required
-        />
-        <CmmsInput
-          label={labels("editor.location")}
-          value={location}
-          onChange={(event) => setLocation(event.target.value)}
-        />
-        <CmmsInput
-          label={labels("editor.serviceSlot")}
-          type="number"
-          min={1}
-          value={serviceSlot}
-          onChange={(event) => setServiceSlot(event.target.value)}
-        />
-        <CmmsInput
-          label={labels("editor.description")}
-          value={description}
-          onChange={(event) => setDescription(event.target.value)}
-          className="md:col-span-2"
-        />
-        <label className="flex flex-col gap-2 md:col-span-2">
-          <span className="text-sm font-medium">{labels("editor.recurrence")}</span>
-          <select
-            className="min-h-11 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] px-3"
-            value={recurrenceRule}
-            onChange={(event) => setRecurrenceRule(event.target.value)}
-          >
+          </CmmsSelect>
+        </CmmsFormField>
+        <CmmsFormField label={labels("editor.startTime")} required>
+          <CmmsInput
+            type="datetime-local"
+            value={startTime}
+            onChange={(event) => setStartTime(event.target.value)}
+            required
+          />
+        </CmmsFormField>
+        <CmmsFormField label={labels("editor.endTime")} required>
+          <CmmsInput
+            type="datetime-local"
+            value={endTime}
+            onChange={(event) => setEndTime(event.target.value)}
+            required
+          />
+        </CmmsFormField>
+        <CmmsFormField label={labels("editor.location")}>
+          <CmmsInput value={location} onChange={(event) => setLocation(event.target.value)} />
+        </CmmsFormField>
+        <CmmsFormField label={labels("editor.serviceSlot")}>
+          <CmmsInput
+            type="number"
+            min={1}
+            value={serviceSlot}
+            onChange={(event) => setServiceSlot(event.target.value)}
+          />
+        </CmmsFormField>
+        <CmmsFormField label={labels("editor.description")} className="md:col-span-2">
+          <CmmsInput value={description} onChange={(event) => setDescription(event.target.value)} />
+        </CmmsFormField>
+        <CmmsFormField label={labels("editor.recurrence")} className="md:col-span-2">
+          <CmmsSelect value={recurrenceRule} onChange={(event) => setRecurrenceRule(event.target.value)}>
             {recurrencePresets.map((preset) => (
               <option key={preset} value={preset}>
                 {labels(`recurrence.${preset}`)}
               </option>
             ))}
-          </select>
-        </label>
-        <div className="md:col-span-2 flex justify-end gap-2">
-          <CmmsButton type="button" variant="secondary" onClick={onClose}>
-            {labels("actions.close")}
-          </CmmsButton>
-          <CmmsButton type="submit" disabled={submitting}>
-            {submitting ? labels("saving") : labels("actions.save")}
-          </CmmsButton>
-        </div>
+          </CmmsSelect>
+        </CmmsFormField>
       </form>
     </CmmsModal>
   );
@@ -734,6 +709,8 @@ function AssignmentModal({
   loading,
   labels,
   error,
+  assigning,
+  autoAssigning,
   onAssignMember,
   onAutoAssign,
 }: {
@@ -750,12 +727,23 @@ function AssignmentModal({
   loading: boolean;
   labels: (key: string, values?: Record<string, string | number>) => string;
   error: string | null;
+  assigning: boolean;
+  autoAssigning: boolean;
   onAssignMember: (memberId: string, role?: string) => Promise<void>;
   onAutoAssign: (count: number) => Promise<void>;
 }) {
   const [memberId, setMemberId] = useState("");
   const [role, setRole] = useState("");
   const [autoCount, setAutoCount] = useState("3");
+
+  const memberOptions = pool.length
+    ? pool
+    : assignments.map((row) => ({
+        memberId: row.memberId,
+        firstName: row.member.firstName,
+        lastName: row.member.lastName,
+        ministry: row.member.ministry,
+      }));
 
   return (
     <CmmsModal
@@ -764,84 +752,100 @@ function AssignmentModal({
       title={labels("assignments.title", { event: event?.title ?? "-" })}
       className="max-w-3xl"
     >
-      <div className="space-y-4">
-        {error ? (
-          <div className="rounded-[var(--radius-xl)] bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            {error}
-          </div>
-        ) : null}
-        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-medium">{labels("assignments.memberId")}</span>
-            <input
-              value={memberId}
-              onChange={(event) => setMemberId(event.target.value)}
-              placeholder={labels("assignments.memberPlaceholder")}
-              className="min-h-11 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] px-3"
-            />
-          </label>
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-medium">{labels("assignments.role")}</span>
-            <input
+      <div className="cmms-section-stack">
+        {error ? <CmmsAlert variant="error">{error}</CmmsAlert> : null}
+        <div className="grid gap-4 md:grid-cols-2">
+          <CmmsFormField label={labels("assignments.memberId")} required>
+            {memberOptions.length ? (
+              <CmmsSelect
+                value={memberId}
+                onChange={(event) => setMemberId(event.target.value)}
+              >
+                <option value="">{labels("assignments.memberPlaceholder")}</option>
+                {memberOptions.map((candidate) => (
+                  <option key={candidate.memberId} value={candidate.memberId}>
+                    {candidate.firstName} {candidate.lastName}
+                  </option>
+                ))}
+              </CmmsSelect>
+            ) : (
+              <CmmsInput
+                value={memberId}
+                onChange={(event) => setMemberId(event.target.value)}
+                placeholder={labels("assignments.memberPlaceholder")}
+              />
+            )}
+          </CmmsFormField>
+          <CmmsFormField label={labels("assignments.role")}>
+            <CmmsInput
               value={role}
               onChange={(event) => setRole(event.target.value)}
               placeholder="LEAD"
-              className="min-h-11 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] px-3"
             />
-          </label>
-          <div className="md:col-span-2 flex flex-wrap gap-2">
-            <CmmsButton
-              onClick={async () => {
-                await onAssignMember(memberId, role || undefined);
-                setMemberId("");
-                setRole("");
-              }}
-              disabled={!memberId}
-            >
-              {labels("assignments.assignMember")}
-            </CmmsButton>
-            <input
+          </CmmsFormField>
+        </div>
+
+        <div className="flex flex-wrap items-end gap-3">
+          <CmmsButton
+            disabled={!memberId || assigning}
+            onClick={async () => {
+              await onAssignMember(memberId, role || undefined);
+              setMemberId("");
+              setRole("");
+            }}
+          >
+            {assigning ? labels("assignments.assigning") : labels("assignments.assignMember")}
+          </CmmsButton>
+          <CmmsFormField label={labels("assignments.autoCountLabel")} className="w-24">
+            <CmmsInput
               value={autoCount}
               onChange={(event) => setAutoCount(event.target.value)}
               type="number"
               min={1}
-              className="h-11 w-24 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] px-3"
             />
-            <CmmsButton
-              variant="secondary"
-              onClick={async () => onAutoAssign(Number(autoCount || 1))}
-            >
-              {labels("assignments.autoAssign")}
-            </CmmsButton>
-          </div>
+          </CmmsFormField>
+          <CmmsButton
+            variant="secondary"
+            disabled={autoAssigning}
+            onClick={async () => onAutoAssign(Number(autoCount || 1))}
+          >
+            {autoAssigning ? labels("assignments.autoAssigning") : labels("assignments.autoAssign")}
+          </CmmsButton>
         </div>
 
         <CmmsCard title={labels("assignments.poolTitle")} description={labels("assignments.poolSubtitle")}>
           {pool.length ? (
             <div className="flex flex-wrap gap-2">
               {pool.slice(0, 12).map((candidate) => (
-                <button
+                <CmmsButton
                   key={candidate.memberId}
                   type="button"
+                  size="sm"
+                  variant="secondary"
                   onClick={() => setMemberId(candidate.memberId)}
-                  className="rounded-[var(--radius-pill)] border border-[var(--border)] px-3 py-1.5 text-xs"
                 >
                   {candidate.firstName} {candidate.lastName}
-                </button>
+                </CmmsButton>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-[var(--muted-foreground)]">{labels("assignments.noPool")}</p>
+            <CmmsEmptyState
+              title={labels("assignments.noPool")}
+              description={labels("assignments.noPoolDescription")}
+            />
           )}
         </CmmsCard>
 
         <CmmsCard title={labels("assignments.currentTitle")}>
           {loading ? (
-            <p className="text-sm text-[var(--muted-foreground)]">{labels("loading")}</p>
+            <CmmsSkeleton className="h-32" />
           ) : (
             <CmmsTable
+              compact
               rows={assignments}
-              emptyState={labels("assignments.none")}
+              emptyState={
+                <CmmsEmptyState title={labels("assignments.noneTitle")} description={labels("assignments.none")} />
+              }
               columns={[
                 {
                   key: "name",

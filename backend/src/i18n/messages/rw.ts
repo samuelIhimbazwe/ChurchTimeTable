@@ -60,11 +60,79 @@ export const rwMessages: Record<string, string> = {
 
     'Gusimburana byarangiye: {eventName}',
 
+  NOTIFICATION_SWAP_PENDING_LEADER_TITLE: 'Swap itegereje review',
+
+  NOTIFICATION_SWAP_PENDING_LEADER_BODY:
+
+    'Swap isaba review ya Team Head kuri {eventName}',
+
+  NOTIFICATION_REPLACEMENT_TITLE: 'Amakuru ya replacement',
+
+  NOTIFICATION_REPLACEMENT_REQUESTED_BODY:
+
+    'Replacement yasabwe kuri {eventName}',
+
+  NOTIFICATION_REPLACEMENT_COVER_ASSIGNED_BODY:
+
+    '{memberName} yiyemeje gukora kuri {eventName}',
+
+  NOTIFICATION_REPLACEMENT_APPROVED_BODY:
+
+    'Replacement yemejwe kuri {eventName}',
+
+  NOTIFICATION_REPLACEMENT_REJECTED_BODY:
+
+    'Replacement yanze kuri {eventName}',
+
+  NOTIFICATION_REPLACEMENT_FINALIZED_BODY:
+
+    'Replacement yarangiye kuri {eventName}',
+
+  NOTIFICATION_REPLACEMENT_PENDING_LEADER_TITLE: 'Replacement itegereje',
+
+  NOTIFICATION_REPLACEMENT_PENDING_LEADER_BODY:
+
+    'Replacement isaba review kuri {eventName}',
+
+  NOTIFICATION_COVERAGE_ESCALATION_TITLE: 'Escalade ya coverage ({level})',
+
+  NOTIFICATION_COVERAGE_ESCALATION_BODY:
+
+    '{memberName} — {eventName}. {notes}',
+
+  NOTIFICATION_READINESS_WARNING_TITLE: 'Iburira ryo gutegura service',
+
+  NOTIFICATION_READINESS_WARNING_BODY:
+
+    '{eventName} readiness: {status}',
+
   NOTIFICATION_ATTENDANCE_TITLE: 'Uko witabiriye',
 
   NOTIFICATION_ATTENDANCE_BODY:
 
     'Uko witabiriye kwawe kuri {eventName} byanditswe',
+
+  NOTIFICATION_ATTENDANCE_ABSENCE_TITLE: 'Gukurikirana attendance birakenewe',
+
+  NOTIFICATION_ATTENDANCE_ABSENCE_BODY:
+
+    'Absence yanditswe kuri {eventName}',
+
+  NOTIFICATION_ATTENDANCE_ESCALATION_TITLE: 'Escalation ya attendance ({level})',
+
+  NOTIFICATION_ATTENDANCE_ESCALATION_BODY:
+
+    '{memberName} — {eventName}. {notes}',
+
+  NOTIFICATION_EXCUSED_REVIEW_TITLE: 'Amakuru y\'excuse review',
+
+  NOTIFICATION_EXCUSED_APPROVED_BODY:
+
+    'Excuse yawe ya {eventName} yemejwe',
+
+  NOTIFICATION_EXCUSED_REJECTED_BODY:
+
+    'Excuse yawe ya {eventName} yanze',
 
   NOTIFICATION_DISCIPLINE_TITLE: 'Imyitwarire',
 
@@ -75,6 +143,20 @@ export const rwMessages: Record<string, string> = {
   NOTIFICATION_DUES_TITLE: 'Imari ya Korali',
 
   NOTIFICATION_DUES_BODY: 'Asigaye: {amount}',
+
+  INVALID_CREDENTIALS: 'Imeri cyangwa ijambo banga siyo.',
+  INVALID_SESSION: 'Session yawe yarangiye. Ongera winjire.',
+  EMAIL_ALREADY_REGISTERED: 'Iyi imeri isanzwe yanditswe.',
+  ACCOUNT_INACTIVE: 'Konti yawe ntabwo ikora. Vugana n\'umuyobozi w\'umurimo.',
+  MEMBER_PENDING_APPROVAL:
+    'Kwiyandikisha kwawe gutegereje kwemezwa n\'umuyobozi.',
+  TOO_MANY_REQUESTS: 'Ugerageje inshuro nyinshi. Tegereza gato hanyuma ugerageze.',
+  NOTIFICATION_MEMBER_APPROVED_TITLE: 'Kwiyandikisha kwemewe',
+  NOTIFICATION_MEMBER_APPROVED_BODY:
+    'Murakaza neza! Kwiyandikisha kwawe mu murimo kwemewe. Ubu ushobora gukoresha sisitemu.',
+  NOTIFICATION_MEMBER_REJECTED_TITLE: 'Amakuru y\'iyandikisha',
+  NOTIFICATION_MEMBER_REJECTED_BODY:
+    'Kwiyandikisha kwawe ntikwemewe. Vugana n\'umuyobozi w\'umurimo ubafashe.',
 
 };
 

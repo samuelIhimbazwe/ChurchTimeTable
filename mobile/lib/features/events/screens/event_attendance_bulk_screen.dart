@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/attendance/attendance_payload.dart';
 import '../../../core/design/components/buttons/cmms_button.dart';
 import '../../../core/design/components/chips/attendance_status_chip.dart';
 import '../../../core/design/tokens/spacing.dart';
@@ -28,6 +29,17 @@ class EventAttendanceBulkScreen extends ConsumerStatefulWidget {
 class _EventAttendanceBulkScreenState
     extends ConsumerState<EventAttendanceBulkScreen> {
   final Map<String, String> _statusByMember = {};
+
+  String _operationalMark(String physical) {
+    switch (physical) {
+      case 'LATE':
+        return 'LATE';
+      case 'ABSENT':
+        return 'UNEXCUSED_ABSENCE';
+      default:
+        return 'ATTENDED';
+    }
+  }
   bool _saving = false;
 
   @override
@@ -44,15 +56,13 @@ class _EventAttendanceBulkScreenState
     final l10n = context.l10n;
     setState(() => _saving = true);
 
-    final records = _statusByMember.entries
-        .map(
-          (e) => {
-            'eventId': widget.eventId,
-            'memberId': e.key,
-            'physicalStatus': e.value,
-          },
-        )
-        .toList();
+    final records = _statusByMember.entries.map((e) {
+      return AttendancePayload.forOperational(
+        eventId: widget.eventId,
+        memberId: e.key,
+        mark: _operationalMark(e.value),
+      );
+    }).toList();
 
     final repo = AttendanceRepository(client: ref.read(apiClientProvider));
     try {
@@ -125,7 +135,10 @@ class _EventAttendanceBulkScreenState
                             );
                           }).toList(),
                         ),
-                        AttendanceStatusChip.fromPhysical(context, status),
+                        AttendanceStatusChip.fromOperational(
+                          context,
+                          _operationalMark(status),
+                        ),
                       ],
                     ),
                   ),
