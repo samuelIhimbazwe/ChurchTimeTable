@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { RequirePermissions } from '../common/decorators/roles.decorator';
 import { PERMISSIONS } from '../common/constants/roles';
@@ -12,7 +13,7 @@ import { GenerateProtocolTeamsDto } from './dto/generate-protocol-teams.dto';
 import { UpsertCommitteeRoleDto } from './dto/upsert-committee-role.dto';
 
 @Controller('governance')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
 export class GovernanceController {
   constructor(
     private governance: GovernanceService,

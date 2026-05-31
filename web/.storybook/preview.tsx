@@ -9,7 +9,7 @@ const preview: Preview = {  parameters: {
       default: "light",
       values: [
         { name: "light", value: "#f8fafc" },
-        { name: "dark", value: "#0b1220" },
+        { name: "dark", value: "#0b0e14" },
       ],
     },
   },

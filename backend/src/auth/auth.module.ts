@@ -6,9 +6,13 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { PermissionsResolver } from './permissions.resolver';
+import { MemberNumberModule } from '../members/member-number.module';
+import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
 
 @Module({
   imports: [
+    MemberNumberModule,
+    MemberPhoneEnforcementModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],

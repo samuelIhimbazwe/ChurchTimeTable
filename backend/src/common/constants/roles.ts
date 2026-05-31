@@ -30,6 +30,7 @@ export const PERMISSIONS = {
   FINANCE_READ: 'finance:read',
   FINANCE_WRITE: 'finance:write',
   MEMBER_MANAGE: 'member:manage',
+  MEMBER_READ: 'member:read',
   REPORT_EXPORT: 'report:export',
   AUDIT_READ: 'audit:read',
   SYNC_ADMIN: 'sync:admin',
@@ -70,4 +71,5 @@ export const CHOIR_OPERATIONS_PERMS = [
   PERMISSIONS.DISCIPLINE_MANAGE,
   PERMISSIONS.FINANCE_READ,
   PERMISSIONS.REPORT_EXPORT,
+  PERMISSIONS.MEMBER_READ,
 ] as const;

@@ -40,6 +40,8 @@ import { UpdateAttendanceWeightsDto } from './dto/update-attendance-weights.dto'
 
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
+import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
+
 import { RolesGuard } from '../common/guards/roles.guard';
 
 import {
@@ -64,7 +66,7 @@ import { OperationalScopeService } from '../governance/operational-scope.service
 
 @Controller('attendance')
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
 
 export class AttendanceController {
 

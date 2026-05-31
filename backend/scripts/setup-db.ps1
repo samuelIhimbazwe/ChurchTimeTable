@@ -1,6 +1,7 @@
 # CMMS database setup - tries PostgreSQL (Docker) first, falls back to SQLite
 param(
-  [switch]$SqliteOnly
+  [switch]$SqliteOnly,
+  [switch]$AllowDbPush
 )
 
 $backendRoot = Split-Path $PSScriptRoot -Parent
@@ -42,7 +43,18 @@ if ($SqliteOnly) {
 npx prisma generate
 npx prisma migrate deploy
 if ($LASTEXITCODE -ne 0) {
-  npx prisma db push --accept-data-loss
+  if ($AllowDbPush -or $SqliteOnly) {
+    Write-Warning "migrate deploy failed - running db push (dev fallback only)."
+    npx prisma db push --accept-data-loss
+  } else {
+    Write-Error @"
+Prisma migrate deploy failed.
+
+Production and CI must use migrations only. Fix the migration error, or for
+local SQLite dev run: .\scripts\setup-db.ps1 -SqliteOnly -AllowDbPush
+"@
+    exit 1
+  }
 }
 npm run prisma:seed
 Write-Host "Database ready."

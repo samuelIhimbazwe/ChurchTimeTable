@@ -99,7 +99,7 @@ export function FinanceStewardshipDashboard() {
   }
 
   return (
-    <OperationalScreen title={t("title")} subtitle={t("subtitle")} error={actionError}>
+    <OperationalScreen error={actionError}>
       <div className="flex flex-wrap items-center justify-end gap-2">
           <CmmsButton
             variant="secondary"
@@ -188,7 +188,56 @@ export function FinanceStewardshipDashboard() {
           tone={data.unpaidBalance > 0 ? "warning" : "default"}
         />
         <DashboardStatCard label={t("stats.unpaidMembers")} value={data.unpaidMemberCount} />
+        {data.contributions ? (
+          <>
+            <DashboardStatCard
+              label={t("stats.contributionTotals")}
+              value={formatCurrency(data.contributions.contributionTotals)}
+            />
+            <DashboardStatCard
+              label={t("stats.pendingContributions")}
+              value={data.contributions.pendingConfirmationCount}
+              tone={
+                data.contributions.pendingConfirmationCount > 0 ? "warning" : "default"
+              }
+            />
+          </>
+        ) : null}
       </div>
+
+      {!data.executiveSummary && data.contributions?.confirmationQueue?.length ? (
+        <CmmsCard
+          title={t("contributionQueueTitle")}
+          description={t("contributionQueueHint")}
+        >
+          <CmmsTable
+            compact
+            rows={data.contributions.confirmationQueue}
+            columns={[
+              {
+                header: "Reference",
+                render: (row) => row.referenceNumber,
+              },
+              {
+                header: t("columns.member"),
+                render: (row) => row.memberName ?? row.memberNumber ?? "—",
+              },
+              {
+                header: t("columns.type"),
+                render: (row) => row.contributionType,
+              },
+              {
+                header: t("columns.amount"),
+                render: (row) => formatCurrency(row.amount),
+              },
+              {
+                header: t("columns.status"),
+                render: (row) => row.status,
+              },
+            ]}
+          />
+        </CmmsCard>
+      ) : null}
 
       {!data.executiveSummary && canApprove ? (
         <CmmsCard

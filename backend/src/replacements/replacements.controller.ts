@@ -11,6 +11,7 @@ import {
 import { ReplacementsService } from './replacements.service';
 import { CreateReplacementDto } from './dto/create-replacement.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { RequirePermissions } from '../common/decorators/roles.decorator';
 import { PERMISSIONS } from '../common/constants/roles';
@@ -18,7 +19,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/decorators/current-user.decorator';
 
 @Controller('replacements')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
 export class ReplacementsController {
   constructor(private replacementsService: ReplacementsService) {}
 

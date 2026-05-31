@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/design/components/buttons/cmms_button.dart';
-import '../../../core/design/tokens/colors.dart';
 import '../../../core/localization/l10n.dart';
 import '../../../core/routing/app_router.dart';
 import '../providers/auth_provider.dart';
@@ -80,7 +79,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           Icon(
             Icons.church,
             size: 72,
-            color: CmmsColors.primary,
+            color: Theme.of(context).colorScheme.primary,
           ),
           const SizedBox(height: 8),
           Text(

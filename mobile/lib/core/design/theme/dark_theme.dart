@@ -7,16 +7,18 @@ ThemeData buildDarkTheme() {
   const brightness = Brightness.dark;
   final colorScheme = ColorScheme(
     brightness: brightness,
-    primary: CmmsColors.primaryLight,
-    onPrimary: CmmsColors.textPrimaryDark,
+    primary: CmmsColors.primaryDarkMode,
+    onPrimary: Colors.white,
     secondary: CmmsColors.accentGold,
     onSecondary: CmmsColors.textPrimaryDark,
     error: CmmsColors.danger,
     onError: Colors.white,
     surface: CmmsColors.surfaceDark,
     onSurface: CmmsColors.textPrimaryDark,
+    onSurfaceVariant: CmmsColors.textSecondaryDark,
     surfaceContainerHighest: CmmsColors.surfaceVariantDark,
     outline: CmmsColors.outlineDark,
+    outlineVariant: CmmsColors.outlineDark,
   );
 
   return ThemeData(
@@ -45,12 +47,44 @@ ThemeData buildDarkTheme() {
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        backgroundColor: CmmsColors.primaryLight,
-        foregroundColor: CmmsColors.textPrimaryDark,
+        backgroundColor: CmmsColors.primaryDarkMode,
+        foregroundColor: Colors.white,
         minimumSize: const Size(64, 48),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: CmmsRadius.button),
       ),
+    ),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: CmmsColors.surfaceDark,
+      indicatorColor: CmmsColors.primaryDarkMode.withValues(alpha: 0.2),
+      labelTextStyle: WidgetStateProperty.resolveWith((states) {
+        final selected = states.contains(WidgetState.selected);
+        return TextStyle(
+          fontSize: 12,
+          fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+          color: selected ? CmmsColors.primaryDarkMode : CmmsColors.textSecondaryDark,
+        );
+      }),
+      iconTheme: WidgetStateProperty.resolveWith((states) {
+        final selected = states.contains(WidgetState.selected);
+        return IconThemeData(
+          color: selected ? CmmsColors.primaryDarkMode : CmmsColors.textSecondaryDark,
+        );
+      }),
+    ),
+    navigationRailTheme: NavigationRailThemeData(
+      backgroundColor: Colors.transparent,
+      indicatorColor: CmmsColors.primaryDarkMode,
+      selectedIconTheme: const IconThemeData(color: Colors.white),
+      selectedLabelTextStyle: const TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.w600,
+      ),
+      unselectedIconTheme: const IconThemeData(color: CmmsColors.textSecondaryDark),
+      unselectedLabelTextStyle: const TextStyle(color: CmmsColors.textSecondaryDark),
+    ),
+    drawerTheme: const DrawerThemeData(
+      backgroundColor: CmmsColors.surfaceDark,
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
@@ -71,7 +105,7 @@ ThemeData buildDarkTheme() {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: CmmsRadius.button,
-        borderSide: const BorderSide(color: CmmsColors.primaryLight, width: 2),
+        borderSide: const BorderSide(color: CmmsColors.primaryDarkMode, width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     ),

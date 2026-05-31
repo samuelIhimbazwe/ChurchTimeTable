@@ -3,6 +3,11 @@ import { MemberStatus, MinistryScope, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { OperationalScopeService } from '../governance/operational-scope.service';
+import {
+  hasProtocolCoordination,
+  hasProtocolOversight,
+} from '../common/governance/governance-permissions.util';
 import {
   isValidMemberTransition,
   UpdateMemberStatusDto,
@@ -10,12 +15,22 @@ import {
 import { BusinessRuleException } from '../common/exceptions/business.exception';
 import { paginate, paginatedResult } from '../common/dto/pagination.dto';
 
+export type MemberRosterItem = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  memberNumber: string | null;
+  ministry: MinistryScope;
+  status: MemberStatus;
+};
+
 @Injectable()
 export class MembersService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
     private notifications: NotificationsService,
+    private operationalScope: OperationalScopeService,
   ) {}
 
   async findAll(
@@ -38,6 +53,54 @@ export class MembersService {
       }),
       this.prisma.member.count({ where }),
     ]);
+
+    return paginatedResult(items, total, page, limit);
+  }
+
+  async findRoster(
+    actorUserId: string,
+    page = 1,
+    limit = 20,
+    filters?: { status?: MemberStatus; ministry?: MinistryScope },
+  ) {
+    const scope = await this.operationalScope.buildForUser(actorUserId);
+    const { skip, take } = paginate(page, limit);
+    const where: Prisma.MemberWhereInput = {
+      status: filters?.status ?? MemberStatus.ACTIVE,
+    };
+    if (filters?.ministry) where.ministry = filters.ministry;
+
+    const narrowToTeam =
+      scope.scopedMemberIds.length > 0 &&
+      !hasProtocolOversight(scope.permissions) &&
+      !hasProtocolCoordination(scope.permissions);
+
+    if (narrowToTeam) {
+      where.id = { in: scope.scopedMemberIds };
+    }
+
+    const [rows, total] = await Promise.all([
+      this.prisma.member.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { lastName: 'asc' },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          memberNumber: true,
+          ministry: true,
+          status: true,
+        },
+      }),
+      this.prisma.member.count({ where }),
+    ]);
+
+    const items: MemberRosterItem[] = rows.map((row) => ({
+      ...row,
+      memberNumber: row.memberNumber ?? null,
+    }));
 
     return paginatedResult(items, total, page, limit);
   }

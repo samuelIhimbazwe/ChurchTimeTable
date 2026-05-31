@@ -22,9 +22,10 @@ export function ApiStatusCard() {
       <div className="space-y-3 text-sm text-[var(--muted-foreground)]">
         <div className="flex items-center gap-3">
           <span
-            className={`inline-block size-3 rounded-full ${
-              connected ? "bg-emerald-500" : "bg-amber-500"
-            }`}
+            className="inline-block size-3 rounded-full"
+            style={{
+              backgroundColor: connected ? "var(--success)" : "var(--warning)",
+            }}
           />
           <span>
             {isLoading

@@ -15,6 +15,8 @@ import { FinanceGovernanceService } from '../finance/finance-governance.service'
 import {
   hasProtocolCoordination,
   hasProtocolOversight,
+  canViewDisciplineIntelligence,
+  canViewFinanceIntelligence,
 } from '../common/governance/governance-permissions.util';
 
 export type AlertSeverity = 'info' | 'warning' | 'critical';
@@ -83,6 +85,9 @@ export class MinistryIntelligenceService {
       ? { absentMemberId: { in: memberIds } }
       : {};
 
+    const canFinance = canViewFinanceIntelligence(permissions);
+    const canDiscipline = canViewDisciplineIntelligence(permissions);
+
     const [
       pendingReplacements,
       pendingSwaps,
@@ -121,10 +126,14 @@ export class MinistryIntelligenceService {
         },
         include: { members: true },
       }),
-      this.governance.disciplineRecommendations(
-        memberIds.length ? memberIds : undefined,
-      ),
-      this.prisma.memberDues.count({ where: { paid: false } }),
+      canDiscipline
+        ? this.governance.disciplineRecommendations(
+            memberIds.length ? memberIds : undefined,
+          )
+        : Promise.resolve({ count: 0, items: [] }),
+      canFinance
+        ? this.prisma.memberDues.count({ where: { paid: false } })
+        : Promise.resolve(0),
       this.prisma.attendance.count({
         where: {
           escalated: true,
@@ -185,7 +194,7 @@ export class MinistryIntelligenceService {
       });
     }
 
-    if (disciplineRecs.count > 0) {
+    if (canDiscipline && disciplineRecs.count > 0) {
       alerts.push({
         id: 'discipline-review',
         type: 'discipline_review',
@@ -197,7 +206,7 @@ export class MinistryIntelligenceService {
       });
     }
 
-    if (unpaidDues >= 5) {
+    if (canFinance && unpaidDues >= 5) {
       alerts.push({
         id: 'finance-compliance',
         type: 'finance_compliance',

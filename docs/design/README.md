@@ -20,6 +20,8 @@ import 'package:cmms_mobile/core/design/design.dart';
 
 ## Documentation
 
+- [ui_prototype_spec.md](ui_prototype_spec.md) — **UI template spec** (screens, layout, features from prototype images)
+- [light_mode_reference.md](light_mode_reference.md) — color tokens and component mapping
 - [typography.md](typography.md)
 - [spacing.md](spacing.md)
 - [components.md](components.md)

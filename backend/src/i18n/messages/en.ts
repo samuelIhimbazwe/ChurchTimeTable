@@ -154,6 +154,14 @@ export const enMessages: Record<string, string> = {
   ACCOUNT_INACTIVE: 'This account is inactive. Contact your ministry leader.',
   MEMBER_PENDING_APPROVAL:
     'Your registration is awaiting leader approval.',
+  PROFILE_UPDATE_NOT_ALLOWED:
+    'Your profile cannot be updated in the current status.',
+  INVALID_PHONE_FORMAT:
+    'Enter a valid Rwanda phone number (e.g. 0781234567).',
+  PHONE_REQUIRED: 'Phone number required to continue.',
+  NOTIFICATION_CONTRIBUTION_CONFIRMED_TITLE: 'Contribution confirmed',
+  NOTIFICATION_CONTRIBUTION_CONFIRMED_BODY:
+    'Your contribution has been confirmed and recorded.',
   TOO_MANY_REQUESTS: 'Too many attempts. Please wait a moment and try again.',
   NOTIFICATION_MEMBER_APPROVED_TITLE: 'Registration approved',
   NOTIFICATION_MEMBER_APPROVED_BODY:

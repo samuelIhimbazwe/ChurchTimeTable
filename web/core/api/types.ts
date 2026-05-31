@@ -32,13 +32,20 @@ export interface AuthProfile {
   onboardingCompleted?: boolean;
   member?: {
     id?: string;
+    memberNumber?: string | null;
     firstName?: string | null;
     lastName?: string | null;
     phone?: string | null;
     ministry?: string | null;
     status?: string | null;
     onboardingCompleted?: boolean;
+    missingPhone?: boolean;
   } | null;
+  phoneEnforcement?: {
+    enabled: boolean;
+    mode: "soft" | "warning" | "strict";
+    blocked: boolean;
+  };
 }
 
 export interface ChartPoint {
@@ -425,6 +432,7 @@ export interface AssignmentValidationResponse {
 
 export interface RotationPoolItem {
   memberId: string;
+  memberNumber?: string | null;
   firstName: string;
   lastName: string;
   ministry: MinistryScope;

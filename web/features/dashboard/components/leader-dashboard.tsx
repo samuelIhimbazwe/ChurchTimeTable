@@ -62,27 +62,32 @@ export function LeaderDashboard() {
             label={t("stats.upcomingEvents")}
             value={data.upcomingEvents}
             description={t("leaderUpcomingEventsHint")}
+            trend={{ value: t("metricTrendUp", { value: "8" }), direction: "up" }}
             tone="accent"
           />
           <DashboardStatCard
             label={t("stats.pendingSwaps")}
             value={data.pendingSwaps}
             description={t("leaderPendingSwapsHint")}
+            trend={{ value: t("metricTrendNeutral"), direction: "neutral" }}
           />
           <DashboardStatCard
             label={t("stats.pendingReplacements")}
             value={data.pendingReplacements}
             description={t("leaderPendingReplacementsHint")}
+            trend={{ value: t("metricTrendNeutral"), direction: "neutral" }}
           />
           <DashboardStatCard
             label={t("stats.attendanceRate")}
             value={formatPercent(data.attendanceRate)}
             description={t("leaderAttendanceHint")}
+            trend={{ value: t("metricTrendUp", { value: "12" }), direction: "up" }}
           />
           <DashboardStatCard
             label={t("stats.activeDiscipline")}
             value={data.activeDiscipline}
             description={t("leaderDisciplineHint")}
+            trend={{ value: t("metricTrendNeutral"), direction: "neutral" }}
             tone={data.activeDiscipline > 0 ? "warning" : "default"}
           />
         </div>

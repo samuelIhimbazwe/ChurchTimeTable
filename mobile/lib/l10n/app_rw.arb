@@ -1,6 +1,13 @@
 {
   "@@locale": "rw",
   "app_title": "CMMS",
+  "app_tagline": "Sisitemu yo gucunga itorero",
+  "nav_home": "Ahabanza",
+  "nav_members": "Abanyamuryango",
+  "nav_events": "Ibirori",
+  "nav_more": "Ibindi",
+  "members_title": "Abanyamuryango",
+  "members_empty": "Nta banyamuryango babonetse.",
   "auth_sign_in_action": "Injira",
   "auth_email_label": "Imeri",
   "auth_password_label": "Ijambo banga",
@@ -36,6 +43,7 @@
   "onboarding_pending_step_access": "Niyo wemewe, uzabona gahunda n'amakuru y'umurimo.",
   "onboarding_pending_help": "Vugana n'umuyobozi wa korali cyangwa wa protocol niba ukeneye ubufasha.",
   "dashboard_member_title": "Ikibaho cyanjye",
+  "dashboard_welcome": "Murakaza neza, {name}",
   "dashboard_leader_title": "Ikibaho cy'umuyobozi",
   "nav_calendar": "Kalendari y'ibikorwa",
   "nav_attendance": "Uko witabiriye",
@@ -323,5 +331,14 @@
   "attendance_discipline_created": "Urubanza rw'ubunyangamugayo rwashyizweho.",
   "coverage_escalate_team_head": "Ohereza ku team head",
   "coverage_escalate_coordinator": "Ohereza ku coordinator",
-  "coverage_escalate_president": "Ohereza ku president"
+  "coverage_escalate_president": "Ohereza ku president",
+  "phoneRequired": "Nimero ya telefoni irakenewe kugira ngo ukomeze.",
+  "updatePhoneNow": "Hindura nonaha",
+  "restrictedUntilPhoneAdded": "Nimero ya telefoni irakenewe kugira ngo ukomeze imirimo y'umurimo.",
+  "warningPhoneIncomplete": "Uzuze nimero ya telefoni kugira ngo utazabura uburyo bwo gukoresha ibikoresho by'umurimo.",
+  "my_contributions_title": "Imisanzu yanjye",
+  "my_contributions_member_number": "Nomero y'umunyamuryango",
+  "my_contributions_history_title": "Amateka y'imisanzu",
+  "my_contributions_total": "Imisanzu yose",
+  "my_contributions_outstanding": "Amafaranga asigaye"
 }

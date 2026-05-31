@@ -67,6 +67,10 @@ export class FinanceExportService {
       amount: h.amount,
       status: h.status,
       receiptUrl: h.receiptUrl ?? '',
+      referenceNumber: (h as { referenceNumber?: string }).referenceNumber ?? '',
+      contributionType: h.contributionType,
+      contributionStatus: h.status,
+      memberNumber: data.memberNumber ?? '',
     }));
     const content = this.toCsv(rows);
     await this.logExport(actorUserId, 'MEMBER_CONTRIBUTIONS_EXPORT_CSV', {
@@ -146,7 +150,7 @@ export class FinanceExportService {
       ? { memberId: filters.memberId }
       : {};
 
-    const [transactions, dues] = await Promise.all([
+    const [transactions, dues, contributions] = await Promise.all([
       this.prisma.financeTransaction.findMany({
         where: { ...scopeWhere, ...dateWhere, ...memberFilter },
         orderBy: { transactionDate: 'desc' },
@@ -158,22 +162,85 @@ export class FinanceExportService {
         take: 500,
         include: {
           member: {
-            select: { firstName: true, lastName: true },
+            select: { firstName: true, lastName: true, memberNumber: true },
+          },
+        },
+      }),
+      this.prisma.contributionRecord.findMany({
+        where: {
+          ...(filters.memberId ? { memberId: filters.memberId } : {}),
+          member: { ministry: { in: scopes } },
+          ...(filters.from || filters.to
+            ? {
+                createdAt: {
+                  ...(filters.from ? { gte: new Date(filters.from) } : {}),
+                  ...(filters.to ? { lte: new Date(filters.to) } : {}),
+                },
+              }
+            : {}),
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 500,
+        include: {
+          member: {
+            select: { firstName: true, lastName: true, memberNumber: true },
           },
         },
       }),
     ]);
 
-    const txRows = transactions.map((t) => ({
-      date: t.transactionDate.toISOString().slice(0, 10),
-      kind: 'transaction',
-      type: t.type,
-      amount: Number(t.amount),
-      status: t.approvalStatus,
-      label: t.description ?? t.category,
-      receiptUrl: t.receiptUrl ?? '',
-      memberName: t.memberId ?? '',
-    }));
+    const memberIds = [
+      ...new Set(
+        transactions
+          .map((t) => t.memberId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const members = memberIds.length
+      ? await this.prisma.member.findMany({
+          where: { id: { in: memberIds } },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            memberNumber: true,
+          },
+        })
+      : [];
+    const memberById = new Map(members.map((member) => [member.id, member]));
+
+    const formatMemberLabel = (
+      member?: {
+        firstName: string;
+        lastName: string;
+        memberNumber?: string | null;
+      } | null,
+    ) => {
+      if (!member) return '';
+      const name = `${member.firstName} ${member.lastName}`.trim();
+      if (member.memberNumber) {
+        return `Member #: ${member.memberNumber} | ${name}`;
+      }
+      return name;
+    };
+
+    const txRows = transactions.map((t) => {
+      const member = t.memberId ? memberById.get(t.memberId) : undefined;
+      return {
+        date: t.transactionDate.toISOString().slice(0, 10),
+        kind: 'transaction',
+        type: t.type,
+        amount: Number(t.amount),
+        status: t.approvalStatus,
+        label: t.description ?? t.category,
+        receiptUrl: t.receiptUrl ?? '',
+        memberNumber: member?.memberNumber ?? '',
+        memberName: formatMemberLabel(member),
+        contributionType: t.category,
+        contributionStatus: t.approvalStatus,
+        referenceNumber: t.id,
+      };
+    });
 
     const dueRows = dues.map((d) => ({
       date: d.updatedAt.toISOString().slice(0, 10),
@@ -183,12 +250,31 @@ export class FinanceExportService {
       status: d.status,
       label: d.period,
       receiptUrl: '',
-      memberName: d.member
-        ? `${d.member.firstName} ${d.member.lastName}`
-        : '',
+      memberNumber: d.member?.memberNumber ?? '',
+      memberName: formatMemberLabel(d.member),
+      contributionType: d.dueType,
+      contributionStatus: d.status,
+      referenceNumber: d.id,
     }));
 
-    return [...txRows, ...dueRows].sort((a, b) => b.date.localeCompare(a.date));
+    const contributionRows = contributions.map((c) => ({
+      date: (c.confirmedAt ?? c.createdAt).toISOString().slice(0, 10),
+      kind: 'contribution',
+      type: c.contributionType,
+      amount: Number(c.amount),
+      status: c.status,
+      label: c.referenceNumber,
+      receiptUrl: c.receiptUrl ?? '',
+      memberNumber: c.member?.memberNumber ?? '',
+      memberName: formatMemberLabel(c.member),
+      contributionType: c.contributionType,
+      contributionStatus: c.status,
+      referenceNumber: c.referenceNumber,
+    }));
+
+    return [...txRows, ...dueRows, ...contributionRows].sort((a, b) =>
+      b.date.localeCompare(a.date),
+    );
   }
 
   private toCsv(data: Record<string, unknown>[]) {

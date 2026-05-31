@@ -30,6 +30,7 @@ import { ChoirModule } from './choir/choir.module';
 import { SystemModule } from './system/system.module';
 import { AppScheduleModule } from './schedule/schedule.module';
 import { GovernanceModule } from './governance/governance.module';
+import { VisibilityModule } from './common/visibility/visibility.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { GovernanceModule } from './governance/governance.module';
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
     I18nModule,
     PrismaModule,
+    VisibilityModule,
     AppScheduleModule,
     AuditModule,
     AuthModule,

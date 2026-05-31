@@ -3,12 +3,14 @@
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 
+import { CmmsAlert } from "@/components/ui/cmms-alert";
 import { CmmsBadge } from "@/components/ui/cmms-badge";
 import { CmmsButton } from "@/components/ui/cmms-button";
 import { CmmsEmptyState } from "@/components/ui/cmms-empty-state";
 import { CmmsInput } from "@/components/ui/cmms-input";
 import { CmmsSelect } from "@/components/ui/cmms-select";
 import { CmmsTable } from "@/components/ui/cmms-table";
+import { DonutChart, CHART_SEGMENT_COLORS } from "@/features/dashboard/components/dashboard-primitives";
 import {
   fetchMembers,
   getApiErrorMessage,
@@ -16,6 +18,21 @@ import {
   type MemberListItem,
 } from "@/core/api/http";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+
+function MemberNameCell({ item }: Readonly<{ item: MemberListItem }>) {
+  const initials = `${item.firstName?.[0] ?? ""}${item.lastName?.[0] ?? ""}`.toUpperCase() || "?";
+
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-muted)] text-xs font-semibold text-[var(--primary)]">
+        {initials}
+      </div>
+      <span className="font-medium text-[var(--foreground)]">
+        {item.firstName} {item.lastName}
+      </span>
+    </div>
+  );
+}
 
 export function PendingMembersQueue() {
   const t = useTranslations("members.pending");
@@ -52,6 +69,20 @@ export function PendingMembersQueue() {
     });
   }, [query.data?.items, search]);
 
+  const ministryCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const item of query.data?.items ?? []) {
+      counts.set(item.ministry, (counts.get(item.ministry) ?? 0) + 1);
+    }
+    return [...counts.entries()].map(([label, count]) => ({ label, count }));
+  }, [query.data?.items]);
+
+  const summarySegments = ministryCounts.map((item, index) => ({
+    label: item.label,
+    count: item.count,
+    color: CHART_SEGMENT_COLORS[index % CHART_SEGMENT_COLORS.length],
+  }));
+
   async function handleStatus(memberId: string, status: "ACTIVE" | "INACTIVE") {
     setActionId(memberId);
     setError(null);
@@ -71,13 +102,6 @@ export function PendingMembersQueue() {
 
   return (
     <div className="cmms-page-stack">
-      <div>
-        <h2 className="text-2xl font-semibold text-[var(--foreground)]">{t("title")}</h2>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--muted-foreground)]">
-          {t("subtitle")}
-        </p>
-      </div>
-
       <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
         <CmmsInput
           id="pending-search"
@@ -96,71 +120,74 @@ export function PendingMembersQueue() {
         </label>
       </div>
 
-      {error ? (
-        <p className="rounded-[var(--radius-xl)] bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-200">
-          {error}
-        </p>
-      ) : null}
+      {error ? <CmmsAlert variant="error">{error}</CmmsAlert> : null}
 
-      {filtered.length === 0 ? (
-        <CmmsEmptyState title={t("emptyTitle")} description={t("emptyDescription")} />
-      ) : (
-        <CmmsTable<MemberListItem>
-          columns={[
-            {
-              key: "name",
-              header: t("name"),
-              render: (member) => `${member.firstName} ${member.lastName}`,
-            },
-            {
-              key: "email",
-              header: t("email"),
-              render: (member) => member.user?.email ?? "—",
-            },
-            {
-              key: "ministry",
-              header: t("ministry"),
-              render: (member) => (
-                <CmmsBadge variant="neutral">{member.ministry}</CmmsBadge>
-              ),
-            },
-            {
-              key: "submitted",
-              header: t("submitted"),
-              render: (member) =>
-                member.createdAt
-                  ? new Date(member.createdAt).toLocaleDateString()
-                  : "—",
-            },
-            {
-              key: "actions",
-              header: t("actions"),
-              render: (member) => (
-                <div className="flex flex-wrap gap-2">
-                  <CmmsButton
-                    type="button"
-                    size="sm"
-                    disabled={actionId === member.id}
-                    onClick={() => handleStatus(member.id, "ACTIVE")}
-                  >
-                    {t("approve")}
-                  </CmmsButton>
-                  <CmmsButton
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    disabled={actionId === member.id}
-                    onClick={() => handleStatus(member.id, "INACTIVE")}
-                  >
-                    {t("reject")}
-                  </CmmsButton>
-                </div>
-              ),
-            },
-          ]}
-          rows={filtered}
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+        {filtered.length === 0 ? (
+          <CmmsEmptyState title={t("emptyTitle")} description={t("emptyDescription")} />
+        ) : (
+          <CmmsTable<MemberListItem>
+            columns={[
+              {
+                key: "name",
+                header: t("name"),
+                render: (member) => <MemberNameCell item={member} />,
+              },
+              {
+                key: "ministry",
+                header: t("ministry"),
+                render: (member) => <CmmsBadge variant="info">{member.ministry}</CmmsBadge>,
+              },
+              {
+                key: "submitted",
+                header: t("submitted"),
+                render: (member) =>
+                  member.createdAt
+                    ? new Date(member.createdAt).toLocaleDateString()
+                    : "—",
+              },
+              {
+                key: "actions",
+                header: t("actions"),
+                render: (member) => (
+                  <div className="flex flex-wrap gap-2">
+                    <CmmsButton
+                      type="button"
+                      size="sm"
+                      disabled={actionId === member.id}
+                      onClick={() => handleStatus(member.id, "ACTIVE")}
+                    >
+                      {t("approve")}
+                    </CmmsButton>
+                    <CmmsButton
+                      type="button"
+                      size="sm"
+                      variant="danger"
+                      disabled={actionId === member.id}
+                      onClick={() => handleStatus(member.id, "INACTIVE")}
+                    >
+                      {t("reject")}
+                    </CmmsButton>
+                  </div>
+                ),
+              },
+            ]}
+            rows={filtered}
+          />
+        )}
+
+        <DonutChart
+          title={t("summaryTitle")}
+          description={t("summaryHint")}
+          centerValue={filtered.length}
+          centerLabel={t("title")}
+          segments={
+            summarySegments.length > 0
+              ? summarySegments
+              : [{ label: t("emptyTitle"), count: 1, color: "var(--chart-muted)" }]
+          }
         />
-      )}
+      </div>
     </div>
   );
 }

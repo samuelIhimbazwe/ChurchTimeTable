@@ -54,7 +54,7 @@ export function ProtectedRoute({
 
   if (status !== "ready") {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center text-sm text-slate-500">
+      <div className="flex min-h-[40vh] items-center justify-center text-sm text-[var(--muted-foreground)]">
         {t("loading")}
       </div>
     );

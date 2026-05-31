@@ -157,6 +157,15 @@ export const frMessages: Record<string, string> = {
     'Ce compte est inactif. Contactez votre responsable de ministère.',
   MEMBER_PENDING_APPROVAL:
     'Votre inscription attend l\'approbation d\'un responsable.',
+  PROFILE_UPDATE_NOT_ALLOWED:
+    'Votre profil ne peut pas être modifié dans votre statut actuel.',
+  INVALID_PHONE_FORMAT:
+    'Entrez un numéro rwandais valide (ex. 0781234567).',
+  PHONE_REQUIRED:
+    'Un numéro de téléphone est requis pour continuer.',
+  NOTIFICATION_CONTRIBUTION_CONFIRMED_TITLE: 'Contribution confirmée',
+  NOTIFICATION_CONTRIBUTION_CONFIRMED_BODY:
+    'Votre contribution a été confirmée et enregistrée.',
   TOO_MANY_REQUESTS:
     'Trop de tentatives. Patientez un instant puis réessayez.',
   NOTIFICATION_MEMBER_APPROVED_TITLE: 'Inscription approuvée',

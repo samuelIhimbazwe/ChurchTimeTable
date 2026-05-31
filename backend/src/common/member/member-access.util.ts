@@ -1,6 +1,7 @@
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { MemberStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MemberPhoneEnforcementService } from './member-phone-enforcement.service';
 
 export async function getMemberForUser(
   prisma: PrismaService,
@@ -14,6 +15,7 @@ export async function getMemberForUser(
       ministry: true,
       firstName: true,
       lastName: true,
+      phone: true,
       onboardingCompleted: true,
     },
   });
@@ -28,6 +30,11 @@ export function isPendingMember(
 export async function assertOperationalMemberAccess(
   prisma: PrismaService,
   userId: string,
+  options?: {
+    roles?: string[];
+    phoneEnforcement?: MemberPhoneEnforcementService;
+    enforcePhone?: boolean;
+  },
 ): Promise<void> {
   const member = await getMemberForUser(prisma, userId);
   if (member && isPendingMember(member.status)) {
@@ -35,5 +42,13 @@ export async function assertOperationalMemberAccess(
       code: 'FORBIDDEN',
       messageKey: 'MEMBER_PENDING_APPROVAL',
     });
+  }
+
+  if (
+    options?.enforcePhone &&
+    options.phoneEnforcement &&
+    options.roles?.length
+  ) {
+    await options.phoneEnforcement.assertCanOperate(userId, options.roles);
   }
 }

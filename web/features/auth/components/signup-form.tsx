@@ -3,6 +3,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { CmmsAlert } from "@/components/ui/cmms-alert";
 import { CmmsButton } from "@/components/ui/cmms-button";
 import { CmmsInput } from "@/components/ui/cmms-input";
 import { CmmsFormField } from "@/components/ui/cmms-form-field";
@@ -195,11 +196,7 @@ export function SignupForm() {
         </div>
       ) : null}
 
-      {error ? (
-        <p className="rounded-[var(--radius-xl)] bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-200">
-          {error}
-        </p>
-      ) : null}
+      {error ? <CmmsAlert variant="error">{error}</CmmsAlert> : null}
 
       <div className="flex flex-wrap gap-3">
         {step > 1 ? (

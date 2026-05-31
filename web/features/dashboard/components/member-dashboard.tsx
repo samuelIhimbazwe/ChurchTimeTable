@@ -16,6 +16,7 @@ import {
   formatPercent,
 } from "@/features/dashboard/components/dashboard-primitives";
 import { CmmsDashboardSkeleton } from "@/components/ui/cmms-skeleton";
+import { useSessionStore } from "@/core/auth/session-store";
 import { useMemberDashboardQuery } from "@/features/dashboard/hooks/use-dashboard-queries";
 import { MemberExcusePanel } from "@/features/dashboard/components/member-excuse-panel";
 import { DashboardAlertsPanel } from "@/features/dashboard/components/dashboard-alerts-panel";
@@ -25,7 +26,11 @@ export function MemberDashboard() {
   const t = useTranslations("dashboard");
   const ta = useTranslations("attendance");
   const router = useRouter();
+  const profile = useSessionStore((state) => state.profile);
   const query = useMemberDashboardQuery(true);
+  const displayName = [profile?.member?.firstName, profile?.member?.lastName]
+    .filter(Boolean)
+    .join(" ");
 
   if (query.isLoading) {
     return <CmmsDashboardSkeleton />;
@@ -46,6 +51,12 @@ export function MemberDashboard() {
 
   return (
     <div className="cmms-page-stack">
+      <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] px-5 py-4 shadow-[var(--shadow-xs)]">
+        <p className="cmms-text-display text-[var(--foreground)]">
+          {t("welcomeBack", { name: displayName || t("memberTitle") })}
+        </p>
+      </div>
+
       {hasWidget(widgets, "alertsPanel") && data.alerts.length > 0 ? (
         <DashboardAlertsPanel alerts={data.alerts} />
       ) : null}
@@ -56,12 +67,14 @@ export function MemberDashboard() {
             label={t("stats.upcomingAssignments")}
             value={data.upcomingAssignments}
             description={t("memberUpcomingAssignmentsHint")}
+            trend={{ value: t("metricTrendNeutral"), direction: "neutral" }}
             tone="accent"
           />
           <DashboardStatCard
             label={t("stats.pendingSwaps")}
             value={data.pendingSwaps}
             description={t("memberPendingSwapsHint")}
+            trend={{ value: t("metricTrendNeutral"), direction: "neutral" }}
           />
           <DashboardStatCard
             label={t("stats.attendanceRate")}
@@ -71,11 +84,13 @@ export function MemberDashboard() {
                 : formatPercent(data.attendanceRate)
             }
             description={t("memberAttendanceHint")}
+            trend={{ value: t("metricTrendUp", { value: "12" }), direction: "up" }}
           />
           <DashboardStatCard
             label={t("stats.responsibilityScore")}
             value={formatPercent(data.responsibilityScore)}
             description={t("memberResponsibilityHint")}
+            trend={{ value: t("metricTrendNeutral"), direction: "neutral" }}
           />
         </div>
       ) : null}

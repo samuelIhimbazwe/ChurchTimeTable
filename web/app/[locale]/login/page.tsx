@@ -60,7 +60,7 @@ export default async function LoginPage({
             </div>
           </section>
 
-          <CmmsCard title={t("auth.title")} description={t("auth.subtitle")}>
+          <CmmsCard title={t("auth.signInCard")} description={t("auth.subtitle")}>
             <LoginForm redirectTo={redirect} />
           </CmmsCard>
         </div>

@@ -9,6 +9,11 @@ import {
   PERMISSIONS,
   ROLES,
 } from '../src/common/constants/roles';
+import {
+  DEFAULT_PHONE_ENFORCEMENT,
+  PHONE_ENFORCEMENT_ENABLED_KEY,
+  PHONE_ENFORCEMENT_MODE_KEY,
+} from '../src/common/member/phone-enforcement.constants';
 
 const prisma = new PrismaClient();
 
@@ -42,6 +47,7 @@ const ROLE_PERMISSION_MAP: Record<string, string[]> = {
     PERMISSIONS.EVENT_READ,
     PERMISSIONS.EVENT_WRITE,
     PERMISSIONS.ASSIGNMENT_WRITE,
+    PERMISSIONS.MEMBER_READ,
     PERMISSIONS.ATTENDANCE_WRITE,
     PERMISSIONS.SWAP_MANAGE,
     PERMISSIONS.DISCIPLINE_READ_ALL,
@@ -64,6 +70,7 @@ const ROLE_PERMISSION_MAP: Record<string, string[]> = {
   [ROLES.CHOIR_REHEARSAL_DIRECTOR]: [
     PERMISSIONS.EVENT_READ,
     PERMISSIONS.ASSIGNMENT_WRITE,
+    PERMISSIONS.MEMBER_READ,
     PERMISSIONS.ATTENDANCE_WRITE,
     PERMISSIONS.REPORT_EXPORT,
   ],
@@ -72,6 +79,7 @@ const ROLE_PERMISSION_MAP: Record<string, string[]> = {
   [ROLES.CHOIR_LOGISTICS]: [
     PERMISSIONS.EVENT_READ,
     PERMISSIONS.ASSIGNMENT_WRITE,
+    PERMISSIONS.MEMBER_READ,
     PERMISSIONS.ATTENDANCE_WRITE,
     PERMISSIONS.REPORT_EXPORT,
   ],
@@ -87,6 +95,7 @@ const ROLE_PERMISSION_MAP: Record<string, string[]> = {
     PERMISSIONS.EVENT_READ,
     PERMISSIONS.EVENT_WRITE,
     PERMISSIONS.ASSIGNMENT_WRITE,
+    PERMISSIONS.MEMBER_READ,
     PERMISSIONS.ATTENDANCE_WRITE,
     PERMISSIONS.PROTOCOL_ATTENDANCE_MANAGE,
     PERMISSIONS.SWAP_MANAGE,
@@ -256,6 +265,24 @@ async function main() {
     'Choir officer roles:',
     Object.keys(CHOIR_OFFICER_META).join(', '),
   );
+
+  await prisma.systemSetting.upsert({
+    where: { key: PHONE_ENFORCEMENT_ENABLED_KEY },
+    create: {
+      key: PHONE_ENFORCEMENT_ENABLED_KEY,
+      value: DEFAULT_PHONE_ENFORCEMENT.enabled,
+    },
+    update: { value: DEFAULT_PHONE_ENFORCEMENT.enabled },
+  });
+
+  await prisma.systemSetting.upsert({
+    where: { key: PHONE_ENFORCEMENT_MODE_KEY },
+    create: {
+      key: PHONE_ENFORCEMENT_MODE_KEY,
+      value: DEFAULT_PHONE_ENFORCEMENT.mode,
+    },
+    update: { value: DEFAULT_PHONE_ENFORCEMENT.mode },
+  });
 }
 
 main()

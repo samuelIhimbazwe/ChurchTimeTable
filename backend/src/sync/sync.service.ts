@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import {
   AttendanceOperationalStatus,
   AttendanceReplacementType,
+  ContributionStatus,
+  ContributionType,
   EventStatus,
   Prisma,
 } from '@prisma/client';
@@ -133,10 +135,12 @@ export class SyncService {
         where: { id: item.entityId },
       });
       await this.assertLastWriteWins(existing?.clientUpdatedAt, clientTime);
+      const payload = { ...(item.payload as Record<string, unknown>) };
+      delete payload.memberNumber;
       await this.prisma.member.update({
         where: { id: item.entityId },
         data: {
-          ...(item.payload as object),
+          ...payload,
           clientUpdatedAt: clientTime,
         },
       });
@@ -293,6 +297,79 @@ export class SyncService {
           transactionDate: payload.transactionDate
             ? new Date(payload.transactionDate)
             : new Date(),
+        },
+      });
+      return;
+    }
+
+    if (item.entity === 'ContributionRecord') {
+      const payload = item.payload as {
+        memberId: string;
+        contributionType: ContributionType;
+        amount: number;
+        currency?: string;
+        notes?: string;
+        receiptUrl?: string;
+        memberDueId?: string;
+        referenceNumber?: string;
+        status?: ContributionStatus;
+      };
+
+      const actorMember = await this.prisma.member.findFirst({
+        where: { userId },
+        select: { id: true },
+      });
+      if (!actorMember || actorMember.id !== payload.memberId) {
+        throw new Error('Contribution sync limited to own member profile');
+      }
+
+      if (
+        payload.status &&
+        payload.status !== ContributionStatus.PENDING &&
+        payload.status !== ContributionStatus.SUBMITTED
+      ) {
+        throw new Error('Contribution status is server-authoritative');
+      }
+
+      const existing = await this.prisma.contributionRecord.findUnique({
+        where: { id: item.entityId },
+      });
+      if (existing) {
+        await this.assertLastWriteWins(existing.updatedAt, clientTime);
+        if (
+          existing.status === ContributionStatus.CONFIRMED ||
+          existing.status === ContributionStatus.REJECTED
+        ) {
+          throw new Error('Confirmed contributions cannot be changed via sync');
+        }
+        await this.prisma.contributionRecord.update({
+          where: { id: item.entityId },
+          data: {
+            amount: payload.amount,
+            notes: payload.notes,
+            receiptUrl: payload.receiptUrl,
+            status: ContributionStatus.SUBMITTED,
+          },
+        });
+        return;
+      }
+
+      const referenceNumber =
+        payload.referenceNumber ??
+        `CNT-SYNC-${item.entityId.slice(0, 8).toUpperCase()}`;
+
+      await this.prisma.contributionRecord.create({
+        data: {
+          id: item.entityId,
+          memberId: payload.memberId,
+          memberDueId: payload.memberDueId,
+          contributionType: payload.contributionType,
+          amount: payload.amount,
+          currency: payload.currency ?? 'RWF',
+          status: ContributionStatus.SUBMITTED,
+          referenceNumber,
+          notes: payload.notes,
+          receiptUrl: payload.receiptUrl,
         },
       });
       return;

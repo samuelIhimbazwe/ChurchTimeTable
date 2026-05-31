@@ -2,10 +2,12 @@ import { cn } from "@/core/utils/cn";
 
 const variants = {
   error:
-    "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-200",
+    "border border-[var(--danger)]/20 bg-[var(--danger-surface)] text-[var(--danger-foreground)]",
   success:
-    "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200",
-  info: "border-[var(--border)] bg-[var(--surface-subtle)] text-[var(--foreground)]",
+    "border border-[var(--success)]/20 bg-[var(--success-surface)] text-[var(--success-foreground)]",
+  warning:
+    "border border-[var(--warning)]/20 bg-[var(--warning-surface)] text-[var(--warning-foreground)]",
+  info: "border border-[var(--border)] bg-[var(--surface-subtle)] text-[var(--foreground)]",
 } as const;
 
 export function CmmsAlert({
@@ -21,7 +23,7 @@ export function CmmsAlert({
     <p
       role={variant === "error" ? "alert" : "status"}
       className={cn(
-        "cmms-text-body rounded-[var(--radius-xl)] border px-4 py-3",
+        "cmms-text-body rounded-[var(--radius-xl)] px-4 py-3",
         variants[variant],
         className,
       )}

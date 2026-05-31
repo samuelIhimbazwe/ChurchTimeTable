@@ -8,7 +8,7 @@ final themeModeProvider =
 });
 
 class ThemeModeNotifier extends StateNotifier<ThemeMode> {
-  ThemeModeNotifier() : super(ThemeMode.system) {
+  ThemeModeNotifier() : super(ThemeMode.light) {
     _load();
   }
 
@@ -21,7 +21,7 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
       if (saved != null) {
         state = ThemeMode.values.firstWhere(
           (m) => m.name == saved,
-          orElse: () => ThemeMode.system,
+          orElse: () => ThemeMode.light,
         );
       }
     } catch (_) {}

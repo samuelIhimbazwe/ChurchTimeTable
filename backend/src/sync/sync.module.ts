@@ -5,6 +5,7 @@ import { AttendanceModule } from '../attendance/attendance.module';
 import { AssignmentsModule } from '../assignments/assignments.module';
 import { EventsModule } from '../events/events.module';
 import { ReplacementsModule } from '../replacements/replacements.module';
+import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { ReplacementsModule } from '../replacements/replacements.module';
     AssignmentsModule,
     EventsModule,
     ReplacementsModule,
+    MemberPhoneEnforcementModule,
   ],
   controllers: [SyncController],
   providers: [SyncService],

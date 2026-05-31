@@ -181,6 +181,22 @@ enum FinanceApprovalStatus {
   REJECTED
 }
 
+enum ContributionType {
+  TITHE
+  OFFERING
+  SPECIAL
+  BUILDING_FUND
+  MISSIONS
+  OTHER
+}
+
+enum ContributionStatus {
+  PENDING
+  SUBMITTED
+  CONFIRMED
+  REJECTED
+}
+
 enum BudgetKind {
   OPERATIONAL
   EVENT
@@ -214,6 +230,7 @@ model User {
   userRoles    UserRole[]
   auditLogs    AuditLog[]
   notifications Notification[]
+  confirmedContributions ContributionRecord[] @relation("ContributionConfirmer")
   approvedAttendance Attendance[] @relation("AttendanceApprover")
 
   @@index([email])
@@ -259,6 +276,7 @@ model UserRole {
 model Member {
   id              String        @id @default(uuid())
   userId          String        @unique
+  memberNumber    String?       @unique
   firstName       String
   lastName        String
   phone           String?
@@ -280,6 +298,7 @@ model Member {
   disciplineCases DisciplineCase[] @relation("DisciplineSubject")
   disciplineReported DisciplineCase[] @relation("DisciplineReporter")
   memberDues      MemberDues[]
+  contributionRecords ContributionRecord[]
   choirCommitteeAssignments ChoirCommitteeMember[]
   protocolCommitteeAssignments ProtocolCommitteeMember[]
   protocolTeamMemberships ProtocolServiceTeamMember[]
@@ -622,11 +641,43 @@ model MemberDues {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
   member          Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  contributionRecords ContributionRecord[]
 
   @@unique([memberId, period, ministryScope, dueType])
   @@index([memberId])
   @@index([ministryScope])
   @@index([status])
+}
+
+model ContributionRecord {
+  id                   String              @id @default(uuid())
+  memberId             String
+  familyId             String?
+  financeTransactionId String?
+  memberDueId          String?
+  contributionType     ContributionType
+  amount               Decimal
+  currency             String              @default("RWF")
+  status               ContributionStatus  @default(PENDING)
+  referenceNumber      String              @unique
+  notes                String?
+  receiptUrl           String?
+  confirmedAt          DateTime?
+  confirmedById        String?
+  thankYouSentAt       DateTime?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  member               Member              @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberDue            MemberDues?         @relation(fields: [memberDueId], references: [id])
+  confirmedBy          User?               @relation("ContributionConfirmer", fields: [confirmedById], references: [id])
+
+  @@index([memberId])
+  @@index([status])
+  @@index([contributionType])
+  @@index([financeTransactionId])
+  @@index([memberDueId])
+  @@index([confirmedAt])
+  @@index([familyId])
 }
 
 model AuditLog {
@@ -677,5 +728,12 @@ model Notification {
 model SystemSetting {
   key       String   @id
   value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model MemberNumberSequence {
+  id        String   @id @default(cuid())
+  nextValue Int
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

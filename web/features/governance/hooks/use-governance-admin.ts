@@ -6,7 +6,7 @@ import {
   assignChoirCommitteeMember,
   assignProtocolCommitteeMember,
   fetchChoirCommittee,
-  fetchMembers,
+  fetchMembersRoster,
   fetchProtocolCommittee,
 } from "@/core/api/http";
 import {
@@ -36,7 +36,7 @@ export function useGovernanceMembersQuery(
 ) {
   return useQuery({
     queryKey: ["members", "governance", ministry],
-    queryFn: () => fetchMembers({ ministry, limit: 200, status: "ACTIVE" }),
+    queryFn: () => fetchMembersRoster({ ministry, limit: 200, status: "ACTIVE" }),
     enabled,
   });
 }

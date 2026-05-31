@@ -1,22 +1,20 @@
 import { getTranslations } from "next-intl/server";
 
 import { Link } from "@/i18n/routing";
+import { cmmsButtonStyles } from "@/components/ui/cmms-button";
 
 export default async function LocalizedNotFoundPage() {
   const t = await getTranslations();
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-6 py-10">
-      <div className="max-w-lg space-y-4 text-center">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
-          404
-        </p>
-        <h1 className="text-4xl font-semibold tracking-tight text-slate-950 dark:text-slate-50">
-          {t("common.notFound")}
-        </h1>
+    <main className="cmms-page flex min-h-screen items-center justify-center">
+      <div className="cmms-panel max-w-lg space-y-6 p-8 text-center">
+        <p className="cmms-text-label uppercase tracking-[0.2em] text-[var(--primary)]">404</p>
+        <h1 className="cmms-text-display text-[var(--foreground)]">{t("common.notFound")}</h1>
+        <p className="cmms-text-body text-[var(--muted-foreground)]">{t("common.backHome")}</p>
         <Link
           href="/"
-          className="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 font-medium text-white transition hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-slate-300"
+          className={cmmsButtonStyles({ variant: "primary", size: "md", className: "inline-flex" })}
         >
           {t("common.backHome")}
         </Link>

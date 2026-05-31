@@ -80,3 +80,27 @@ bool canMarkAttendance(List<String> permissions) {
     'attendance.mark',
   ]);
 }
+
+const memberRead = 'member:read';
+
+const memberRosterAccessPermissions = [
+  memberRead,
+  'assignment:write',
+  'event:write',
+  'member:manage',
+  protocolOversight,
+  protocolTeamManage,
+  protocolOperationalMonitor,
+  protocolTeamHead,
+  choirOversight,
+  choirOperationsManage,
+];
+
+bool canAccessMemberRoster(List<String> permissions) {
+  return memberRosterAccessPermissions
+      .any((p) => hasEffectivePermission(permissions, p));
+}
+
+bool canManageMemberDirectory(List<String> permissions) {
+  return hasEffectivePermission(permissions, 'member:manage');
+}

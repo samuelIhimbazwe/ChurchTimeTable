@@ -1,6 +1,13 @@
 {
   "@@locale": "en",
   "app_title": "CMMS",
+  "app_tagline": "Church management system",
+  "nav_home": "Home",
+  "nav_members": "Members",
+  "nav_events": "Events",
+  "nav_more": "More",
+  "members_title": "Members",
+  "members_empty": "No members found yet.",
   "auth_sign_in_action": "Sign in",
   "auth_email_label": "Email",
   "auth_password_label": "Password",
@@ -43,6 +50,14 @@
   "onboarding_pending_step_access": "Once approved, you can view schedules and ministry updates.",
   "onboarding_pending_help": "If you need help, contact your choir or protocol leader.",
   "dashboard_member_title": "My dashboard",
+  "dashboard_welcome": "Welcome back, {name}",
+  "@dashboard_welcome": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "dashboard_leader_title": "Leader dashboard",
   "nav_calendar": "Event calendar",
   "nav_attendance": "Attendance",
@@ -355,5 +370,14 @@
   "operational_stat_discipline_risk": "Discipline risks",
   "operational_stat_readiness": "Readiness warnings",
   "operational_stat_teams": "Your teams",
-  "operational_stat_pending_absences": "Pending absences"
+  "operational_stat_pending_absences": "Pending absences",
+  "phoneRequired": "Phone number required to continue.",
+  "updatePhoneNow": "Update now",
+  "restrictedUntilPhoneAdded": "Phone number required to continue ministry operations.",
+  "warningPhoneIncomplete": "Complete your phone number to avoid losing access to ministry tools.",
+  "my_contributions_title": "My contributions",
+  "my_contributions_member_number": "Member number",
+  "my_contributions_history_title": "Contribution history",
+  "my_contributions_total": "Total contributed",
+  "my_contributions_outstanding": "Outstanding balance"
 }

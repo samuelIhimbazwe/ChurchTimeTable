@@ -19,12 +19,17 @@ import { ReceiptUploadService } from './receipt/receipt-upload.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { CreateBudgetDto } from './dto/create-budget.dto';
 import { UpsertMemberDuesDto } from './dto/upsert-member-dues.dto';
+import { CreateContributionDto } from './dto/create-contribution.dto';
+import { RejectContributionDto } from './dto/reject-contribution.dto';
+import { ContributionService } from './contribution.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import {
   RequireAnyPermissions,
   RequirePermissions,
 } from '../common/decorators/roles.decorator';
+import { SkipPhoneEnforcement } from '../common/decorators/skip-phone-enforcement.decorator';
 import { PERMISSIONS } from '../common/constants/roles';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/decorators/current-user.decorator';
@@ -52,13 +57,14 @@ const FINANCE_MANAGE_ANY = [
 ] as const;
 
 @Controller('finance')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
 export class FinanceController {
   constructor(
     private financeService: FinanceService,
     private financeGovernance: FinanceGovernanceService,
     private financeExport: FinanceExportService,
     private receiptUpload: ReceiptUploadService,
+    private contributionService: ContributionService,
   ) {}
 
   @Get('stewardship/analytics')
@@ -71,11 +77,67 @@ export class FinanceController {
   }
 
   @Get('contributions/mine')
+  @SkipPhoneEnforcement()
   memberContributions(@CurrentUser() user: JwtPayload) {
     return this.financeGovernance.memberContributions(user.sub);
   }
 
+  @Get('my-contributions')
+  @SkipPhoneEnforcement()
+  myContributions(@CurrentUser() user: JwtPayload) {
+    return this.financeGovernance.memberContributions(user.sub);
+  }
+
+  @Get('my-contributions/summary')
+  @SkipPhoneEnforcement()
+  myContributionsSummary(@CurrentUser() user: JwtPayload) {
+    return this.contributionService.getMemberContributionSummary(user.sub);
+  }
+
+  @Get('contributions/queue')
+  @RequireAnyPermissions(...FINANCE_VIEW_ANY)
+  contributionQueue(@CurrentUser() user: JwtPayload) {
+    return this.contributionService.getConfirmationQueue(user.sub);
+  }
+
+  @Post('contributions')
+  @RequireAnyPermissions(...FINANCE_MANAGE_ANY)
+  createContribution(
+    @Body() dto: CreateContributionDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.contributionService.createContribution(user.sub, dto);
+  }
+
+  @Post('contributions/:id/submit')
+  submitContribution(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.contributionService.submitContribution(user.sub, id);
+  }
+
+  @Post('contributions/:id/confirm')
+  @RequireAnyPermissions(...FINANCE_MANAGE_ANY)
+  confirmContribution(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.contributionService.confirmContribution(user.sub, id);
+  }
+
+  @Post('contributions/:id/reject')
+  @RequireAnyPermissions(...FINANCE_MANAGE_ANY)
+  rejectContribution(
+    @Param('id') id: string,
+    @Body() dto: RejectContributionDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.contributionService.rejectContribution(user.sub, id, dto.notes);
+  }
+
   @Get('contributions/mine/export/csv')
+  @SkipPhoneEnforcement()
   async memberContributionsCsv(
     @CurrentUser() user: JwtPayload,
     @Res() res: Response,

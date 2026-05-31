@@ -150,6 +150,14 @@ export const rwMessages: Record<string, string> = {
   ACCOUNT_INACTIVE: 'Konti yawe ntabwo ikora. Vugana n\'umuyobozi w\'umurimo.',
   MEMBER_PENDING_APPROVAL:
     'Kwiyandikisha kwawe gutegereje kwemezwa n\'umuyobozi.',
+  PROFILE_UPDATE_NOT_ALLOWED:
+    'Umwirondoro wawe ntushobora guhindurwa muri ubu buryo.',
+  INVALID_PHONE_FORMAT:
+    'Andika nimero ya telefoni y\'u Rwanda (urug. 0781234567).',
+  PHONE_REQUIRED: 'Nimero ya telefoni irakenewe kugira ngo ukomeze.',
+  NOTIFICATION_CONTRIBUTION_CONFIRMED_TITLE: 'Imisanzu yemejwe',
+  NOTIFICATION_CONTRIBUTION_CONFIRMED_BODY:
+    'Imisanzu yawe yemejwe kandi yanditswe.',
   TOO_MANY_REQUESTS: 'Ugerageje inshuro nyinshi. Tegereza gato hanyuma ugerageze.',
   NOTIFICATION_MEMBER_APPROVED_TITLE: 'Kwiyandikisha kwemewe',
   NOTIFICATION_MEMBER_APPROVED_BODY:

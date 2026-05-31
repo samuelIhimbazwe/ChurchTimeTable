@@ -5,6 +5,7 @@ import '../../../core/localization/l10n.dart';
 import '../../../core/models/dashboard_models.dart';
 import '../../../core/routing/app_router.dart';
 import '../../../core/widgets/localized_card.dart';
+import '../../../core/widgets/mobile_tab_shell.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/dashboard_providers.dart';
 
@@ -21,50 +22,32 @@ class MemberDashboardScreen extends ConsumerWidget {
         ? '${member['firstName']} ${member['lastName']}'
         : l10n.member_name_fallback;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.dashboard_member_title),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () =>
-                Navigator.pushNamed(context, AppRouter.settings),
-          ),
-          IconButton(
-            icon: const Icon(Icons.sync),
-            onPressed: () => Navigator.pushNamed(context, AppRouter.sync),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: l10n.common_logout,
-            onPressed: () async {
-              await ref.read(authProvider.notifier).logout();
-              if (context.mounted) {
-                Navigator.pushReplacementNamed(context, AppRouter.login);
-              }
-            },
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async => ref.invalidate(memberDashboardProvider),
-        child: summaryAsync.when(
-          loading: () => Center(child: Text(l10n.common_loading)),
-          error: (_, __) => Center(child: Text(l10n.error_network)),
-          data: (summary) {
-            final score =
-                summary.raw['attendanceScore'] as Map<String, dynamic>?;
-            final widgets = summary.widgets;
-            final perms = summary.permissionWidgets;
+    final embedded = MobileTabShellScope.embeddedInShell(context);
 
-            return ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                LocalizedCard(
-                  title: name,
-                  subtitle: member?['ministry']?.toString(),
-                  leading: const CircleAvatar(child: Icon(Icons.person)),
-                ),
+    final body = RefreshIndicator(
+      onRefresh: () async => ref.invalidate(memberDashboardProvider),
+      child: summaryAsync.when(
+        loading: () => Center(child: Text(l10n.common_loading)),
+        error: (_, __) => Center(child: Text(l10n.error_network)),
+        data: (summary) {
+          final score =
+              summary.raw['attendanceScore'] as Map<String, dynamic>?;
+          final widgets = summary.widgets;
+          final perms = summary.permissionWidgets;
+
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Text(
+                l10n.dashboard_welcome(name),
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 12),
+              LocalizedCard(
+                title: name,
+                subtitle: member?['ministry']?.toString(),
+                leading: const CircleAvatar(child: Icon(Icons.person)),
+              ),
                 if (score != null) ...[
                   const SizedBox(height: 12),
                   LocalizedCard(
@@ -172,6 +155,38 @@ class MemberDashboardScreen extends ConsumerWidget {
           },
         ),
       ),
+    );
+
+    if (embedded) {
+      return body;
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.dashboard_member_title),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () =>
+                Navigator.pushNamed(context, AppRouter.settings),
+          ),
+          IconButton(
+            icon: const Icon(Icons.sync),
+            onPressed: () => Navigator.pushNamed(context, AppRouter.sync),
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: l10n.common_logout,
+            onPressed: () async {
+              await ref.read(authProvider.notifier).logout();
+              if (context.mounted) {
+                Navigator.pushReplacementNamed(context, AppRouter.login);
+              }
+            },
+          ),
+        ],
+      ),
+      body: body,
     );
   }
 }

@@ -9,13 +9,14 @@ import {
 import { ChoirRotationService } from './choir-rotation.service';
 import { RotationAssignDto } from './dto/rotation-assign.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { RequirePermissions } from '../common/decorators/roles.decorator';
 import { PERMISSIONS } from '../common/constants/roles';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @Controller('choir')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
 export class ChoirController {
   constructor(private rotation: ChoirRotationService) {}
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { CmmsButton } from "@/components/ui/cmms-button";
+import { CmmsCard } from "@/components/ui/cmms-card";
 import { LocaleSwitcher } from "@/components/ui/locale-switcher";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { logoutRequest } from "@/core/api/http";
@@ -40,16 +41,16 @@ export function PendingApprovalScreen() {
 
   return (
     <main className="cmms-page flex min-h-screen items-center">
-      <div className="mx-auto w-full max-w-xl">
-        <div className="mb-6 flex justify-end gap-3">
-          <LocaleSwitcher />
-          <ThemeToggle />
-        </div>
-        <div className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-8 shadow-[var(--shadow-xs)]">
+      <div className="grid w-full gap-6 lg:grid-cols-[minmax(0,1.2fr)_420px]">
+        <section className="cmms-panel p-8">
+          <div className="flex flex-wrap justify-end gap-3">
+            <LocaleSwitcher />
+            <ThemeToggle />
+          </div>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--primary)]">
             {t("eyebrow")}
           </p>
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-[var(--foreground)]">
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight text-[var(--foreground)]">
             {t("title")}
           </h1>
           {displayName ? (
@@ -57,10 +58,11 @@ export function PendingApprovalScreen() {
               {t("greeting", { name: displayName })}
             </p>
           ) : null}
-          <p className="mt-4 text-base leading-7 text-[var(--muted-foreground)]">
-            {t("body")}
-          </p>
-          <ul className="mt-6 space-y-3 text-sm leading-6 text-[var(--foreground)]">
+          <p className="mt-4 text-base leading-7 text-[var(--muted-foreground)]">{t("body")}</p>
+        </section>
+
+        <CmmsCard title={t("title")} description={t("body")}>
+          <ul className="space-y-3 text-sm leading-6 text-[var(--foreground)]">
             <li>{t("stepReview")}</li>
             <li>{t("stepNotify")}</li>
             <li>{t("stepAccess")}</li>
@@ -81,7 +83,7 @@ export function PendingApprovalScreen() {
               {t("backToLogin")}
             </Link>
           </div>
-        </div>
+        </CmmsCard>
       </div>
     </main>
   );

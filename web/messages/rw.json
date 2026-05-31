@@ -1,7 +1,9 @@
 {
   "app": {
     "name": "CMMS Web",
+    "nameShort": "CMMS",
     "tagline": "Urufatiro rwa web rwiteguye gukoreshwa mu mikorere y'itorero.",
+    "taglineShort": "Sisitemu yo gucunga itorero",
     "description": "Church Management and Coordination System ikoreshwa kuri browser."
   },
   "nav": {
@@ -11,23 +13,29 @@
   },
   "shell": {
     "menu": "Ibikubiyemo",
-    "navGroupToday": "Uyu munsi",
-    "navGroupPersonal": "Ministry yanjye",
+    "search": "Shakisha…",
+    "notifications": "Amamenyesha",
+    "navGroupMain": "By'ingenzi",
+    "navGroupPersonal": "Bwite",
     "navGroupOperations": "Imikorere",
     "navGroupStewardship": "Stewardship",
     "navGroupGovernance": "Governance",
     "navGroupAdmin": "Administration",
     "navDashboard": "Ikibaho",
-    "navEvents": "Moteri y'ibyabaye",
-    "navAttendance": "Gukurikirana attendance",
+    "navMembers": "Abanyamuryango",
+    "membersSummary": "Reba abanyamuryango, inshingano n'imiterere y'ubunyamuryango.",
+    "navEvents": "Ibirori",
+    "navAttendance": "Attendance",
     "navCoverage": "Gucunga coverage",
-    "navOperational": "Operational center",
-    "navGovernance": "Committee governance",
-    "navPendingMembers": "Kwiyandikisha gutegereje",
+    "navOperational": "Imikorere",
+    "navGovernance": "Governance",
+    "navPendingMembers": "Kwemera gutegereje",
     "pendingMembersSummary": "Suzuma ucemeze abanyamuryango bashya.",
     "navFinance": "Finance stewardship",
     "navMyContributions": "Imisanzu yanjye",
     "myContributionsSummary": "Amateka yawe y'imisanzu n'ibisabwa.",
+    "navProfile": "Igenamiterere y'umwirondoro",
+    "profileSummary": "Hindura amazina yawe n'inomero ya telefoni.",
     "navAdmin": "Admin console",
     "memberSummary": "Inshingano, attendance, notifications n'iterambere ry'imisanzu.",
     "leaderSummary": "Imikorere, trends za attendance, analytics za ministry n'ibimenyetso by'ubwitange.",
@@ -86,8 +94,15 @@
       "paid": "Byishyuwe",
       "partial": "Igice",
       "unpaid": "Bisigaye",
-      "waived": "Byahagaritswe"
-    }
+      "waived": "Byahagaritswe",
+      "confirmed": "Byemejwe",
+      "submitted": "Byoherejwe",
+      "pending": "Bitegereje",
+      "rejected": "Byanze"
+    },
+    "typeSummaryTitle": "Ku bw'ubwoko bw'imisanzu",
+    "typeSummaryHint": "Imisanzu yemejwe yegeranyijwe ku bw'ubwoko.",
+    "filterAll": "Ubwoko bwose"
   },
   "financeStewardship": {
     "title": "Finance stewardship",
@@ -100,7 +115,9 @@
       "balance": "Balance ya ministry",
       "compliance": "Uko imisanzu ishishurwa",
       "unpaid": "Amafaranga asigaye",
-      "unpaidMembers": "Abanyamuryango bafite balance"
+      "unpaidMembers": "Abanyamuryango bafite balance",
+      "contributionTotals": "Imisanzu yemejwe",
+      "pendingContributions": "Bitegereje kwemezwa"
     },
     "recentTransactions": "Transactions za vuba",
     "recentTransactionsHint": "Transactions zemewe za ministry mu scope yawe.",
@@ -116,6 +133,9 @@
     "pendingApprovalsHint": "Suzuma expenses mbere yo gukora ku balance ya ministry.",
     "noPendingApprovals": "Nta transaction itegereje kwemezwa",
     "noPendingApprovalsHint": "Expenses nshya zizagaragara hano.",
+    "contributionQueueTitle": "Urutonde rw'imisanzu itegereje kwemezwa",
+    "contributionQueueHint": "Suzuma imisanzu yoherejwe mbere yo kuyandika mu bitabo bya ministry.",
+    "noContributionQueue": "Nta misanzu itegereje kwemezwa",
     "noBudgetsTitle": "Nta budgets zashyizweho",
     "noBudgetsHint": "Ingengo y'imari izagaragara iyo abayobozi bazishyiraho.",
     "approve": "Emeza",
@@ -607,6 +627,7 @@
       "rejectionNotes": "Impamvu yo kwanga",
       "notesHint": "Ibisobanuro by'ubushake ku audit.",
       "cancel": "Hagarika",
+      "confirm": "Emeza",
       "submitting": "Birimo kubikwa..."
     },
     "table": {
@@ -677,6 +698,7 @@
   },
   "auth": {
     "title": "Injira",
+    "signInCard": "Injira kuri konti yawe",
     "subtitle": "Injira kuri platform y'itorero kugira ngo urebe gahunda, attendance n'amakuru y'umurimo.",
     "email": "Imeri",
     "password": "Ijambo banga",
@@ -697,6 +719,24 @@
     "forgotPasswordDescription": "Tuzagufasha vuba.",
     "forgotPasswordPlaceholder": "Guhindura ijambo banga binyuze kuri imeri bizaza mu gihe gito. Vugana n'umuyobozi w'umurimo niba ukeneye ubufasha.",
     "backToSignIn": "Subira ku kwinjira"
+  },
+  "profile": {
+    "title": "Umwirondoro",
+    "subtitle": "Hindura amazina yawe n'inomero ya telefoni.",
+    "firstName": "Izina ry'ibanze",
+    "lastName": "Izina ry'umuryango",
+    "phone": "Telefoni",
+    "phoneHint": "Imiterere ya Rwanda yemewe, urug. 0781234567",
+    "save": "Bika umwirondoro",
+    "saving": "Birimo kubikwa…",
+    "saveSuccess": "Umwirondoro wahindutse.",
+    "saveError": "Ntibyashobotse guhindura umwirondoro.",
+    "phoneBannerMessage": "Ongeraho nimero ya telefoni kugira ngo urangize umwirondoro wawe.",
+    "phoneBannerAction": "Hindura umwirondoro",
+    "phoneRequired": "Nimero ya telefoni irakenewe kugira ngo ukomeze.",
+    "updatePhoneNow": "Hindura nonaha",
+    "restrictedUntilPhoneAdded": "Nimero ya telefoni irakenewe kugira ngo ukomeze imirimo y'umurimo.",
+    "warningPhoneIncomplete": "Uzuze nimero ya telefoni kugira ngo utazabura uburyo bwo gukoresha ibikoresho by'umurimo."
   },
   "onboarding": {
     "signup": {
@@ -757,9 +797,38 @@
     }
   },
   "members": {
+    "directory": {
+      "tabs": {
+        "all": "Byose",
+        "active": "Bakora",
+        "pending": "Bategereje",
+        "inactive": "Badafite"
+      },
+      "search": "Shakisha abanyamuryango",
+      "filter": "Suzuma",
+      "addMember": "Ongeramo umunyamuryango",
+      "name": "Amazina",
+      "ministry": "Umurimo",
+      "role": "Inshingano",
+      "status": "Imiterere",
+      "joined": "Yinjiye",
+      "actions": "Ibikorwa",
+      "loading": "Turimo gupakurura abanyamuryango…",
+      "emptyTitle": "Nta banyamuryango babonetse",
+      "emptyDescription": "Gerageza guhindura ishakisha cyangwa filter.",
+      "loadError": "Ntibyashobotse gupakurura abanyamuryango.",
+      "roleMember": "Umunyamuryango",
+      "roleCoordinator": "Coordinator",
+      "roleLeader": "Umuyobozi",
+      "statusActive": "Akora",
+      "statusPending": "Arategereje",
+      "statusInactive": "Ntakora"
+    },
     "pending": {
-      "title": "Kwiyandikisha gutegereje",
-      "subtitle": "Suzuma abanyamuryango bashya mbere yo guha uburenganzira bwuzuye.",
+      "title": "Abanyamuryango bategereje",
+      "subtitle": "Suzuma ucemeze abanyamuryango bashya.",
+      "summaryTitle": "Incamake y'ibyemezo",
+      "summaryHint": "Ibyifuzo bitegereje ku murimo.",
       "search": "Shakisha",
       "ministryFilter": "Umurimo",
       "allMinistries": "Imirimo yose",
@@ -783,6 +852,11 @@
     "title": "Urufatiro rwa dashboard ikingiwe",
     "subtitle": "Uru rupapuro rurarinzwe kandi rwiteguye kwakira widgets za Sprint 3.",
     "memberTitle": "Dashboard y'umunyamuryango",
+    "welcomeBack": "Murakaza neza, {name}",
+    "metricTrendUp": "+{value}% ugereranyije n'ukwe gushize",
+    "metricTrendNeutral": "Bihagaze ugereranyije n'ukwe gushize",
+    "overviewSectionTitle": "Incamake y'imikorere",
+    "overviewSectionHint": "Ibyo ukeneye kwitaho ubu.",
     "memberExcuseTitle": "Saba absence yemewe",
     "memberExcuseDescription": "Ohereza excuse ku murimo uri imbere. Umuyobozi azayigenzura.",
     "memberExcuseAction": "Saba excuse",

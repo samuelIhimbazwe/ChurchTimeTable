@@ -8,9 +8,10 @@ import { AttendanceService } from './attendance.service';
 import { AttendanceScoringService } from './attendance-scoring.service';
 import { AttendanceEscalationService } from './attendance-escalation.service';
 import { AttendanceGovernanceService } from './attendance-governance.service';
+import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
 
 @Module({
-  imports: [NotificationsModule, AuditModule, AuthModule, GovernanceModule],
+  imports: [NotificationsModule, AuditModule, AuthModule, GovernanceModule, MemberPhoneEnforcementModule],
   controllers: [AttendanceController],
   providers: [
     AttendanceService,

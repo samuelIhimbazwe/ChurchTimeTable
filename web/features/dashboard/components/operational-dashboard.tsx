@@ -55,7 +55,9 @@ export function OperationalDashboard() {
   const roleLabel = t(`roles.${role}`);
 
   return (
-    <OperationalScreen title={t("title")} subtitle={t("subtitle", { role: roleLabel })}>
+    <OperationalScreen
+      subtitle={t("subtitle", { role: roleLabel })}
+    >
       <div className="flex flex-wrap justify-end gap-2">
         <Link
           href="/dashboard/attendance"

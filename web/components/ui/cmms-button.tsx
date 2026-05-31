@@ -13,7 +13,7 @@ const variantStyles: Record<ButtonVariant, string> = {
   ghost:
     "bg-transparent text-[var(--muted-foreground)] hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]",
   danger:
-    "bg-rose-600 text-white shadow-[var(--shadow-sm)] hover:bg-rose-500",
+    "bg-[var(--danger)] text-[var(--primary-foreground)] shadow-[var(--shadow-sm)] hover:opacity-95",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {

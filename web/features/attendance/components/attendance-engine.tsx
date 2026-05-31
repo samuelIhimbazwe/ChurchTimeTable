@@ -232,8 +232,6 @@ export function AttendanceEngine() {
 
   return (
     <OperationalScreen
-      title={t("title")}
-      subtitle={t("subtitle")}
       tabs={visibleTabs}
       activeTabId={tab}
       onTabChange={(id) => setTab(id as OperationalTab)}

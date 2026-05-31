@@ -42,6 +42,12 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         title: Text(l10n.finance_summary_title),
         actions: [
           IconButton(
+            icon: const Icon(Icons.receipt_long_outlined),
+            tooltip: l10n.my_contributions_title,
+            onPressed: () =>
+                Navigator.pushNamed(context, AppRouter.myContributions),
+          ),
+          IconButton(
             icon: const Icon(Icons.savings),
             onPressed: () => Navigator.pushNamed(context, AppRouter.budgets),
           ),

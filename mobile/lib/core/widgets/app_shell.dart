@@ -5,7 +5,7 @@ import '../auth/governance_permissions.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../localization/l10n.dart';
 import '../routing/app_router.dart';
-import '../design/tokens/colors.dart';
+import 'mobile_tab_shell.dart';
 
 class AppShell extends ConsumerWidget {
   const AppShell({
@@ -38,6 +38,7 @@ class AppShell extends ConsumerWidget {
       case AppRouter.budgets:
       case AppRouter.settings:
       case AppRouter.language:
+      case AppRouter.members:
         return true;
       default:
         return false;
@@ -56,6 +57,12 @@ class AppShell extends ConsumerWidget {
     final width = MediaQuery.sizeOf(context).width;
     final auth = ref.watch(authProvider);
     if (width < _desktopBreakpoint || !auth.isAuthenticated) {
+      if (MobileTabShell.shouldUse(currentRoute)) {
+        return MobileTabShell(
+          currentRoute: currentRoute,
+          child: child,
+        );
+      }
       return child;
     }
 
@@ -68,6 +75,8 @@ class AppShell extends ConsumerWidget {
     final extended = width >= 1180;
     final userLabel = _userLabel(auth);
     final subtitle = auth.roleNames.isEmpty ? null : auth.roleNames.join(' · ');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -93,6 +102,7 @@ class AppShell extends ConsumerWidget {
                       title: l10n.app_title,
                       subtitle: subtitle,
                       userLabel: userLabel,
+                      brandColor: primary,
                     ),
                   ),
                   Expanded(
@@ -171,7 +181,9 @@ class AppShell extends ConsumerWidget {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
+                            color: Colors.black.withValues(
+                              alpha: isDark ? 0.35 : 0.05,
+                            ),
                             blurRadius: 24,
                             offset: const Offset(0, 12),
                           ),
@@ -423,12 +435,14 @@ class _ShellBrand extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.userLabel,
+    required this.brandColor,
   });
 
   final bool extended;
   final String title;
   final String? subtitle;
   final String userLabel;
+  final Color brandColor;
 
   @override
   Widget build(BuildContext context) {
@@ -441,10 +455,10 @@ class _ShellBrand extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: CmmsColors.primary.withValues(alpha: 0.10),
+              color: brandColor.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(Icons.church, color: CmmsColors.primary),
+            child: Icon(Icons.church, color: brandColor),
           ),
           const SizedBox(height: 12),
           Text(
@@ -462,10 +476,10 @@ class _ShellBrand extends StatelessWidget {
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: CmmsColors.primary.withValues(alpha: 0.10),
+            color: brandColor.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(18),
           ),
-          child: const Icon(Icons.church, color: CmmsColors.primary, size: 28),
+          child: Icon(Icons.church, color: brandColor, size: 28),
         ),
         const SizedBox(height: 16),
         Text(title, style: textTheme.titleLarge),

@@ -1,15 +1,32 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc;
+  --background: #f4f6f9;
   --foreground: #0f172a;
   --surface: #ffffff;
-  --surface-muted: #eef2ff;
+  --surface-muted: #e8f0fe;
   --surface-subtle: #f8fafc;
   --border: #e2e8f0;
-  --primary: #1e3a8a;
+  --primary: #0056d2;
   --primary-foreground: #ffffff;
-  --muted-foreground: #475569;
+  --muted-foreground: #64748b;
+  --success: #16a34a;
+  --warning: #f59e0b;
+  --danger: #dc2626;
+  --info: #0891b2;
+  --success-surface: #ecfdf5;
+  --success-foreground: #166534;
+  --warning-surface: #fffbeb;
+  --warning-foreground: #92400e;
+  --danger-surface: #fef2f2;
+  --danger-foreground: #991b1b;
+  --info-surface: #ecfeff;
+  --info-foreground: #155e75;
+  --chart-1: #0056d2;
+  --chart-2: #16a34a;
+  --chart-3: #f59e0b;
+  --chart-4: #0891b2;
+  --chart-muted: #e2e8f0;
   --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.06);
   --shadow-sm: 0 12px 30px rgba(15, 23, 42, 0.08);
   --shadow-lg: 0 30px 80px rgba(15, 23, 42, 0.18);
@@ -45,19 +62,37 @@
 }
 
 .dark {
-  --background: #0b1220;
-  --foreground: #e2e8f0;
-  --surface: #111827;
+  --background: #0b0e14;
+  --foreground: #e5e7eb;
+  --surface: #131924;
   --surface-muted: #1e293b;
-  --surface-subtle: #0f172a;
-  --border: #334155;
-  --primary: #60a5fa;
-  --primary-foreground: #0f172a;
-  --muted-foreground: #94a3b8;
-  --shadow-xs: 0 1px 2px rgba(2, 6, 23, 0.35);
-  --shadow-sm: 0 12px 30px rgba(2, 6, 23, 0.45);
-  --shadow-lg: 0 30px 80px rgba(2, 6, 23, 0.65);
-  --overlay: rgba(2, 6, 23, 0.65);
+  --surface-subtle: #0f1419;
+  --border: #2a3444;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --muted-foreground: #9ca3af;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #38bdf8;
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 12px 30px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 30px 80px rgba(0, 0, 0, 0.55);
+  --overlay: rgba(2, 6, 23, 0.72);
+  --success-surface: rgba(16, 185, 129, 0.14);
+  --success-foreground: #6ee7b7;
+  --warning-surface: rgba(245, 158, 11, 0.14);
+  --warning-foreground: #fcd34d;
+  --danger-surface: rgba(239, 68, 68, 0.14);
+  --danger-foreground: #fca5a5;
+  --info-surface: rgba(56, 189, 248, 0.14);
+  --info-foreground: #7dd3fc;
+  --chart-1: #2563eb;
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #38bdf8;
+  --chart-muted: #2a3444;
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--primary) 35%, transparent);
 }
 
 * {
@@ -72,7 +107,7 @@ body {
 
 body {
   background:
-    radial-gradient(circle at top, rgba(30, 58, 138, 0.06), transparent 32%),
+    radial-gradient(circle at top, rgba(0, 86, 210, 0.05), transparent 36%),
     var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
@@ -81,8 +116,18 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+.dark body {
+  background:
+    radial-gradient(circle at top, rgba(37, 99, 235, 0.12), transparent 40%),
+    var(--background);
+}
+
 ::selection {
   background: rgba(37, 99, 235, 0.18);
+}
+
+.dark ::selection {
+  background: rgba(37, 99, 235, 0.35);
 }
 
 button,

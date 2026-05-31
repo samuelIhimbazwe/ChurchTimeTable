@@ -1,6 +1,13 @@
 {
   "@@locale": "fr",
   "app_title": "CMMS",
+  "app_tagline": "Système de gestion d'église",
+  "nav_home": "Accueil",
+  "nav_members": "Membres",
+  "nav_events": "Événements",
+  "nav_more": "Plus",
+  "members_title": "Membres",
+  "members_empty": "Aucun membre trouvé.",
   "auth_sign_in_action": "Se connecter",
   "auth_email_label": "E-mail",
   "auth_password_label": "Mot de passe",
@@ -36,6 +43,7 @@
   "onboarding_pending_step_access": "Une fois approuvé, vous pourrez consulter horaires et actualités.",
   "onboarding_pending_help": "Contactez votre responsable de chorale ou de protocol si besoin.",
   "dashboard_member_title": "Mon tableau de bord",
+  "dashboard_welcome": "Bon retour, {name}",
   "dashboard_leader_title": "Tableau de bord responsable",
   "nav_calendar": "Calendrier des événements",
   "nav_attendance": "Présence",
@@ -323,5 +331,14 @@
   "attendance_discipline_created": "Dossier disciplinaire créé.",
   "coverage_escalate_team_head": "Escalader au chef d'équipe",
   "coverage_escalate_coordinator": "Escalader au coordinateur",
-  "coverage_escalate_president": "Escalader au président"
+  "coverage_escalate_president": "Escalader au président",
+  "phoneRequired": "Un numéro de téléphone est requis pour continuer.",
+  "updatePhoneNow": "Mettre à jour",
+  "restrictedUntilPhoneAdded": "Un numéro de téléphone est requis pour continuer les opérations ministérielles.",
+  "warningPhoneIncomplete": "Complétez votre numéro de téléphone pour éviter de perdre l'accès aux outils ministériels.",
+  "my_contributions_title": "Mes contributions",
+  "my_contributions_member_number": "Numéro de membre",
+  "my_contributions_history_title": "Historique des contributions",
+  "my_contributions_total": "Total contribué",
+  "my_contributions_outstanding": "Solde restant"
 }

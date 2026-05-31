@@ -21,9 +21,11 @@ import '../../features/notifications/screens/notifications_screen.dart';
 import '../../features/assignments/screens/leader_assignment_screen.dart';
 import '../../features/choir/screens/choir_rotation_screen.dart';
 import '../../features/finance/screens/budget_screen.dart';
+import '../../features/finance/screens/my_contributions_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
 import '../../features/settings/screens/language_settings_screen.dart';
 import '../../features/coverage/screens/coverage_screen.dart';
+import '../../features/members/screens/members_screen.dart';
 
 class AppRouter {
   static const splash = '/';
@@ -46,6 +48,8 @@ class AppRouter {
   static const assignments = '/assignments';
   static const choirRotation = '/choir-rotation';
   static const budgets = '/budgets';
+  static const myContributions = '/my-contributions';
+  static const members = '/members';
   static const settings = '/settings';
   static const language = '/settings/language';
 
@@ -70,6 +74,8 @@ class AppRouter {
     assignments,
     choirRotation,
     budgets,
+    myContributions,
+    members,
     settings,
     language,
   };
@@ -159,6 +165,10 @@ class AppRouter {
         return l10n.choir_rotation_title;
       case budgets:
         return l10n.budgets_title;
+      case myContributions:
+        return l10n.my_contributions_title;
+      case members:
+        return l10n.members_title;
       case settings:
         return l10n.settings_title;
       case language:
@@ -225,6 +235,10 @@ class AppRouter {
         return _page(const ChoirRotationScreen(), routeName: choirRotation);
       case budgets:
         return _page(const BudgetScreen(), routeName: budgets);
+      case myContributions:
+        return _page(const MyContributionsScreen(), routeName: myContributions);
+      case members:
+        return _page(const MembersScreen(), routeName: members);
       case settings:
         return _page(const SettingsScreen(), routeName: settings);
       case language:

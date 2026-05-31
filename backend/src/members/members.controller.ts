@@ -11,20 +11,40 @@ import { MemberStatus, MinistryScope } from '@prisma/client';
 import { MembersService } from './members.service';
 import { UpdateMemberStatusDto } from './dto/update-member-status.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
-import { RequirePermissions } from '../common/decorators/roles.decorator';
+import {
+  RequireAnyPermissions,
+  RequirePermissions,
+} from '../common/decorators/roles.decorator';
 import { PERMISSIONS } from '../common/constants/roles';
+import { MEMBER_ROSTER_ACCESS_CLAIMS } from '../common/governance/governance-permissions.util';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/decorators/current-user.decorator';
 import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Controller('members')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
 export class MembersController {
   constructor(private membersService: MembersService) {}
 
+  @Get('roster')
+  @RequireAnyPermissions(...MEMBER_ROSTER_ACCESS_CLAIMS)
+  findRoster(
+    @CurrentUser() user: JwtPayload,
+    @Query() query: PaginationDto & {
+      status?: MemberStatus;
+      ministry?: MinistryScope;
+    },
+  ) {
+    return this.membersService.findRoster(user.sub, query.page, query.limit, {
+      status: query.status,
+      ministry: query.ministry,
+    });
+  }
+
   @Get()
-  @RequirePermissions(PERMISSIONS.EVENT_READ)
+  @RequirePermissions(PERMISSIONS.MEMBER_MANAGE)
   findAll(
     @Query() query: PaginationDto & {
       status?: MemberStatus;
@@ -38,7 +58,7 @@ export class MembersController {
   }
 
   @Get(':id')
-  @RequirePermissions(PERMISSIONS.EVENT_READ)
+  @RequirePermissions(PERMISSIONS.MEMBER_MANAGE)
   findOne(@Param('id') id: string) {
     return this.membersService.findOne(id);
   }

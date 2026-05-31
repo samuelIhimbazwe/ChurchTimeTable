@@ -9,7 +9,7 @@ class MemberRepository {
   Future<List<Map<String, dynamic>>> list({int limit = 200}) async {
     await _client.loadToken();
     final res = await _client.dio.get(
-      '/members',
+      '/members/roster',
       queryParameters: {'limit': limit, 'status': 'ACTIVE'},
     );
     final parsed = ApiResponse<Map<String, dynamic>>.fromJson(

@@ -20,6 +20,7 @@ import {
 } from '../common/governance/finance-scope.util';
 import { AuditService } from '../audit/audit.service';
 import { ReceiptUploadService } from './receipt/receipt-upload.service';
+import { ContributionService } from './contribution.service';
 
 @Injectable()
 export class FinanceGovernanceService {
@@ -28,6 +29,7 @@ export class FinanceGovernanceService {
     private operationalScope: OperationalScopeService,
     private audit: AuditService,
     private receiptUpload: ReceiptUploadService,
+    private contributions: ContributionService,
   ) {}
 
   async scopeForUser(actorUserId: string): Promise<FinanceScopeContext> {
@@ -129,6 +131,10 @@ export class FinanceGovernanceService {
       },
     });
     const monthlyTrend = this.buildMonthlyTrend(recentTx, trendStart);
+    const contributionStats = await this.contributions.getContributionStats(scopes);
+    const confirmationQueue = ctx.executiveSummaryOnly
+      ? []
+      : await this.contributions.getConfirmationQueue(actorUserId);
 
     return {
       ministryScopes: scopes,
@@ -172,7 +178,11 @@ export class FinanceGovernanceService {
             approvalStatus: t.approvalStatus,
             receiptUrl: t.receiptUrl,
           })),
-      alerts: this.buildAlerts(budgetHealth, dues, transactions),
+      alerts: this.buildAlerts(budgetHealth, dues, transactions, contributionStats),
+      contributions: {
+        ...contributionStats,
+        confirmationQueue,
+      },
     };
   }
 
@@ -181,6 +191,20 @@ export class FinanceGovernanceService {
     if (!ctx.memberId) {
       throw new ForbiddenException('Member profile required');
     }
+
+    const member = await this.prisma.member.findUniqueOrThrow({
+      where: { id: ctx.memberId },
+      select: { memberNumber: true },
+    });
+
+    const contributionLayer =
+      await this.contributions.getMemberContributions(actorUserId);
+
+    const linkedTxIds = new Set(
+      contributionLayer.records
+        .map((record) => record.financeTransactionId)
+        .filter((id): id is string => Boolean(id)),
+    );
 
     const dues = await this.prisma.memberDues.findMany({
       where: { memberId: ctx.memberId },
@@ -192,14 +216,32 @@ export class FinanceGovernanceService {
       where: {
         memberId: ctx.memberId,
         type: TransactionType.INCOME,
+        id: linkedTxIds.size ? { notIn: [...linkedTxIds] } : undefined,
       },
       orderBy: { transactionDate: 'desc' },
       take: 100,
     });
 
     const summary = this.buildMemberContributionSummary(dues, transactions);
+    summary.totalContributed += contributionLayer.totals.confirmed;
     const byMinistry = this.buildMemberMinistryBreakdown(dues, transactions);
-    const history = this.buildMemberContributionHistory(dues, transactions);
+    const history = [
+      ...this.buildMemberContributionHistory(dues, transactions),
+      ...contributionLayer.records.map((record) => ({
+        id: record.id,
+        date: new Date(record.confirmedAt ?? record.createdAt)
+          .toISOString()
+          .slice(0, 10),
+        ministryScope: record.ministryScope,
+        contributionType: record.contributionType,
+        period: null as string | null,
+        amount: record.amount,
+        status: record.status,
+        receiptUrl: record.receiptUrl,
+        referenceNumber: record.referenceNumber,
+        source: 'contribution_record' as const,
+      })),
+    ].sort((a, b) => b.date.localeCompare(a.date));
     const reminders = dues
       .filter((d) => d.status === 'UNPAID' || d.status === 'PARTIAL')
       .map((d) => ({
@@ -216,10 +258,14 @@ export class FinanceGovernanceService {
       }));
 
     return {
+      memberNumber: member.memberNumber,
       summary,
       byMinistry,
       history,
       reminders,
+      contributionRecords: contributionLayer.records,
+      contributionTotals: contributionLayer.totals,
+      contributionByType: contributionLayer.byType,
       dues: dues.map((d) => ({
         id: d.id,
         ministryScope: d.ministryScope,
@@ -495,6 +541,14 @@ export class FinanceGovernanceService {
       monthlyTrend: [],
       recentTransactions: [],
       alerts: [],
+      contributions: {
+        contributionTotals: 0,
+        confirmedCount: 0,
+        pendingConfirmationCount: 0,
+        contributionGrowth: [],
+        contributionTypeDistribution: [],
+        confirmationQueue: [],
+      },
     };
   }
 
@@ -529,6 +583,9 @@ export class FinanceGovernanceService {
     budgets: Array<{ overBudget: boolean; name: string }>,
     dues: Array<{ status: string }>,
     transactions: Array<{ receiptUrl: string | null; approvalStatus: string }>,
+    contributionStats?: {
+      pendingConfirmationCount: number;
+    },
   ) {
     const alerts: Array<{
       id: string;
@@ -566,6 +623,15 @@ export class FinanceGovernanceService {
         severity: 'info',
         title: 'Receipts pending',
         message: `${missingReceipt} approved transaction(s) lack receipt evidence.`,
+      });
+    }
+
+    if (contributionStats?.pendingConfirmationCount) {
+      alerts.push({
+        id: 'contributions-pending-confirmation',
+        severity: 'warning',
+        title: 'Contributions awaiting confirmation',
+        message: `${contributionStats.pendingConfirmationCount} contribution(s) need treasurer review.`,
       });
     }
 

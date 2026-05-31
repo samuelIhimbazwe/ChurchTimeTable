@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
+import { CmmsAlert } from "@/components/ui/cmms-alert";
 import { CmmsButton } from "@/components/ui/cmms-button";
 import { CmmsInput } from "@/components/ui/cmms-input";
 import {
@@ -57,11 +58,7 @@ export function LoginForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      {sessionNotice ? (
-        <p className="rounded-[var(--radius-xl)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
-          {sessionNotice}
-        </p>
-      ) : null}
+      {sessionNotice ? <CmmsAlert variant="warning">{sessionNotice}</CmmsAlert> : null}
       <CmmsInput
         id="email"
         type="email"
@@ -79,11 +76,7 @@ export function LoginForm({
         onChange={setPassword}
         required
       />
-      {error ? (
-        <p className="rounded-[var(--radius-xl)] bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-200">
-          {error}
-        </p>
-      ) : null}
+      {error ? <CmmsAlert variant="error">{error}</CmmsAlert> : null}
       <CmmsButton type="submit" disabled={submitting} fullWidth>
         {submitting ? t("submitting") : t("submit")}
       </CmmsButton>

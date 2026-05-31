@@ -14,6 +14,7 @@ import { CmmsTable } from "@/components/ui/cmms-table";
 import { CmmsTabs } from "@/components/ui/cmms-tabs";
 import { OperationalScreen } from "@/components/ui/operational-screen";
 import { getApiErrorMessage } from "@/core/api/errors";
+import { formatMemberPickerLabel } from "@/core/members/member-labels";
 import {
   CHOIR_GOVERNANCE_SCOPE,
   PROTOCOL_GOVERNANCE_SCOPE,
@@ -84,8 +85,6 @@ export function CommitteeGovernanceAdmin() {
 
   return (
     <OperationalScreen
-      title={t("title")}
-      subtitle={t("subtitle")}
       tabs={[
         { id: "protocol", label: t("tabs.protocol") },
         { id: "choir", label: t("tabs.choir") },
@@ -99,7 +98,7 @@ export function CommitteeGovernanceAdmin() {
       success={success}
     >
       <CmmsPageSection title={t("assignTitle")} description={t("assignDescription")}>
-        <div className="rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-xs)] sm:p-6">
+        <CmmsCard>
           {loading ? (
             <div className="grid gap-4 md:grid-cols-2">
               <CmmsSkeleton className="h-11" />
@@ -115,8 +114,7 @@ export function CommitteeGovernanceAdmin() {
                   <option value="">{t("memberPlaceholder")}</option>
                   {roster?.map((member) => (
                     <option key={member.id} value={member.id}>
-                      {member.firstName} {member.lastName}
-                      {member.user?.email ? ` (${member.user.email})` : ""}
+                      {formatMemberPickerLabel(member)}
                     </option>
                   ))}
                 </CmmsSelect>
@@ -138,7 +136,7 @@ export function CommitteeGovernanceAdmin() {
               {isPending ? t("assigning") : t("assignAction")}
             </CmmsButton>
           </div>
-        </div>
+        </CmmsCard>
       </CmmsPageSection>
 
       <div className="grid gap-6 xl:grid-cols-2">
@@ -178,7 +176,12 @@ export function CommitteeGovernanceAdmin() {
               {
                 key: "member",
                 header: t("columns.member"),
-                render: (row) => `${row.member.firstName} ${row.member.lastName}`,
+                render: (row) =>
+                  formatMemberPickerLabel({
+                    memberNumber: row.member.memberNumber,
+                    firstName: row.member.firstName,
+                    lastName: row.member.lastName,
+                  }),
               },
               {
                 key: "role",

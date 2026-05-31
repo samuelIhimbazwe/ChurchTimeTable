@@ -36,7 +36,7 @@ export function PasswordInput({
           type={visible ? "text" : "password"}
           className={cn(
             "min-h-11 w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 pr-24 text-sm text-[var(--foreground)] shadow-[var(--shadow-xs)] outline-none transition placeholder:text-[var(--muted-foreground)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20",
-            error && "border-rose-400 focus:border-rose-500 focus:ring-rose-500/20",
+            error && "border-[var(--danger)] focus:border-[var(--danger)] focus:ring-[var(--danger)]/20",
           )}
           value={value}
           onChange={(event) => onChange(event.target.value)}
@@ -54,7 +54,7 @@ export function PasswordInput({
         </button>
       </div>
       {error ? (
-        <span className="text-sm text-rose-600 dark:text-rose-300">{error}</span>
+        <span className="text-sm text-[var(--danger)]">{error}</span>
       ) : hint ? (
         <span className="text-sm text-[var(--muted-foreground)]">{hint}</span>
       ) : null}

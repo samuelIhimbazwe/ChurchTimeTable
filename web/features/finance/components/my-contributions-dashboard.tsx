@@ -46,6 +46,7 @@ export function MyContributionsDashboard() {
   const query = useMyContributionsQuery();
   const [exporting, setExporting] = useState<"csv" | "pdf" | null>(null);
   const [exportDone, setExportDone] = useState(false);
+  const [typeFilter, setTypeFilter] = useState<string>("ALL");
 
   if (query.isLoading) {
     return (
@@ -69,6 +70,11 @@ export function MyContributionsDashboard() {
 
   const data = query.data as MyContributionsPayload;
   const { summary, byMinistry, history, reminders } = data;
+  const contributionByType = data.contributionByType ?? [];
+  const filteredHistory =
+    typeFilter === "ALL"
+      ? history
+      : history.filter((item) => item.contributionType === typeFilter);
   const isEmpty = history.length === 0 && reminders.length === 0;
 
   async function handleExport(kind: "csv" | "pdf") {
@@ -84,11 +90,7 @@ export function MyContributionsDashboard() {
   }
 
   return (
-    <OperationalScreen
-      title={t("title")}
-      subtitle={t("subtitle")}
-      className="cmms-content-narrow"
-    >
+    <OperationalScreen className="cmms-content-narrow">
         <div className="flex flex-wrap gap-2">
           <CmmsButton
             variant="secondary"
@@ -148,6 +150,43 @@ export function MyContributionsDashboard() {
             />
           </CmmsCard>
 
+          {contributionByType.length > 0 ? (
+            <CmmsCard title={t("typeSummaryTitle")} description={t("typeSummaryHint")}>
+              <div className="mb-4 flex flex-wrap gap-2">
+                <CmmsButton
+                  size="sm"
+                  variant={typeFilter === "ALL" ? "primary" : "secondary"}
+                  onClick={() => setTypeFilter("ALL")}
+                >
+                  {t("filterAll")}
+                </CmmsButton>
+                {contributionByType.map((entry) => (
+                  <CmmsButton
+                    key={entry.contributionType}
+                    size="sm"
+                    variant={
+                      typeFilter === entry.contributionType ? "primary" : "secondary"
+                    }
+                    onClick={() => setTypeFilter(entry.contributionType)}
+                  >
+                    {entry.contributionType}
+                  </CmmsButton>
+                ))}
+              </div>
+              <ul className="space-y-2">
+                {contributionByType.map((entry) => (
+                  <li
+                    key={entry.contributionType}
+                    className="flex items-center justify-between rounded-lg bg-[var(--surface-subtle)] px-3 py-2 text-sm"
+                  >
+                    <span>{entry.contributionType}</span>
+                    <span>{formatCurrency(entry.confirmed)}</span>
+                  </li>
+                ))}
+              </ul>
+            </CmmsCard>
+          ) : null}
+
           {byMinistry.length > 0 ? (
             <CmmsCard title={t("ministryTitle")} description={t("ministryHint")}>
               <ul className="space-y-3">
@@ -198,18 +237,18 @@ export function MyContributionsDashboard() {
           ) : null}
 
           <CmmsCard title={t("historyTitle")} description={t("historyHint")}>
-            {history.length === 0 ? (
+            {filteredHistory.length === 0 ? (
               <p className="text-sm text-[var(--muted-foreground)]">{t("noHistory")}</p>
             ) : (
               <ul className="divide-y divide-[var(--border)]">
-                {history.map((item) => (
+                {filteredHistory.map((item) => (
                   <li
                     key={`${item.id}-${item.date}`}
                     className="flex flex-wrap items-start justify-between gap-3 py-3 first:pt-0 last:pb-0"
                   >
                     <div>
                       <p className="font-medium text-[var(--foreground)]">
-                        {item.period ?? item.contributionType}
+                        {item.referenceNumber ?? item.period ?? item.contributionType}
                       </p>
                       <p className="text-sm text-[var(--muted-foreground)]">
                         {item.date} · {t(`ministry.${item.ministryScope.toLowerCase()}`)}

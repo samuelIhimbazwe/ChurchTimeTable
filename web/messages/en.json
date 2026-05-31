@@ -1,7 +1,9 @@
 {
   "app": {
     "name": "CMMS Web",
+    "nameShort": "CMMS",
     "tagline": "Production web foundation for church operations.",
+    "taglineShort": "Church management system",
     "description": "Church Management and Coordination System for browser teams."
   },
   "nav": {
@@ -11,23 +13,29 @@
   },
   "shell": {
     "menu": "Menu",
-    "navGroupToday": "Today",
-    "navGroupPersonal": "My ministry",
+    "search": "Search…",
+    "notifications": "Notifications",
+    "navGroupMain": "Main",
+    "navGroupPersonal": "Personal",
     "navGroupOperations": "Operations",
     "navGroupStewardship": "Stewardship",
     "navGroupGovernance": "Governance",
     "navGroupAdmin": "Administration",
     "navDashboard": "Dashboard",
-    "navEvents": "Event engine",
-    "navAttendance": "Attendance governance",
+    "navMembers": "Members",
+    "membersSummary": "Browse ministry members, roles, and membership status.",
+    "navEvents": "Events",
+    "navAttendance": "Attendance",
     "navCoverage": "Coverage management",
-    "navOperational": "Operational center",
-    "navGovernance": "Committee governance",
-    "navPendingMembers": "Pending registrations",
+    "navOperational": "Operations",
+    "navGovernance": "Governance",
+    "navPendingMembers": "Pending approvals",
     "pendingMembersSummary": "Review and approve new ministry member signups.",
     "navFinance": "Finance stewardship",
     "navMyContributions": "My contributions",
     "myContributionsSummary": "Your personal contribution history and obligations.",
+    "navProfile": "Profile settings",
+    "profileSummary": "Update your name and contact phone number.",
     "navAdmin": "Admin console",
     "memberSummary": "Assignments, attendance, notifications, and contribution progress.",
     "leaderSummary": "Operations, attendance trends, ministry analytics, and reliability signals.",
@@ -86,8 +94,15 @@
       "paid": "Paid",
       "partial": "Partial",
       "unpaid": "Outstanding",
-      "waived": "Waived"
-    }
+      "waived": "Waived",
+      "confirmed": "Confirmed",
+      "submitted": "Submitted",
+      "pending": "Pending",
+      "rejected": "Rejected"
+    },
+    "typeSummaryTitle": "By contribution type",
+    "typeSummaryHint": "Confirmed totals grouped by type.",
+    "filterAll": "All types"
   },
   "financeStewardship": {
     "title": "Finance stewardship",
@@ -100,7 +115,9 @@
       "balance": "Ministry balance",
       "compliance": "Contribution compliance",
       "unpaid": "Outstanding balance",
-      "unpaidMembers": "Members with balance"
+      "unpaidMembers": "Members with balance",
+      "contributionTotals": "Confirmed contributions",
+      "pendingContributions": "Awaiting confirmation"
     },
     "recentTransactions": "Recent transactions",
     "recentTransactionsHint": "Approved ministry transactions in your scope.",
@@ -116,6 +133,9 @@
     "pendingApprovalsHint": "Review expenses before they affect ministry balances.",
     "noPendingApprovals": "No transactions awaiting approval",
     "noPendingApprovalsHint": "New expenses requiring your review will appear here.",
+    "contributionQueueTitle": "Contribution confirmation queue",
+    "contributionQueueHint": "Review submitted member contributions before they post to ministry books.",
+    "noContributionQueue": "No contributions awaiting confirmation",
     "noBudgetsTitle": "No budgets configured",
     "noBudgetsHint": "Budget plans for this ministry will appear once leaders define them.",
     "approve": "Approve",
@@ -609,6 +629,7 @@
       "rejectionNotes": "Rejection notes",
       "notesHint": "Optional context for audit and pastoral review.",
       "cancel": "Cancel",
+      "confirm": "Confirm",
       "submitting": "Saving…"
     },
     "table": {
@@ -679,6 +700,7 @@
   },
   "auth": {
     "title": "Sign in",
+    "signInCard": "Sign in to your account",
     "subtitle": "Sign in to your church ministry platform to view schedules, attendance, and ministry updates.",
     "email": "Email",
     "password": "Password",
@@ -699,6 +721,24 @@
     "forgotPasswordDescription": "We will help you recover access soon.",
     "forgotPasswordPlaceholder": "Password reset by email is coming in a later release. Please contact your ministry leader if you need help signing in.",
     "backToSignIn": "Back to sign in"
+  },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "Update your name and phone number.",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "phone": "Phone",
+    "phoneHint": "Rwanda formats accepted, e.g. 0781234567",
+    "save": "Save profile",
+    "saving": "Saving…",
+    "saveSuccess": "Profile updated.",
+    "saveError": "Could not update profile.",
+    "phoneBannerMessage": "Add your phone number to complete your profile.",
+    "phoneBannerAction": "Update profile",
+    "phoneRequired": "Phone number required to continue.",
+    "updatePhoneNow": "Update now",
+    "restrictedUntilPhoneAdded": "Phone number required to continue ministry operations.",
+    "warningPhoneIncomplete": "Complete your phone number to avoid losing access to ministry tools."
   },
   "onboarding": {
     "signup": {
@@ -759,9 +799,38 @@
     }
   },
   "members": {
+    "directory": {
+      "tabs": {
+        "all": "All",
+        "active": "Active",
+        "pending": "Pending",
+        "inactive": "Inactive"
+      },
+      "search": "Search members",
+      "filter": "Filter",
+      "addMember": "Add member",
+      "name": "Name",
+      "ministry": "Ministry",
+      "role": "Role",
+      "status": "Status",
+      "joined": "Joined",
+      "actions": "Actions",
+      "loading": "Loading members…",
+      "emptyTitle": "No members found",
+      "emptyDescription": "Try adjusting your search or status filter.",
+      "loadError": "Unable to load members.",
+      "roleMember": "Member",
+      "roleCoordinator": "Coordinator",
+      "roleLeader": "Leader",
+      "statusActive": "Active",
+      "statusPending": "Pending",
+      "statusInactive": "Inactive"
+    },
     "pending": {
-      "title": "Pending registrations",
-      "subtitle": "Review new ministry members before granting full platform access.",
+      "title": "Pending members",
+      "subtitle": "Review and approve new ministry member signups.",
+      "summaryTitle": "Approval summary",
+      "summaryHint": "Pending requests by ministry.",
       "search": "Search members",
       "ministryFilter": "Ministry",
       "allMinistries": "All ministries",
@@ -785,6 +854,9 @@
     "title": "Protected dashboard foundation",
     "subtitle": "This page is guarded and ready for Sprint 3 widgets.",
     "memberTitle": "Member dashboard",
+    "welcomeBack": "Welcome back, {name}",
+    "metricTrendUp": "+{value}% vs last month",
+    "metricTrendNeutral": "Stable vs last month",
     "memberExcuseTitle": "Request excused absence",
     "memberExcuseDescription": "Submit an excuse request for an upcoming assignment. A leader will review it.",
     "memberExcuseAction": "Request excuse",

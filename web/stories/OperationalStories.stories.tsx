@@ -92,8 +92,8 @@ export const AuthValidationErrors: StoryObj = {
   render: () => (
     <div className="mx-auto max-w-md space-y-4 rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] p-6">
       <h2 className="cmms-text-heading">Sign in</h2>
-      <p className="text-sm text-rose-700">Invalid credentials</p>
-      <p className="text-sm text-amber-700">Your session expired. Please sign in again.</p>
+      <p className="text-sm text-[var(--danger)]">Invalid credentials</p>
+      <p className="text-sm text-[var(--warning-foreground)]">Your session expired. Please sign in again.</p>
     </div>
   ),
 };

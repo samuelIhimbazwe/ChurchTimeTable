@@ -20,6 +20,11 @@ import {
   resolvePermissionFlags,
   resolveWidgetLayout,
 } from './dashboard-widgets.constants';
+import {
+  canViewDisciplineIntelligence,
+  canViewFinanceIntelligence,
+} from '../common/governance/governance-permissions.util';
+import { ResponseVisibilityService } from '../common/visibility/response-visibility.service';
 
 @Injectable()
 export class DashboardService {
@@ -31,6 +36,7 @@ export class DashboardService {
     private intelligence: MinistryIntelligenceService,
     private operationalScope: OperationalScopeService,
     private financeGovernance: FinanceGovernanceService,
+    private visibility: ResponseVisibilityService,
   ) {}
 
   async leaderSummary(userId: string, permissions: string[] = []) {
@@ -142,6 +148,9 @@ export class DashboardService {
     const monthScore = this.attendanceScoring.scoreRecords(monthOperationalRows, weights);
     const attendanceRate = monthOperationalRows.length ? monthScore.percentage : null;
 
+    const canFinance = canViewFinanceIntelligence(permissions);
+    const canDiscipline = canViewDisciplineIntelligence(permissions);
+
     const [
       ministryKpis,
       alerts,
@@ -156,20 +165,23 @@ export class DashboardService {
       this.intelligence.generateAlerts(permissions, { userId }),
       this.intelligence.workloadAnalytics(),
       this.intelligence.operationalAnalytics(userId),
-      this.intelligence.financeAnalytics({ actorUserId: userId }),
-      this.intelligence.disciplineAnalytics(),
+      canFinance
+        ? this.intelligence.financeAnalytics({ actorUserId: userId })
+        : Promise.resolve(null),
+      canDiscipline
+        ? this.intelligence.disciplineAnalytics()
+        : Promise.resolve(null),
       this.intelligence.ministryHealthScore(userId),
       this.governance.choirAttendanceSummary(),
     ]);
 
     const permissionWidgets = resolvePermissionFlags(permissions);
 
-    return {
+    const payload: Record<string, unknown> = {
       upcomingEvents,
       upcomingEventList,
       pendingSwaps,
       pendingReplacements,
-      activeDiscipline,
       attendanceRate,
       attendanceSummary,
       attendanceTrend: this.buildAttendanceTrend(attendanceTrendRows, trendStart, now),
@@ -177,14 +189,6 @@ export class DashboardService {
       reliabilityBands: await this.buildReliabilityBands(reliabilityRows),
       teamReliability: this.buildTeamReliability(teamRows),
       replacementFrequency: this.buildReplacementFrequency(replacementRows, trendStart, now),
-      financeSummary: {
-        income: financeAnalytics.income,
-        expense: financeAnalytics.expense,
-        balance: financeAnalytics.balance,
-        count:
-          (financeAnalytics as { recentTransactions?: unknown[] }).recentTransactions
-            ?.length ?? 0,
-      },
       syncConflicts,
       recentAudit,
       permissionWidgets,
@@ -195,11 +199,33 @@ export class DashboardService {
         ministryHealth,
         workloadAnalytics,
         operationalAnalytics,
-        financeAnalytics,
-        disciplineAnalytics,
         choirSummary,
       },
     };
+
+    if (canDiscipline) {
+      payload.activeDiscipline = activeDiscipline;
+    }
+
+    if (canFinance && financeAnalytics) {
+      payload.financeSummary = {
+        income: financeAnalytics.income,
+        expense: financeAnalytics.expense,
+        balance: financeAnalytics.balance,
+        count:
+          (financeAnalytics as { recentTransactions?: unknown[] }).recentTransactions
+            ?.length ?? 0,
+      };
+      (payload.intelligence as Record<string, unknown>).financeAnalytics =
+        financeAnalytics;
+    }
+
+    if (canDiscipline && disciplineAnalytics) {
+      (payload.intelligence as Record<string, unknown>).disciplineAnalytics =
+        disciplineAnalytics;
+    }
+
+    return this.visibility.filterLeaderSummary(payload, permissions);
   }
 
   async memberSummary(userId: string, memberId: string, permissions: string[] = []) {
@@ -304,25 +330,28 @@ export class DashboardService {
       // Non-member actors or missing profile — keep legacy dues slice.
     }
 
-    return {
-      upcomingAssignments,
-      upcomingSchedule,
-      pendingSwaps,
-      attendanceRecent,
-      recentNotifications,
-      attendanceRate,
-      responsibilityScore,
-      attendanceScore,
-      contributionProgress,
-      history: {
-        protocolTeamHistory,
-        committeeRoleHistory,
+    return this.visibility.filterMemberSummary(
+      {
+        upcomingAssignments,
+        upcomingSchedule,
+        pendingSwaps,
+        attendanceRecent,
+        recentNotifications,
+        attendanceRate,
+        responsibilityScore,
+        attendanceScore,
+        contributionProgress,
+        history: {
+          protocolTeamHistory,
+          committeeRoleHistory,
+        },
+        permissionWidgets,
+        widgets: resolveWidgetLayout(MEMBER_WIDGETS, permissions),
+        alerts,
+        personalAnalytics,
       },
-      permissionWidgets,
-      widgets: resolveWidgetLayout(MEMBER_WIDGETS, permissions),
-      alerts,
-      personalAnalytics,
-    };
+      permissions,
+    );
   }
 
   async adminSummary(userId: string, permissions: string[] = []) {
@@ -407,6 +436,9 @@ export class DashboardService {
   }
 
   async intelligenceSummary(permissions: string[], userId: string) {
+    const canFinance = canViewFinanceIntelligence(permissions);
+    const canDiscipline = canViewDisciplineIntelligence(permissions);
+
     const [
       ministryKpis,
       ministryHealth,
@@ -420,21 +452,32 @@ export class DashboardService {
       this.intelligence.ministryHealthScore(userId),
       this.intelligence.workloadAnalytics(),
       this.intelligence.operationalAnalytics(userId),
-      this.intelligence.financeAnalytics({ actorUserId: userId }),
-      this.intelligence.disciplineAnalytics(),
+      canFinance
+        ? this.intelligence.financeAnalytics({ actorUserId: userId })
+        : Promise.resolve(null),
+      canDiscipline
+        ? this.intelligence.disciplineAnalytics()
+        : Promise.resolve(null),
       this.intelligence.generateAlerts(permissions, { userId }),
     ]);
 
-    return {
+    const payload: Record<string, unknown> = {
       ministryKpis,
       ministryHealth,
       workloadAnalytics,
       operationalAnalytics,
-      financeAnalytics,
-      disciplineAnalytics,
       alerts,
       generatedAt: new Date().toISOString(),
     };
+
+    if (canFinance && financeAnalytics) {
+      payload.financeAnalytics = financeAnalytics;
+    }
+    if (canDiscipline && disciplineAnalytics) {
+      payload.disciplineAnalytics = disciplineAnalytics;
+    }
+
+    return this.visibility.filterIntelligenceSummary(payload, permissions);
   }
 
   async operationalRoleSummary(

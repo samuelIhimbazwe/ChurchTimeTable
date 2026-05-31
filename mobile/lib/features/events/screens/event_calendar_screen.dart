@@ -9,6 +9,7 @@ import '../../../core/localization/church_localization.dart';
 import '../../../core/localization/l10n.dart';
 import '../../../core/localization/locale_date_format.dart';
 import '../../../core/localization/locale_provider.dart';
+import '../../../core/widgets/mobile_tab_shell.dart';
 import '../providers/event_providers.dart';
 import 'event_create_screen.dart';
 import 'event_detail_screen.dart';
@@ -215,28 +216,10 @@ class _EventCalendarScreenState extends ConsumerState<EventCalendarScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final lang = ref.watch(localeProvider).languageCode;
+    final embedded = MobileTabShellScope.embeddedInShell(context);
     final eventsAsync = ref.watch(eventsListProvider(_filter));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.nav_calendar),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: l10n.event_create_title,
-            onPressed: () async {
-              final created = await Navigator.push<bool>(
-                context,
-                MaterialPageRoute(builder: (_) => const EventCreateScreen()),
-              );
-              if (created == true) {
-                ref.invalidate(eventsListProvider(_filter));
-              }
-            },
-          ),
-        ],
-      ),
-      body: eventsAsync.when(
+    final body = eventsAsync.when(
         loading: () => Center(child: Text(l10n.common_loading)),
         error: (_, __) => Center(
           child: Column(
@@ -381,6 +364,32 @@ class _EventCalendarScreenState extends ConsumerState<EventCalendarScreen> {
           );
         },
       ),
+    );
+
+    if (embedded) {
+      return body;
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.nav_calendar),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            tooltip: l10n.event_create_title,
+            onPressed: () async {
+              final created = await Navigator.push<bool>(
+                context,
+                MaterialPageRoute(builder: (_) => const EventCreateScreen()),
+              );
+              if (created == true) {
+                ref.invalidate(eventsListProvider(_filter));
+              }
+            },
+          ),
+        ],
+      ),
+      body: body,
     );
   }
 }

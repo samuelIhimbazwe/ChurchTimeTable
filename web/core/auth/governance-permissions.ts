@@ -196,6 +196,27 @@ export function canAccessOperationalDashboard(permissions: string[]): boolean {
   return resolveOperationalDashboardRole(permissions) !== null;
 }
 
+export const MEMBER_READ = "member:read";
+
+export const MEMBER_ROSTER_ACCESS_PERMISSIONS = [
+  MEMBER_READ,
+  "assignment:write",
+  "event:write",
+  "member:manage",
+  PROTOCOL_OVERSIGHT,
+  PROTOCOL_TEAM_MANAGE,
+  PROTOCOL_OPERATIONAL_MONITOR,
+  PROTOCOL_TEAM_HEAD,
+  CHOIR_OVERSIGHT,
+  CHOIR_OPERATIONS_MANAGE,
+] as const;
+
+export function canAccessMemberRoster(permissions: string[]): boolean {
+  return MEMBER_ROSTER_ACCESS_PERMISSIONS.some((p) =>
+    hasEffectivePermission(permissions, p),
+  );
+}
+
 /** Choir operational leaders without protocol governance scope */
 export function isChoirOnlyOperations(permissions: string[]): boolean {
   return (

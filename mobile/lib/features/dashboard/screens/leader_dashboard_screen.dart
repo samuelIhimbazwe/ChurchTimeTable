@@ -9,6 +9,7 @@ import '../../../core/design/tokens/spacing.dart';
 import '../../../core/localization/l10n.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/routing/app_router.dart';
+import '../../../core/widgets/mobile_tab_shell.dart';
 import '../../../core/auth/governance_permissions.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../core/models/dashboard_models.dart';
@@ -26,33 +27,10 @@ class LeaderDashboardScreen extends ConsumerWidget {
         ? ref.watch(leaderDashboardProvider)
         : const AsyncValue<LeaderDashboardSummary?>.data(null);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.dashboard_leader_title),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () =>
-                Navigator.pushNamed(context, AppRouter.settings),
-          ),
-          IconButton(
-            icon: const Icon(Icons.sync),
-            onPressed: () => Navigator.pushNamed(context, AppRouter.sync),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: l10n.common_logout,
-            onPressed: () async {
-              await ref.read(authProvider.notifier).logout();
-              if (context.mounted) {
-                Navigator.pushReplacementNamed(context, AppRouter.login);
-              }
-            },
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async => ref.invalidate(leaderDashboardProvider),
+    final embedded = MobileTabShellScope.embeddedInShell(context);
+
+    final body = RefreshIndicator(
+      onRefresh: () async => ref.invalidate(leaderDashboardProvider),
         child: CustomScrollView(
           slivers: [
             SliverToBoxAdapter(
@@ -99,6 +77,38 @@ class LeaderDashboardScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+
+    if (embedded) {
+      return body;
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.dashboard_leader_title),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () =>
+                Navigator.pushNamed(context, AppRouter.settings),
+          ),
+          IconButton(
+            icon: const Icon(Icons.sync),
+            onPressed: () => Navigator.pushNamed(context, AppRouter.sync),
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: l10n.common_logout,
+            onPressed: () async {
+              await ref.read(authProvider.notifier).logout();
+              if (context.mounted) {
+                Navigator.pushReplacementNamed(context, AppRouter.login);
+              }
+            },
+          ),
+        ],
+      ),
+      body: body,
     );
   }
 

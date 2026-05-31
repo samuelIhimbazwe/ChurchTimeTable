@@ -18,6 +18,7 @@ import { OperationalScreen } from "@/components/ui/operational-screen";
 import { CmmsAlert } from "@/components/ui/cmms-alert";
 import { getApiErrorMessage } from "@/core/api/errors";
 import type { EventFormInput, EventItem, EventStatus, EventType, MinistryScope } from "@/core/api/types";
+import { formatMemberPickerLabel } from "@/core/members/member-labels";
 import { useEventAssignmentsQuery, useEventsQuery, useCreateEventMutation, useUpdateEventMutation, useCancelEventMutation, useValidateAssignmentMutation, useCreateAssignmentMutation, useBulkAssignMutation, useChoirRotationPoolQuery, useAutoAssignChoirRotationMutation } from "@/features/events/hooks/use-event-engine";
 
 type CalendarView = "month" | "week" | "agenda";
@@ -168,7 +169,6 @@ export function EventEngine() {
   return (
     <OperationalScreen error={error}>
       <CmmsCard
-        title={t("title")}
         description={t("subtitle")}
         headerAction={
           <CmmsButton
@@ -538,7 +538,7 @@ function EventChip({
         </button>
         {event.status !== "CANCELLED" ? (
           <button
-            className="text-[11px] text-rose-600"
+            className="text-[11px] text-[var(--danger)]"
             onClick={() => onCancel(event.id)}
           >
             Cancel
@@ -721,9 +721,15 @@ function AssignmentModal({
     id: string;
     memberId: string;
     role?: string | null;
-    member: { firstName: string; lastName: string; ministry: string };
+    member: { firstName: string; lastName: string; ministry: string; memberNumber?: string | null };
   }>;
-  pool: Array<{ memberId: string; firstName: string; lastName: string; ministry: string }>;
+  pool: Array<{
+    memberId: string;
+    firstName: string;
+    lastName: string;
+    ministry: string;
+    memberNumber?: string | null;
+  }>;
   loading: boolean;
   labels: (key: string, values?: Record<string, string | number>) => string;
   error: string | null;
@@ -743,6 +749,7 @@ function AssignmentModal({
         firstName: row.member.firstName,
         lastName: row.member.lastName,
         ministry: row.member.ministry,
+        memberNumber: row.member.memberNumber,
       }));
 
   return (
@@ -764,7 +771,7 @@ function AssignmentModal({
                 <option value="">{labels("assignments.memberPlaceholder")}</option>
                 {memberOptions.map((candidate) => (
                   <option key={candidate.memberId} value={candidate.memberId}>
-                    {candidate.firstName} {candidate.lastName}
+                    {formatMemberPickerLabel(candidate)}
                   </option>
                 ))}
               </CmmsSelect>
@@ -824,7 +831,7 @@ function AssignmentModal({
                   variant="secondary"
                   onClick={() => setMemberId(candidate.memberId)}
                 >
-                  {candidate.firstName} {candidate.lastName}
+                  {formatMemberPickerLabel(candidate)}
                 </CmmsButton>
               ))}
             </div>
@@ -850,7 +857,12 @@ function AssignmentModal({
                 {
                   key: "name",
                   header: labels("table.member"),
-                  render: (row) => `${row.member.firstName} ${row.member.lastName}`,
+                  render: (row) =>
+                    formatMemberPickerLabel({
+                      memberNumber: row.member.memberNumber,
+                      firstName: row.member.firstName,
+                      lastName: row.member.lastName,
+                    }),
                 },
                 {
                   key: "role",

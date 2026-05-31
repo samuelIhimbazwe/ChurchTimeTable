@@ -189,6 +189,17 @@ export async function fetchCurrentUser() {
   return response.data.data;
 }
 
+export interface UpdateProfileInput {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+}
+
+export async function updateProfileRequest(input: UpdateProfileInput) {
+  const response = await http.patch<ApiEnvelope<AuthProfile>>("/users/me", input);
+  return response.data.data;
+}
+
 export async function fetchLeaderDashboard() {
   const response = await http.get<ApiEnvelope<LeaderDashboardSummary>>(
     "/dashboard/leader-summary",
@@ -594,6 +605,7 @@ export interface CommitteeGovernanceSnapshot {
 
 export interface MemberListItem {
   id: string;
+  memberNumber?: string | null;
   firstName: string;
   lastName: string;
   ministry: string;
@@ -602,11 +614,41 @@ export interface MemberListItem {
   user?: { email: string | null };
 }
 
+export interface MemberRosterItem {
+  id: string;
+  firstName: string;
+  lastName: string;
+  memberNumber?: string | null;
+  ministry: string;
+  status: string;
+}
+
+export async function fetchMembersRoster(params?: {
+  page?: number;
+  limit?: number;
+  ministry?: string;
+  status?: string;
+}) {
+  const response = await http.get<ApiEnvelope<ApiListResponse<MemberRosterItem>>>(
+    "/members/roster",
+    {
+      params: {
+        page: params?.page ?? 1,
+        limit: params?.limit ?? 200,
+        ministry: params?.ministry,
+        status: params?.status ?? "ACTIVE",
+      },
+    },
+  );
+  return response.data.data;
+}
+
 export async function fetchMembers(params?: {
   page?: number;
   limit?: number;
   ministry?: string;
   status?: string;
+  includeAllStatuses?: boolean;
 }) {
   const response = await http.get<ApiEnvelope<ApiListResponse<MemberListItem>>>(
     "/members",
@@ -615,7 +657,9 @@ export async function fetchMembers(params?: {
         page: params?.page ?? 1,
         limit: params?.limit ?? 200,
         ministry: params?.ministry,
-        status: params?.status ?? "ACTIVE",
+        ...(params?.includeAllStatuses
+          ? {}
+          : { status: params?.status ?? "ACTIVE" }),
       },
     },
   );
@@ -688,6 +732,38 @@ export interface FinanceStewardshipAnalytics {
   monthlyTrend: Array<{ label: string; income: number; expense: number }>;
   recentTransactions: FinanceTransactionRow[];
   alerts: Array<{ id: string; severity: string; title: string; message: string }>;
+  contributions?: {
+    contributionTotals: number;
+    confirmedCount: number;
+    pendingConfirmationCount: number;
+    contributionGrowth: Array<{ label: string; total: number }>;
+    contributionTypeDistribution: Array<{
+      contributionType: string;
+      total: number;
+    }>;
+    confirmationQueue: ContributionRecord[];
+  };
+}
+
+export interface ContributionRecord {
+  id: string;
+  memberId: string;
+  memberNumber?: string | null;
+  memberName?: string;
+  ministryScope?: string;
+  familyId?: string | null;
+  financeTransactionId?: string | null;
+  memberDueId?: string | null;
+  contributionType: string;
+  amount: number;
+  currency: string;
+  status: string;
+  referenceNumber: string;
+  notes?: string | null;
+  receiptUrl?: string | null;
+  confirmedAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface FinanceTransactionRow {
@@ -719,6 +795,7 @@ export async function approveFinanceTransaction(transactionId: string, approve: 
 }
 
 export interface MyContributionsPayload {
+  memberNumber?: string | null;
   summary: {
     totalContributed: number;
     outstandingBalance: number;
@@ -743,6 +820,8 @@ export interface MyContributionsPayload {
     amount: number;
     status: string;
     receiptUrl: string | null;
+    referenceNumber?: string | null;
+    source?: string;
   }>;
   reminders: Array<{
     id: string;
@@ -753,8 +832,32 @@ export interface MyContributionsPayload {
     remaining: number;
     status: string;
   }>;
+  contributionRecords?: ContributionRecord[];
+  contributionTotals?: {
+    confirmed: number;
+    pending: number;
+    rejected: number;
+  };
+  contributionByType?: Array<{
+    contributionType: string;
+    total: number;
+    confirmed: number;
+    count: number;
+  }>;
   dues: unknown[];
   transactions: unknown[];
+}
+
+export async function fetchMyContributionsSummary() {
+  const response = await http.get<
+    ApiEnvelope<{
+      memberNumber?: string | null;
+      totals: MyContributionsPayload["contributionTotals"];
+      byType: MyContributionsPayload["contributionByType"];
+      recentCount: number;
+    }>
+  >("/finance/my-contributions/summary");
+  return response.data.data;
 }
 
 export async function fetchMyContributions() {

@@ -23,7 +23,7 @@ export function CmmsFormField({
       </label>
       {children}
       {error ? (
-        <p className="text-sm text-rose-600 dark:text-rose-300" role="alert">
+        <p className="text-sm text-[var(--danger)]" role="alert">
           {error}
         </p>
       ) : hint ? (

@@ -22,7 +22,14 @@ class AppLocalizations {
   static final Map<String, Map<String, String>> _catalog = {
     'rw': {
       'app_title': 'CMMS',
-      'auth_sign_in_action': 'Injira',
+      'app_tagline': 'Sisitemu yo gucunga itorero',
+      'nav_home': 'Ahabanza',
+      'nav_members': 'Abanyamuryango',
+      'nav_events': 'Ibirori',
+      'nav_more': 'Ibindi',
+      'members_title': 'Abanyamuryango',
+      'members_empty': 'Nta banyamuryango babonetse.',
+      'dashboard_welcome': 'Murakaza neza, {name}',
       'auth_email_label': 'Imeri',
       'auth_password_label': 'Ijambo banga',
       'auth_email_invalid': 'Andika imeri yemewe',
@@ -319,6 +326,17 @@ class AppLocalizations {
       'coverage_escalate_team_head': 'Ohereza ku team head',
       'coverage_escalate_coordinator': 'Ohereza ku coordinator',
       'coverage_escalate_president': 'Ohereza ku president',
+      'phoneRequired': 'Nimero ya telefoni irakenewe kugira ngo ukomeze.',
+      'updatePhoneNow': 'Hindura nonaha',
+      'restrictedUntilPhoneAdded':
+          'Nimero ya telefoni irakenewe kugira ngo ukomeze imirimo y\'umurimo.',
+      'warningPhoneIncomplete':
+          'Uzuze nimero ya telefoni kugira ngo utazabura uburyo bwo gukoresha ibikoresho by\'umurimo.',
+      'my_contributions_title': 'Imisanzu yanjye',
+      'my_contributions_member_number': 'Nomero y\'umunyamuryango',
+      'my_contributions_history_title': 'Amateka y\'imisanzu',
+      'my_contributions_total': 'Imisanzu yose',
+      'my_contributions_outstanding': 'Amafaranga asigaye',
       'nav_operational': 'Operational center',
       'operational_title': 'Operational center',
       'operational_unauthorized': 'Nta burenganzira bwo kuyobora ufite.',
@@ -341,7 +359,14 @@ class AppLocalizations {
     },
     'en': {
       'app_title': 'CMMS',
-      'auth_sign_in_action': 'Sign in',
+      'app_tagline': 'Church management system',
+      'nav_home': 'Home',
+      'nav_members': 'Members',
+      'nav_events': 'Events',
+      'nav_more': 'More',
+      'members_title': 'Members',
+      'members_empty': 'No members found yet.',
+      'dashboard_welcome': 'Welcome back, {name}',
       'auth_email_label': 'Email',
       'auth_password_label': 'Password',
       'auth_email_invalid': 'Enter a valid email address',
@@ -633,6 +658,17 @@ class AppLocalizations {
       'coverage_escalate_team_head': 'Escalate to team head',
       'coverage_escalate_coordinator': 'Escalate to coordinator',
       'coverage_escalate_president': 'Escalate to president',
+      'phoneRequired': 'Phone number required to continue.',
+      'updatePhoneNow': 'Update now',
+      'restrictedUntilPhoneAdded':
+          'Phone number required to continue ministry operations.',
+      'warningPhoneIncomplete':
+          'Complete your phone number to avoid losing access to ministry tools.',
+      'my_contributions_title': 'My contributions',
+      'my_contributions_member_number': 'Member number',
+      'my_contributions_history_title': 'Contribution history',
+      'my_contributions_total': 'Total contributed',
+      'my_contributions_outstanding': 'Outstanding balance',
       'nav_operational': 'Operational center',
       'operational_title': 'Operational center',
       'operational_unauthorized': 'You do not have operational governance access.',
@@ -655,7 +691,14 @@ class AppLocalizations {
     },
     'fr': {
       'app_title': 'CMMS',
-      'auth_sign_in_action': 'Se connecter',
+      'app_tagline': 'Système de gestion d\'église',
+      'nav_home': 'Accueil',
+      'nav_members': 'Membres',
+      'nav_events': 'Événements',
+      'nav_more': 'Plus',
+      'members_title': 'Membres',
+      'members_empty': 'Aucun membre trouvé.',
+      'dashboard_welcome': 'Bon retour, {name}',
       'auth_email_label': 'E-mail',
       'auth_password_label': 'Mot de passe',
       'auth_email_invalid': 'Saisissez une adresse e-mail valide',
@@ -954,6 +997,17 @@ class AppLocalizations {
       'coverage_escalate_team_head': 'Escalader au chef d\'équipe',
       'coverage_escalate_coordinator': 'Escalader au coordinateur',
       'coverage_escalate_president': 'Escalader au président',
+      'phoneRequired': 'Un numéro de téléphone est requis pour continuer.',
+      'updatePhoneNow': 'Mettre à jour',
+      'restrictedUntilPhoneAdded':
+          'Un numéro de téléphone est requis pour continuer les opérations ministérielles.',
+      'warningPhoneIncomplete':
+          'Complétez votre numéro de téléphone pour éviter de perdre l\'accès aux outils ministériels.',
+      'my_contributions_title': 'Mes contributions',
+      'my_contributions_member_number': 'Numéro de membre',
+      'my_contributions_history_title': 'Historique des contributions',
+      'my_contributions_total': 'Total contribué',
+      'my_contributions_outstanding': 'Solde restant',
       'nav_operational': 'Centre opérationnel',
       'operational_title': 'Centre opérationnel',
       'operational_unauthorized': 'Accès opérationnel refusé.',
@@ -1052,6 +1106,15 @@ class AppLocalizations {
       );
 
   String get app_title => _t('app_title');
+  String get app_tagline => _t('app_tagline');
+  String get nav_home => _t('nav_home');
+  String get nav_members => _t('nav_members');
+  String get nav_events => _t('nav_events');
+  String get nav_more => _t('nav_more');
+  String get members_title => _t('members_title');
+  String get members_empty => _t('members_empty');
+  String dashboard_welcome(String name) =>
+      _t('dashboard_welcome').replaceAll('{name}', name);
   String get auth_sign_in_action => _t('auth_sign_in_action');
   String get auth_email_label => _t('auth_email_label');
   String get auth_password_label => _t('auth_password_label');
@@ -1382,6 +1445,15 @@ class AppLocalizations {
   String get operational_stat_teams => _t('operational_stat_teams');
   String get operational_stat_pending_absences =>
       _t('operational_stat_pending_absences');
+  String get phoneRequired => _t('phoneRequired');
+  String get updatePhoneNow => _t('updatePhoneNow');
+  String get restrictedUntilPhoneAdded => _t('restrictedUntilPhoneAdded');
+  String get warningPhoneIncomplete => _t('warningPhoneIncomplete');
+  String get my_contributions_title => _t('my_contributions_title');
+  String get my_contributions_member_number => _t('my_contributions_member_number');
+  String get my_contributions_history_title => _t('my_contributions_history_title');
+  String get my_contributions_total => _t('my_contributions_total');
+  String get my_contributions_outstanding => _t('my_contributions_outstanding');
 }
 
 class _AppLocalizationsDelegate

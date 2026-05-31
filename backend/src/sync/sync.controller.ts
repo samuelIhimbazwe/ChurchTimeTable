@@ -2,11 +2,12 @@ import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { SyncService } from './sync.service';
 import { SyncBatchDto } from './dto/sync-batch.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/decorators/current-user.decorator';
 
 @Controller('sync')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PhoneOperationalGuard)
 export class SyncController {
   constructor(private syncService: SyncService) {}
 

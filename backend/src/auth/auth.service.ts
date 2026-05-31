@@ -12,6 +12,8 @@ import { RegisterDto } from './dto/register.dto';
 import { ROLES } from '../common/constants/roles';
 import { MemberStatus } from '@prisma/client';
 import { PermissionsResolver } from './permissions.resolver';
+import { MemberNumberService } from '../members/member-number.service';
+import { MemberPhoneEnforcementService } from '../common/member/member-phone-enforcement.service';
 import { durationToMs } from './auth.constants';
 import {
   AccountInactiveException,
@@ -40,6 +42,8 @@ export class AuthService {
     private jwt: JwtService,
     private config: ConfigService,
     private permissionsResolver: PermissionsResolver,
+    private memberNumberService: MemberNumberService,
+    private phoneEnforcement: MemberPhoneEnforcementService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -58,24 +62,28 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
-    const user = await this.prisma.user.create({
-      data: {
-        email: dto.email,
-        passwordHash,
-        preferredLanguage: dto.preferredLanguage ?? 'rw',
-        member: {
-          create: {
-            firstName: dto.firstName,
-            lastName: dto.lastName,
-            phone: dto.phone,
-            ministry: dto.ministry ?? 'CHOIR',
-            status: MemberStatus.PENDING,
-            onboardingCompleted: false,
+    const user = await this.prisma.$transaction(async (tx) => {
+      const memberNumber = await this.memberNumberService.generateMemberNumber(tx);
+      return tx.user.create({
+        data: {
+          email: dto.email,
+          passwordHash,
+          preferredLanguage: dto.preferredLanguage ?? 'rw',
+          member: {
+            create: {
+              firstName: dto.firstName,
+              lastName: dto.lastName,
+              phone: dto.phone,
+              ministry: dto.ministry ?? 'CHOIR',
+              status: MemberStatus.PENDING,
+              onboardingCompleted: false,
+              memberNumber,
+            },
           },
+          userRoles: { create: { roleId: memberRole.id } },
         },
-        userRoles: { create: { roleId: memberRole.id } },
-      },
-      include: { member: true },
+        include: { member: true },
+      });
     });
 
     return this.issueSession(user.id, user.email);
@@ -180,6 +188,7 @@ export class AuthService {
         member: {
           select: {
             id: true,
+            memberNumber: true,
             firstName: true,
             lastName: true,
             phone: true,
@@ -196,14 +205,28 @@ export class AuthService {
     const { roles, permissions } =
       await this.permissionsResolver.resolveForUser(userId);
 
+    const member = user.member
+      ? {
+          ...user.member,
+          missingPhone:
+            (user.member.status === MemberStatus.ACTIVE ||
+              user.member.status === MemberStatus.PENDING) &&
+            !user.member.phone,
+        }
+      : null;
+
+    const phoneEnforcementState =
+      await this.phoneEnforcement.buildAuthEnforcementState(userId, roles);
+
     return {
       id: user.id,
       email: user.email,
       preferredLanguage: user.preferredLanguage,
-      member: user.member,
+      member,
       roles,
       permissions,
       onboardingCompleted: user.member?.onboardingCompleted ?? false,
+      phoneEnforcement: phoneEnforcementState,
     };
   }
 

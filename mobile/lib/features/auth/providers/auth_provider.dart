@@ -45,6 +45,9 @@ class AuthState {
     return raw.map((e) => e.toString()).toList();
   }
 
+  String? get memberNumber =>
+      profile?['member']?['memberNumber']?.toString();
+
   List<String> get roleNames {
     final fromApi = profile?['roles'] as List?;
     if (fromApi != null) {

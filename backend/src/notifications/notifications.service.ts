@@ -59,15 +59,15 @@ export class NotificationsService {
 
 
   private memberDisplayName(member: {
-
     firstName: string;
-
     lastName: string;
-
+    memberNumber?: string | null;
   }): string {
-
-    return `${member.firstName} ${member.lastName}`.trim();
-
+    const name = `${member.firstName} ${member.lastName}`.trim();
+    if (member.memberNumber) {
+      return `${name} (${member.memberNumber})`;
+    }
+    return name;
   }
 
 
@@ -831,6 +831,36 @@ export class NotificationsService {
     const body = this.i18n.translate(locale, 'NOTIFICATION_MEMBER_REJECTED_BODY');
     return this.create(userId, NotificationType.GENERAL, title, body, {
       kind: 'MEMBER_REJECTED',
+    });
+  }
+
+  /** Sprint F hook — in-app notice only; thank-you workflow deferred. */
+  async onContributionConfirmed(event: {
+    userId: string;
+    amount: number;
+    currency: string;
+    referenceNumber: string;
+    contributionId: string;
+    contributionType: string;
+  }) {
+    const locale = await this.userLocale(event.userId);
+    const title = this.i18n.translate(
+      locale,
+      'NOTIFICATION_CONTRIBUTION_CONFIRMED_TITLE',
+      'Contribution confirmed',
+    );
+    const body = this.i18n.translate(
+      locale,
+      'NOTIFICATION_CONTRIBUTION_CONFIRMED_BODY',
+      `Your contribution ${event.referenceNumber} has been confirmed.`,
+    );
+    return this.create(event.userId, NotificationType.GENERAL, title, body, {
+      kind: 'contribution_confirmed',
+      contributionId: event.contributionId,
+      referenceNumber: event.referenceNumber,
+      amount: event.amount,
+      currency: event.currency,
+      contributionType: event.contributionType,
     });
   }
 
