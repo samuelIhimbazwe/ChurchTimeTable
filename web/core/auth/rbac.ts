@@ -2,22 +2,11 @@ import type { AuthProfile } from "@/core/api/types";
 import {
   hasEffectivePermission,
   hasOperationalLeaderDashboard,
+  hasPlatformAdminAccess,
+  canAccessLeaderDashboard,
 } from "@/core/auth/governance-permissions";
 
 export type DashboardExperience = "member" | "leader" | "super-admin";
-
-const leaderRoles = new Set([
-  "CHOIR_LEADER",
-  "CHOIR_PRESIDENT",
-  "CHOIR_VICE_PRESIDENT",
-  "CHOIR_SECRETARY",
-  "CHOIR_TREASURER",
-  "CHOIR_REHEARSAL_DIRECTOR",
-  "CHOIR_LOGISTICS",
-  "CHOIR_COMMITTEE",
-  "PROTOCOL_LEADER",
-  "CHURCH_ADMIN",
-]);
 
 export function hasRole(profile: AuthProfile | null, roles: string[]) {
   if (!profile) {
@@ -44,13 +33,13 @@ export function getDashboardExperience(
     return "member";
   }
 
-  if (profile.roles.includes("SUPER_ADMIN")) {
+  if (hasPlatformAdminAccess(profile.permissions)) {
     return "super-admin";
   }
 
   if (
-    hasOperationalLeaderDashboard(profile.permissions) ||
-    profile.roles.some((role) => leaderRoles.has(role))
+    canAccessLeaderDashboard(profile.permissions) ||
+    hasOperationalLeaderDashboard(profile.permissions)
   ) {
     return "leader";
   }

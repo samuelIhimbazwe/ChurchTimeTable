@@ -22,6 +22,29 @@ import { UpsertMemberDuesDto } from './dto/upsert-member-dues.dto';
 import { CreateContributionDto } from './dto/create-contribution.dto';
 import { RejectContributionDto } from './dto/reject-contribution.dto';
 import { ContributionService } from './contribution.service';
+import { ContributionGovernanceService } from './contribution-governance.service';
+import { ContributionTotalsService } from './contribution-totals.service';
+import { ContributionListService } from './contribution-list.service';
+import { ContributionRankingsService } from './contribution-rankings.service';
+import { ContributionCorrectionService } from './contribution-correction.service';
+import { ContributionTimelineService } from './contribution-timeline.service';
+import { ChangeContributionFamilyDto } from './dto/change-contribution-family.dto';
+import { ChangeContributionTypeDto } from './dto/change-contribution-type.dto';
+import { ChangeContributionCampaignDto } from './dto/change-contribution-campaign.dto';
+import { ContributionTotalsQueryDto } from './dto/contribution-totals-query.dto';
+import { ContributionByTypeQueryDto } from './dto/contribution-by-type-query.dto';
+import { ContributionRankingsQueryDto } from './dto/contribution-rankings-query.dto';
+import { ThankYouService } from './thank-you.service';
+import { AdjustContributionDto } from './dto/adjust-contribution.dto';
+import { ApproveContributionDto } from './dto/approve-contribution.dto';
+import { RejectFamilyContributionDto } from './dto/reject-family-contribution.dto';
+import { SubmitContributionDto } from './dto/submit-contribution.dto';
+import { ContributionSubmissionService } from './contribution-submission.service';
+import { ContributionMemberService } from './contribution-member.service';
+import { ContributionFamilyContextService } from './contribution-family-context.service';
+import { ContributionAdjustmentsListService } from './contribution-adjustments-list.service';
+import { ContributionStatus } from '@prisma/client';
+import { MemberContributionsQueryDto } from './dto/member-contributions-query.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -30,30 +53,37 @@ import {
   RequirePermissions,
 } from '../common/decorators/roles.decorator';
 import { SkipPhoneEnforcement } from '../common/decorators/skip-phone-enforcement.decorator';
-import { PERMISSIONS } from '../common/constants/roles';
+import {
+  ADMIN_AUDIT_ACCESS,
+  FINANCE_MANAGE_PERMISSIONS,
+  FINANCE_VIEW_PERMISSIONS,
+  PERMISSIONS,
+} from '../common/constants/roles';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/decorators/current-user.decorator';
 import { PaginationDto } from '../common/dto/pagination.dto';
-import { SuperAdminOnly } from '../common/decorators/super-admin.decorator';
 
-const FINANCE_VIEW_ANY = [
-  PERMISSIONS.FINANCE_READ,
-  PERMISSIONS.CHOIR_FINANCE_VIEW,
-  PERMISSIONS.CHOIR_FINANCE_MANAGE,
-  PERMISSIONS.CHOIR_FINANCE_APPROVE,
-  PERMISSIONS.PROTOCOL_FINANCE_VIEW,
-  PERMISSIONS.PROTOCOL_FINANCE_MANAGE,
-  PERMISSIONS.PROTOCOL_FINANCE_APPROVE,
-  PERMISSIONS.MINISTRY_FINANCE_OVERSIGHT,
-  PERMISSIONS.PROTOCOL_OVERSIGHT_SCOPE,
+const FINANCE_VIEW_ANY = FINANCE_VIEW_PERMISSIONS;
+const FINANCE_MANAGE_ANY = FINANCE_MANAGE_PERMISSIONS;
+
+/** Choir treasurer / family coordinator contribution stewardship (Sprint 10) */
+const CONTRIBUTION_RECORD_WRITE_ANY = [
+  ...FINANCE_MANAGE_PERMISSIONS,
+  PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
 ] as const;
 
-const FINANCE_MANAGE_ANY = [
-  PERMISSIONS.FINANCE_WRITE,
-  PERMISSIONS.CHOIR_FINANCE_MANAGE,
-  PERMISSIONS.CHOIR_FINANCE_APPROVE,
-  PERMISSIONS.PROTOCOL_FINANCE_MANAGE,
-  PERMISSIONS.PROTOCOL_FINANCE_APPROVE,
+const STEWARDSHIP_ANALYTICS_ANY = [
+  ...FINANCE_VIEW_PERMISSIONS,
+  PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
+  PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
+] as const;
+
+const MEMBER_CONTRIBUTION_ACCESS = [
+  PERMISSIONS.CHOIR_CONTRIBUTION_SUBMIT,
+  PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_FAMILY,
+  PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
+  PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
+  ...FINANCE_VIEW_ANY,
 ] as const;
 
 @Controller('finance')
@@ -65,15 +95,116 @@ export class FinanceController {
     private financeExport: FinanceExportService,
     private receiptUpload: ReceiptUploadService,
     private contributionService: ContributionService,
+    private contributionGovernance: ContributionGovernanceService,
+    private contributionTotals: ContributionTotalsService,
+    private contributionList: ContributionListService,
+    private contributionRankings: ContributionRankingsService,
+    private contributionCorrections: ContributionCorrectionService,
+    private contributionTimeline: ContributionTimelineService,
+    private contributionSubmission: ContributionSubmissionService,
+    private contributionMember: ContributionMemberService,
+    private contributionFamilyContext: ContributionFamilyContextService,
+    private contributionAdjustmentsList: ContributionAdjustmentsListService,
+    private thankYouService: ThankYouService,
   ) {}
 
-  @Get('stewardship/analytics')
-  @RequireAnyPermissions(...FINANCE_VIEW_ANY)
-  stewardshipAnalytics(
+  @Post('contributions/submit')
+  @RequirePermissions(PERMISSIONS.CHOIR_CONTRIBUTION_SUBMIT)
+  submitMemberContribution(
+    @Body() dto: SubmitContributionDto,
     @CurrentUser() user: JwtPayload,
-    @Query('ministryScope') ministryScope?: MinistryScope,
   ) {
-    return this.financeGovernance.analytics(user.sub, ministryScope);
+    return this.contributionSubmission.submit(user.sub, dto);
+  }
+
+  @Get('contributions/submit-options')
+  @RequirePermissions(PERMISSIONS.CHOIR_CONTRIBUTION_SUBMIT)
+  @SkipPhoneEnforcement()
+  contributionSubmitOptions(@CurrentUser() user: JwtPayload) {
+    return this.contributionSubmission.getSubmitOptions(user.sub);
+  }
+
+  @Get('contributions/member')
+  @SkipPhoneEnforcement()
+  listMemberContributions(
+    @CurrentUser() user: JwtPayload,
+    @Query() query: MemberContributionsQueryDto,
+  ) {
+    return this.contributionMember.listMine(user.sub, query);
+  }
+
+  @Get('contributions/family/context')
+  @SkipPhoneEnforcement()
+  familyContributionContext(@CurrentUser() user: JwtPayload) {
+    return this.contributionFamilyContext.getLeadershipContext(user.sub);
+  }
+
+  @Get('contributions/family/inbox')
+  @SkipPhoneEnforcement()
+  familyContributionInbox(
+    @CurrentUser() user: JwtPayload,
+    @Query('familyId') familyId?: string,
+    @Query('status') status?: ContributionStatus,
+    @Query('limit') limit?: string,
+  ) {
+    return this.contributionGovernance.getFamilyInbox(
+      user.sub,
+      familyId,
+      status,
+      limit ? Number(limit) : 30,
+    );
+  }
+
+  @Get('contributions')
+  @SkipPhoneEnforcement()
+  listContributions(
+    @CurrentUser() user: JwtPayload,
+    @Query('limit') limit?: string,
+  ) {
+    return this.contributionGovernance.listAllContributions(
+      user.sub,
+      limit ? Number(limit) : 50,
+    );
+  }
+
+  @Get('contributions/totals')
+  @SkipPhoneEnforcement()
+  getContributionTotals(
+    @CurrentUser() user: JwtPayload,
+    @Query() query: ContributionTotalsQueryDto,
+  ) {
+    return this.contributionTotals.getTotals(user.sub, query);
+  }
+
+  @Get('contributions/rankings')
+  @SkipPhoneEnforcement()
+  getContributionRankings(
+    @CurrentUser() user: JwtPayload,
+    @Query() query: ContributionRankingsQueryDto,
+  ) {
+    return this.contributionRankings.getRankings(user.sub, query);
+  }
+
+  @Get('contributions/adjustments/recent')
+  @SkipPhoneEnforcement()
+  recentContributionAdjustments(
+    @CurrentUser() user: JwtPayload,
+    @Query('limit') limit?: string,
+  ) {
+    return this.contributionAdjustmentsList.listRecent(
+      user.sub,
+      limit ? Number(limit) : 20,
+    );
+  }
+
+  @Get('contributions/by-type/:catalogId')
+  @SkipPhoneEnforcement()
+  contributionsByType(
+    @Param('catalogId') catalogId: string,
+    @CurrentUser() user: JwtPayload,
+    @Query() query: ContributionByTypeQueryDto,
+  ) {
+    return this.contributionList.listByType(user.sub, catalogId, query);
   }
 
   @Get('contributions/mine')
@@ -101,39 +232,12 @@ export class FinanceController {
   }
 
   @Post('contributions')
-  @RequireAnyPermissions(...FINANCE_MANAGE_ANY)
+  @RequireAnyPermissions(...CONTRIBUTION_RECORD_WRITE_ANY)
   createContribution(
     @Body() dto: CreateContributionDto,
     @CurrentUser() user: JwtPayload,
   ) {
     return this.contributionService.createContribution(user.sub, dto);
-  }
-
-  @Post('contributions/:id/submit')
-  submitContribution(
-    @Param('id') id: string,
-    @CurrentUser() user: JwtPayload,
-  ) {
-    return this.contributionService.submitContribution(user.sub, id);
-  }
-
-  @Post('contributions/:id/confirm')
-  @RequireAnyPermissions(...FINANCE_MANAGE_ANY)
-  confirmContribution(
-    @Param('id') id: string,
-    @CurrentUser() user: JwtPayload,
-  ) {
-    return this.contributionService.confirmContribution(user.sub, id);
-  }
-
-  @Post('contributions/:id/reject')
-  @RequireAnyPermissions(...FINANCE_MANAGE_ANY)
-  rejectContribution(
-    @Param('id') id: string,
-    @Body() dto: RejectContributionDto,
-    @CurrentUser() user: JwtPayload,
-  ) {
-    return this.contributionService.rejectContribution(user.sub, id, dto.notes);
   }
 
   @Get('contributions/mine/export/csv')
@@ -167,6 +271,129 @@ export class FinanceController {
       `attachment; filename="${exported.filename}"`,
     );
     res.send(exported.buffer);
+  }
+
+  @Get('contributions/:id/timeline')
+  @SkipPhoneEnforcement()
+  getContributionTimeline(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.contributionTimeline.getTimeline(user.sub, id);
+  }
+
+  @Get('contributions/:id')
+  @SkipPhoneEnforcement()
+  getMemberContribution(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.contributionMember.getByIdForActor(user.sub, id);
+  }
+
+  @Post('contributions/:id/change-family')
+  @SkipPhoneEnforcement()
+  changeContributionFamily(
+    @Param('id') id: string,
+    @Body() dto: ChangeContributionFamilyDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.contributionCorrections.changeFamily(user.sub, id, dto);
+  }
+
+  @Post('contributions/:id/change-type')
+  @SkipPhoneEnforcement()
+  changeContributionType(
+    @Param('id') id: string,
+    @Body() dto: ChangeContributionTypeDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.contributionCorrections.changeType(user.sub, id, dto);
+  }
+
+  @Post('contributions/:id/change-campaign')
+  @SkipPhoneEnforcement()
+  changeContributionCampaign(
+    @Param('id') id: string,
+    @Body() dto: ChangeContributionCampaignDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.contributionCorrections.changeCampaign(user.sub, id, dto);
+  }
+
+  @Post('contributions/:id/family/approve')
+  @SkipPhoneEnforcement()
+  approveFamilyContribution(
+    @Param('id') id: string,
+    @Body() dto: ApproveContributionDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.contributionGovernance.approveFamily(user.sub, id, dto);
+  }
+
+  @Post('contributions/:id/family/reject')
+  @SkipPhoneEnforcement()
+  rejectFamilyContribution(
+    @Param('id') id: string,
+    @Body() dto: RejectFamilyContributionDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.contributionGovernance.rejectFamily(user.sub, id, dto);
+  }
+
+  @Post('contributions/:id/adjust')
+  @SkipPhoneEnforcement()
+  adjustContribution(
+    @Param('id') id: string,
+    @Body() dto: AdjustContributionDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.contributionGovernance.adjustContribution(user.sub, id, dto);
+  }
+
+  @Get('stewardship/analytics')
+  @RequireAnyPermissions(...STEWARDSHIP_ANALYTICS_ANY)
+  stewardshipAnalytics(
+    @CurrentUser() user: JwtPayload,
+    @Query('ministryScope') ministryScope?: MinistryScope,
+  ) {
+    return this.financeGovernance.analytics(user.sub, ministryScope);
+  }
+
+  @Post('contributions/:id/submit')
+  submitContribution(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.contributionService.submitContribution(user.sub, id);
+  }
+
+  @Post('contributions/:id/confirm')
+  @RequireAnyPermissions(...CONTRIBUTION_RECORD_WRITE_ANY)
+  confirmContribution(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.contributionService.confirmContribution(user.sub, id);
+  }
+
+  @Post('contributions/:id/reject')
+  @RequireAnyPermissions(...CONTRIBUTION_RECORD_WRITE_ANY)
+  rejectContribution(
+    @Param('id') id: string,
+    @Body() dto: RejectContributionDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.contributionService.rejectContribution(user.sub, id, dto.notes);
+  }
+
+  @Post('contributions/:id/resend-thank-you')
+  @RequireAnyPermissions(...CONTRIBUTION_RECORD_WRITE_ANY)
+  resendThankYou(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.thankYouService.resendContributionThankYou(user.sub, id);
   }
 
   @Get('export/csv')
@@ -354,10 +581,9 @@ export class FinanceController {
     );
   }
 
-  /** Super-admin finance access requires explicit audit (Sprint 8 privacy) */
+  /** Platform finance audit — requires admin audit visibility */
   @Get('admin/audit-summary')
-  @SuperAdminOnly()
-  @RequirePermissions(PERMISSIONS.AUDIT_READ)
+  @RequireAnyPermissions(...ADMIN_AUDIT_ACCESS)
   async adminFinanceAudit(@CurrentUser() user: JwtPayload) {
     const data = await this.financeGovernance.analytics(user.sub);
     return {

@@ -28,6 +28,29 @@ import { CmmsDashboardSkeleton } from "@/components/ui/cmms-skeleton";
 import { CmmsPageSection } from "@/components/ui/cmms-page-section";
 import { useLeaderDashboardQuery } from "@/features/dashboard/hooks/use-dashboard-queries";
 
+function attendanceRateTrend(
+  points: Array<{ present: number; total: number }> | undefined,
+  t: (key: string, values?: Record<string, string | number>) => string,
+): { value: string; direction: "up" | "down" | "neutral" } | undefined {
+  if (!points?.length || points.length < 2) return undefined;
+  const withData = points.filter((p) => p.total > 0);
+  if (withData.length < 2) return undefined;
+  const prev = withData[withData.length - 2];
+  const latest = withData[withData.length - 1];
+  const prevRate = Math.round((prev.present / prev.total) * 100);
+  const latestRate = Math.round((latest.present / latest.total) * 100);
+  const delta = latestRate - prevRate;
+  if (delta === 0) {
+    return { value: t("metricTrendNeutral"), direction: "neutral" };
+  }
+  return {
+    value: t(delta > 0 ? "metricTrendUp" : "metricTrendDown", {
+      value: String(Math.abs(delta)),
+    }),
+    direction: delta > 0 ? "up" : "down",
+  };
+}
+
 export function LeaderDashboard() {
   const t = useTranslations("dashboard");
   const router = useRouter();
@@ -48,6 +71,7 @@ export function LeaderDashboard() {
 
   const data = query.data;
   const widgets = data.widgets;
+  const attendanceTrend = attendanceRateTrend(data.attendanceTrend, t);
 
   return (
     <div className="cmms-page-stack">
@@ -62,34 +86,32 @@ export function LeaderDashboard() {
             label={t("stats.upcomingEvents")}
             value={data.upcomingEvents}
             description={t("leaderUpcomingEventsHint")}
-            trend={{ value: t("metricTrendUp", { value: "8" }), direction: "up" }}
             tone="accent"
           />
           <DashboardStatCard
             label={t("stats.pendingSwaps")}
             value={data.pendingSwaps}
             description={t("leaderPendingSwapsHint")}
-            trend={{ value: t("metricTrendNeutral"), direction: "neutral" }}
           />
           <DashboardStatCard
             label={t("stats.pendingReplacements")}
             value={data.pendingReplacements}
             description={t("leaderPendingReplacementsHint")}
-            trend={{ value: t("metricTrendNeutral"), direction: "neutral" }}
           />
           <DashboardStatCard
             label={t("stats.attendanceRate")}
             value={formatPercent(data.attendanceRate)}
             description={t("leaderAttendanceHint")}
-            trend={{ value: t("metricTrendUp", { value: "12" }), direction: "up" }}
+            trend={attendanceTrend}
           />
-          <DashboardStatCard
-            label={t("stats.activeDiscipline")}
-            value={data.activeDiscipline}
-            description={t("leaderDisciplineHint")}
-            trend={{ value: t("metricTrendNeutral"), direction: "neutral" }}
-            tone={data.activeDiscipline > 0 ? "warning" : "default"}
-          />
+          {data.activeDiscipline != null ? (
+            <DashboardStatCard
+              label={t("stats.activeDiscipline")}
+              value={data.activeDiscipline}
+              description={t("leaderDisciplineHint")}
+              tone={data.activeDiscipline > 0 ? "warning" : "default"}
+            />
+          ) : null}
         </div>
         </CmmsPageSection>
       ) : null}
@@ -232,7 +254,7 @@ export function LeaderDashboard() {
 
       {(hasWidget(widgets, "financeSnapshot") || hasWidget(widgets, "auditActivity")) ? (
         <div className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-          {hasWidget(widgets, "financeSnapshot") ? (
+          {hasWidget(widgets, "financeSnapshot") && data.financeSummary ? (
             <CmmsCard title={t("financeCardTitle")} description={t("financeCardDescription")}>
               <div className="grid gap-4 sm:grid-cols-2">
                 <DashboardStatCard
@@ -253,7 +275,7 @@ export function LeaderDashboard() {
             </CmmsCard>
           ) : null}
 
-          {hasWidget(widgets, "auditActivity") ? (
+          {hasWidget(widgets, "auditActivity") && data.recentAudit?.length ? (
             <CmmsCard title={t("auditCardTitle")} description={t("auditCardDescription")}>
               <CmmsTable
                 rows={data.recentAudit}

@@ -9,6 +9,8 @@ Use this folder to run a **4–8 week pilot** with one choir + protocol team.
 | [ACCOUNTS.md](./ACCOUNTS.md) | Test accounts after `seed-pilot` |
 | [RBAC_AND_ROLES.md](./RBAC_AND_ROLES.md) | Create roles, set permissions, assign leaders |
 | [CHOIR_OFFICER_ROLES.md](./CHOIR_OFFICER_ROLES.md) | President, secretary, treasurer — separate access |
+| [SPRINT_10.md](./SPRINT_10.md) | Choir family & contribution governance (v1.2 lock) |
+| [SPRINT_10_2.md](./SPRINT_10_2.md) | **Next:** Contribution engine implementation spec |
 
 ## Quick start (development / church office LAN)
 

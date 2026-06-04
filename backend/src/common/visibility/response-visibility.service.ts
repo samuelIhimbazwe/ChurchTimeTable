@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+  canViewAdminAudit,
   canViewDisciplineIntelligence,
   canViewFinanceIntelligence,
 } from '../governance/governance-permissions.util';
@@ -10,6 +11,8 @@ const FINANCE_WIDGET_IDS = new Set([
   'financeSnapshot',
   'financeStewardshipPanel',
 ]);
+
+const ADMIN_WIDGET_IDS = new Set(['auditActivity']);
 
 const DISCIPLINE_WIDGET_IDS = new Set(['disciplinePanel']);
 
@@ -22,6 +25,7 @@ export class ResponseVisibilityService {
     const result = { ...payload } as Record<string, unknown>;
     const canFinance = canViewFinanceIntelligence(permissions);
     const canDiscipline = canViewDisciplineIntelligence(permissions);
+    const canAudit = canViewAdminAudit(permissions);
 
     if (!canFinance) {
       delete result.financeSummary;
@@ -29,6 +33,10 @@ export class ResponseVisibilityService {
 
     if (!canDiscipline) {
       delete result.activeDiscipline;
+    }
+
+    if (!canAudit) {
+      delete result.recentAudit;
     }
 
     if (result.intelligence && typeof result.intelligence === 'object') {
@@ -50,6 +58,9 @@ export class ResponseVisibilityService {
         const id = (widget as { id?: string }).id;
         if (!canFinance && id && FINANCE_WIDGET_IDS.has(id)) return false;
         if (!canDiscipline && id && DISCIPLINE_WIDGET_IDS.has(id)) return false;
+        if (!canAudit && id && ADMIN_WIDGET_IDS.has(id)) return false;
+        if (id === 'financeSnapshot' && !result.financeSummary) return false;
+        if (id === 'financeStewardshipPanel' && !canFinance) return false;
         return true;
       });
     }
@@ -99,6 +110,36 @@ export class ResponseVisibilityService {
       );
     }
     return result as T;
+  }
+
+  filterSearchResponse<
+    T extends {
+      contributions: unknown[];
+    },
+  >(payload: T, permissions: string[]): T {
+    if (canViewFinanceIntelligence(permissions)) {
+      return payload;
+    }
+
+    return {
+      ...payload,
+      contributions: [],
+    };
+  }
+
+  filterFamilyMetrics<
+    T extends {
+      contributions: unknown | null;
+    },
+  >(payload: T, permissions: string[]): T {
+    if (canViewFinanceIntelligence(permissions)) {
+      return payload;
+    }
+
+    return {
+      ...payload,
+      contributions: null,
+    };
   }
 
   filterAlerts(alerts: MinistryAlert[], permissions: string[]): MinistryAlert[] {

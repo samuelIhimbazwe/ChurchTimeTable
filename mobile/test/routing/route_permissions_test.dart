@@ -12,8 +12,8 @@ void main() {
       expect(canAccessRoute(AppRouter.calendar, permissions), isTrue);
     });
 
-    test('allows finance route for finance readers', () {
-      const permissions = ['event:read', 'finance:read'];
+    test('allows finance route for scoped finance viewers', () {
+      const permissions = ['event:read', 'choir.finance.view'];
 
       expect(canAccessRoute(AppRouter.finance, permissions), isTrue);
     });

@@ -96,7 +96,10 @@ export function LoginForm({
 }
 
 function normalizeRedirectPath(redirectTo: string | undefined, profile: Awaited<ReturnType<typeof fetchCurrentUser>>) {
-  if (profile && profile.member?.status === "PENDING") {
+  if (
+    profile &&
+    (profile.member?.status === "NEW_MEMBER" || profile.member?.status === "PENDING")
+  ) {
     return "/pending-approval";
   }
 

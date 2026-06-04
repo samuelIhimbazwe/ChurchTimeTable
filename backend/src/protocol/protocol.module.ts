@@ -1,0 +1,56 @@
+import { Module } from '@nestjs/common';
+import { AuditModule } from '../audit/audit.module';
+import { AuthModule } from '../auth/auth.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
+import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
+import { ProtocolController } from './protocol.controller';
+import { ProtocolTeamsService } from './protocol-teams.service';
+import { ProtocolAssignmentEngine } from './protocol-assignment.engine';
+import { ServiceQuotaEngine } from './service-quota.engine';
+import { ProtocolAttendanceService } from './protocol-attendance.service';
+import { ProtocolReplacementsService } from './protocol-replacements.service';
+import { ProtocolRankingService } from './protocol-ranking.service';
+import { ProtocolPerformanceService } from './protocol-performance.service';
+import { ProtocolReliabilityService } from './protocol-reliability.service';
+import { ProtocolDashboardService } from './protocol-dashboard.service';
+import { ProtocolMembersService } from './protocol-members.service';
+import { ProtocolReportsService } from './protocol-reports.service';
+import { ProtocolSearchService } from './protocol-search.service';
+import { ProtocolTeamLeadersService } from './protocol-team-leaders.service';
+import { ProtocolTeamLeaderAccessService } from './protocol-team-leader-access.service';
+import { ProtocolBackupsService } from './protocol-backups.service';
+import { ProtocolTeamReportsService } from './protocol-team-reports.service';
+import { ProtocolNotificationsService } from './protocol-notifications.service';
+
+@Module({
+  imports: [
+    AuditModule,
+    AuthModule,
+    NotificationsModule,
+    MemberPhoneEnforcementModule,
+    PilotReadyModule,
+  ],
+  controllers: [ProtocolController],
+  providers: [
+    ProtocolTeamsService,
+    ProtocolAssignmentEngine,
+    ServiceQuotaEngine,
+    ProtocolAttendanceService,
+    ProtocolReplacementsService,
+    ProtocolRankingService,
+    ProtocolPerformanceService,
+    ProtocolReliabilityService,
+    ProtocolDashboardService,
+    ProtocolMembersService,
+    ProtocolReportsService,
+    ProtocolSearchService,
+    ProtocolTeamLeadersService,
+    ProtocolTeamLeaderAccessService,
+    ProtocolBackupsService,
+    ProtocolTeamReportsService,
+    ProtocolNotificationsService,
+  ],
+  exports: [ProtocolTeamsService, ProtocolDashboardService],
+})
+export class ProtocolModule {}

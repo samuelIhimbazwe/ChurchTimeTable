@@ -2,56 +2,40 @@ import '../auth/governance_permissions.dart';
 import '../auth/phone_enforcement.dart';
 import 'app_router.dart';
 
-final financeAccessPermissions = [
-  'finance:read',
-  'finance:write',
-  'choir.finance.view',
-  'choir.finance.manage',
-  'choir.finance.approve',
-  'protocol.finance.view',
-  'protocol.finance.manage',
-  'protocol.finance.approve',
-  'ministry.finance.oversight',
-  'protocol.oversight',
-];
-
-final assignmentAccessPermissions = [
+const assignmentAccessPermissions = [
   'assignment:write',
   'event:write',
   'choir.oversight',
   'choir.operations.manage',
 ];
 
-final attendanceAccessPermissions = [
-  'event:read',
-  'attendance:write',
-  'attendance.mark',
-  'protocol.attendance.manage',
-  'protocol.team.head',
-  'protocol.team.manage',
-  'protocol.operational.monitor',
-  'protocol.oversight',
-  'choir.attendance.manage',
-  'choir.oversight',
-  'choir.operations.manage',
-  'report:export',
+const familyAccessPermissions = [
+  'family:view',
+  'family:manage',
 ];
 
-final coverageAccessPermissions = [
-  'event:read',
-  'swap:manage',
-  'protocol.team.head',
-  'protocol.team.manage',
-  'protocol.oversight',
-  'protocol.operational.monitor',
-  'report:export',
+const welfareAccessPermissions = [
+  'choir.welfare.view',
+  'choir.welfare.manage',
 ];
 
-final memberDirectoryAccessPermissions = [
+const musicAccessPermissions = [
+  'choir.music.view',
+  'choir.music.manage',
+];
+
+const rehearsalAccessPermissions = [
+  'choir.rehearsal.view',
+  'choir.rehearsal.manage',
+  'choir.music.view',
+  'choir.music.manage',
+];
+
+const memberDirectoryAccessPermissions = [
   'member:manage',
 ];
 
-final disciplineAccessPermissions = [
+const disciplineAccessPermissions = [
   'discipline:read_all',
   'discipline:manage',
 ];
@@ -84,9 +68,17 @@ List<String>? requiredPermissionsForRoute(String routeName) {
     case AppRouter.finance:
       return financeAccessPermissions;
     case AppRouter.budgets:
-      return ['finance:write', ...financeAccessPermissions];
+      return ['choir.finance.manage', ...financeAccessPermissions];
     case AppRouter.members:
       return memberDirectoryAccessPermissions;
+    case AppRouter.families:
+      return familyAccessPermissions;
+    case AppRouter.welfare:
+      return welfareAccessPermissions;
+    case AppRouter.music:
+      return musicAccessPermissions;
+    case AppRouter.rehearsals:
+      return rehearsalAccessPermissions;
     default:
       return null;
   }
@@ -98,14 +90,7 @@ bool canAccessRoute(
   Map<String, dynamic>? profile,
 }) {
   if (routeName == AppRouter.leaderDashboard) {
-    return hasOperationalLeaderDashboard(permissions) ||
-        permissions.contains('event:write') ||
-        permissions.contains('assignment:write') ||
-        canMarkAttendance(permissions) ||
-        permissions.contains('swap:manage') ||
-        permissions.contains('finance:write') ||
-        permissions.contains('discipline:manage') ||
-        permissions.contains('report:export');
+    return canAccessLeaderDashboard(permissions);
   }
 
   if (routeName == AppRouter.operational) {
@@ -134,19 +119,8 @@ bool canAccessRoute(
 }
 
 String dashboardRouteForPermissions(List<String> permissions) {
-  if (routeNameLooksLikeLeader(permissions)) {
+  if (canAccessLeaderDashboard(permissions)) {
     return AppRouter.leaderDashboard;
   }
   return AppRouter.memberDashboard;
-}
-
-bool routeNameLooksLikeLeader(List<String> permissions) {
-  return hasOperationalLeaderDashboard(permissions) ||
-      permissions.contains('event:write') ||
-      permissions.contains('assignment:write') ||
-      canMarkAttendance(permissions) ||
-      permissions.contains('swap:manage') ||
-      permissions.contains('finance:write') ||
-      permissions.contains('discipline:manage') ||
-      permissions.contains('report:export');
 }

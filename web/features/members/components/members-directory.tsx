@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 
 import { CmmsBadge } from "@/components/ui/cmms-badge";
 import { CmmsButton } from "@/components/ui/cmms-button";
+import { Link } from "@/i18n/routing";
 import { CmmsCard } from "@/components/ui/cmms-card";
 import { CmmsEmptyState } from "@/components/ui/cmms-empty-state";
 import { CmmsInput } from "@/components/ui/cmms-input";
@@ -15,18 +16,33 @@ import { fetchMembers, getApiErrorMessage, type MemberListItem } from "@/core/ap
 import { formatMemberDirectoryPrimary } from "@/core/members/member-labels";
 import { useQuery } from "@tanstack/react-query";
 
-type StatusTab = "ALL" | "ACTIVE" | "PENDING" | "INACTIVE";
+type StatusTab = "ALL" | "ACTIVE" | "NEW_MEMBER" | "TEMPORARILY_INACTIVE";
 
 function memberStatusVariant(status: string) {
-  if (status === "ACTIVE") return "success" as const;
-  if (status === "PENDING") return "warning" as const;
+  if (status === "ACTIVE" || status === "NEW_MEMBER") return "success" as const;
+  if (status === "PROBATION" || status === "TEMPORARILY_INACTIVE") return "warning" as const;
+  if (status === "SUSPENDED" || status === "DISCIPLINE") return "danger" as const;
   return "neutral" as const;
 }
 
 function memberStatusLabel(status: string, t: (key: string) => string) {
-  if (status === "ACTIVE") return t("statusActive");
-  if (status === "PENDING") return t("statusPending");
-  if (status === "INACTIVE") return t("statusInactive");
+  const normalized =
+    status === "PENDING"
+      ? "NEW_MEMBER"
+      : status === "INACTIVE"
+        ? "TEMPORARILY_INACTIVE"
+        : status;
+  const known = [
+    "NEW_MEMBER",
+    "ACTIVE",
+    "PROBATION",
+    "TEMPORARILY_INACTIVE",
+    "SUSPENDED",
+    "DISCIPLINE",
+  ];
+  if (known.includes(normalized)) {
+    return t(`status.${normalized}`);
+  }
   return status;
 }
 
@@ -117,8 +133,8 @@ export function MembersDirectory() {
             items={[
               { id: "ALL", label: t("tabs.all") },
               { id: "ACTIVE", label: t("tabs.active") },
-              { id: "PENDING", label: t("tabs.pending") },
-              { id: "INACTIVE", label: t("tabs.inactive") },
+              { id: "NEW_MEMBER", label: t("tabs.newMember") },
+              { id: "TEMPORARILY_INACTIVE", label: t("tabs.inactive") },
             ]}
             activeId={statusTab}
             onChange={(id) => setStatusTab(id as StatusTab)}
@@ -172,11 +188,14 @@ export function MembersDirectory() {
           {
             key: "actions",
             header: t("actions"),
-            className: "w-12",
-            render: () => (
-              <CmmsButton type="button" variant="ghost" size="sm" aria-label={t("actions")}>
-                ⋮
-              </CmmsButton>
+            className: "w-28",
+            render: (item) => (
+              <Link
+                href={`/dashboard/members/${item.id}`}
+                className="inline-flex min-h-9 items-center rounded-[var(--radius-pill)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--surface-muted)]"
+              >
+                {t("viewProfile")}
+              </Link>
             ),
           },
         ]}

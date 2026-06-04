@@ -6,7 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { ContributionType, MemberStatus } from '@prisma/client';
 import { AppModule } from '../src/app.module';
 import { ResponseInterceptor } from '../src/common/interceptors/response.interceptor';
-import { ROLES } from '../src/common/constants/roles';
+import { ROLES, PERMISSIONS } from '../src/common/constants/roles';
 import { PrismaService } from '../src/prisma/prisma.service';
 
 describe('Contributions (e2e)', () => {
@@ -36,6 +36,28 @@ describe('Contributions (e2e)', () => {
     const treasurerRole = await prisma.role.findUniqueOrThrow({
       where: { name: ROLES.CHOIR_TREASURER },
     });
+
+    for (const code of [
+      PERMISSIONS.CHOIR_FINANCE_VIEW,
+      PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
+      PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
+    ]) {
+      const permission = await prisma.permission.upsert({
+        where: { code },
+        create: { code, description: code },
+        update: {},
+      });
+      await prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: {
+            roleId: treasurerRole.id,
+            permissionId: permission.id,
+          },
+        },
+        create: { roleId: treasurerRole.id, permissionId: permission.id },
+        update: {},
+      });
+    }
 
     const memberEmail = `contrib-member-${Date.now()}@test.local`;
     const treasurerEmail = `contrib-treasurer-${Date.now()}@test.local`;

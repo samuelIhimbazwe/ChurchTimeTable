@@ -154,9 +154,9 @@ class LeaderDashboardScreen extends ConsumerWidget {
     add(CmmsMinistry.discipline, l10n.nav_discipline, AppRouter.discipline,
         auth.hasPermission('discipline:read_all'));
     add(CmmsMinistry.finance, l10n.nav_finance, AppRouter.finance,
-        auth.hasPermission('finance:read'));
+        canAccessFinanceNav(perms));
     add(CmmsMinistry.finance, l10n.nav_budgets, AppRouter.budgets,
-        auth.hasPermission('finance:write'));
+        hasEffectivePermission(perms, 'choir.finance.manage'));
     add(CmmsMinistry.general, l10n.nav_sync, AppRouter.sync, true);
 
     return tiles;

@@ -40,6 +40,21 @@ function statusVariant(
   }
 }
 
+function thankYouVariant(
+  status: string | null | undefined,
+): "success" | "warning" | "danger" | "neutral" {
+  switch (status) {
+    case "SENT":
+      return "success";
+    case "PENDING":
+      return "warning";
+    case "FAILED":
+      return "danger";
+    default:
+      return "neutral";
+  }
+}
+
 export function MyContributionsDashboard() {
   const t = useTranslations("myContributions");
   const router = useRouter();
@@ -269,6 +284,20 @@ export function MyContributionsDashboard() {
                       <CmmsBadge variant={statusVariant(item.status)} className="mt-1">
                         {t(`status.${item.status.toLowerCase()}`)}
                       </CmmsBadge>
+                      {item.thankYouDeliveryStatus ? (
+                        <div className="mt-1 space-y-1">
+                          <CmmsBadge variant={thankYouVariant(item.thankYouDeliveryStatus)}>
+                            {t(`acknowledgment.${item.thankYouDeliveryStatus.toLowerCase()}`)}
+                          </CmmsBadge>
+                          {item.thankYouSentAt ? (
+                            <p className="text-xs text-[var(--muted-foreground)]">
+                              {t("acknowledgmentSentAt", {
+                                date: new Date(item.thankYouSentAt).toLocaleDateString(),
+                              })}
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : null}
                     </div>
                   </li>
                 ))}

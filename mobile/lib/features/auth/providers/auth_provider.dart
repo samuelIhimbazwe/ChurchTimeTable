@@ -67,28 +67,17 @@ class AuthState {
   bool get hasOperationalLeaderDashboard =>
       gov.hasOperationalLeaderDashboard(permissions);
 
-  bool get isStaff {
-    if (hasOperationalLeaderDashboard ||
-        hasPermission('event:write') ||
-        hasPermission('assignment:write') ||
-        gov.canMarkAttendance(permissions) ||
-        hasPermission('swap:manage') ||
-        hasPermission('finance:write') ||
-        hasPermission('discipline:manage')) {
-      return true;
-    }
-    return roleNames.any(
-      (name) =>
-          name.contains('LEADER') ||
-          name.contains('ADMIN') ||
-          name.contains('PRESIDENT') ||
-          name.contains('SECRETARY') ||
-          name.contains('TREASURER') ||
-          name.contains('COMMITTEE') ||
-          name.contains('LOGISTICS') ||
-          name.contains('REHEARSAL'),
-    );
-  }
+  bool get hasPlatformAdminAccess =>
+      gov.hasPlatformAdminAccess(permissions);
+
+  bool get canViewAdminAudit => gov.canViewAdminAudit(permissions);
+
+  bool get canManageAdminSync => gov.canManageAdminSync(permissions);
+
+  bool get canAccessLeaderDashboard =>
+      gov.canAccessLeaderDashboard(permissions);
+
+  bool get isStaff => canAccessLeaderDashboard;
 
   bool get isLeader => isStaff;
 }

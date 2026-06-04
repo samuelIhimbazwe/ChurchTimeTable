@@ -32,8 +32,8 @@ See [CHOIR_OFFICER_ROLES.md](./CHOIR_OFFICER_ROLES.md) for what each login can d
 
 | Email | Password |
 |-------|----------|
-| `member1@church.local` | `Pilot@123` |
-| `member2@church.local` | `Pilot@123` |
+| `member1@church.local` | `Pilot@123` — **family head** on pilot family `PILOT-A` |
+| `member2@church.local` | `Pilot@123` — **family secretary** (view-only) on `PILOT-A` |
 | `member3@church.local` | `Pilot@123` |
 | `member4@church.local` | `Pilot@123` |
 

@@ -1,0 +1,111 @@
+import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ChoirScheduleAdjustmentAction } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
+import { PermissionsResolver } from '../auth/permissions.resolver';
+import { CHOIR_SCHEDULING_AUDIT } from './choir-scheduling.constants';
+import { hasChoirOpsSchedule } from './choir-scheduling-access.util';
+import { ChoirServiceAssignmentsService } from './choir-service-assignments.service';
+import { ChoirSchedulingNotificationsService } from './choir-scheduling-notifications.service';
+
+@Injectable()
+export class ChoirScheduleAdjustmentsService {
+  constructor(
+    private prisma: PrismaService,
+    private audit: AuditService,
+    private permissions: PermissionsResolver,
+    private assignments: ChoirServiceAssignmentsService,
+    private notify: ChoirSchedulingNotificationsService,
+  ) {}
+
+  async adjust(
+    actorUserId: string,
+    data: {
+      occurrenceId: string;
+      action: ChoirScheduleAdjustmentAction;
+      choirId?: string;
+      newChoirId?: string;
+      role?: 'PRIMARY' | 'SUPPORTING' | 'CHILDREN' | 'SPECIAL_GUEST';
+      reason?: string;
+    },
+  ) {
+    const resolved = await this.permissions.resolveForUser(actorUserId);
+    if (!hasChoirOpsSchedule(resolved.permissions)) {
+      throw new ForbiddenException('Denied');
+    }
+
+    let assignmentId: string | undefined;
+
+    if (data.action === 'REPLACE' && data.choirId && data.newChoirId) {
+      await this.prisma.choirServiceAssignment.updateMany({
+        where: {
+          occurrenceId: data.occurrenceId,
+          choirId: data.choirId,
+          cancelledAt: null,
+        },
+        data: { cancelledAt: new Date() },
+      });
+      const created = await this.assignments.assign(actorUserId, {
+        choirId: data.newChoirId,
+        occurrenceId: data.occurrenceId,
+        role: data.role,
+        overrideReason: data.reason,
+      });
+      assignmentId = created.id;
+    } else if (data.action === 'ADD_SUPPORTING' && data.newChoirId) {
+      const created = await this.assignments.assign(actorUserId, {
+        choirId: data.newChoirId,
+        occurrenceId: data.occurrenceId,
+        role: 'SUPPORTING',
+        overrideReason: data.reason,
+      });
+      assignmentId = created.id;
+    } else if (data.action === 'CANCEL' && data.choirId) {
+      await this.prisma.choirServiceAssignment.updateMany({
+        where: {
+          occurrenceId: data.occurrenceId,
+          choirId: data.choirId,
+        },
+        data: { cancelledAt: new Date() },
+      });
+    }
+
+    const adjustment = await this.prisma.choirScheduleAdjustment.create({
+      data: {
+        occurrenceId: data.occurrenceId,
+        choirId: data.choirId,
+        assignmentId,
+        action: data.action,
+        previousChoirId: data.choirId,
+        newChoirId: data.newChoirId,
+        reason: data.reason,
+        actorUserId,
+      },
+    });
+
+    await this.audit.log({
+      userId: actorUserId,
+      action: CHOIR_SCHEDULING_AUDIT.ASSIGNMENT_ADJUSTED,
+      entity: 'ChoirScheduleAdjustment',
+      entityId: adjustment.id,
+      newValue: data as Prisma.InputJsonValue,
+    });
+
+    void this.notify.notifyScheduleChange(data.occurrenceId, data.reason);
+
+    return adjustment;
+  }
+
+  async list(actorUserId: string, occurrenceId?: string) {
+    const resolved = await this.permissions.resolveForUser(actorUserId);
+    if (!hasChoirOpsSchedule(resolved.permissions)) {
+      throw new ForbiddenException('Denied');
+    }
+    return this.prisma.choirScheduleAdjustment.findMany({
+      where: occurrenceId ? { occurrenceId } : {},
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    });
+  }
+}

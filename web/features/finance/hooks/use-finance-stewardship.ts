@@ -6,6 +6,7 @@ import {
   approveFinanceTransaction,
   fetchFinanceStewardshipAnalytics,
   fetchMyContributions,
+  resendContributionThankYou,
 } from "@/core/api/http";
 
 export function useFinanceStewardshipQuery(
@@ -32,6 +33,18 @@ export function useApproveFinanceTransactionMutation(ministryScope?: "CHOIR" | "
   return useMutation({
     mutationFn: ({ id, approve }: { id: string; approve: boolean }) =>
       approveFinanceTransaction(id, approve),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["finance", "stewardship", ministryScope ?? "all"],
+      });
+    },
+  });
+}
+
+export function useResendThankYouMutation(ministryScope?: "CHOIR" | "PROTOCOL") {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (contributionId: string) => resendContributionThankYou(contributionId),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["finance", "stewardship", ministryScope ?? "all"],

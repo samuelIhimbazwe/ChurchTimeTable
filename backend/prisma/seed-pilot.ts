@@ -2,14 +2,52 @@
  * Pilot sample data — run after seed.ts:
  *   npx ts-node prisma/seed-pilot.ts
  */
-import { PrismaClient } from '@prisma/client';
+import { FamilyMemberRole, PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { ROLES } from '../src/common/constants/roles';
+import { MAIN_CHOIR_ID } from '../src/common/constants/choir.constants';
 
 const prisma = new PrismaClient();
 
 const PILOT_PASSWORD = 'Pilot@123';
 const DEFAULT_PROTOCOL_MINISTRY = 'protocol-ministry';
+const MEMBER_NUMBER_SEQUENCE_ID = 'primary';
+
+let pilotPhoneCounter = 788000001;
+
+function nextPilotPhone(): string {
+  const phone = `0${pilotPhoneCounter}`;
+  pilotPhoneCounter += 1;
+  return phone;
+}
+
+async function nextMemberNumber(): Promise<string> {
+  await prisma.memberNumberSequence.upsert({
+    where: { id: MEMBER_NUMBER_SEQUENCE_ID },
+    create: { id: MEMBER_NUMBER_SEQUENCE_ID, nextValue: 1 },
+    update: {},
+  });
+  const updated = await prisma.memberNumberSequence.update({
+    where: { id: MEMBER_NUMBER_SEQUENCE_ID },
+    data: { nextValue: { increment: 1 } },
+  });
+  return `M${String(updated.nextValue - 1).padStart(6, '0')}`;
+}
+
+async function ensureChoirMembership(userId: string, role: string) {
+  await prisma.choirMembership.upsert({
+    where: {
+      userId_choirId: { userId, choirId: MAIN_CHOIR_ID },
+    },
+    create: {
+      userId,
+      choirId: MAIN_CHOIR_ID,
+      role,
+      isActive: true,
+    },
+    update: { role, isActive: true },
+  });
+}
 
 async function upsertPilotUser(
   email: string,
@@ -19,11 +57,25 @@ async function upsertPilotUser(
     lastName: string;
     ministry: 'CHOIR' | 'PROTOCOL' | 'BOTH';
   },
-  options?: { status?: 'ACTIVE' | 'PENDING' },
+  options?: {
+    status?: 'ACTIVE' | 'NEW_MEMBER';
+    phone?: string;
+    memberNumber?: string;
+    choirRole?: string;
+  },
 ) {
   const role = await prisma.role.findUniqueOrThrow({ where: { name: roleName } });
   const passwordHash = await bcrypt.hash(PILOT_PASSWORD, 10);
   const status = options?.status ?? 'ACTIVE';
+  const phone = options?.phone ?? nextPilotPhone();
+  const memberNumber = options?.memberNumber ?? (await nextMemberNumber());
+  const memberData = {
+    ...member,
+    status,
+    phone,
+    memberNumber,
+    onboardingCompleted: status === 'ACTIVE',
+  };
   const user = await prisma.user.upsert({
     where: { email },
     create: {
@@ -31,11 +83,7 @@ async function upsertPilotUser(
       passwordHash,
       preferredLanguage: 'rw',
       member: {
-        create: {
-          ...member,
-          status,
-          onboardingCompleted: status === 'ACTIVE',
-        },
+        create: memberData,
       },
     },
     update: {
@@ -43,16 +91,8 @@ async function upsertPilotUser(
       preferredLanguage: 'rw',
       member: {
         upsert: {
-          create: {
-            ...member,
-            status,
-            onboardingCompleted: status === 'ACTIVE',
-          },
-          update: {
-            ...member,
-            status,
-            onboardingCompleted: status === 'ACTIVE',
-          },
+          create: memberData,
+          update: memberData,
         },
       },
     },
@@ -63,15 +103,8 @@ async function upsertPilotUser(
     await prisma.member.create({
       data: {
         userId: user.id,
-        ...member,
-        status,
-        onboardingCompleted: status === 'ACTIVE',
+        ...memberData,
       },
-    });
-  } else if (user.member.status !== status) {
-    await prisma.member.update({
-      where: { id: user.member.id },
-      data: { status, onboardingCompleted: status === 'ACTIVE' },
     });
   }
 
@@ -80,10 +113,22 @@ async function upsertPilotUser(
     data: { userId: user.id, roleId: role.id },
   });
 
-  return prisma.user.findUniqueOrThrow({
+  const resolved = await prisma.user.findUniqueOrThrow({
     where: { email },
     include: { member: true },
   });
+
+  if (
+    resolved.member &&
+    (member.ministry === 'CHOIR' || member.ministry === 'BOTH')
+  ) {
+    await ensureChoirMembership(
+      resolved.id,
+      options?.choirRole ?? roleName,
+    );
+  }
+
+  return resolved;
 }
 
 async function assignProtocolCommitteeRole(
@@ -240,13 +285,13 @@ async function main() {
     'pending.choir@church.local',
     ROLES.MEMBER,
     { firstName: 'Ange', lastName: 'Mukamana', ministry: 'CHOIR' },
-    { status: 'PENDING' },
+    { status: 'NEW_MEMBER' },
   );
   await upsertPilotUser(
     'pending.protocol@church.local',
     ROLES.MEMBER,
     { firstName: 'Eric', lastName: 'Niyonsaba', ministry: 'PROTOCOL' },
-    { status: 'PENDING' },
+    { status: 'NEW_MEMBER' },
   );
 
   const now = new Date();
@@ -322,6 +367,34 @@ async function main() {
       create: { eventId: protocolEvent.id, memberId },
       update: {},
     });
+  }
+
+  const pilotFamily = await prisma.family.upsert({
+    where: {
+      choirId_familyCode: { choirId: MAIN_CHOIR_ID, familyCode: 'PILOT-A' },
+    },
+    create: {
+      choirId: MAIN_CHOIR_ID,
+      familyCode: 'PILOT-A',
+      familyName: 'Pilot Family Alpha',
+      delegationEnabled: false,
+    },
+    update: { familyName: 'Pilot Family Alpha' },
+  });
+
+  const member1 = members.find((u) => u.email === 'member1@church.local');
+  const member2 = members.find((u) => u.email === 'member2@church.local');
+  if (member1?.member && member2?.member) {
+    for (const [memberId, role] of [
+      [member1.member.id, FamilyMemberRole.HEAD],
+      [member2.member.id, FamilyMemberRole.SECRETARY],
+    ] as const) {
+      await prisma.familyMember.upsert({
+        where: { memberId },
+        create: { familyId: pilotFamily.id, memberId, role },
+        update: { familyId: pilotFamily.id, role },
+      });
+    }
   }
 
   console.log('Pilot seed complete. Password for all pilot users:', PILOT_PASSWORD);

@@ -23,6 +23,7 @@ import { OperationalScreen } from "@/components/ui/operational-screen";
 import {
   useApproveFinanceTransactionMutation,
   useFinanceStewardshipQuery,
+  useResendThankYouMutation,
 } from "@/features/finance/hooks/use-finance-stewardship";
 import {
   canApproveFinanceForMinistry,
@@ -31,6 +32,8 @@ import {
 } from "@/core/auth/governance-permissions";
 import { useSessionStore } from "@/core/auth/session-store";
 import { getApiErrorMessage } from "@/core/api/errors";
+import { CmmsModal } from "@/components/ui/cmms-modal";
+import type { ContributionRecord } from "@/core/api/http";
 
 type MinistryTab = "CHOIR" | "PROTOCOL";
 
@@ -54,12 +57,16 @@ export function FinanceStewardshipDashboard() {
   const [exporting, setExporting] = useState<"csv" | "pdf" | null>(null);
   const [exportDone, setExportDone] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [resendTarget, setResendTarget] = useState<ContributionRecord | null>(null);
 
   const query = useFinanceStewardshipQuery(
     canChoir && canProtocol ? tab : canProtocol ? "PROTOCOL" : "CHOIR",
     canChoir || canProtocol,
   );
   const approveMutation = useApproveFinanceTransactionMutation(
+    canChoir && canProtocol ? tab : canProtocol ? "PROTOCOL" : "CHOIR",
+  );
+  const resendMutation = useResendThankYouMutation(
     canChoir && canProtocol ? tab : canProtocol ? "PROTOCOL" : "CHOIR",
   );
 
@@ -95,6 +102,17 @@ export function FinanceStewardshipDashboard() {
       await approveMutation.mutateAsync({ id, approve });
     } catch (error) {
       setActionError(getApiErrorMessage(error, t("approvalFailed")));
+    }
+  }
+
+  async function handleResendThankYou() {
+    if (!resendTarget) return;
+    setActionError(null);
+    try {
+      await resendMutation.mutateAsync(resendTarget.id);
+      setResendTarget(null);
+    } catch (error) {
+      setActionError(getApiErrorMessage(error, t("acknowledgmentResendFailed")));
     }
   }
 
@@ -203,7 +221,71 @@ export function FinanceStewardshipDashboard() {
             />
           </>
         ) : null}
+        {data.contributions?.thankYou ? (
+          <>
+            <DashboardStatCard
+              label={t("stats.thankYouSent")}
+              value={data.contributions.thankYou.totalSent}
+            />
+            <DashboardStatCard
+              label={t("stats.thankYouPending")}
+              value={data.contributions.thankYou.totalPending}
+              tone={
+                data.contributions.thankYou.totalPending > 0 ? "warning" : "default"
+              }
+            />
+            <DashboardStatCard
+              label={t("stats.thankYouFailed")}
+              value={data.contributions.thankYou.totalFailed}
+              tone={
+                data.contributions.thankYou.totalFailed > 0 ? "danger" : "default"
+              }
+            />
+          </>
+        ) : null}
       </div>
+
+      {!data.executiveSummary && data.contributions?.acknowledgmentQueue?.length ? (
+        <CmmsCard
+          title={t("acknowledgmentTitle")}
+          description={t("acknowledgmentHint")}
+        >
+          <CmmsTable
+            compact
+            rows={data.contributions.acknowledgmentQueue}
+            columns={[
+              {
+                header: "Reference",
+                render: (row) => row.referenceNumber,
+              },
+              {
+                header: t("columns.member"),
+                render: (row) => row.memberName ?? row.memberNumber ?? "—",
+              },
+              {
+                header: t("columns.amount"),
+                render: (row) => formatCurrency(row.amount),
+              },
+              {
+                header: t("columns.status"),
+                render: (row) => row.thankYouDeliveryStatus ?? "—",
+              },
+              {
+                header: t("columns.actions"),
+                render: (row) => (
+                  <CmmsButton
+                    variant="secondary"
+                    disabled={resendMutation.isPending}
+                    onClick={() => setResendTarget(row)}
+                  >
+                    {t("acknowledgmentResend")}
+                  </CmmsButton>
+                ),
+              },
+            ]}
+          />
+        </CmmsCard>
+      ) : null}
 
       {!data.executiveSummary && data.contributions?.confirmationQueue?.length ? (
         <CmmsCard
@@ -330,6 +412,31 @@ export function FinanceStewardshipDashboard() {
           description={t("noBudgetsHint")}
         />
       )}
+      <CmmsModal
+        open={resendTarget != null}
+        onClose={() => setResendTarget(null)}
+        title={t("acknowledgmentResendConfirmTitle")}
+        footer={
+          <div className="flex justify-end gap-2">
+            <CmmsButton variant="secondary" onClick={() => setResendTarget(null)}>
+              {t("acknowledgmentResendCancel")}
+            </CmmsButton>
+            <CmmsButton
+              variant="primary"
+              disabled={resendMutation.isPending}
+              onClick={() => void handleResendThankYou()}
+            >
+              {t("acknowledgmentResendConfirm")}
+            </CmmsButton>
+          </div>
+        }
+      >
+        <p className="text-sm text-[var(--muted-foreground)]">
+          {t("acknowledgmentResendConfirmBody", {
+            reference: resendTarget?.referenceNumber ?? "—",
+          })}
+        </p>
+      </CmmsModal>
     </OperationalScreen>
   );
 }

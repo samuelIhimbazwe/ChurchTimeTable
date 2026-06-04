@@ -23,6 +23,7 @@ import {
 import {
   canViewDisciplineIntelligence,
   canViewFinanceIntelligence,
+  canViewAdminAudit,
 } from '../common/governance/governance-permissions.util';
 import { ResponseVisibilityService } from '../common/visibility/response-visibility.service';
 
@@ -150,6 +151,7 @@ export class DashboardService {
 
     const canFinance = canViewFinanceIntelligence(permissions);
     const canDiscipline = canViewDisciplineIntelligence(permissions);
+    const canAudit = canViewAdminAudit(permissions);
 
     const [
       ministryKpis,
@@ -190,7 +192,6 @@ export class DashboardService {
       teamReliability: this.buildTeamReliability(teamRows),
       replacementFrequency: this.buildReplacementFrequency(replacementRows, trendStart, now),
       syncConflicts,
-      recentAudit,
       permissionWidgets,
       widgets: resolveWidgetLayout(LEADER_WIDGETS, permissions),
       alerts,
@@ -202,6 +203,10 @@ export class DashboardService {
         choirSummary,
       },
     };
+
+    if (canAudit) {
+      payload.recentAudit = recentAudit;
+    }
 
     if (canDiscipline) {
       payload.activeDiscipline = activeDiscipline;

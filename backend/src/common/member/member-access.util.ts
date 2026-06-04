@@ -24,7 +24,7 @@ export async function getMemberForUser(
 export function isPendingMember(
   status: MemberStatus | string | undefined,
 ): boolean {
-  return status === MemberStatus.PENDING;
+  return status === MemberStatus.NEW_MEMBER;
 }
 
 export async function assertOperationalMemberAccess(

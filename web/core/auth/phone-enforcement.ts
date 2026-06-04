@@ -4,7 +4,12 @@ export type PhoneEnforcementMode = "soft" | "warning" | "strict";
 
 const PHONE_EXEMPT_ROLES = new Set(["SUPER_ADMIN", "CHURCH_ADMIN"]);
 
-const ENFORCEMENT_STATUSES = new Set(["ACTIVE", "PENDING"]);
+const ENFORCEMENT_STATUSES = new Set([
+  "ACTIVE",
+  "NEW_MEMBER",
+  "PROBATION",
+  "PENDING",
+]);
 
 const STRICT_ALLOWED_ROUTES = new Set([
   "/dashboard",

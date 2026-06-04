@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/design/tokens/spacing.dart';
 import '../../../core/localization/l10n.dart';
 import '../../../core/repositories/member_repository.dart';
+import '../../../core/routing/app_router.dart';
 import '../../../core/widgets/mobile_tab_shell.dart';
 
 class MembersScreen extends StatefulWidget {
@@ -91,6 +92,14 @@ class _MembersScreenState extends State<MembersScreen> {
 
               return Card(
                 child: ListTile(
+                  onTap: () {
+                    final id = member['id']?.toString();
+                    if (id == null || id.isEmpty) return;
+                    Navigator.of(context).pushNamed(
+                      AppRouter.memberProfile,
+                      arguments: id,
+                    );
+                  },
                   leading: CircleAvatar(
                     backgroundColor: Theme.of(context)
                         .colorScheme

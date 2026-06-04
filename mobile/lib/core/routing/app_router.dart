@@ -26,6 +26,29 @@ import '../../features/settings/screens/settings_screen.dart';
 import '../../features/settings/screens/language_settings_screen.dart';
 import '../../features/coverage/screens/coverage_screen.dart';
 import '../../features/members/screens/members_screen.dart';
+import '../../features/members/screens/member_profile_screen.dart';
+import '../../features/families/screens/families_screen.dart';
+import '../../features/ministries/screens/ministries_screen.dart';
+import '../../features/ministries/screens/ministry_detail_screen.dart';
+import '../../features/ministry_services/screens/ministry_services_screen.dart';
+import '../../features/operational_units/screens/operational_units_screen.dart';
+import '../../features/operational_units/screens/operational_unit_detail_screen.dart';
+import '../../features/welfare/screens/welfare_screen.dart';
+import '../../features/music/screens/music_screen.dart';
+import '../../features/rehearsals/screens/rehearsals_screen.dart';
+import '../../features/devotions/screens/devotion_center_screen.dart';
+import '../../features/search/screens/search_screen.dart';
+import '../../features/assets/screens/assets_screen.dart';
+import '../../features/assets/screens/asset_detail_screen.dart';
+import '../../features/ministry_finance/screens/ministry_finance_screen.dart';
+import '../../features/church_intelligence/screens/church_intelligence_screen.dart';
+import '../../features/operations/screens/operations_screen.dart';
+import '../../features/protocol/screens/protocol_screen.dart';
+import '../../features/member_portal/screens/member_home_screen.dart';
+import '../../features/member_portal/screens/membership_center_screen.dart';
+import '../../features/member_portal/screens/broadcast_center_screen.dart';
+import '../../features/member_portal/screens/invitations_screen.dart';
+import '../../features/member_portal/screens/requests_screen.dart';
 
 class AppRouter {
   static const splash = '/';
@@ -50,6 +73,30 @@ class AppRouter {
   static const budgets = '/budgets';
   static const myContributions = '/my-contributions';
   static const members = '/members';
+  static const memberProfile = '/members/profile';
+  static const myProfile = '/my-profile';
+  static const families = '/families';
+  static const ministries = '/ministries';
+  static const ministryDetail = '/ministries/detail';
+  static const ministryServices = '/ministries/services';
+  static const ministryFinance = '/ministries/finance';
+  static const operationalUnits = '/operational-units';
+  static const operationalUnitDetail = '/operational-units/detail';
+  static const welfare = '/welfare';
+  static const music = '/music';
+  static const rehearsals = '/rehearsals';
+  static const devotions = '/devotions';
+  static const search = '/search';
+  static const assets = '/assets';
+  static const assetDetail = '/assets/detail';
+  static const churchIntelligence = '/church/intelligence';
+  static const churchOperations = '/operations';
+  static const protocolDashboard = '/protocol';
+  static const memberPortalHome = '/member-portal';
+  static const memberPortalMembership = '/member-portal/membership';
+  static const memberPortalBroadcasts = '/member-portal/broadcasts';
+  static const memberPortalInvitations = '/member-portal/invitations';
+  static const memberPortalRequests = '/member-portal/requests';
   static const settings = '/settings';
   static const language = '/settings/language';
 
@@ -76,6 +123,29 @@ class AppRouter {
     budgets,
     myContributions,
     members,
+    memberProfile,
+    myProfile,
+    families,
+    ministries,
+    ministryDetail,
+    ministryServices,
+    operationalUnits,
+    operationalUnitDetail,
+    welfare,
+    music,
+    rehearsals,
+    search,
+    assets,
+    assetDetail,
+    ministryFinance,
+    churchIntelligence,
+    churchOperations,
+    protocolDashboard,
+    memberPortalHome,
+    memberPortalMembership,
+    memberPortalBroadcasts,
+    memberPortalInvitations,
+    memberPortalRequests,
     settings,
     language,
   };
@@ -169,6 +239,36 @@ class AppRouter {
         return l10n.my_contributions_title;
       case members:
         return l10n.members_title;
+      case memberProfile:
+        return l10n.member_profile_title;
+      case myProfile:
+        return l10n.member_profile_title;
+      case families:
+        return l10n.families_title;
+      case ministries:
+        return l10n.ministries_title;
+      case ministryDetail:
+        return l10n.ministry_detail_title;
+      case ministryFinance:
+        return 'Ministry finance';
+      case operationalUnits:
+        return l10n.operational_units_title;
+      case operationalUnitDetail:
+        return l10n.operational_unit_detail_title;
+      case welfare:
+        return l10n.welfare_title;
+      case music:
+        return l10n.music_title;
+      case rehearsals:
+        return l10n.rehearsals_title;
+      case devotions:
+        return l10n.devotion_center_title;
+      case search:
+        return l10n.search_title;
+      case assets:
+        return 'Assets';
+      case assetDetail:
+        return 'Asset';
       case settings:
         return l10n.settings_title;
       case language:
@@ -239,6 +339,117 @@ class AppRouter {
         return _page(const MyContributionsScreen(), routeName: myContributions);
       case members:
         return _page(const MembersScreen(), routeName: members);
+      case memberProfile:
+        final memberId = settings.arguments as String?;
+        if (memberId == null || memberId.isEmpty) {
+          return _page(const MembersScreen(), routeName: members);
+        }
+        return _page(
+          MemberProfileScreen(memberId: memberId),
+          routeName: memberProfile,
+        );
+      case myProfile:
+        return _page(const MyMemberProfileScreen(), routeName: myProfile);
+      case families:
+        return _page(const FamiliesScreen(), routeName: families);
+      case assets:
+        return _page(const AssetsScreen(), routeName: assets);
+      case assetDetail:
+        final assetId = settings.arguments as String?;
+        if (assetId == null || assetId.isEmpty) {
+          return _page(const AssetsScreen(), routeName: assets);
+        }
+        return _page(
+          AssetDetailScreen(assetId: assetId),
+          routeName: assetDetail,
+        );
+      case churchIntelligence:
+        return _page(
+          const ChurchIntelligenceScreen(),
+          routeName: churchIntelligence,
+        );
+      case churchOperations:
+        return _page(
+          const OperationsScreen(),
+          routeName: churchOperations,
+        );
+      case protocolDashboard:
+        return _page(
+          const ProtocolScreen(),
+          routeName: protocolDashboard,
+        );
+      case memberPortalHome:
+        return _page(const MemberHomeScreen(), routeName: memberPortalHome);
+      case memberPortalMembership:
+        return _page(
+          const MembershipCenterScreen(),
+          routeName: memberPortalMembership,
+        );
+      case memberPortalBroadcasts:
+        return _page(
+          const BroadcastCenterScreen(),
+          routeName: memberPortalBroadcasts,
+        );
+      case memberPortalInvitations:
+        return _page(
+          const MemberInvitationsScreen(),
+          routeName: memberPortalInvitations,
+        );
+      case memberPortalRequests:
+        return _page(
+          const MemberRequestsScreen(),
+          routeName: memberPortalRequests,
+        );
+      case ministries:
+        return _page(const MinistriesScreen(), routeName: ministries);
+      case ministryDetail:
+        final ministryId = settings.arguments as String?;
+        if (ministryId == null || ministryId.isEmpty) {
+          return _page(const MinistriesScreen(), routeName: ministries);
+        }
+        return _page(
+          MinistryDetailScreen(ministryId: ministryId),
+          routeName: ministryDetail,
+        );
+      case ministryServices:
+        final ministryId = settings.arguments as String?;
+        if (ministryId == null || ministryId.isEmpty) {
+          return _page(const MinistriesScreen(), routeName: ministries);
+        }
+        return _page(
+          MinistryServicesScreen(ministryId: ministryId),
+          routeName: ministryServices,
+        );
+      case ministryFinance:
+        final ministryId = settings.arguments as String?;
+        if (ministryId == null || ministryId.isEmpty) {
+          return _page(const MinistriesScreen(), routeName: ministries);
+        }
+        return _page(
+          MinistryFinanceScreen(ministryId: ministryId),
+          routeName: ministryFinance,
+        );
+      case operationalUnits:
+        return _page(const OperationalUnitsScreen(), routeName: operationalUnits);
+      case operationalUnitDetail:
+        final unitId = settings.arguments as String?;
+        if (unitId == null || unitId.isEmpty) {
+          return _page(const OperationalUnitsScreen(), routeName: operationalUnits);
+        }
+        return _page(
+          OperationalUnitDetailScreen(unitId: unitId),
+          routeName: operationalUnitDetail,
+        );
+      case welfare:
+        return _page(const WelfareScreen(), routeName: welfare);
+      case music:
+        return _page(const MusicScreen(), routeName: music);
+      case rehearsals:
+        return _page(const RehearsalsScreen(), routeName: rehearsals);
+      case devotions:
+        return _page(const DevotionCenterScreen(), routeName: devotions);
+      case search:
+        return _page(const SearchScreen(), routeName: search);
       case settings:
         return _page(const SettingsScreen(), routeName: settings);
       case language:

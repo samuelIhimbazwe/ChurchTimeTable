@@ -5,6 +5,7 @@ import '../auth/governance_permissions.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../localization/l10n.dart';
 import '../routing/app_router.dart';
+import '../routing/route_permissions.dart';
 import '../design/tokens/colors.dart';
 
 class MobileTabShellScope extends InheritedWidget {
@@ -65,8 +66,7 @@ class MobileTabShell extends ConsumerWidget {
     }
   }
 
-  String _homeRoute(AuthState auth) =>
-      auth.isStaff ? AppRouter.leaderDashboard : AppRouter.memberDashboard;
+  String _homeRoute(AuthState auth) => dashboardRouteForPermissions(auth.permissions);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -159,13 +159,25 @@ class _MobileDrawer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final items = <_DrawerItem>[
-      if (auth.isStaff && hasOperationalLeaderDashboard(auth.permissions))
+      _DrawerItem(AppRouter.search, l10n.search_title, Icons.search),
+      if (hasOperationalLeaderDashboard(auth.permissions))
         _DrawerItem(AppRouter.operational, l10n.nav_operational, Icons.dashboard_outlined),
-      if (auth.hasPermission('event:read') || !auth.isStaff)
+      if (canAccessAttendanceNav(auth.permissions))
         _DrawerItem(AppRouter.attendance, l10n.nav_attendance, Icons.fact_check_outlined),
-      _DrawerItem(AppRouter.coverage, l10n.nav_coverage, Icons.shield_outlined),
-      _DrawerItem(AppRouter.swaps, l10n.nav_swaps, Icons.swap_horiz_outlined),
-      _DrawerItem(AppRouter.finance, l10n.nav_finance, Icons.account_balance_wallet_outlined),
+      if (canAccessCoverageNav(auth.permissions))
+        _DrawerItem(AppRouter.coverage, l10n.nav_coverage, Icons.shield_outlined),
+      if (auth.hasPermission('swap:manage'))
+        _DrawerItem(AppRouter.swaps, l10n.nav_swaps, Icons.swap_horiz_outlined),
+      if (canAccessFinanceNav(auth.permissions))
+        _DrawerItem(AppRouter.finance, l10n.nav_finance, Icons.account_balance_wallet_outlined),
+      if (canViewFamilies(auth.permissions))
+        _DrawerItem(AppRouter.families, l10n.families_title, Icons.family_restroom_outlined),
+      if (canViewWelfare(auth.permissions))
+        _DrawerItem(AppRouter.welfare, l10n.welfare_title, Icons.volunteer_activism_outlined),
+      if (canViewMusic(auth.permissions))
+        _DrawerItem(AppRouter.music, l10n.music_title, Icons.library_music_outlined),
+      if (canViewRehearsals(auth.permissions))
+        _DrawerItem(AppRouter.rehearsals, l10n.rehearsals_title, Icons.music_note_outlined),
       _DrawerItem(AppRouter.sync, l10n.nav_sync, Icons.sync_outlined),
       _DrawerItem(AppRouter.settings, l10n.nav_settings, Icons.settings_outlined),
     ];

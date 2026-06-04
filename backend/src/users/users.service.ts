@@ -17,7 +17,7 @@ export class UsersService {
 
     if (
       member.status !== MemberStatus.ACTIVE &&
-      member.status !== MemberStatus.PENDING
+      member.status !== MemberStatus.NEW_MEMBER
     ) {
       throw new ForbiddenException({
         code: 'FORBIDDEN',
@@ -69,7 +69,7 @@ export class UsersService {
         ...updated,
         missingPhone:
           (updated.status === MemberStatus.ACTIVE ||
-            updated.status === MemberStatus.PENDING) &&
+            updated.status === MemberStatus.NEW_MEMBER) &&
           !updated.phone,
       },
     };

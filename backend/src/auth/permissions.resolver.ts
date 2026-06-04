@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
+/**
+ * Resolves effective permissions from DB role grants + committee assignments.
+ * JWT payloads are rebuilt on each request/login — no legacy permission assumptions.
+ */
 @Injectable()
 export class PermissionsResolver {
   constructor(private prisma: PrismaService) {}
@@ -86,6 +90,45 @@ export class PermissionsResolver {
           parsePermissions(item.role.permissionsJson),
         ),
         ...scopedClaims,
+      );
+
+      const customAssignments =
+        await this.prisma.choirMemberCustomRole.findMany({
+          where: { memberId: user.member.id },
+          include: {
+            customRole: { include: { permissions: true } },
+          },
+        });
+      permissions.push(
+        ...customAssignments.flatMap((item) =>
+          item.customRole.isActive
+            ? item.customRole.permissions.map((p) => p.permission)
+            : [],
+        ),
+      );
+
+      const ministryAssignments =
+        await this.prisma.ministryPermissionAssignment.findMany({
+          where: { memberId: user.member.id, revokedAt: null },
+          select: { ministryId: true, permission: true },
+        });
+      permissions.push(
+        ...ministryAssignments.flatMap((item) => [
+          item.permission,
+          `ministry:${item.ministryId}:${item.permission}`,
+        ]),
+      );
+
+      const unitAssignments =
+        await this.prisma.operationalUnitPermissionAssignment.findMany({
+          where: { memberId: user.member.id, revokedAt: null },
+          select: { operationalUnitId: true, permission: true },
+        });
+      permissions.push(
+        ...unitAssignments.flatMap((item) => [
+          item.permission,
+          `operational_unit:${item.operationalUnitId}:${item.permission}`,
+        ]),
       );
     }
 

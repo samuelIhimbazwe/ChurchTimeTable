@@ -75,7 +75,7 @@ export class AuthService {
               lastName: dto.lastName,
               phone: dto.phone,
               ministry: dto.ministry ?? 'CHOIR',
-              status: MemberStatus.PENDING,
+              status: MemberStatus.NEW_MEMBER,
               onboardingCompleted: false,
               memberNumber,
             },
@@ -210,7 +210,7 @@ export class AuthService {
           ...user.member,
           missingPhone:
             (user.member.status === MemberStatus.ACTIVE ||
-              user.member.status === MemberStatus.PENDING) &&
+              user.member.status === MemberStatus.NEW_MEMBER) &&
             !user.member.phone,
         }
       : null;

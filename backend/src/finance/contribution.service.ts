@@ -19,11 +19,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { OperationalScopeService } from '../governance/operational-scope.service';
 import {
+  assertContributionStewardScope,
   buildFinanceScopeContext,
-  canAccessMinistryFinance,
   type FinanceScopeContext,
 } from '../common/governance/finance-scope.util';
-import { NotificationsService } from '../notifications/notifications.service';
+import { ThankYouService } from './thank-you.service';
 import { CreateContributionDto } from './dto/create-contribution.dto';
 import { ContributionConfirmedEvent } from './events/contribution-confirmed.event';
 
@@ -37,7 +37,7 @@ export class ContributionService {
     private prisma: PrismaService,
     private audit: AuditService,
     private operationalScope: OperationalScopeService,
-    private notifications: NotificationsService,
+    private thankYou: ThankYouService,
   ) {}
 
   async scopeForUser(actorUserId: string): Promise<FinanceScopeContext> {
@@ -115,23 +115,15 @@ export class ContributionService {
       confirmedAt: record.confirmedAt,
       confirmedById: record.confirmedById,
       thankYouSentAt: record.thankYouSentAt,
+      thankYouSentById: record.thankYouSentById,
+      thankYouDeliveryStatus: record.thankYouDeliveryStatus,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     };
   }
 
   private assertManageScope(ctx: FinanceScopeContext, ministry: MinistryScope) {
-    if (!canAccessMinistryFinance(ctx, ministry)) {
-      throw new ForbiddenException('Finance access denied for this ministry');
-    }
-    const canManage =
-      (ministry === MinistryScope.CHOIR && ctx.canManageChoir) ||
-      (ministry === MinistryScope.PROTOCOL && ctx.canManageProtocol) ||
-      (ministry === MinistryScope.BOTH &&
-        (ctx.canManageChoir || ctx.canManageProtocol));
-    if (!canManage && !ctx.canApproveChoir && !ctx.canApproveProtocol) {
-      throw new ForbiddenException('Cannot manage contributions for this ministry');
-    }
+    assertContributionStewardScope(ctx, ministry);
   }
 
   async createContribution(actorUserId: string, dto: CreateContributionDto) {
@@ -330,16 +322,23 @@ export class ContributionService {
       result.updated.referenceNumber,
       result.transaction.id,
     );
-    await this.notifications.onContributionConfirmed({
-      userId: member.userId,
-      amount: event.amount,
-      currency: event.currency,
-      referenceNumber: event.referenceNumber,
-      contributionId: event.contributionId,
-      contributionType: event.contributionType,
+    await this.thankYou.handleContributionConfirmed(event);
+
+    const refreshed = await this.prisma.contributionRecord.findUniqueOrThrow({
+      where: { id: contributionId },
+      include: {
+        member: {
+          select: {
+            memberNumber: true,
+            firstName: true,
+            lastName: true,
+            ministry: true,
+          },
+        },
+      },
     });
 
-    return this.serializeRecord(result.updated);
+    return this.serializeRecord(refreshed);
   }
 
   async rejectContribution(

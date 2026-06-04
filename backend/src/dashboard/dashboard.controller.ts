@@ -1,11 +1,9 @@
 import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { DashboardService } from './dashboard.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { SuperAdminGuard } from '../common/guards/super-admin.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { RequireAnyPermissions, RequirePermissions } from '../common/decorators/roles.decorator';
-import { PERMISSIONS } from '../common/constants/roles';
-import { SuperAdminOnly } from '../common/decorators/super-admin.decorator';
+import { ADMIN_AUDIT_ACCESS, PERMISSIONS } from '../common/constants/roles';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/decorators/current-user.decorator';
 import { PrismaService } from '../prisma/prisma.service';
@@ -17,10 +15,11 @@ import {
   hasProtocolCoordination,
   hasProtocolOversight,
   hasProtocolTeamHeadAuthority,
+  LEADER_DASHBOARD_ACCESS_CLAIMS,
 } from '../common/governance/governance-permissions.util';
 
 @Controller('dashboard')
-@UseGuards(JwtAuthGuard, SuperAdminGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class DashboardController {
   constructor(
     private dashboard: DashboardService,
@@ -29,14 +28,7 @@ export class DashboardController {
   ) {}
 
   @Get('leader-summary')
-  @RequireAnyPermissions(
-    PERMISSIONS.PROTOCOL_OVERSIGHT_SCOPE,
-    PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE,
-    PERMISSIONS.PROTOCOL_OPERATIONAL_MONITOR,
-    PERMISSIONS.CHOIR_OVERSIGHT,
-    PERMISSIONS.CHOIR_OPERATIONS_MANAGE,
-    PERMISSIONS.REPORT_EXPORT,
-  )
+  @RequireAnyPermissions(...LEADER_DASHBOARD_ACCESS_CLAIMS)
   async leaderSummary(@CurrentUser() user: JwtPayload) {
     await assertOperationalMemberAccess(this.prisma, user.sub);
     const data = await this.dashboard.leaderSummary(user.sub, user.permissions ?? []);
@@ -59,8 +51,7 @@ export class DashboardController {
   }
 
   @Get('admin-summary')
-  @SuperAdminOnly()
-  @RequirePermissions(PERMISSIONS.AUDIT_READ)
+  @RequireAnyPermissions(...ADMIN_AUDIT_ACCESS)
   async adminSummary(@CurrentUser() user: JwtPayload) {
     await assertOperationalMemberAccess(this.prisma, user.sub);
     const data = await this.dashboard.adminSummary(user.sub, user.permissions ?? []);

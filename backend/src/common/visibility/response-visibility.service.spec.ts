@@ -39,9 +39,8 @@ describe('ResponseVisibilityService', () => {
   it('removes discipline analytics without discipline permissions', () => {
     const treasurerPerms = [
       PERMISSIONS.EVENT_READ,
-      PERMISSIONS.FINANCE_READ,
-      PERMISSIONS.FINANCE_WRITE,
       PERMISSIONS.CHOIR_FINANCE_VIEW,
+      PERMISSIONS.CHOIR_FINANCE_MANAGE,
     ];
 
     const filtered = service.filterLeaderSummary(

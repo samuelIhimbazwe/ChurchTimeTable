@@ -16,7 +16,6 @@ function mockOperationalContext(
     permissions: [
       PERMISSIONS.CHOIR_FINANCE_MANAGE,
       PERMISSIONS.CHOIR_FINANCE_APPROVE,
-      PERMISSIONS.FINANCE_WRITE,
     ],
     ministryIds: ['CHOIR'],
     protocolMinistryIds: [],
@@ -33,13 +32,14 @@ function mockOperationalContext(
 
 describe('ContributionService', () => {
   const audit = { log: jest.fn() };
-  const notifications = { onContributionConfirmed: jest.fn() };
+  const thankYou = { handleContributionConfirmed: jest.fn() };
   const operationalScope = {
     buildForUser: jest.fn().mockResolvedValue(mockOperationalContext()),
   };
   const prisma = {
     contributionRecord: {
       findUnique: jest.fn(),
+      findUniqueOrThrow: jest.fn(),
       findMany: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
@@ -65,7 +65,7 @@ describe('ContributionService', () => {
     prisma as never,
     audit as never,
     operationalScope as never,
-    notifications as never,
+    thankYou as never,
   );
 
   beforeEach(() => {
@@ -99,6 +99,8 @@ describe('ContributionService', () => {
       confirmedAt: null,
       confirmedById: null,
       thankYouSentAt: null,
+      thankYouSentById: null,
+      thankYouDeliveryStatus: 'PENDING',
       createdAt: new Date(),
       updatedAt: new Date(),
       member: {
@@ -157,6 +159,35 @@ describe('ContributionService', () => {
       confirmedAt: new Date(),
       confirmedById: 'user-1',
       thankYouSentAt: null,
+      thankYouSentById: null,
+      thankYouDeliveryStatus: 'PENDING',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      member: {
+        memberNumber: 'M000001',
+        firstName: 'Test',
+        lastName: 'Member',
+        ministry: MinistryScope.CHOIR,
+      },
+    });
+    prisma.contributionRecord.findUniqueOrThrow.mockResolvedValue({
+      id: 'contrib-1',
+      memberId: 'member-1',
+      familyId: null,
+      financeTransactionId: 'tx-1',
+      memberDueId: null,
+      contributionType: ContributionType.OFFERING,
+      amount: 3000,
+      currency: 'RWF',
+      status: ContributionStatus.CONFIRMED,
+      referenceNumber: 'CNT-TEST-001',
+      notes: null,
+      receiptUrl: null,
+      confirmedAt: new Date(),
+      confirmedById: 'user-1',
+      thankYouSentAt: new Date(),
+      thankYouSentById: null,
+      thankYouDeliveryStatus: 'SENT',
       createdAt: new Date(),
       updatedAt: new Date(),
       member: {
@@ -171,7 +202,7 @@ describe('ContributionService', () => {
 
     expect(result.status).toBe('CONFIRMED');
     expect(result.financeTransactionId).toBe('tx-1');
-    expect(notifications.onContributionConfirmed).toHaveBeenCalled();
+    expect(thankYou.handleContributionConfirmed).toHaveBeenCalled();
   });
 
   it('rejects a submitted contribution', async () => {
@@ -198,6 +229,8 @@ describe('ContributionService', () => {
       confirmedAt: null,
       confirmedById: null,
       thankYouSentAt: null,
+      thankYouSentById: null,
+      thankYouDeliveryStatus: 'PENDING',
       createdAt: new Date(),
       updatedAt: new Date(),
       member: {

@@ -166,6 +166,18 @@ export const frMessages: Record<string, string> = {
   NOTIFICATION_CONTRIBUTION_CONFIRMED_TITLE: 'Contribution confirmée',
   NOTIFICATION_CONTRIBUTION_CONFIRMED_BODY:
     'Votre contribution a été confirmée et enregistrée.',
+  NOTIFICATION_CONTRIBUTION_CONFIRMED_MEMBER_BODY:
+    'Contribution confirmée. Montant confirmé : {amount} {currency}',
+  NOTIFICATION_CONTRIBUTION_REJECTED_TITLE: 'Contribution refusée',
+  NOTIFICATION_CONTRIBUTION_REJECTED_MEMBER_BODY:
+    'Contribution refusée. Motif : {reason}',
+  NOTIFICATION_CONTRIBUTION_SUBMITTED_HEAD_TITLE:
+    'Nouvelle contribution à examiner',
+  NOTIFICATION_CONTRIBUTION_SUBMITTED_HEAD_BODY:
+    '{name} a soumis une contribution pour examen par votre famille.',
+  CONTRIBUTION_THANK_YOU_TITLE: 'Merci, {memberName}',
+  CONTRIBUTION_THANK_YOU_MESSAGE:
+    'Merci pour votre contribution {contributionType} de {amount} {currency}. Numéro de membre : {memberNumber}.',
   TOO_MANY_REQUESTS:
     'Trop de tentatives. Patientez un instant puis réessayez.',
   NOTIFICATION_MEMBER_APPROVED_TITLE: 'Inscription approuvée',
@@ -174,6 +186,19 @@ export const frMessages: Record<string, string> = {
   NOTIFICATION_MEMBER_REJECTED_TITLE: 'Mise à jour d\'inscription',
   NOTIFICATION_MEMBER_REJECTED_BODY:
     'Votre inscription n\'a pas été approuvée. Contactez votre responsable de ministère.',
-
+  WELFARE_NOTIFY_OPENED_TITLE: 'Dossier de bien-être ouvert',
+  WELFARE_NOTIFY_OPENED_BODY: 'Un nouveau dossier a été ouvert : {title}',
+  WELFARE_NOTIFY_APPROVED_TITLE: 'Dossier approuvé',
+  WELFARE_NOTIFY_APPROVED_BODY: 'Dossier approuvé : {title}',
+  WELFARE_NOTIFY_CLOSED_TITLE: 'Dossier clôturé',
+  WELFARE_NOTIFY_CLOSED_BODY: 'Dossier clôturé : {title}',
+  WELFARE_NOTIFY_FUNDED_TITLE: 'Objectif de financement atteint',
+  WELFARE_NOTIFY_FUNDED_BODY: 'Dossier financé : {title}',
+  WELFARE_NOTIFY_UPDATED_TITLE: 'Dossier mis à jour',
+  WELFARE_NOTIFY_UPDATED_BODY: 'Dossier mis à jour : {title}',
+  REHEARSAL_NOTIFY_SCHEDULED_TITLE: 'Répétition planifiée',
+  REHEARSAL_NOTIFY_SCHEDULED_BODY: '{title} le {date}',
+  REHEARSAL_NOTIFY_PLAN_TITLE: 'Plan de répétition mis à jour',
+  REHEARSAL_NOTIFY_PLAN_BODY: 'Liste des chants mise à jour pour {title}',
 };
 

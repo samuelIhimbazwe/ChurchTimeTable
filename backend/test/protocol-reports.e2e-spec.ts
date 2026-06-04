@@ -1,0 +1,19 @@
+import request from 'supertest';
+import { bootstrapProtocolE2e } from './helpers/protocol-e2e.helper';
+
+describe('Protocol reports (e2e)', () => {
+  it('returns monthly service report', async () => {
+    const ctx = await bootstrapProtocolE2e();
+    const now = new Date();
+
+    const res = await request(ctx.app.getHttpServer())
+      .get('/api/v1/protocol/reports/monthly-service')
+      .query({ year: now.getFullYear(), month: now.getMonth() + 1 })
+      .set('Authorization', `Bearer ${ctx.adminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveProperty('teams');
+
+    await ctx.app.close();
+  });
+});

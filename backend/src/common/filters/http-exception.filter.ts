@@ -4,6 +4,7 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiErrorResponse } from '../interfaces/api-response.interface';
@@ -12,6 +13,8 @@ import { LocaleRequest } from '../middleware/locale.middleware';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(HttpExceptionFilter.name);
+
   constructor(private i18n: I18nService) {}
 
   catch(exception: unknown, host: ArgumentsHost) {
@@ -24,6 +27,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
     let code = 'INTERNAL_ERROR';
     let message = this.i18n.translate(locale, code);
     let details: Record<string, unknown> | undefined;
+
+    if (!(exception instanceof HttpException)) {
+      this.logger.error(
+        exception instanceof Error ? exception.stack : String(exception),
+      );
+    }
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();

@@ -1,61 +1,57 @@
-# Pilot go-live checklist
+# Choir Module Go-Live Checklist
 
-Score each item **0** (not done) · **1** (partial) · **2** (done).  
-**Minimum to start pilot: 28 / 40** (70%). Target for “solid pilot”: **34 / 40**.
+Verify each role can complete core workflows before Protocol MVP begins.
 
-## A. Infrastructure (max 10)
+## President
 
-| # | Item | 0 | 1 | 2 |
-|---|------|---|---|---|
-| A1 | API reachable from leader phones (Wi‑Fi / HTTPS) | | | |
-| A2 | Database backed up (daily copy of SQLite file or PostgreSQL dump) | | | |
-| A3 | `JWT_SECRET` changed from dev default | | | |
-| A4 | One person named as **pilot admin** (admin@church.local or real account) | | | |
-| A5 | `npm run prisma:seed` + `npm run prisma:seed:pilot` run (or real members imported) | | | |
+- [ ] Open welfare dashboard and review urgent cases
+- [ ] Approve or reject a welfare case with audit trail
+- [ ] View welfare reports (category + monthly)
+- [ ] Open choir reporting center export (PDF/CSV)
+- [ ] Assign members to rehearsal events and edit rehearsal plan
 
-## B. People & roles (max 8)
+## Treasurer
 
-| # | Item | 0 | 1 | 2 |
-|---|------|---|---|---|
-| B1 | Choir leader account created and tested login | | | |
-| B2 | Protocol leader account created and tested login | | | |
-| B3 | At least 5 active members have accounts | | | |
-| B4 | Leaders trained on **calendar → assign → attendance** (30 min session) | | | |
+- [ ] Record welfare contribution (anonymous supported)
+- [ ] Export welfare cases CSV/PDF
+- [ ] View contribution stewardship (Sprint 10 — unchanged)
 
-## C. Sunday workflow (max 10)
+## Coordinator
 
-| # | Item | 0 | 1 | 2 |
-|---|------|---|---|---|
-| C1 | Next 2 Sundays have events in calendar | | | |
-| C2 | Assignments match real roster (not only seed data) | | | |
-| C3 | Leader can mark bulk attendance after service | | | |
-| C4 | Member can mark own attendance if absent from leader device | | | |
-| C5 | Replacement request uses pickers (no UUID typing) | | | |
+- [ ] Create welfare case via wizard
+- [ ] Transition case to fundraising and complete
+- [ ] Browse music library and open song detail with assets
+- [ ] View rehearsal readiness dashboard
 
-## D. Mobile app (max 8)
+## Secretary
 
-| # | Item | 0 | 1 | 2 |
-|---|------|---|---|---|
-| D1 | App installed on each leader device | | | |
-| D2 | `CMMS_API_BASE` points to correct server IP | | | |
-| D3 | Language set to **Kinyarwanda** (or agreed locale) | | | |
-| D4 | Offline: attendance queues and sync screen retried after service | | | |
+- [ ] Search welfare cases, songs, and rehearsals globally
+- [ ] Export choir summary reports
 
-## E. Support & feedback (max 4)
+## Section Leader
 
-| # | Item | 0 | 1 | 2 |
-|---|------|---|---|---|
-| E1 | WhatsApp / phone contact for “app not working” | | | |
-| E2 | Weekly 15‑min review (conflicts, sync errors, leader feedback) | | | |
+- [ ] View rehearsal plan on event detail
+- [ ] Mark section readiness via plan update (manage permission)
+- [ ] Contribute to welfare case
 
----
+## Member
+
+- [ ] Submit welfare contribution on case detail
+- [ ] Favorite a song
+- [ ] View mobile welfare list (offline cache after first load)
+- [ ] View mobile music library and song lyrics
+
+## System
+
+- [x] Backend e2e: `npm run test:e2e` — **171/171 green** (see `docs/certification/REGRESSION_REPORT.md`)
+- [ ] Web Playwright: welfare, music, rehearsals specs (requires running servers)
+- [x] Localization: en / fr / rw keys present for welfare, music, rehearsals, choirReports
+- [x] Mobile choir keys: en / fr / rw ARB parity (run `flutter gen-l10n` after edits)
 
 ## Sign-off
 
-| Role | Name | Date | Score |
-|------|------|------|-------|
-| Church admin | | | /40 |
-| Choir leader | | | |
-| Protocol leader | | | |
-
-**Approved to start pilot:** ☐ Yes (≥28) · ☐ No — blockers: _______________
+| Role | Name | Date | Pass |
+|------|------|------|------|
+| Product | | | |
+| Choir President | | | |
+| Engineering | | | |

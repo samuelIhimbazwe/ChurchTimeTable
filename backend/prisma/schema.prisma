@@ -8,11 +8,147 @@ datasource db {
 }
 
 enum MemberStatus {
-  PENDING
+  NEW_MEMBER
   ACTIVE
-  INACTIVE
+  PROBATION
+  TEMPORARILY_INACTIVE
   SUSPENDED
-  ALUMNI
+  DISCIPLINE
+  TRANSFERRED
+  GRADUATED
+  RETIRED
+  DECEASED
+}
+
+enum MemberGender {
+  MALE
+  FEMALE
+  OTHER
+  UNSPECIFIED
+}
+
+enum ChoirVoicePart {
+  SOPRANO
+  ALTO
+  TENOR
+  BASS
+  UNSPECIFIED
+}
+
+enum WelfareCaseStatus {
+  DRAFT
+  OPEN
+  UNDER_REVIEW
+  APPROVED
+  ACTIVE_SUPPORT
+  ACTIVE
+  PARTIALLY_FUNDED
+  FUNDED
+  CLOSED
+  CANCELLED
+}
+
+enum WelfareUrgency {
+  LOW
+  NORMAL
+  HIGH
+  CRITICAL
+}
+
+enum WelfareAssistanceType {
+  CASH
+  MATERIAL
+  FOOD
+  TRANSPORT
+  HOSPITAL
+  VOLUNTEER
+  PRAYER
+  COUNSELING
+  OTHER
+}
+
+enum RehearsalAttendanceStatus {
+  PRESENT
+  LATE
+  EXCUSED
+  ABSENT
+}
+
+enum RehearsalReadinessStatus {
+  PREPARED
+  NEEDS_PRACTICE
+  NOT_STARTED
+}
+
+enum SongAssetType {
+  LYRICS
+  PDF
+  SHEET_MUSIC
+  AUDIO
+  VIDEO
+  OTHER
+}
+
+enum AnnouncementAudience {
+  ENTIRE_CHOIR
+  FAMILIES
+  LEADERSHIP
+  VOICE_SECTION
+  CUSTOM_GROUP
+}
+
+enum ChoirDocumentCategory {
+  CONSTITUTION
+  POLICY
+  MEETING_MINUTES
+  REHEARSAL_GUIDE
+  WELFARE
+  EVENT
+  TRAINING
+  OTHER
+}
+
+enum MeetingStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ActionItemStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum DevotionType {
+  VERSE_OF_DAY
+  ENCOURAGEMENT
+  ANNOUNCEMENT
+}
+
+enum UniformItemStatus {
+  AVAILABLE
+  ASSIGNED
+  RETURNED
+  DAMAGED
+  LOST
+}
+
+enum EquipmentCondition {
+  EXCELLENT
+  GOOD
+  FAIR
+  POOR
+  OUT_OF_SERVICE
+}
+
+enum EquipmentAssignmentStatus {
+  ASSIGNED
+  RETURNED
+  LOST
+  DAMAGED
 }
 
 enum EventType {
@@ -31,6 +167,21 @@ enum MinistryScope {
   CHOIR
   PROTOCOL
   BOTH
+}
+
+enum MinistryMembershipStatus {
+  ACTIVE
+  INACTIVE
+  REMOVED
+}
+
+enum OperationalUnitType {
+  CHOIR
+  ARTIST_GROUP
+  PROTOCOL_TEAM
+  SERVICE_TEAM
+  OUTREACH_TEAM
+  CUSTOM
 }
 
 enum EventStatus {
@@ -197,6 +348,40 @@ enum ContributionStatus {
   REJECTED
 }
 
+enum ThankYouDeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+enum FamilyMemberRole {
+  HEAD
+  ASSISTANT_HEAD
+  SECRETARY
+  MEMBER
+}
+
+enum ContributionCampaignStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum PaymentChannel {
+  MOMO
+  BANK
+  OTHER
+}
+
+enum ContributionAdjustmentCategory {
+  CORRECTION
+  TRANSFER
+  REVERSAL
+  MISCLASSIFICATION
+  OTHER
+}
+
 enum BudgetKind {
   OPERATIONAL
   EVENT
@@ -213,6 +398,200 @@ enum NotificationType {
   ATTENDANCE
   DISCIPLINE
   GENERAL
+  CHOIR_DEVOTION
+  MINISTRY_ANNOUNCEMENT
+  MINISTRY_DOCUMENT
+  MINISTRY_MEETING
+  MINISTRY_ACTION_ITEM
+  MINISTRY_LEADERSHIP
+  MINISTRY_DEVOTION
+  OPERATION_ASSIGNMENT
+  OPERATION_SCHEDULE
+}
+
+enum MinistryAnnouncementPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum MinistryAnnouncementAudience {
+  ALL_MINISTRY
+  LEADERSHIP_ONLY
+  UNIT_LEADERS
+  CUSTOM
+}
+
+enum MinistryDocumentCategory {
+  POLICY
+  CONSTITUTION
+  GUIDELINE
+  TRAINING
+  MEETING_MINUTES
+  FORM
+  OTHER
+}
+
+enum MinistryActivityType {
+  ANNOUNCEMENT_CREATED
+  ANNOUNCEMENT_PUBLISHED
+  DOCUMENT_UPLOADED
+  DOCUMENT_ARCHIVED
+  MEETING_CREATED
+  MEETING_COMPLETED
+  ACTION_ITEM_CREATED
+  ACTION_ITEM_COMPLETED
+  LEADER_ASSIGNED
+  UNIT_CREATED
+  MEMBER_JOINED
+  MEMBER_REMOVED
+  DEVOTION_PUBLISHED
+  REPORT_GENERATED
+  BUDGET_CREATED
+  ASSET_ADDED
+  MINISTRY_CREATED
+}
+
+// --- Church Intelligence Foundation (MF-6) ---
+
+enum MinistryHealthStatus {
+  EXCELLENT
+  HEALTHY
+  WATCHLIST
+  AT_RISK
+  INACTIVE
+}
+
+enum GovernanceAlertType {
+  NO_LEADERSHIP
+  NO_MEETINGS
+  NO_REPORTS
+  NO_ACTIVITY
+  LOW_ENGAGEMENT
+  INACTIVE_UNIT
+  BUDGET_INACTIVE
+  MISSING_SUCCESSION
+}
+
+enum ChurchActivityType {
+  MINISTRY_CREATED
+  UNIT_CREATED
+  LEADER_ASSIGNED
+  MEETING_HELD
+  REPORT_GENERATED
+  ASSET_ADDED
+  BUDGET_CREATED
+  DEVOTION_PUBLISHED
+  ANNOUNCEMENT_PUBLISHED
+  EXPENSE_PAID
+  MEMBER_JOINED
+  FUND_DEPOSIT
+}
+
+enum LeadershipAssignmentScope {
+  MINISTRY
+  OPERATIONAL_UNIT
+}
+
+// --- Resource & Asset Management (MF-4) ---
+
+enum AssetStatus {
+  ACTIVE
+  IN_USE
+  UNDER_MAINTENANCE
+  LOST
+  DAMAGED
+  RETIRED
+}
+
+enum AssetCondition {
+  EXCELLENT
+  GOOD
+  FAIR
+  POOR
+  BROKEN
+}
+
+enum AssetOwnerType {
+  CHURCH
+  MINISTRY
+  OPERATIONAL_UNIT
+}
+
+enum AssetAssignmentTargetType {
+  MINISTRY
+  OPERATIONAL_UNIT
+  MEMBER
+}
+
+enum AssetMaintenanceType {
+  REPAIR
+  SERVICE
+  INSPECTION
+  UPGRADE
+}
+
+enum AssetActivityType {
+  CREATED
+  OWNERSHIP_CHANGED
+  CUSTODIAN_ASSIGNED
+  ASSIGNED
+  RETURNED
+  TRANSFERRED
+  MAINTENANCE_RECORDED
+  LOST
+  FOUND
+  RETIRED
+}
+
+enum UniformAssetStatus {
+  AVAILABLE
+  ASSIGNED
+  IN_STORAGE
+  DAMAGED
+  RETIRED
+}
+
+// --- Ministry Finance Foundation (MF-5) ---
+
+enum MinistryFundType {
+  GENERAL
+  WELFARE
+  PROJECT
+  EVENT
+  EMERGENCY
+  CUSTOM
+}
+
+enum MinistryBudgetStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+  ARCHIVED
+}
+
+enum MinistryExpenseStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  PAID
+  VOID
+}
+
+enum MinistryFundTransactionType {
+  DEPOSIT
+  EXPENSE
+  TRANSFER
+  ADJUSTMENT
+}
+
+enum DevotionVisibilityScope {
+  CHURCH_WIDE
+  MINISTRY
+  OPERATIONAL_UNIT
+  CHOIR
 }
 
 model User {
@@ -231,7 +610,33 @@ model User {
   auditLogs    AuditLog[]
   notifications Notification[]
   confirmedContributions ContributionRecord[] @relation("ContributionConfirmer")
+  thankYouSentContributions ContributionRecord[] @relation("ContributionThankYouSender")
   approvedAttendance Attendance[] @relation("AttendanceApprover")
+  announcementReads ChoirAnnouncementRead[]
+  choirMemberships  ChoirMembership[]
+  devotionsCreated  Devotion[]          @relation("DevotionAuthor")
+  devotionBookmarks DevotionBookmark[]
+  customRolesCreated ChoirCustomRole[]  @relation("CustomRoleAuthor")
+  ministryLeadershipAssigned MinistryLeadershipAssignment[] @relation("MinistryLeadershipAssigner")
+  ministryPermissionsGranted MinistryPermissionAssignment[] @relation("MinistryPermissionGranter")
+  operationalUnitLeadershipAssigned OperationalUnitLeadershipAssignment[] @relation("OperationalUnitLeadershipAssigner")
+  operationalUnitPermissionsGranted OperationalUnitPermissionAssignment[] @relation("OperationalUnitPermissionGranter")
+  ministryAnnouncementsCreated      MinistryAnnouncement[]                @relation("MinistryAnnouncementAuthor")
+  ministryDocumentsUploaded         MinistryDocument[]                    @relation("MinistryDocumentUploader")
+  ministryDocumentVersionsUploaded  MinistryDocumentVersion[]             @relation("MinistryDocumentVersionUploader")
+  ministryMeetingsCreated           MinistryMeeting[]                     @relation("MinistryMeetingCreator")
+  ministryActivities                MinistryActivity[]                    @relation("MinistryActivityActor")
+  assetsCreated                     Asset[]                               @relation("AssetCreator")
+  assetActivities                   AssetActivity[]                       @relation("AssetActivityActor")
+  ministryFundTransactions          MinistryFundTransaction[]             @relation("MinistryFundTransactionActor")
+  ministryFundTransfersApproved     MinistryFundTransfer[]                @relation("MinistryFundTransferApprover")
+  operationsCreated                 OperationOccurrence[]                 @relation("OperationCreator")
+  operationsApproved                OperationOccurrence[]                 @relation("OperationApprover")
+  operationNotifications            OperationNotification[]
+  churchBroadcastsCreated           ChurchBroadcast[] @relation("BroadcastCreator")
+  choirJoinRequestsReviewed         ChoirJoinRequest[] @relation("ChoirJoinReviewerUser")
+  importJobsUploaded                ImportJob[]
+  notificationDeliveryLogs        NotificationDeliveryLog[] @relation("NotificationDeliveryRecipient")
 
   @@index([email])
 }
@@ -281,7 +686,7 @@ model Member {
   lastName        String
   phone           String?
   ministry        MinistryScope @default(CHOIR)
-  status              MemberStatus  @default(PENDING)
+  status              MemberStatus  @default(NEW_MEMBER)
   onboardingCompleted Boolean       @default(false)
   isChildrenChoir     Boolean       @default(false)
   serviceNumber   Int?
@@ -303,6 +708,55 @@ model Member {
   protocolCommitteeAssignments ProtocolCommitteeMember[]
   protocolTeamMemberships ProtocolServiceTeamMember[]
   teamHeadAssignments ProtocolServiceTeam[] @relation("ProtocolTeamHead")
+  familyMembership    FamilyMember?
+  familiesHeaded      Family[]              @relation("FamilyHead")
+  familyLeadershipHistory FamilyLeadershipHistory[]
+  contributionAdjustments ContributionAdjustment[] @relation("ContributionAdjuster")
+  familyApprovedContributions ContributionRecord[] @relation("ContributionFamilyApprover")
+  familyRejectedContributions ContributionRecord[] @relation("ContributionFamilyRejecter")
+  profile                   MemberProfile?
+  statusHistory             MemberStatusHistory[]
+  welfareCases              WelfareCase[]         @relation("WelfareSubject")
+  welfareCasesCoordinated   WelfareCase[]         @relation("WelfareCoordinator")
+  welfareContributions      WelfareContribution[]
+  songUsageLed              SongUsageRecord[]
+  songFavorites             SongFavorite[]
+  rehearsalPlansLed         RehearsalPlan[]
+  rehearsalAttendances      RehearsalAttendance[]
+  meetingAttendance         MeetingAttendee[]
+  meetingActionsOwned       MeetingActionItem[]
+  uniformAssignments        UniformAssignment[]
+  equipmentAssignments      EquipmentAssignment[]
+  customRoleAssignments     ChoirMemberCustomRole[]
+  ministryMemberships       MinistryMembership[]
+  ministryLeadershipAssignments MinistryLeadershipAssignment[]
+  ministryPermissionAssignments MinistryPermissionAssignment[]
+  operationalUnitMemberships OperationalUnitMembership[]
+  operationalUnitLeadershipAssignments OperationalUnitLeadershipAssignment[]
+  operationalUnitPermissionAssignments OperationalUnitPermissionAssignment[]
+  ministryAnnouncementReads            MinistryAnnouncementRead[]
+  ministryMeetingAttendees             MinistryMeetingAttendee[]
+  ministryMeetingActionItems           MinistryMeetingActionItem[] @relation("MinistryMeetingActionAssignee")
+  assetCustodians                      AssetCustodian[]
+  ministryExpensesRequested            MinistryExpense[] @relation("MinistryExpenseRequester")
+  ministryExpensesApproved             MinistryExpense[] @relation("MinistryExpenseApprover")
+  operationAssignments                 OperationAssignment[]
+  protocolMemberProfile                ProtocolMemberProfile?
+  protocolOccurrenceTeamMemberships    ProtocolOccurrenceTeamMember[]
+  protocolReplacementRequestsAsOriginal ProtocolReplacementRequest[] @relation("ProtocolReplacementOriginal")
+  protocolReplacementRequestsAsCover   ProtocolReplacementRequest[] @relation("ProtocolReplacementCover")
+  protocolRankingEntries               ProtocolRankingEntry[]
+  protocolCategoryRankingEntries     ProtocolCategoryRankingEntry[]
+  protocolTeamLeader                   ProtocolTeamLeader?
+  protocolTeamBackups                  ProtocolOccurrenceTeamBackup[]
+  choirAttendances                     ChoirAttendance[]
+  choirParticipationProfiles           ChoirMemberParticipationProfile[]
+  choirCategoryRankingEntries          ChoirCategoryRankingEntry[]
+  choirJoinRequests                    ChoirJoinRequest[]
+  protocolInvitations                  ProtocolInvitation[]
+  protocolMembershipClaims             ProtocolMembershipClaim[]
+  protocolInvitationsSent              ProtocolInvitation[] @relation("ProtocolInviter")
+  protocolClaimsReviewed               ProtocolMembershipClaim[] @relation("ProtocolClaimReviewer")
 
   @@index([status])
   @@index([ministry])
@@ -311,6 +765,7 @@ model Member {
 
 model Event {
   id            String        @id @default(uuid())
+  choirId       String?
   title         String
   type          EventType
   startTime     DateTime
@@ -322,11 +777,16 @@ model Event {
   metadata      Json?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  choir         Choir?        @relation(fields: [choirId], references: [id])
   assignments   EventAssignment[]
   attendances   Attendance[]
   swaps         Swap[]
   replacements  Replacement[]
+  songUsageRecords SongUsageRecord[]
+  rehearsalPlan RehearsalPlan?
+  rehearsalAttendances RehearsalAttendance[]
 
+  @@index([choirId])
   @@index([startTime, endTime])
   @@index([type, ministryScope])
   @@index([status])
@@ -462,11 +922,12 @@ model Replacement {
 
 model ChoirCommitteeRole {
   id              String   @id @default(uuid())
-  choirId          String
+  choirId         String
   name            String
   permissionsJson Json
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  choir           Choir    @relation(fields: [choirId], references: [id], onDelete: Cascade)
   members         ChoirCommitteeMember[]
 
   @@unique([choirId, name])
@@ -649,35 +1110,127 @@ model MemberDues {
   @@index([status])
 }
 
+model ContributionTypeCatalog {
+  id            String          @id @default(uuid())
+  choirId       String?
+  code          String
+  name          String
+  description   String?
+  active        Boolean         @default(true)
+  sortOrder     Int             @default(0)
+  ministryScope MinistryScope   @default(CHOIR)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  choir         Choir?          @relation(fields: [choirId], references: [id])
+  campaigns     ContributionCampaign[]
+  records       ContributionRecord[]
+
+  @@unique([choirId, code])
+  @@index([choirId])
+  @@index([active, ministryScope])
+  @@index([sortOrder])
+}
+
+model ContributionCampaign {
+  id                 String                     @id @default(uuid())
+  choirId            String?
+  contributionTypeId String
+  name               String
+  description        String?
+  goalAmount         Decimal
+  currency           String                     @default("RWF")
+  status             ContributionCampaignStatus @default(DRAFT)
+  periodStart        DateTime?
+  periodEnd          DateTime?
+  ministryScope      MinistryScope              @default(CHOIR)
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+  choir              Choir?                     @relation(fields: [choirId], references: [id])
+  contributionType   ContributionTypeCatalog    @relation(fields: [contributionTypeId], references: [id], onDelete: Restrict)
+  records            ContributionRecord[]
+
+  @@index([choirId])
+  @@index([contributionTypeId])
+  @@index([status, ministryScope])
+  @@index([periodStart, periodEnd])
+}
+
 model ContributionRecord {
-  id                   String              @id @default(uuid())
-  memberId             String
-  familyId             String?
-  financeTransactionId String?
-  memberDueId          String?
-  contributionType     ContributionType
-  amount               Decimal
-  currency             String              @default("RWF")
-  status               ContributionStatus  @default(PENDING)
-  referenceNumber      String              @unique
-  notes                String?
-  receiptUrl           String?
-  confirmedAt          DateTime?
-  confirmedById        String?
-  thankYouSentAt       DateTime?
-  createdAt            DateTime            @default(now())
-  updatedAt            DateTime            @updatedAt
-  member               Member              @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  memberDue            MemberDues?         @relation(fields: [memberDueId], references: [id])
-  confirmedBy          User?               @relation("ContributionConfirmer", fields: [confirmedById], references: [id])
+  id                       String                   @id @default(uuid())
+  memberId                 String
+  familyId                 String?
+  financeTransactionId     String?
+  memberDueId              String?
+  /// @deprecated Sprint 10 — use contributionTypeCatalogId; kept for migration compat
+  contributionType         ContributionType
+  contributionTypeCatalogId String?
+  contributionCampaignId   String?
+  /// Member claim — immutable after submit
+  claimedAmount            Decimal?
+  /// Family-head confirmation — immutable after approve
+  confirmedAmount          Decimal?
+  discrepancyAmount        Decimal?
+  discrepancyReason        String?
+  /// Legacy amount field — mirrors claimedAmount during transition
+  amount                   Decimal
+  currency                 String                   @default("RWF")
+  paymentAt                DateTime?
+  paymentChannel           PaymentChannel?
+  status                   ContributionStatus       @default(PENDING)
+  referenceNumber          String                   @unique
+  notes                    String?
+  receiptUrl               String?
+  familyApprovedAt         DateTime?
+  familyApprovedByMemberId String?
+  familyRejectedAt         DateTime?
+  familyRejectedByMemberId String?
+  rejectionReason          String?
+  confirmedAt              DateTime?
+  confirmedById            String?
+  thankYouSentAt           DateTime?
+  thankYouSentById         String?
+  thankYouDeliveryStatus   ThankYouDeliveryStatus   @default(PENDING)
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
+  member                   Member                   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberDue                MemberDues?              @relation(fields: [memberDueId], references: [id])
+  contributionTypeCatalog  ContributionTypeCatalog? @relation(fields: [contributionTypeCatalogId], references: [id])
+  contributionCampaign     ContributionCampaign?    @relation(fields: [contributionCampaignId], references: [id])
+  confirmedBy              User?                    @relation("ContributionConfirmer", fields: [confirmedById], references: [id])
+  thankYouSentBy           User?                    @relation("ContributionThankYouSender", fields: [thankYouSentById], references: [id])
+  familyApprovedBy         Member?                  @relation("ContributionFamilyApprover", fields: [familyApprovedByMemberId], references: [id])
+  familyRejectedBy         Member?                  @relation("ContributionFamilyRejecter", fields: [familyRejectedByMemberId], references: [id])
+  adjustments              ContributionAdjustment[]
 
   @@index([memberId])
   @@index([status])
   @@index([contributionType])
+  @@index([contributionTypeCatalogId])
+  @@index([contributionCampaignId])
   @@index([financeTransactionId])
   @@index([memberDueId])
   @@index([confirmedAt])
   @@index([familyId])
+  @@index([familyApprovedAt])
+  @@index([paymentAt])
+}
+
+model ContributionAdjustment {
+  id                     String                         @id @default(uuid())
+  contributionRecordId   String
+  /// Signed delta applied to confirmedAmount (e.g. +3000, -2000)
+  adjustmentAmount       Decimal
+  category               ContributionAdjustmentCategory
+  reason                 String
+  adjustedByMemberId     String
+  referenceContributionId String?
+  createdAt              DateTime                       @default(now())
+  contributionRecord   ContributionRecord @relation(fields: [contributionRecordId], references: [id], onDelete: Cascade)
+  adjustedBy           Member             @relation("ContributionAdjuster", fields: [adjustedByMemberId], references: [id])
+
+  @@index([contributionRecordId])
+  @@index([adjustedByMemberId])
+  @@index([createdAt])
 }
 
 model AuditLog {
@@ -711,17 +1264,25 @@ model SyncConflict {
 }
 
 model Notification {
-  id        String           @id @default(uuid())
-  userId    String
-  type      NotificationType
-  title     String
-  body      String
-  data      Json?
-  read      Boolean          @default(false)
-  createdAt DateTime         @default(now())
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String           @id @default(uuid())
+  userId     String
+  choirId    String?
+  ministryId String?
+  type       NotificationType
+  title      String
+  body       String
+  data       Json?
+  read       Boolean          @default(false)
+  archived   Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  choir      Choir?           @relation(fields: [choirId], references: [id])
+  ministry   Ministry?        @relation(fields: [ministryId], references: [id], onDelete: Cascade)
 
   @@index([userId, read])
+  @@index([userId, archived])
+  @@index([userId, choirId])
+  @@index([userId, ministryId])
   @@index([createdAt])
 }
 
@@ -731,9 +1292,2455 @@ model SystemSetting {
   updatedAt DateTime @updatedAt
 }
 
+// --- Multi-choir foundation ---
+
+enum ChoirKind {
+  PRIMARY
+  SPECIAL
+  CHILDREN
+}
+
+model Choir {
+  id          String   @id @default(uuid())
+  name        String
+  code        String   @unique
+  description String?
+  choirKind   ChoirKind @default(PRIMARY)
+  leaderDisplayName String?
+  isPublicJoinable Boolean @default(true)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  memberships           ChoirMembership[]
+  joinRequests          ChoirJoinRequest[]
+  devotions             Devotion[]
+  customRoles           ChoirCustomRole[]
+  families              Family[]
+  events                Event[]
+  welfareCases          WelfareCase[]
+  songs                 Song[]
+  songCategories        SongCategory[]
+  documents             ChoirDocument[]
+  meetings              ChoirMeeting[]
+  announcements         ChoirAnnouncement[]
+  uniformTypes          UniformType[]
+  equipmentAssets       EquipmentAsset[]
+  contributionTypes     ContributionTypeCatalog[]
+  contributionCampaigns ContributionCampaign[]
+  committeeRoles        ChoirCommitteeRole[]
+  notifications         Notification[]
+  protocolTeamLeaders   ProtocolTeamLeader[]
+  activities            ChoirActivity[]
+  serviceAssignments    ChoirServiceAssignment[]
+  serviceEligibility    ChoirServiceEligibility?
+  participationProfiles ChoirMemberParticipationProfile[]
+
+  @@index([isActive])
+}
+
+model ChoirMembership {
+  id       String   @id @default(uuid())
+  userId   String
+  choirId  String
+  role     String
+  joinedAt DateTime @default(now())
+  isActive Boolean  @default(true)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  choir    Choir    @relation(fields: [choirId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, choirId])
+  @@index([choirId])
+  @@index([userId])
+  @@index([isActive])
+}
+
+model Devotion {
+  id                  String                 @id @default(uuid())
+  choirId             String?
+  ministryId          String?
+  operationalUnitId   String?
+  visibilityScope     DevotionVisibilityScope @default(CHOIR)
+  title               String
+  content             String
+  verseReference      String?
+  verseText           String?
+  type                DevotionType
+  isPinned            Boolean                @default(false)
+  publishedAt         DateTime?
+  expiresAt           DateTime?
+  createdById         String
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  choir               Choir?                 @relation(fields: [choirId], references: [id], onDelete: Cascade)
+  ministry            Ministry?              @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  operationalUnit     OperationalUnit?       @relation(fields: [operationalUnitId], references: [id], onDelete: Cascade)
+  createdBy           User                   @relation("DevotionAuthor", fields: [createdById], references: [id])
+  bookmarks           DevotionBookmark[]
+
+  @@index([choirId, isPinned])
+  @@index([choirId, type])
+  @@index([choirId, publishedAt])
+  @@index([ministryId, publishedAt])
+  @@index([operationalUnitId])
+  @@index([visibilityScope])
+}
+
+model DevotionBookmark {
+  id         String   @id @default(uuid())
+  userId     String
+  devotionId String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  devotion   Devotion @relation(fields: [devotionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, devotionId])
+  @@index([userId])
+}
+
+model ChoirCustomRole {
+  id           String   @id @default(uuid())
+  choirId      String
+  name         String
+  description  String?
+  isSystemRole Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  createdById  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  choir        Choir    @relation(fields: [choirId], references: [id], onDelete: Cascade)
+  createdBy    User     @relation("CustomRoleAuthor", fields: [createdById], references: [id])
+  permissions  ChoirCustomRolePermission[]
+  assignments  ChoirMemberCustomRole[]
+
+  @@unique([choirId, name])
+  @@index([choirId, isActive])
+}
+
+model ChoirCustomRolePermission {
+  roleId     String
+  permission String
+  role       ChoirCustomRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permission])
+  @@index([roleId])
+}
+
+model ChoirMemberCustomRole {
+  id           String   @id @default(uuid())
+  memberId     String
+  choirId      String
+  customRoleId String
+  assignedById String
+  assignedAt   DateTime @default(now())
+  member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  customRole   ChoirCustomRole @relation(fields: [customRoleId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, choirId, customRoleId])
+  @@index([choirId])
+  @@index([memberId])
+  @@index([customRoleId])
+}
+
+model Family {
+  id                 String                    @id @default(uuid())
+  choirId            String?
+  familyCode         String
+  familyName         String
+  headMemberId       String?
+  delegationEnabled  Boolean                   @default(false)
+  notes              String?
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+  choir              Choir?                    @relation(fields: [choirId], references: [id])
+  headMember         Member?                   @relation("FamilyHead", fields: [headMemberId], references: [id])
+  members            FamilyMember[]
+  leadershipHistory  FamilyLeadershipHistory[]
+
+  @@unique([choirId, familyCode])
+  @@index([choirId])
+  @@index([headMemberId])
+}
+
+model FamilyMember {
+  id        String           @id @default(uuid())
+  familyId  String
+  memberId  String           @unique
+  role      FamilyMemberRole @default(MEMBER)
+  joinedAt  DateTime         @default(now())
+  createdAt DateTime         @default(now())
+  family    Family           @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  member    Member           @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([familyId])
+  @@index([memberId])
+  @@index([role])
+}
+
+model FamilyLeadershipHistory {
+  id              String           @id @default(uuid())
+  familyId        String
+  memberId        String
+  role            FamilyMemberRole
+  startedAt       DateTime         @default(now())
+  endedAt         DateTime?
+  assignedByUserId String?
+  createdAt       DateTime         @default(now())
+  family          Family           @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  member          Member           @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([familyId])
+  @@index([memberId])
+  @@index([role])
+  @@index([startedAt])
+  @@index([endedAt])
+}
+
+model FamilyCodeSequence {
+  id        String   @id @default("primary")
+  nextValue Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model MemberNumberSequence {
   id        String   @id @default(cuid())
   nextValue Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// --- Choir MVP: member lifecycle ---
+
+model MemberProfile {
+  id                    String    @id @default(uuid())
+  memberId              String    @unique
+  gender                MemberGender @default(UNSPECIFIED)
+  voicePart             ChoirVoicePart @default(UNSPECIFIED)
+  dateOfBirth           DateTime?
+  address               String?
+  emergencyContactName  String?
+  emergencyContactPhone String?
+  baptismDate           DateTime?
+  choirJoinDate         DateTime?
+  notes                 String?
+  skillsJson            Json?
+  instrumentsJson       Json?
+  availabilityJson      Json?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  member                Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+}
+
+model MemberStatusHistory {
+  id         String       @id @default(uuid())
+  memberId   String
+  fromStatus MemberStatus?
+  toStatus   MemberStatus
+  reason     String?
+  changedByUserId String?
+  createdAt  DateTime     @default(now())
+  member     Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([memberId])
+  @@index([createdAt])
+}
+
+// --- Choir MVP: welfare ---
+
+model WelfareCategory {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  description String?
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  cases       WelfareCase[]
+}
+
+model WelfareCase {
+  id              String            @id @default(uuid())
+  choirId         String?
+  memberId        String
+  familyId        String?
+  categoryId      String
+  title           String
+  description     String
+  urgency         WelfareUrgency    @default(NORMAL)
+  status          WelfareCaseStatus @default(OPEN)
+  coordinatorId   String?
+  supportPlan     String?
+  requestedAmount Decimal?
+  approvedAmount  Decimal?
+  targetDate      DateTime?
+  documentUrls    Json?
+  openedAt        DateTime          @default(now())
+  closedAt        DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  choir           Choir?            @relation(fields: [choirId], references: [id])
+  member          Member            @relation("WelfareSubject", fields: [memberId], references: [id])
+  coordinator     Member?           @relation("WelfareCoordinator", fields: [coordinatorId], references: [id])
+  category        WelfareCategory   @relation(fields: [categoryId], references: [id])
+  contributions   WelfareContribution[]
+  assistance      WelfareAssistance[]
+
+  @@index([choirId])
+  @@index([memberId])
+  @@index([familyId])
+  @@index([status])
+  @@index([categoryId])
+}
+
+model WelfareContribution {
+  id            String   @id @default(uuid())
+  caseId        String?
+  contributorId String
+  amount        Decimal
+  currency      String   @default("RWF")
+  paymentChannel String?
+  paymentAt     DateTime @default(now())
+  notes         String?
+  isAnonymous   Boolean  @default(false)
+  receiptUrl    String?
+  recordedByUserId String?
+  createdAt     DateTime @default(now())
+  case          WelfareCase? @relation(fields: [caseId], references: [id])
+  contributor   Member   @relation(fields: [contributorId], references: [id])
+
+  @@index([caseId])
+  @@index([contributorId])
+  @@index([paymentAt])
+}
+
+model WelfareAssistance {
+  id            String                @id @default(uuid())
+  caseId        String
+  assistanceType WelfareAssistanceType
+  description   String
+  amount        Decimal?
+  currency      String?               @default("RWF")
+  deliveredAt   DateTime              @default(now())
+  recordedByUserId String?
+  createdAt     DateTime              @default(now())
+  case          WelfareCase           @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+  @@index([deliveredAt])
+}
+
+// --- Choir MVP: music library ---
+
+model SongCategory {
+  id        String   @id @default(uuid())
+  choirId   String?
+  code      String
+  name      String
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  choir     Choir?   @relation(fields: [choirId], references: [id])
+  songs     Song[]
+
+  @@unique([choirId, code])
+  @@index([choirId])
+}
+
+model Song {
+  id                 String   @id @default(uuid())
+  choirId            String?
+  title              String
+  alternateTitle     String?
+  language           String?
+  composer           String?
+  arranger           String?
+  year               Int?
+  copyrightInfo      String?
+  source             String?
+  scriptureReference String?
+  lyricsText         String?
+  notes              String?
+  categoryId         String?
+  active             Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  choir              Choir?   @relation(fields: [choirId], references: [id])
+  category           SongCategory? @relation(fields: [categoryId], references: [id])
+  assets             SongAsset[]
+  usageRecords       SongUsageRecord[]
+  rehearsalPlanSongs RehearsalPlanSong[]
+  favorites          SongFavorite[]
+
+  @@index([title])
+  @@index([categoryId])
+  @@index([choirId])
+}
+
+model SongFavorite {
+  id        String   @id @default(uuid())
+  memberId  String
+  songId    String
+  createdAt DateTime @default(now())
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  song      Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, songId])
+  @@index([memberId])
+}
+
+model SongAsset {
+  id        String        @id @default(uuid())
+  songId    String
+  assetType SongAssetType
+  fileName  String
+  fileUrl   String
+  mimeType  String?
+  fileSize  Int?
+  createdAt DateTime      @default(now())
+  song      Song          @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@index([songId])
+}
+
+model SongUsageRecord {
+  id        String   @id @default(uuid())
+  songId    String
+  eventId   String?
+  rehearsalPlanId String?
+  leaderId  String?
+  usedAt    DateTime @default(now())
+  notes     String?
+  song      Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  event     Event?   @relation(fields: [eventId], references: [id])
+  leader    Member?  @relation(fields: [leaderId], references: [id])
+
+  @@index([songId])
+  @@index([usedAt])
+}
+
+// --- Choir MVP: rehearsal operations ---
+
+model VoiceSection {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  planSections RehearsalPlanSection[]
+}
+
+model RehearsalPlan {
+  id        String   @id @default(uuid())
+  eventId   String   @unique
+  leaderId  String?
+  objectives String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  leader    Member?  @relation(fields: [leaderId], references: [id])
+  songs     RehearsalPlanSong[]
+  sections  RehearsalPlanSection[]
+
+  @@index([leaderId])
+}
+
+model RehearsalPlanSong {
+  id               String @id @default(uuid())
+  rehearsalPlanId  String
+  songId           String
+  sortOrder        Int    @default(0)
+  estimatedMinutes Int?
+  difficulty       String?
+  priority         Int    @default(0)
+  readinessPercent Int?
+  notes            String?
+  plan             RehearsalPlan @relation(fields: [rehearsalPlanId], references: [id], onDelete: Cascade)
+  song             Song          @relation(fields: [songId], references: [id])
+
+  @@unique([rehearsalPlanId, songId])
+}
+
+model RehearsalPlanSection {
+  id               String @id @default(uuid())
+  rehearsalPlanId  String
+  voiceSectionId   String
+  focusNotes       String?
+  readinessStatus  RehearsalReadinessStatus @default(NOT_STARTED)
+  readinessPercent Int?
+  plan             RehearsalPlan @relation(fields: [rehearsalPlanId], references: [id], onDelete: Cascade)
+  voiceSection     VoiceSection  @relation(fields: [voiceSectionId], references: [id])
+
+  @@unique([rehearsalPlanId, voiceSectionId])
+}
+
+model RehearsalAttendance {
+  id               String                   @id @default(uuid())
+  eventId          String
+  memberId         String
+  status           RehearsalAttendanceStatus
+  notes            String?
+  recordedByUserId String?
+  recordedAt       DateTime                 @default(now())
+  event            Event                    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  member           Member                   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, memberId])
+  @@index([eventId])
+  @@index([memberId])
+}
+
+// --- Choir MVP: communication ---
+
+model ChoirAnnouncement {
+  id          String               @id @default(uuid())
+  choirId     String?
+  title       String
+  body        String
+  audience    AnnouncementAudience @default(ENTIRE_CHOIR)
+  audienceRef String?
+  publishedAt DateTime?
+  expiresAt   DateTime?
+  createdByUserId String
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  choir       Choir?               @relation(fields: [choirId], references: [id])
+  reads       ChoirAnnouncementRead[]
+
+  @@index([choirId])
+  @@index([publishedAt])
+  @@index([audience])
+}
+
+model ChoirAnnouncementRead {
+  id             String   @id @default(uuid())
+  announcementId String
+  userId         String
+  readAt         DateTime @default(now())
+  acknowledged   Boolean  @default(false)
+  announcement   ChoirAnnouncement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, userId])
+}
+
+// --- Choir MVP: documents ---
+
+model ChoirDocument {
+  id          String                @id @default(uuid())
+  choirId     String?
+  title       String
+  category    ChoirDocumentCategory @default(OTHER)
+  description String?
+  currentVersionId String?          @unique
+  createdByUserId String
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  choir       Choir?                @relation(fields: [choirId], references: [id])
+  versions    ChoirDocumentVersion[]
+  currentVersion ChoirDocumentVersion? @relation("CurrentDocumentVersion", fields: [currentVersionId], references: [id])
+
+  @@index([choirId])
+}
+
+model ChoirDocumentVersion {
+  id          String   @id @default(uuid())
+  documentId  String
+  versionNumber Int
+  fileName    String
+  fileUrl     String
+  mimeType    String?
+  fileSize    Int?
+  changeNotes String?
+  uploadedByUserId String
+  createdAt   DateTime @default(now())
+  document    ChoirDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  currentFor  ChoirDocument? @relation("CurrentDocumentVersion")
+
+  @@unique([documentId, versionNumber])
+  @@index([documentId])
+}
+
+// --- Choir MVP: meetings ---
+
+model ChoirMeeting {
+  id          String        @id @default(uuid())
+  choirId     String?
+  title       String
+  scheduledAt DateTime
+  location    String?
+  agenda      String?
+  minutes     String?
+  status      MeetingStatus @default(SCHEDULED)
+  createdByUserId String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  choir       Choir?        @relation(fields: [choirId], references: [id])
+  attendees   MeetingAttendee[]
+  decisions   MeetingDecision[]
+  actionItems MeetingActionItem[]
+
+  @@index([choirId])
+}
+
+model MeetingAttendee {
+  id        String @id @default(uuid())
+  meetingId String
+  memberId  String
+  present   Boolean @default(false)
+  meeting   ChoirMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  member    Member       @relation(fields: [memberId], references: [id])
+
+  @@unique([meetingId, memberId])
+}
+
+model MeetingDecision {
+  id        String   @id @default(uuid())
+  meetingId String
+  decision  String
+  createdAt DateTime @default(now())
+  meeting   ChoirMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@index([meetingId])
+}
+
+model MeetingActionItem {
+  id        String           @id @default(uuid())
+  meetingId String
+  title     String
+  ownerId   String?
+  dueAt     DateTime?
+  status    ActionItemStatus @default(OPEN)
+  meeting   ChoirMeeting     @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  owner     Member?          @relation(fields: [ownerId], references: [id])
+
+  @@index([meetingId])
+  @@index([status])
+}
+
+// --- Choir MVP: uniforms ---
+
+model UniformType {
+  id          String @id @default(uuid())
+  choirId     String?
+  code        String
+  name        String
+  description String?
+  choir       Choir? @relation(fields: [choirId], references: [id])
+  items       UniformItem[]
+
+  @@unique([choirId, code])
+  @@index([choirId])
+}
+
+model UniformItem {
+  id           String            @id @default(uuid())
+  uniformTypeId String
+  label        String
+  size         String?
+  status       UniformItemStatus @default(AVAILABLE)
+  condition    String?
+  assignments  UniformAssignment[]
+  uniformType  UniformType       @relation(fields: [uniformTypeId], references: [id])
+
+  @@index([uniformTypeId])
+  @@index([status])
+}
+
+model UniformAssignment {
+  id           String   @id @default(uuid())
+  uniformItemId String
+  memberId     String
+  issuedAt     DateTime @default(now())
+  returnedAt   DateTime?
+  notes        String?
+  item         UniformItem @relation(fields: [uniformItemId], references: [id])
+  member       Member      @relation(fields: [memberId], references: [id])
+
+  @@index([memberId])
+  @@index([uniformItemId])
+}
+
+// --- Choir MVP: equipment ---
+
+model EquipmentAsset {
+  id           String             @id @default(uuid())
+  choirId      String?
+  name         String
+  category     String?
+  serialNumber String?            @unique
+  condition    EquipmentCondition @default(GOOD)
+  notes        String?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  choir        Choir?             @relation(fields: [choirId], references: [id])
+  assignments  EquipmentAssignment[]
+  maintenance  EquipmentMaintenanceLog[]
+
+  @@index([choirId])
+}
+
+model EquipmentAssignment {
+  id          String                    @id @default(uuid())
+  equipmentId String
+  memberId    String?
+  status      EquipmentAssignmentStatus @default(ASSIGNED)
+  assignedAt  DateTime                  @default(now())
+  returnedAt  DateTime?
+  notes       String?
+  equipment   EquipmentAsset            @relation(fields: [equipmentId], references: [id])
+  member      Member?                   @relation(fields: [memberId], references: [id])
+
+  @@index([equipmentId])
+  @@index([memberId])
+}
+
+model EquipmentMaintenanceLog {
+  id          String   @id @default(uuid())
+  equipmentId String
+  description String
+  cost        Decimal?
+  performedAt DateTime @default(now())
+  equipment   EquipmentAsset @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@index([equipmentId])
+}
+
+// --- Ministry Foundation (MF-1) ---
+
+model Ministry {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  memberships            MinistryMembership[]
+  leadershipPositions    MinistryLeadershipPosition[]
+  leadershipAssignments  MinistryLeadershipAssignment[]
+  permissionAssignments  MinistryPermissionAssignment[]
+  settings               MinistrySettings?
+  operationalUnits       OperationalUnit[]
+  announcements          MinistryAnnouncement[]
+  documents              MinistryDocument[]
+  meetings               MinistryMeeting[]
+  activities             MinistryActivity[]
+  devotions              Devotion[]
+  notifications          Notification[]
+  funds                  MinistryFund[]
+  budgets                MinistryBudget[]
+  expenses               MinistryExpense[]
+
+  @@index([isActive])
+}
+
+model MinistryMembership {
+  id         String                   @id @default(uuid())
+  ministryId String
+  memberId   String
+  joinedAt   DateTime                 @default(now())
+  status     MinistryMembershipStatus @default(ACTIVE)
+  notes      String?
+  createdAt  DateTime                 @default(now())
+  updatedAt  DateTime                 @updatedAt
+
+  ministry Ministry @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  member   Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([ministryId, memberId])
+  @@index([memberId])
+  @@index([ministryId, status])
+}
+
+model MinistryLeadershipPosition {
+  id          String   @id @default(uuid())
+  ministryId  String
+  name        String
+  description String?
+  isSystem    Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ministry    Ministry                       @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  assignments MinistryLeadershipAssignment[]
+
+  @@unique([ministryId, name])
+  @@index([ministryId, isActive])
+}
+
+model MinistryLeadershipAssignment {
+  id               String    @id @default(uuid())
+  ministryId       String
+  memberId         String
+  positionId       String
+  startedAt        DateTime  @default(now())
+  endedAt          DateTime?
+  assignedByUserId String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  ministry   Ministry                   @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  member     Member                     @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  position   MinistryLeadershipPosition @relation(fields: [positionId], references: [id], onDelete: Restrict)
+  assignedBy User?                      @relation("MinistryLeadershipAssigner", fields: [assignedByUserId], references: [id])
+
+  @@index([ministryId, endedAt])
+  @@index([memberId])
+  @@index([positionId])
+}
+
+model MinistryPermissionAssignment {
+  id              String    @id @default(uuid())
+  ministryId      String
+  memberId        String
+  permission      String
+  grantedByUserId String?
+  grantedAt       DateTime  @default(now())
+  revokedAt       DateTime?
+
+  ministry  Ministry @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  grantedBy User?    @relation("MinistryPermissionGranter", fields: [grantedByUserId], references: [id])
+
+  @@index([ministryId, memberId])
+  @@index([ministryId, permission])
+  @@index([memberId, revokedAt])
+}
+
+model MinistrySettings {
+  ministryId            String   @id
+  allowDevotions          Boolean  @default(true)
+  allowAnnouncements      Boolean  @default(true)
+  allowDocuments          Boolean  @default(true)
+  allowMeetings           Boolean  @default(true)
+  allowAssets             Boolean  @default(true)
+  allowFinance            Boolean  @default(true)
+  allowOperationalUnits   Boolean  @default(false)
+  allowReporting          Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  ministry Ministry @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+}
+
+// --- Operational Units Foundation (MF-2) ---
+
+model OperationalUnit {
+  id          String              @id @default(uuid())
+  ministryId  String
+  code        String
+  name        String
+  description String?
+  type        OperationalUnitType @default(CUSTOM)
+  isActive    Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  ministry              Ministry                              @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  memberships           OperationalUnitMembership[]
+  leadershipPositions   OperationalUnitLeadershipPosition[]
+  leadershipAssignments OperationalUnitLeadershipAssignment[]
+  permissionAssignments OperationalUnitPermissionAssignment[]
+  settings              OperationalUnitSettings?
+  devotions               Devotion[]
+  operationAssignments    OperationAssignment[]
+  protocolMemberProfiles  ProtocolMemberProfile[]
+
+  @@unique([ministryId, code])
+  @@unique([ministryId, name])
+  @@index([ministryId, isActive])
+  @@index([type])
+}
+
+model OperationalUnitMembership {
+  id                String                   @id @default(uuid())
+  operationalUnitId String
+  memberId          String
+  status            MinistryMembershipStatus @default(ACTIVE)
+  joinedAt          DateTime                 @default(now())
+  notes             String?
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+
+  operationalUnit OperationalUnit @relation(fields: [operationalUnitId], references: [id], onDelete: Cascade)
+  member          Member          @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([operationalUnitId, memberId])
+  @@index([memberId])
+  @@index([operationalUnitId, status])
+}
+
+model OperationalUnitLeadershipPosition {
+  id                String   @id @default(uuid())
+  operationalUnitId String
+  name              String
+  description       String?
+  isSystem          Boolean  @default(false)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  operationalUnit OperationalUnit                   @relation(fields: [operationalUnitId], references: [id], onDelete: Cascade)
+  assignments     OperationalUnitLeadershipAssignment[]
+
+  @@unique([operationalUnitId, name])
+  @@index([operationalUnitId, isActive])
+}
+
+model OperationalUnitLeadershipAssignment {
+  id                String    @id @default(uuid())
+  operationalUnitId String
+  memberId          String
+  positionId        String
+  startedAt         DateTime  @default(now())
+  endedAt           DateTime?
+  assignedByUserId  String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  operationalUnit OperationalUnit                   @relation(fields: [operationalUnitId], references: [id], onDelete: Cascade)
+  member          Member                            @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  position        OperationalUnitLeadershipPosition @relation(fields: [positionId], references: [id], onDelete: Restrict)
+  assignedBy      User?                             @relation("OperationalUnitLeadershipAssigner", fields: [assignedByUserId], references: [id])
+
+  @@index([operationalUnitId, endedAt])
+  @@index([memberId])
+  @@index([positionId])
+}
+
+model OperationalUnitPermissionAssignment {
+  id                String    @id @default(uuid())
+  operationalUnitId String
+  memberId          String
+  permission        String
+  grantedByUserId   String?
+  grantedAt         DateTime  @default(now())
+  revokedAt         DateTime?
+
+  operationalUnit OperationalUnit @relation(fields: [operationalUnitId], references: [id], onDelete: Cascade)
+  member          Member          @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  grantedBy       User?           @relation("OperationalUnitPermissionGranter", fields: [grantedByUserId], references: [id])
+
+  @@index([operationalUnitId, memberId])
+  @@index([operationalUnitId, permission])
+  @@index([memberId, revokedAt])
+}
+
+model OperationalUnitSettings {
+  operationalUnitId   String   @id
+  allowEvents         Boolean  @default(true)
+  allowAttendance     Boolean  @default(true)
+  allowReports        Boolean  @default(true)
+  allowAnnouncements  Boolean  @default(true)
+  allowDocuments      Boolean  @default(true)
+  allowAssets         Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  operationalUnit OperationalUnit @relation(fields: [operationalUnitId], references: [id], onDelete: Cascade)
+}
+
+// --- Ministry Services Platform (MF-3) ---
+
+model MinistryAnnouncement {
+  id              String                     @id @default(uuid())
+  ministryId      String
+  title           String
+  content         String
+  priority        MinistryAnnouncementPriority @default(NORMAL)
+  audienceType    MinistryAnnouncementAudience @default(ALL_MINISTRY)
+  audienceRef     String?
+  publishedAt     DateTime?
+  expiresAt       DateTime?
+  createdByUserId String
+  isPinned        Boolean                    @default(false)
+  isActive        Boolean                    @default(true)
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
+
+  ministry  Ministry                   @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  createdBy User                       @relation("MinistryAnnouncementAuthor", fields: [createdByUserId], references: [id])
+  reads     MinistryAnnouncementRead[]
+
+  @@index([ministryId, isActive])
+  @@index([ministryId, isPinned])
+  @@index([ministryId, publishedAt])
+}
+
+model MinistryAnnouncementRead {
+  id             String   @id @default(uuid())
+  announcementId String
+  memberId       String
+  readAt         DateTime @default(now())
+
+  announcement MinistryAnnouncement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  member       Member                 @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, memberId])
+  @@index([memberId])
+}
+
+model MinistryDocument {
+  id               String                 @id @default(uuid())
+  ministryId       String
+  title            String
+  description      String?
+  category         MinistryDocumentCategory @default(OTHER)
+  currentVersionId String?                @unique
+  isArchived       Boolean                @default(false)
+  uploadedByUserId String
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  ministry       Ministry                  @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  uploadedBy     User                      @relation("MinistryDocumentUploader", fields: [uploadedByUserId], references: [id])
+  versions       MinistryDocumentVersion[]
+  currentVersion MinistryDocumentVersion?  @relation("MinistryDocumentCurrentVersion", fields: [currentVersionId], references: [id])
+
+  @@index([ministryId, isArchived])
+  @@index([ministryId, category])
+}
+
+model MinistryDocumentVersion {
+  id               String   @id @default(uuid())
+  documentId       String
+  versionNumber    Int
+  fileName         String
+  fileUrl          String
+  mimeType         String?
+  fileSize         Int?
+  changeNotes      String?
+  uploadedByUserId String
+  createdAt        DateTime @default(now())
+
+  document   MinistryDocument  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  uploadedBy User              @relation("MinistryDocumentVersionUploader", fields: [uploadedByUserId], references: [id])
+  currentFor MinistryDocument? @relation("MinistryDocumentCurrentVersion")
+
+  @@unique([documentId, versionNumber])
+  @@index([documentId])
+}
+
+model MinistryMeeting {
+  id              String        @id @default(uuid())
+  ministryId      String
+  title           String
+  description     String?
+  scheduledAt     DateTime
+  location        String?
+  status          MeetingStatus @default(SCHEDULED)
+  createdByUserId String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  ministry    Ministry                  @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  createdBy   User                      @relation("MinistryMeetingCreator", fields: [createdByUserId], references: [id])
+  attendees   MinistryMeetingAttendee[]
+  decisions   MinistryMeetingDecision[]
+  actionItems MinistryMeetingActionItem[]
+
+  @@index([ministryId, status])
+  @@index([ministryId, scheduledAt])
+}
+
+model MinistryMeetingAttendee {
+  id        String  @id @default(uuid())
+  meetingId String
+  memberId  String
+  present   Boolean @default(false)
+
+  meeting MinistryMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  member  Member          @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([meetingId, memberId])
+}
+
+model MinistryMeetingDecision {
+  id        String   @id @default(uuid())
+  meetingId String
+  summary   String
+  createdAt DateTime @default(now())
+
+  meeting MinistryMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@index([meetingId])
+}
+
+model MinistryMeetingActionItem {
+  id         String           @id @default(uuid())
+  meetingId  String
+  title      String
+  assigneeId String?
+  dueDate    DateTime?
+  status     ActionItemStatus @default(OPEN)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  meeting  MinistryMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  assignee Member?         @relation("MinistryMeetingActionAssignee", fields: [assigneeId], references: [id])
+
+  @@index([meetingId, status])
+  @@index([assigneeId])
+}
+
+model MinistryActivity {
+  id         String               @id @default(uuid())
+  ministryId String
+  type       MinistryActivityType
+  actorUserId String?
+  actorLabel String?
+  entityType String?
+  entityId   String?
+  summary    String?
+  metadata   Json?
+  createdAt  DateTime             @default(now())
+
+  ministry Ministry @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  actor    User?    @relation("MinistryActivityActor", fields: [actorUserId], references: [id])
+
+  @@index([ministryId, createdAt])
+  @@index([ministryId, type])
+  @@index([actorUserId])
+}
+
+// --- Resource & Asset Management Foundation (MF-4) ---
+
+model AssetCategory {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  description String?
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  assets      Asset[]
+
+  @@index([isSystem])
+}
+
+model Asset {
+  id              String          @id @default(uuid())
+  code            String          @unique
+  name            String
+  description     String?
+  categoryId      String
+  status          AssetStatus     @default(ACTIVE)
+  condition       AssetCondition  @default(GOOD)
+  purchaseDate    DateTime?
+  purchaseValue   Decimal?
+  serialNumber    String?
+  manufacturer    String?
+  model           String?
+  imageUrls       Json?
+  notes           String?
+  createdByUserId String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  category      AssetCategory       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  createdBy     User?               @relation("AssetCreator", fields: [createdByUserId], references: [id])
+  ownerships    AssetOwnership[]
+  custodians    AssetCustodian[]
+  assignments   AssetAssignment[]
+  maintenance   AssetMaintenance[]
+  activities    AssetActivity[]
+  uniformProfile   UniformProfile?
+  instrumentProfile InstrumentProfile?
+
+  @@index([categoryId])
+  @@index([status])
+  @@index([condition])
+}
+
+model AssetOwnership {
+  id                  String         @id @default(uuid())
+  assetId             String
+  ownerType           AssetOwnerType
+  ownerId             String
+  ownershipPercentage Decimal?
+  contributedAmount   Decimal?
+  notes               String?
+  createdAt           DateTime       @default(now())
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@unique([assetId, ownerType, ownerId])
+  @@index([ownerType, ownerId])
+  @@index([assetId])
+}
+
+model AssetCustodian {
+  id         String    @id @default(uuid())
+  assetId    String
+  memberId   String
+  assignedAt DateTime  @default(now())
+  releasedAt DateTime?
+  notes      String?
+
+  asset  Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  member Member @relation(fields: [memberId], references: [id], onDelete: Restrict)
+
+  @@index([assetId, releasedAt])
+  @@index([memberId])
+}
+
+model AssetAssignment {
+  id               String                    @id @default(uuid())
+  assetId          String
+  assignedToType   AssetAssignmentTargetType
+  assignedToId     String
+  purpose          String?
+  assignedAt       DateTime                  @default(now())
+  expectedReturnAt DateTime?
+  returnedAt       DateTime?
+  notes            String?
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId, returnedAt])
+  @@index([assignedToType, assignedToId])
+}
+
+model AssetMaintenance {
+  id                   String               @id @default(uuid())
+  assetId              String
+  type                 AssetMaintenanceType
+  description          String
+  cost                 Decimal?
+  vendor               String?
+  performedBy          String?
+  performedAt          DateTime             @default(now())
+  nextMaintenanceDate  DateTime?
+  attachments          Json?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId, performedAt])
+  @@index([nextMaintenanceDate])
+}
+
+model AssetActivity {
+  id           String            @id @default(uuid())
+  assetId      String
+  activityType AssetActivityType
+  actorId      String?
+  metadata     Json?
+  createdAt    DateTime          @default(now())
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  actor User? @relation("AssetActivityActor", fields: [actorId], references: [id])
+
+  @@index([assetId, createdAt])
+  @@index([activityType])
+}
+
+model UniformProfile {
+  assetId String           @id
+  size    String?
+  gender  MemberGender?
+  style   String?
+  color   String?
+  status  UniformAssetStatus @default(AVAILABLE)
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+}
+
+model InstrumentProfile {
+  assetId              String  @id
+  instrumentType       String
+  tuningNotes          String?
+  maintenanceIntervalDays Int?
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([instrumentType])
+}
+
+// --- Ministry Finance & Resource Funds (MF-5) ---
+
+model MinistryFund {
+  id          String           @id @default(uuid())
+  ministryId  String
+  name        String
+  description String?
+  type        MinistryFundType @default(GENERAL)
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  ministry     Ministry                  @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  transactions MinistryFundTransaction[]
+  expenses     MinistryExpense[]
+  transfersOut MinistryFundTransfer[]    @relation("FundTransferFrom")
+  transfersIn  MinistryFundTransfer[]      @relation("FundTransferTo")
+
+  @@unique([ministryId, name])
+  @@index([ministryId, isActive])
+  @@index([type])
+}
+
+model MinistryBudget {
+  id          String               @id @default(uuid())
+  ministryId  String
+  name        String
+  fiscalYear  Int
+  totalBudget Decimal
+  notes       String?
+  status      MinistryBudgetStatus @default(DRAFT)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  ministry   Ministry                 @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  categories MinistryBudgetCategory[]
+  expenses   MinistryExpense[]
+
+  @@unique([ministryId, name, fiscalYear])
+  @@index([ministryId, status])
+  @@index([fiscalYear])
+}
+
+model MinistryBudgetCategory {
+  id              String   @id @default(uuid())
+  budgetId        String
+  name            String
+  allocatedAmount Decimal
+  spentAmount     Decimal  @default(0)
+  remainingAmount Decimal
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  budget   MinistryBudget    @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  expenses MinistryExpense[]
+
+  @@unique([budgetId, name])
+  @@index([budgetId])
+}
+
+model MinistryExpense {
+  id            String                @id @default(uuid())
+  ministryId    String
+  fundId        String
+  categoryId    String?
+  budgetId      String?
+  amount        Decimal
+  description   String
+  receiptUrls   Json?
+  requestedById String
+  approvedById  String?
+  approvedAt    DateTime?
+  expenseDate   DateTime              @default(now())
+  status        MinistryExpenseStatus @default(DRAFT)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  ministry    Ministry                @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  fund        MinistryFund            @relation(fields: [fundId], references: [id], onDelete: Restrict)
+  category    MinistryBudgetCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  budget      MinistryBudget?         @relation(fields: [budgetId], references: [id], onDelete: SetNull)
+  requestedBy Member                  @relation("MinistryExpenseRequester", fields: [requestedById], references: [id])
+  approvedBy  Member?                 @relation("MinistryExpenseApprover", fields: [approvedById], references: [id])
+
+  @@index([ministryId, status])
+  @@index([fundId])
+  @@index([expenseDate])
+}
+
+model MinistryFundTransaction {
+  id          String                      @id @default(uuid())
+  fundId      String
+  type        MinistryFundTransactionType
+  amount      Decimal
+  description String?
+  actorId     String?
+  transferId  String?
+  expenseId   String?
+  createdAt   DateTime                    @default(now())
+
+  fund     MinistryFund          @relation(fields: [fundId], references: [id], onDelete: Cascade)
+  actor    User?                   @relation("MinistryFundTransactionActor", fields: [actorId], references: [id])
+  transfer MinistryFundTransfer? @relation(fields: [transferId], references: [id], onDelete: SetNull)
+
+  @@index([fundId, createdAt])
+  @@index([type])
+}
+
+model MinistryFundTransfer {
+  id           String   @id @default(uuid())
+  fromFundId   String
+  toFundId     String
+  amount       Decimal
+  reason       String?
+  approvedById String?
+  createdAt    DateTime @default(now())
+
+  fromFund     MinistryFund              @relation("FundTransferFrom", fields: [fromFundId], references: [id], onDelete: Restrict)
+  toFund       MinistryFund              @relation("FundTransferTo", fields: [toFundId], references: [id], onDelete: Restrict)
+  approvedBy   User?                     @relation("MinistryFundTransferApprover", fields: [approvedById], references: [id])
+  transactions MinistryFundTransaction[]
+
+  @@index([fromFundId])
+  @@index([toFundId])
+  @@index([createdAt])
+}
+
+model LeadershipTerm {
+  id              String                    @id @default(uuid())
+  assignmentScope LeadershipAssignmentScope
+  assignmentId    String
+  startedAt       DateTime
+  expectedEndAt   DateTime?
+  endedAt         DateTime?
+  notes           String?
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+
+  @@unique([assignmentScope, assignmentId])
+  @@index([expectedEndAt])
+  @@index([endedAt])
+  @@index([startedAt])
+}
+
+// --- Local Church Operations & Scheduling (MF-7) ---
+
+enum ChurchOperationType {
+  SERVICE
+  SPECIAL_EVENT
+}
+
+enum OperationOccurrenceStatus {
+  DRAFT
+  UNDER_REVIEW
+  APPROVED
+  PUBLISHED
+  COMPLETED
+  CANCELLED
+}
+
+enum OperationAssignmentType {
+  MAIN_CHOIR
+  CHILDREN_CHOIR
+  PROTOCOL_TEAM
+  SERVICE_TEAM
+  CUSTOM
+}
+
+enum OperationAssignmentStatus {
+  PENDING
+  CONFIRMED
+  DECLINED
+  REPLACED
+  COMPLETED
+}
+
+enum OperationNotificationKind {
+  ASSIGNMENT_CREATED
+  ASSIGNMENT_CONFIRMED
+  ASSIGNMENT_DECLINED
+  OPERATION_PUBLISHED
+  OPERATION_CANCELLED
+  CONFLICT_DETECTED
+}
+
+model OperationTemplate {
+  id          String              @id @default(uuid())
+  code        String              @unique
+  name        String
+  type        ChurchOperationType
+  description String?
+  isSystem    Boolean             @default(false)
+  isActive    Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  occurrences OperationOccurrence[]
+  requirements TemplateAssignmentRequirement[]
+
+  @@index([type, isActive])
+}
+
+model TemplateAssignmentRequirement {
+  id             String                  @id @default(uuid())
+  templateId     String
+  assignmentType OperationAssignmentType
+  quantity       Int                     @default(1)
+  required       Boolean                 @default(true)
+  notes          String?
+
+  template OperationTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+}
+
+model OperationOccurrence {
+  id           String                    @id @default(uuid())
+  templateId   String?
+  type         ChurchOperationType
+  title        String
+  description  String?
+  startAt      DateTime
+  endAt        DateTime
+  status       OperationOccurrenceStatus @default(DRAFT)
+  createdById  String
+  approvedById String?
+  publishedAt  DateTime?
+  completedAt  DateTime?
+  cancelledAt  DateTime?
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+
+  template      OperationTemplate?       @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  createdBy     User                     @relation("OperationCreator", fields: [createdById], references: [id])
+  approvedBy    User?                    @relation("OperationApprover", fields: [approvedById], references: [id])
+  requirements  AssignmentRequirement[]
+  assignments   OperationAssignment[]
+  notifications OperationNotification[]
+  protocolTeam  ProtocolOccurrenceTeam?
+  choirServiceAssignments ChoirServiceAssignment[]
+  choirActivities ChoirActivity[]
+
+  @@index([status])
+  @@index([startAt, endAt])
+  @@index([type])
+  @@index([templateId])
+}
+
+model AssignmentRequirement {
+  id                    String                  @id @default(uuid())
+  operationOccurrenceId String
+  assignmentType        OperationAssignmentType
+  quantity              Int                     @default(1)
+  required              Boolean                 @default(true)
+  notes                 String?
+
+  occurrence OperationOccurrence @relation(fields: [operationOccurrenceId], references: [id], onDelete: Cascade)
+
+  @@index([operationOccurrenceId])
+}
+
+model OperationAssignment {
+  id                 String                    @id @default(uuid())
+  occurrenceId       String
+  assignmentType     OperationAssignmentType
+  operationalUnitId  String
+  memberId           String?
+  status             OperationAssignmentStatus @default(PENDING)
+  confirmedAt        DateTime?
+  declinedAt         DateTime?
+  notes              String?
+  overrideReason     String?
+  overrideByUserId   String?
+  attendanceId       String?
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+
+  occurrence      OperationOccurrence @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
+  operationalUnit OperationalUnit   @relation(fields: [operationalUnitId], references: [id], onDelete: Restrict)
+  member          Member?           @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  notifications   OperationNotification[]
+
+  @@unique([occurrenceId, operationalUnitId])
+  @@index([occurrenceId, status])
+  @@index([operationalUnitId])
+  @@index([memberId])
+  @@index([attendanceId])
+}
+
+model OperationNotification {
+  id           String                    @id @default(uuid())
+  occurrenceId String?
+  assignmentId String?
+  userId       String
+  kind         OperationNotificationKind
+  title        String
+  body         String?
+  scheduledFor DateTime?
+  sentAt       DateTime?
+  createdAt    DateTime                  @default(now())
+
+  occurrence OperationOccurrence? @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
+  assignment OperationAssignment? @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  user       User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, sentAt])
+  @@index([scheduledFor])
+  @@index([occurrenceId])
+}
+
+// --- Protocol Operations Engine (PROTOCOL-1) ---
+
+enum ProtocolOccurrenceTeamStatus {
+  GENERATED
+  REVIEWED
+  APPROVED
+  PUBLISHED
+  COMPLETED
+}
+
+enum ProtocolTeamMemberType {
+  OFFICIAL
+  REPLACEMENT
+  VOLUNTEER
+}
+
+enum ProtocolAttendanceOutcome {
+  PRESENT_FULL
+  PRESENT_LEFT_EARLY
+  PRESENT_LATE
+  PRESENT_LATE_LEFT_EARLY
+  ABSENT_EXCUSED
+  ABSENT_SELF_REPLACED
+  ABSENT_UNEXCUSED
+}
+
+enum ProtocolRankingCategory {
+  ATTENDANCE
+  RELIABILITY
+  SERVICE_COUNT
+  REPLACEMENT_SUPPORT
+  TEAMWORK
+  OVERALL
+}
+
+enum ProtocolReplacementStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ProtocolAssignmentMode {
+  SUNDAY
+  TUESDAY
+  IGABURO
+  SPECIAL_EVENT
+}
+
+enum ProtocolBadgeKind {
+  FAITHFUL_SERVANT
+  EMERGENCY_HELPER
+  TEAM_SUPPORTER
+  RELIABLE_MEMBER
+  MOST_ACTIVE
+  PERFECT_ATTENDANCE
+  SERVICE_VETERAN
+  ATTENDANCE_CHAMPION
+}
+
+model ProtocolEngineSettings {
+  id                          String   @id @default("default")
+  maxOfficialServicesPerMonth Int      @default(3)
+  maxNonChoirMembers          Int      @default(3)
+  backupPoolSize              Int      @default(3)
+  gradePresentFull            Int      @default(100)
+  gradePresentLate            Int      @default(80)
+  gradePresentLeftEarly       Int      @default(75)
+  gradePresentLateLeftEarly   Int      @default(50)
+  gradeAbsentSelfReplaced     Int      @default(40)
+  gradeAbsentExcused          Int      @default(20)
+  gradeAbsentUnexcused        Int      @default(0)
+  overallWeightAttendance     Float    @default(0.3)
+  overallWeightReliability    Float    @default(0.3)
+  overallWeightServiceCount   Float    @default(0.2)
+  overallWeightReplacement    Float    @default(0.1)
+  overallWeightTeamwork       Float    @default(0.1)
+  membersCanViewFullRanking   Boolean  @default(false)
+  updatedAt                   DateTime @updatedAt
+}
+
+model ProtocolMemberProfile {
+  id                          String   @id @default(uuid())
+  memberId                    String   @unique
+  protocolUnitId              String
+  active                      Boolean  @default(true)
+  notes                       String?
+  officialServicesMonth       Int      @default(0)
+  extraServicesMonth          Int      @default(0)
+  totalServicesMonth          Int      @default(0)
+  lifetimeOfficialServices    Int      @default(0)
+  lifetimeExtraServices       Int      @default(0)
+  lifetimeTotalServices       Int      @default(0)
+  assignedCount               Int      @default(0)
+  attendedCount               Int      @default(0)
+  attendanceRate              Float    @default(0)
+  lateArrivals                Int      @default(0)
+  earlyDepartures             Int      @default(0)
+  excusedAbsences             Int      @default(0)
+  replacementFoundAbsences    Int      @default(0)
+  selfReplacements            Int      @default(0)
+  unexcusedAbsences           Int      @default(0)
+  replacementServicesAccepted Int      @default(0)
+  replacementAssistanceGiven  Int      @default(0)
+  reliabilityScore            Float    @default(100)
+  currentRank                 Int?
+  currentGradeScore           Float?
+  currentOverallRank          Int?
+  statsMonth                  Int?
+  statsYear                   Int?
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+
+  member       Member              @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  protocolUnit OperationalUnit     @relation(fields: [protocolUnitId], references: [id], onDelete: Restrict)
+  badges       ProtocolMemberBadge[]
+
+  @@index([protocolUnitId, active])
+  @@index([currentRank])
+}
+
+model ProtocolOccurrenceTeam {
+  id                String                       @id @default(uuid())
+  occurrenceId      String                       @unique
+  status            ProtocolOccurrenceTeamStatus @default(GENERATED)
+  assignmentMode    ProtocolAssignmentMode
+  generatedAt       DateTime                     @default(now())
+  reviewedAt        DateTime?
+  approvedAt        DateTime?
+  publishedAt       DateTime?
+  completedAt       DateTime?
+  generatedByUserId String?
+  approvedByUserId  String?
+  notes             String?
+
+  occurrence OperationOccurrence           @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
+  members    ProtocolOccurrenceTeamMember[]
+  teamLeader ProtocolOccurrenceTeamLeader?
+  backups    ProtocolOccurrenceTeamBackup[]
+  report     ProtocolTeamReport?
+
+  @@index([status])
+  @@index([generatedAt])
+}
+
+model ProtocolTeamLeader {
+  id               String   @id @default(uuid())
+  memberId         String   @unique
+  choirId          String?
+  label            String?
+  isNonChoirLeader Boolean  @default(false)
+  active           Boolean  @default(true)
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  member           Member                         @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  choir            Choir?                         @relation(fields: [choirId], references: [id], onDelete: SetNull)
+  teamAssignments  ProtocolOccurrenceTeamLeader[]
+  reportsSubmitted ProtocolTeamReport[]
+
+  @@index([choirId, active])
+  @@index([isNonChoirLeader, active])
+}
+
+model ProtocolOccurrenceTeamLeader {
+  id                   String   @id @default(uuid())
+  teamId               String   @unique
+  protocolTeamLeaderId String
+  assignedByUserId     String?
+  overrideReason       String?
+  assignedAt           DateTime @default(now())
+
+  team               ProtocolOccurrenceTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  protocolTeamLeader ProtocolTeamLeader     @relation(fields: [protocolTeamLeaderId], references: [id], onDelete: Restrict)
+
+  @@index([protocolTeamLeaderId])
+}
+
+model ProtocolOccurrenceTeamBackup {
+  id        String   @id @default(uuid())
+  teamId    String
+  memberId  String
+  rank      Int      @default(0)
+  createdAt DateTime @default(now())
+
+  team   ProtocolOccurrenceTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  member Member                 @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, memberId])
+  @@index([teamId, rank])
+}
+
+model ProtocolTeamReport {
+  id              String   @id @default(uuid())
+  teamId          String   @unique
+  leaderId        String
+  summary         String
+  issues          String?
+  recommendations String?
+  submittedAt     DateTime @default(now())
+  submittedByUserId String?
+
+  team   ProtocolOccurrenceTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  leader ProtocolTeamLeader     @relation(fields: [leaderId], references: [id], onDelete: Restrict)
+
+  @@index([submittedAt])
+}
+
+model ProtocolOccurrenceTeamMember {
+  id                    String                 @id @default(uuid())
+  teamId                String
+  memberId              String
+  assignmentType        ProtocolTeamMemberType @default(OFFICIAL)
+  isExtraService        Boolean                @default(false)
+  quotaOverrideReason   String?
+  quotaOverrideByUserId String?
+  createdAt             DateTime               @default(now())
+
+  team                ProtocolOccurrenceTeam      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  member              Member                      @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  attendance          ProtocolTeamAttendance?
+  replacementRequests ProtocolReplacementRequest[]
+
+  @@unique([teamId, memberId])
+  @@index([teamId])
+  @@index([memberId])
+}
+
+model ProtocolTeamAttendance {
+  id                    String                    @id @default(uuid())
+  teamMemberId          String                    @unique
+  outcome               ProtocolAttendanceOutcome
+  attendanceScoreEarned Int?
+  recordedAt            DateTime                  @default(now())
+  recordedByUserId      String
+  notes                 String?
+
+  teamMember ProtocolOccurrenceTeamMember @relation(fields: [teamMemberId], references: [id], onDelete: Cascade)
+
+  @@index([recordedAt])
+  @@index([outcome])
+}
+
+model ProtocolReplacementRequest {
+  id                  String                    @id @default(uuid())
+  teamMemberId        String
+  originalMemberId    String
+  replacementMemberId String
+  reason              String?
+  status              ProtocolReplacementStatus @default(PENDING)
+  reviewedByUserId      String?
+  reviewedAt          DateTime?
+  createdAt           DateTime                  @default(now())
+
+  teamMember        ProtocolOccurrenceTeamMember @relation(fields: [teamMemberId], references: [id], onDelete: Cascade)
+  originalMember    Member                       @relation("ProtocolReplacementOriginal", fields: [originalMemberId], references: [id], onDelete: Restrict)
+  replacementMember Member                       @relation("ProtocolReplacementCover", fields: [replacementMemberId], references: [id], onDelete: Restrict)
+
+  @@index([status])
+  @@index([teamMemberId])
+  @@index([originalMemberId])
+}
+
+model ProtocolRankingEntry {
+  id               String   @id @default(uuid())
+  memberId         String
+  year             Int
+  month            Int?
+  rank             Int
+  gradeScore       Float
+  totalServices    Int
+  attendanceRate   Float
+  reliabilityScore Float
+  generatedAt      DateTime @default(now())
+
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, year, month])
+  @@index([year, month, rank])
+}
+
+model ProtocolMemberBadge {
+  id        String            @id @default(uuid())
+  profileId String
+  kind      ProtocolBadgeKind
+  awardedAt DateTime          @default(now())
+  year      Int?
+  month     Int?
+
+  profile ProtocolMemberProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, kind, year, month])
+  @@index([profileId])
+}
+
+model ProtocolCategoryRankingEntry {
+  id        String                  @id @default(uuid())
+  memberId  String
+  category  ProtocolRankingCategory
+  year      Int
+  month     Int?
+  rank      Int
+  score     Float
+  generatedAt DateTime              @default(now())
+
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, category, year, month])
+  @@index([category, year, month, rank])
+}
+
+// --- Choir Operations, Participation & Scheduling (CHOIR-2) ---
+
+enum ChoirActivityType {
+  SERVICE
+  REHEARSAL
+  PRAYER
+  SPECIAL_REHEARSAL
+  CONCERT
+  RETREAT
+  TRAINING
+  MEETING
+  OTHER
+}
+
+enum ChoirServiceAssignmentRole {
+  PRIMARY
+  SUPPORTING
+  CHILDREN
+  SPECIAL_GUEST
+}
+
+enum ChoirAttendanceOutcome {
+  PRESENT_FULL
+  PRESENT_LATE
+  PRESENT_LEFT_EARLY
+  PRESENT_LATE_LEFT_EARLY
+  ABSENT_EXCUSED
+  ABSENT_UNEXCUSED
+}
+
+enum ChoirSchedulePlanPeriod {
+  MONTHLY
+  QUARTERLY
+  SEMI_ANNUAL
+  ANNUAL
+}
+
+enum ChoirSchedulePlanStatus {
+  DRAFT
+  GENERATED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ChoirScheduleAdjustmentAction {
+  MOVE
+  REPLACE
+  ADD_SUPPORTING
+  CANCEL
+  RESCHEDULE
+}
+
+enum ChoirRankingCategory {
+  SERVICE_ATTENDANCE
+  REHEARSAL_ATTENDANCE
+  PRAYER_ATTENDANCE
+  RELIABILITY
+  SERVICE_COUNT
+  OVERALL
+}
+
+enum ChoirBadgeKind {
+  PERFECT_SERVICE_ATTENDANCE
+  PERFECT_REHEARSAL_ATTENDANCE
+  PRAYER_CHAMPION
+  RELIABLE_SINGER
+  SERVICE_VETERAN
+  CHOIR_SUPPORTER
+  ATTENDANCE_CHAMPION
+  FAITHFUL_MEMBER
+}
+
+model ChoirEngineSettings {
+  id                        String  @id @default("default")
+  gradePresentFull          Int     @default(100)
+  gradePresentLate          Int     @default(80)
+  gradePresentLeftEarly     Int     @default(75)
+  gradePresentLateLeftEarly Int     @default(50)
+  gradeAbsentExcused        Int     @default(20)
+  gradeAbsentUnexcused      Int     @default(0)
+  weightServiceAttendance   Float   @default(0.3)
+  weightRehearsalAttendance Float   @default(0.25)
+  weightPrayerAttendance    Float   @default(0.15)
+  weightReliability         Float   @default(0.2)
+  weightServiceCount        Float   @default(0.1)
+  membersCanViewFullRanking Boolean @default(false)
+  updatedAt                 DateTime @updatedAt
+}
+
+model ChoirServiceEligibility {
+  id                      String  @id @default(uuid())
+  choirId                 String  @unique
+  eligibleForMainServices Boolean @default(true)
+  eligibleForSunday1      Boolean @default(true)
+  eligibleForSunday2      Boolean @default(true)
+  eligibleForTuesday      Boolean @default(true)
+  eligibleForIgaburo      Boolean @default(true)
+  eligibleForSpecialEvents Boolean @default(true)
+  isChildrenChoir         Boolean @default(false)
+  isFifthSundayChoir      Boolean @default(false)
+  priority                Int     @default(0)
+  notes                   String?
+  updatedAt               DateTime @updatedAt
+
+  choir Choir @relation(fields: [choirId], references: [id], onDelete: Cascade)
+}
+
+model ChoirActivity {
+  id           String            @id @default(uuid())
+  choirId      String
+  title        String
+  description  String?
+  activityType ChoirActivityType
+  startAt      DateTime
+  endAt        DateTime
+  location     String?
+  notes        String?
+  occurrenceId String?
+  createdById  String
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  choir      Choir              @relation(fields: [choirId], references: [id], onDelete: Cascade)
+  occurrence OperationOccurrence? @relation(fields: [occurrenceId], references: [id], onDelete: SetNull)
+  attendances ChoirAttendance[]
+
+  @@index([choirId, startAt])
+  @@index([activityType])
+  @@index([occurrenceId])
+}
+
+model ChoirServiceAssignment {
+  id             String                     @id @default(uuid())
+  choirId        String
+  occurrenceId   String
+  role           ChoirServiceAssignmentRole @default(PRIMARY)
+  assignedById   String?
+  assignedAt     DateTime                   @default(now())
+  overrideReason String?
+  cancelledAt    DateTime?
+  planEntryId    String?
+
+  choir      Choir               @relation(fields: [choirId], references: [id], onDelete: Cascade)
+  occurrence OperationOccurrence @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
+  planEntry  ChoirSchedulePlanEntry? @relation(fields: [planEntryId], references: [id], onDelete: SetNull)
+  adjustments ChoirScheduleAdjustment[]
+
+  @@unique([choirId, occurrenceId, role])
+  @@index([occurrenceId])
+  @@index([choirId])
+}
+
+model ChoirAttendance {
+  id               String                 @id @default(uuid())
+  activityId       String
+  memberId         String
+  outcome          ChoirAttendanceOutcome
+  scoreEarned      Int?
+  notes            String?
+  recordedByUserId String?
+  recordedAt       DateTime               @default(now())
+
+  activity ChoirActivity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  member   Member        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, memberId])
+  @@index([memberId])
+  @@index([outcome])
+}
+
+model ChoirMemberParticipationProfile {
+  id                        String   @id @default(uuid())
+  choirId                   String
+  memberId                  String
+  officialServices          Int      @default(0)
+  extraServices             Int      @default(0)
+  serviceAssignments        Int      @default(0)
+  servicesAttended          Int      @default(0)
+  serviceAttendanceRate     Float    @default(0)
+  rehearsalsScheduled       Int      @default(0)
+  rehearsalsAttended        Int      @default(0)
+  rehearsalAttendanceRate   Float    @default(0)
+  prayerSessionsScheduled   Int      @default(0)
+  prayerSessionsAttended    Int      @default(0)
+  prayerAttendanceRate      Float    @default(0)
+  lateArrivals              Int      @default(0)
+  earlyDepartures           Int      @default(0)
+  excusedAbsences           Int      @default(0)
+  unexcusedAbsences         Int      @default(0)
+  overallParticipationScore Float    @default(0)
+  lifetimeParticipationScore Float   @default(0)
+  yearsActive               Int      @default(0)
+  currentRank               Int?
+  currentOverallRank        Int?
+  statsYear                 Int?
+  statsMonth                Int?
+  updatedAt                 DateTime @updatedAt
+
+  choir  Choir  @relation(fields: [choirId], references: [id], onDelete: Cascade)
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  badges ChoirMemberBadge[]
+
+  @@unique([choirId, memberId])
+  @@index([choirId, overallParticipationScore])
+}
+
+model ChoirSchedulePlan {
+  id              String                 @id @default(uuid())
+  label           String
+  periodType      ChoirSchedulePlanPeriod
+  year            Int
+  month           Int?
+  quarter         Int?
+  startAt         DateTime
+  endAt           DateTime
+  status          ChoirSchedulePlanStatus @default(DRAFT)
+  generatedAt     DateTime?
+  generatedById   String?
+  publishedAt     DateTime?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  entries ChoirSchedulePlanEntry[]
+
+  @@index([year, month])
+  @@index([status])
+}
+
+model ChoirSchedulePlanEntry {
+  id             String                     @id @default(uuid())
+  planId         String
+  occurrenceId   String
+  choirId        String
+  role           ChoirServiceAssignmentRole @default(PRIMARY)
+  isOverride     Boolean                    @default(false)
+  overrideReason String?
+  sortOrder      Int                        @default(0)
+
+  plan        ChoirSchedulePlan        @relation(fields: [planId], references: [id], onDelete: Cascade)
+  assignments ChoirServiceAssignment[]
+
+  @@unique([planId, occurrenceId, choirId, role])
+  @@index([occurrenceId])
+}
+
+model ChoirScheduleAdjustment {
+  id              String                      @id @default(uuid())
+  occurrenceId    String
+  choirId         String?
+  assignmentId    String?
+  action          ChoirScheduleAdjustmentAction
+  previousChoirId String?
+  newChoirId      String?
+  reason          String?
+  actorUserId     String
+  createdAt       DateTime                    @default(now())
+
+  assignment ChoirServiceAssignment? @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
+
+  @@index([occurrenceId])
+  @@index([createdAt])
+}
+
+model ChoirCategoryRankingEntry {
+  id        String               @id @default(uuid())
+  choirId   String
+  memberId  String
+  category  ChoirRankingCategory
+  year      Int
+  month     Int?
+  rank      Int
+  score     Float
+  generatedAt DateTime           @default(now())
+
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([choirId, memberId, category, year, month])
+  @@index([choirId, category, year, month, rank])
+}
+
+model ChoirMemberBadge {
+  id        String         @id @default(uuid())
+  profileId String
+  kind      ChoirBadgeKind
+  awardedAt DateTime       @default(now())
+  year      Int?
+  month     Int?
+
+  profile ChoirMemberParticipationProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, kind, year, month])
+  @@index([profileId])
+}
+
+// --- Member Portal (MEMBER-PORTAL-1) ---
+
+enum ChurchBroadcastType {
+  LIVE_SERVICE
+  RECORDED_SERVICE
+  SERMON
+  SPECIAL_EVENT
+  OTHER
+}
+
+model ChurchBroadcast {
+  id            String              @id @default(uuid())
+  title         String
+  description   String?
+  youtubeUrl    String
+  thumbnail     String?
+  broadcastType ChurchBroadcastType @default(OTHER)
+  startAt       DateTime?
+  endAt         DateTime?
+  isLive        Boolean             @default(false)
+  publishedAt   DateTime?
+  createdById   String
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  createdBy User @relation("BroadcastCreator", fields: [createdById], references: [id])
+
+  @@index([isLive])
+  @@index([broadcastType])
+  @@index([startAt])
+}
+
+enum ChoirJoinRequestType {
+  VISITOR
+  PERMANENT_MEMBER
+  RETURNING_MEMBER
+  OTHER
+}
+
+enum ChoirJoinRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+  NEEDS_INFO
+}
+
+model ChoirJoinRequest {
+  id               String                 @id @default(uuid())
+  memberId         String
+  choirId          String
+  requestType      ChoirJoinRequestType   @default(PERMANENT_MEMBER)
+  reason           String?
+  status           ChoirJoinRequestStatus @default(PENDING)
+  reviewNotes      String?
+  reviewedByUserId String?
+  reviewedAt       DateTime?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  member         Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  choir          Choir  @relation(fields: [choirId], references: [id], onDelete: Cascade)
+  reviewedByUser User?  @relation("ChoirJoinReviewerUser", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([choirId, status])
+  @@index([memberId, status])
+}
+
+enum ProtocolInvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+model ProtocolInvitation {
+  id          String                   @id @default(uuid())
+  memberId    String
+  invitedById String
+  message     String?
+  status      ProtocolInvitationStatus @default(PENDING)
+  expiresAt   DateTime
+  respondedAt DateTime?
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+
+  member    Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  invitedBy Member @relation("ProtocolInviter", fields: [invitedById], references: [id], onDelete: Restrict)
+
+  @@index([memberId, status])
+  @@index([status])
+}
+
+enum ProtocolMembershipClaimStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+model ProtocolMembershipClaim {
+  id           String                        @id @default(uuid())
+  memberId     String
+  message      String?
+  status       ProtocolMembershipClaimStatus @default(PENDING)
+  reviewNotes  String?
+  reviewedById String?
+  reviewedAt   DateTime?
+  createdAt    DateTime                      @default(now())
+  updatedAt    DateTime                      @updatedAt
+
+  member     Member  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  reviewedBy Member? @relation("ProtocolClaimReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([memberId, status])
+  @@index([status])
+}
+
+// --- Pilot readiness (PILOT-READY-1) ---
+
+enum ImportJobType {
+  MEMBERS
+  CHOIR_MEMBERS
+  PROTOCOL_MEMBERS
+  MINISTRIES
+  MINISTRY_MEMBERS
+  LEADERSHIP_ASSIGNMENTS
+  ASSETS
+  SCHEDULES
+}
+
+enum ImportJobStatus {
+  PENDING
+  PREVIEWING
+  CONFIRMED
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model ImportJob {
+  id           String          @id @default(uuid())
+  type         ImportJobType
+  status       ImportJobStatus @default(PENDING)
+  fileName     String?
+  mimeType     String?
+  uploadedById String
+  preview      Json?
+  results      Json?
+  errorMessage String?
+  createdAt    DateTime        @default(now())
+  completedAt  DateTime?
+
+  uploadedBy User @relation(fields: [uploadedById], references: [id])
+
+  @@index([status])
+  @@index([type])
+  @@index([uploadedById])
+}
+
+enum NotificationRuleTrigger {
+  SERVICE_TOMORROW
+  SERVICE_TODAY
+  REHEARSAL_TOMORROW
+  REHEARSAL_TODAY
+  EVENT_REMINDER
+  PROTOCOL_ASSIGNMENT
+  CHOIR_ASSIGNMENT
+  SCHEDULE_CHANGE
+  REPLACEMENT_APPROVED
+  INVITATION_RECEIVED
+  REQUEST_APPROVED
+  REQUEST_REJECTED
+}
+
+enum NotificationDeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+  READ
+}
+
+enum ReminderJobStatus {
+  SUCCESS
+  FAILED
+  SKIPPED
+}
+
+enum NotificationChannel {
+  IN_APP
+  PUSH
+  EMAIL
+}
+
+model NotificationRule {
+  id            String                  @id @default(uuid())
+  trigger       NotificationRuleTrigger @unique
+  channel       NotificationChannel     @default(IN_APP)
+  enabled       Boolean                 @default(true)
+  titleTemplate String?
+  bodyTemplate  String?
+  config        Json?
+  updatedAt     DateTime                @updatedAt
+}
+
+model NotificationDeliveryLog {
+  id               String                     @id @default(uuid())
+  notificationId   String?
+  recipientUserId  String
+  trigger          NotificationRuleTrigger
+  title            String
+  body             String
+  status           NotificationDeliveryStatus @default(PENDING)
+  dedupeKey        String?                    @unique
+  sentAt           DateTime?
+  readAt           DateTime?
+  failureReason    String?
+  metadata         Json?
+  createdAt        DateTime                   @default(now())
+
+  recipient User @relation("NotificationDeliveryRecipient", fields: [recipientUserId], references: [id])
+
+  @@index([recipientUserId])
+  @@index([trigger])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ReminderJobRun {
+  id              String                @id @default(uuid())
+  jobKey          String
+  trigger         NotificationRuleTrigger
+  status          ReminderJobStatus
+  recipientCount  Int                   @default(0)
+  failureMessage  String?
+  lastRunAt       DateTime              @default(now())
+  nextRunAt       DateTime?
+  metadata        Json?
+
+  @@index([jobKey])
+  @@index([lastRunAt])
+}
+
+// --- Deployment-ready (DEPLOYMENT-READY-1) ---
+
+model ChurchConfiguration {
+  id                 String   @id @default("default")
+  setupCompleted     Boolean  @default(false)
+  setupStep          Int      @default(0)
+  churchInfo         Json?
+  leadership         Json?
+  ministriesConfig   Json?
+  choirsConfig       Json?
+  protocolConfig     Json?
+  servicesConfig     Json?
+  serviceTimes       Json?
+  choirRules         Json?
+  protocolRules      Json?
+  schedulingRules    Json?
+  notificationRules  Json?
+  attendanceRules    Json?
+  demoModeEnabled    Boolean  @default(false)
+  goLiveE2eVerified  Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }

@@ -25,4 +25,4 @@ try {
 Write-Host "`nPilot setup done." -ForegroundColor Green
 Write-Host "  API:     http://localhost:3000/api/v1"
 Write-Host "  Admin:   admin@church.local / Admin@123"
-Write-Host "  Leaders: choir.leader@church.local | protocol.leader@church.local / Pilot@123"
+Write-Host "  Leaders: choir.president@church.local | protocol.leader@church.local / Pilot@123"

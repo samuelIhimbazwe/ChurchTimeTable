@@ -12,8 +12,8 @@ async function signIn(page: import("@playwright/test").Page, email: string) {
 
 test("member can open my contributions page", async ({ page }) => {
   await signIn(page, "member1@church.local");
-  await page.goto("/en/dashboard/finance/my-contributions");
-  await expect(page).toHaveURL(/\/en\/dashboard\/finance\/my-contributions$/, {
+  await page.goto("/en/dashboard/contributions");
+  await expect(page).toHaveURL(/\/en\/dashboard\/contributions\/?$/, {
     timeout: 60_000,
   });
   await expect(

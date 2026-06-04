@@ -50,7 +50,7 @@ $ npm run start:prod
 # unit tests
 $ npm run test
 
-# e2e tests
+# e2e tests (auto-provisions SQLite e2e-test.db + seed — no manual .env required)
 $ npm run test:e2e
 
 # test coverage

@@ -6,7 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { MemberStatus } from '@prisma/client';
 import { AppModule } from '../src/app.module';
 import { ResponseInterceptor } from '../src/common/interceptors/response.interceptor';
-import { ROLES } from '../src/common/constants/roles';
+import { ROLES, PERMISSIONS } from '../src/common/constants/roles';
 import { PrismaService } from '../src/prisma/prisma.service';
 import {
   PHONE_ENFORCEMENT_ENABLED_KEY,
@@ -64,6 +64,25 @@ describe('Phone enforcement (e2e)', () => {
     const role = await prisma.role.findUniqueOrThrow({
       where: { name: ROLES.CHOIR_SECRETARY },
     });
+
+    for (const code of [PERMISSIONS.REPORT_EXPORT]) {
+      const permission = await prisma.permission.upsert({
+        where: { code },
+        create: { code, description: code },
+        update: {},
+      });
+      await prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: {
+            roleId: role.id,
+            permissionId: permission.id,
+          },
+        },
+        create: { roleId: role.id, permissionId: permission.id },
+        update: {},
+      });
+    }
+
     memberEmail = `phone-enforce-${Date.now()}@test.local`;
     const passwordHash = await bcrypt.hash('TestPass1', 10);
     await prisma.user.create({
@@ -137,6 +156,12 @@ describe('Phone enforcement (e2e)', () => {
   });
 
   it('profile update restores operational access', async () => {
+    await request(app.getHttpServer())
+      .patch('/api/v1/users/me')
+      .set('Authorization', `Bearer ${memberToken}`)
+      .send({ phone: '0787654321' })
+      .expect(200);
+
     await request(app.getHttpServer())
       .get('/api/v1/reports/attendance')
       .set('Authorization', `Bearer ${memberToken}`)

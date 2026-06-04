@@ -17,7 +17,8 @@ const PHONE_EXEMPT_ROLES = new Set<string>([
 
 const ENFORCEMENT_STATUSES = new Set<MemberStatus>([
   MemberStatus.ACTIVE,
-  MemberStatus.PENDING,
+  MemberStatus.NEW_MEMBER,
+  MemberStatus.PROBATION,
 ]);
 
 export type PhoneEnforcementState = {

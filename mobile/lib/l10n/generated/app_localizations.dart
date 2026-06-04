@@ -28,6 +28,13 @@ class AppLocalizations {
       'nav_events': 'Ibirori',
       'nav_more': 'Ibindi',
       'members_title': 'Abanyamuryango',
+      'member_profile_title': 'Umwirondoro w\'umunyamuryango',
+      'member_profile_timeline': 'Ibikorwa by\'umunyamuryango',
+      'member_profile_timeline_empty': 'Nta bikorwa biraboneka.',
+      'member_profile_status': 'Imiterere',
+      'member_profile_voice': 'Ijwi',
+      'member_profile_family': 'Umuryango',
+      'member_profile_welfare': 'Dosiye z\'ubufasha zifunguye',
       'members_empty': 'Nta banyamuryango babonetse.',
       'dashboard_welcome': 'Murakaza neza, {name}',
       'auth_email_label': 'Imeri',
@@ -337,6 +344,74 @@ class AppLocalizations {
       'my_contributions_history_title': 'Amateka y\'imisanzu',
       'my_contributions_total': 'Imisanzu yose',
       'my_contributions_outstanding': 'Amafaranga asigaye',
+      'my_contributions_ack_sent': 'Imurakoze yoherejwe',
+      'my_contributions_ack_pending': 'Bitegereje',
+      'my_contributions_ack_failed': 'Byanze',
+      'operational_units_title': 'Ibice bikora',
+      'operational_unit_detail_title': 'Igice',
+      'ministries_title': 'Ministéri',
+      'ministry_detail_title': 'Ministéri',
+      'families_title': 'Imiryango',
+      'families_head': 'Umutwe',
+      'families_member_count': 'Abanyamuryango',
+      'families_health_score': 'Amanota y\'ubuzima',
+      'families_attendance': 'Kwitabira',
+      'families_contributions': 'Umusanzu',
+      'families_participation': 'Urugendo',
+      'search_title': 'Shakisha',
+      'search_placeholder': 'Shakisha abanyamuryango, imiryango, ibikorwa…',
+      'search_group_members': 'Abanyamuryango',
+      'search_group_families': 'Imiryango',
+      'search_group_events': 'Ibikorwa',
+      'search_group_assignments': 'Inshingano',
+      'search_group_contributions': 'Umusanzu',
+      'search_group_welfare_cases': 'Ubusabane',
+      'search_group_songs': 'Indirimbo',
+      'search_group_rehearsals': 'Imyitozo',
+      'welfare_title': 'Ubusabane',
+      'welfare_open_cases': 'Ubusabane bufunguye',
+      'welfare_funds_raised': 'Amafaranga yegeranyijwe',
+      'welfare_raised': 'Byegeranyijwe',
+      'welfare_remaining': 'Bisigaye',
+      'welfare_amount': 'Amafaranga',
+      'welfare_contribute': 'Tanga',
+      'music_title': 'Ububiko bw\'indirimbo',
+      'music_usage_count': 'Ikoreshwa',
+      'rehearsals_title': 'Imyitozo',
+      'rehearsals_readiness': 'Gutegura',
+      'rehearsals_attendance': 'Kwitabira',
+      'rehearsals_plan': 'Gahunda',
+      'rehearsals_reports': 'Raporo',
+      'rehearsals_prep_score': 'Gutegura gusenga',
+      'welfare_create_title': 'Fungura ubusabane',
+      'welfare_field_title': 'Umutwe',
+      'welfare_field_description': 'Ibisobanuro',
+      'welfare_field_member_id': 'ID y\'umunyamuryango',
+      'welfare_category': 'Icyiciro',
+      'welfare_submit_case': 'Ohereza',
+      'welfare_assistance_title': 'Andika ubufasha',
+      'welfare_assistance_type': 'Ubwoko bw\'ubufasha',
+      'welfare_record_assistance': 'Andika ubufasha',
+      'welfare_reports_title': 'Raporo z\'ubusabane',
+      'welfare_assistance_total': 'Ubufasha bwose',
+      'welfare_tab_overview': 'Incamake',
+      'welfare_timeline': 'Amateka',
+      'welfare_timeline_empty': 'Nta makuru y\'amateka.',
+      'welfare_contributions': 'Imisanzu',
+      'welfare_offline_banner': 'Amakuru abitswe. Kura hasi kugira ngo usubiremo kuri interineti.',
+      'music_favorites': 'Ibikunzwe',
+      'music_favorite': 'Ongeraho mu bikunzwe',
+      'music_unfavorite': 'Kuraho mu bikunzwe',
+      'music_recent': 'Byasuzumwe vuba',
+      'music_lyrics': 'Amagambo',
+      'music_assets': 'Dosiye',
+      'common_back': 'Subira inyuma',
+      'common_next': 'Ibikurikira',
+      'common_retry': 'Ongera ugerageze',
+      'search_group_welfare_categories': 'Ibyiciro by\'ubusabane',
+      'search_group_choir_documents': 'Inyandiko z\'ikorali',
+      'search_group_choir_meetings': 'Inama z\'ikorali',
+      'search_group_welfare_assistance': 'Ubufasha bw\'ubusabane',
       'nav_operational': 'Operational center',
       'operational_title': 'Operational center',
       'operational_unauthorized': 'Nta burenganzira bwo kuyobora ufite.',
@@ -365,6 +440,13 @@ class AppLocalizations {
       'nav_events': 'Events',
       'nav_more': 'More',
       'members_title': 'Members',
+      'member_profile_title': 'Member profile',
+      'member_profile_timeline': 'Activity timeline',
+      'member_profile_timeline_empty': 'No activity recorded yet.',
+      'member_profile_status': 'Status',
+      'member_profile_voice': 'Voice section',
+      'member_profile_family': 'Family',
+      'member_profile_welfare': 'Open welfare cases',
       'members_empty': 'No members found yet.',
       'dashboard_welcome': 'Welcome back, {name}',
       'auth_email_label': 'Email',
@@ -669,6 +751,74 @@ class AppLocalizations {
       'my_contributions_history_title': 'Contribution history',
       'my_contributions_total': 'Total contributed',
       'my_contributions_outstanding': 'Outstanding balance',
+      'my_contributions_ack_sent': 'Thank-you sent',
+      'my_contributions_ack_pending': 'Acknowledgment pending',
+      'my_contributions_ack_failed': 'Acknowledgment failed',
+      'operational_units_title': 'Operational units',
+      'operational_unit_detail_title': 'Unit',
+      'ministries_title': 'Ministries',
+      'ministry_detail_title': 'Ministry',
+      'families_title': 'Families',
+      'families_head': 'Head',
+      'families_member_count': 'Members',
+      'families_health_score': 'Health score',
+      'families_attendance': 'Attendance',
+      'families_contributions': 'Contributions',
+      'families_participation': 'Participation',
+      'search_title': 'Search',
+      'search_placeholder': 'Search members, families, events…',
+      'search_group_members': 'Members',
+      'search_group_families': 'Families',
+      'search_group_events': 'Events',
+      'search_group_assignments': 'Assignments',
+      'search_group_contributions': 'Contributions',
+      'search_group_welfare_cases': 'Welfare cases',
+      'search_group_songs': 'Songs',
+      'search_group_rehearsals': 'Rehearsals',
+      'welfare_title': 'Welfare',
+      'welfare_open_cases': 'Open cases',
+      'welfare_funds_raised': 'Funds raised',
+      'welfare_raised': 'Raised',
+      'welfare_remaining': 'Remaining',
+      'welfare_amount': 'Amount',
+      'welfare_contribute': 'Contribute',
+      'music_title': 'Music library',
+      'music_usage_count': 'Uses',
+      'rehearsals_title': 'Rehearsals',
+      'rehearsals_readiness': 'Readiness',
+      'rehearsals_attendance': 'Attendance',
+      'rehearsals_plan': 'Plan',
+      'rehearsals_reports': 'Reports',
+      'rehearsals_prep_score': 'Preparation score',
+      'welfare_create_title': 'Open welfare case',
+      'welfare_field_title': 'Title',
+      'welfare_field_description': 'Description',
+      'welfare_field_member_id': 'Member ID',
+      'welfare_category': 'Category',
+      'welfare_submit_case': 'Submit case',
+      'welfare_assistance_title': 'Record assistance',
+      'welfare_assistance_type': 'Assistance type',
+      'welfare_record_assistance': 'Record assistance',
+      'welfare_reports_title': 'Welfare reports',
+      'welfare_assistance_total': 'Assistance total',
+      'welfare_tab_overview': 'Overview',
+      'welfare_timeline': 'Timeline',
+      'welfare_timeline_empty': 'No timeline events yet.',
+      'welfare_contributions': 'Contributions',
+      'welfare_offline_banner': 'Showing cached data. Pull to refresh when online.',
+      'music_favorites': 'Favorites',
+      'music_favorite': 'Add to favorites',
+      'music_unfavorite': 'Remove from favorites',
+      'music_recent': 'Recently viewed',
+      'music_lyrics': 'Lyrics',
+      'music_assets': 'Assets',
+      'common_back': 'Back',
+      'common_next': 'Next',
+      'common_retry': 'Retry',
+      'search_group_welfare_categories': 'Welfare categories',
+      'search_group_choir_documents': 'Choir documents',
+      'search_group_choir_meetings': 'Choir meetings',
+      'search_group_welfare_assistance': 'Welfare assistance',
       'nav_operational': 'Operational center',
       'operational_title': 'Operational center',
       'operational_unauthorized': 'You do not have operational governance access.',
@@ -697,6 +847,13 @@ class AppLocalizations {
       'nav_events': 'Événements',
       'nav_more': 'Plus',
       'members_title': 'Membres',
+      'member_profile_title': 'Profil membre',
+      'member_profile_timeline': 'Chronologie',
+      'member_profile_timeline_empty': 'Aucune activité pour le moment.',
+      'member_profile_status': 'Statut',
+      'member_profile_voice': 'Section vocale',
+      'member_profile_family': 'Famille',
+      'member_profile_welfare': 'Dossiers bien-être ouverts',
       'members_empty': 'Aucun membre trouvé.',
       'dashboard_welcome': 'Bon retour, {name}',
       'auth_email_label': 'E-mail',
@@ -1008,6 +1165,74 @@ class AppLocalizations {
       'my_contributions_history_title': 'Historique des contributions',
       'my_contributions_total': 'Total contribué',
       'my_contributions_outstanding': 'Solde restant',
+      'my_contributions_ack_sent': 'Remerciement envoye',
+      'my_contributions_ack_pending': 'Accuse en attente',
+      'my_contributions_ack_failed': 'Accuse echoue',
+      'operational_units_title': 'Unités opérationnelles',
+      'operational_unit_detail_title': 'Unité',
+      'ministries_title': 'Ministères',
+      'ministry_detail_title': 'Ministère',
+      'families_title': 'Familles',
+      'families_head': 'Chef',
+      'families_member_count': 'Membres',
+      'families_health_score': 'Score de santé',
+      'families_attendance': 'Présence',
+      'families_contributions': 'Contributions',
+      'families_participation': 'Participation',
+      'search_title': 'Recherche',
+      'search_placeholder': 'Rechercher membres, familles, evenements…',
+      'search_group_members': 'Membres',
+      'search_group_families': 'Familles',
+      'search_group_events': 'Evenements',
+      'search_group_assignments': 'Affectations',
+      'search_group_contributions': 'Contributions',
+      'search_group_welfare_cases': 'Dossiers bien-être',
+      'search_group_songs': 'Chants',
+      'search_group_rehearsals': 'Répétitions',
+      'welfare_title': 'Bien-être',
+      'welfare_open_cases': 'Dossiers ouverts',
+      'welfare_funds_raised': 'Fonds collectés',
+      'welfare_raised': 'Collecté',
+      'welfare_remaining': 'Restant',
+      'welfare_amount': 'Montant',
+      'welfare_contribute': 'Contribuer',
+      'music_title': 'Bibliothèque musicale',
+      'music_usage_count': 'Utilisations',
+      'rehearsals_title': 'Répétitions',
+      'rehearsals_readiness': 'Préparation',
+      'rehearsals_attendance': 'Présence',
+      'rehearsals_plan': 'Plan',
+      'rehearsals_reports': 'Rapports',
+      'rehearsals_prep_score': 'Préparation au culte',
+      'welfare_create_title': 'Ouvrir un dossier',
+      'welfare_field_title': 'Titre',
+      'welfare_field_description': 'Description',
+      'welfare_field_member_id': 'ID membre',
+      'welfare_category': 'Catégorie',
+      'welfare_submit_case': 'Soumettre',
+      'welfare_assistance_title': 'Enregistrer une assistance',
+      'welfare_assistance_type': 'Type d\'assistance',
+      'welfare_record_assistance': 'Enregistrer',
+      'welfare_reports_title': 'Rapports bien-être',
+      'welfare_assistance_total': 'Total assistance',
+      'welfare_tab_overview': 'Aperçu',
+      'welfare_timeline': 'Chronologie',
+      'welfare_timeline_empty': 'Aucun événement pour l\'instant.',
+      'welfare_contributions': 'Contributions',
+      'welfare_offline_banner': 'Données en cache. Tirez pour actualiser en ligne.',
+      'music_favorites': 'Favoris',
+      'music_favorite': 'Ajouter aux favoris',
+      'music_unfavorite': 'Retirer des favoris',
+      'music_recent': 'Consultés récemment',
+      'music_lyrics': 'Paroles',
+      'music_assets': 'Fichiers',
+      'common_back': 'Retour',
+      'common_next': 'Suivant',
+      'common_retry': 'Réessayer',
+      'search_group_welfare_categories': 'Catégories bien-être',
+      'search_group_choir_documents': 'Documents du chœur',
+      'search_group_choir_meetings': 'Réunions du chœur',
+      'search_group_welfare_assistance': 'Assistance bien-être',
       'nav_operational': 'Centre opérationnel',
       'operational_title': 'Centre opérationnel',
       'operational_unauthorized': 'Accès opérationnel refusé.',
@@ -1112,6 +1337,13 @@ class AppLocalizations {
   String get nav_events => _t('nav_events');
   String get nav_more => _t('nav_more');
   String get members_title => _t('members_title');
+  String get member_profile_title => _t('member_profile_title');
+  String get member_profile_timeline => _t('member_profile_timeline');
+  String get member_profile_timeline_empty => _t('member_profile_timeline_empty');
+  String get member_profile_status => _t('member_profile_status');
+  String get member_profile_voice => _t('member_profile_voice');
+  String get member_profile_family => _t('member_profile_family');
+  String get member_profile_welfare => _t('member_profile_welfare');
   String get members_empty => _t('members_empty');
   String dashboard_welcome(String name) =>
       _t('dashboard_welcome').replaceAll('{name}', name);
@@ -1454,6 +1686,74 @@ class AppLocalizations {
   String get my_contributions_history_title => _t('my_contributions_history_title');
   String get my_contributions_total => _t('my_contributions_total');
   String get my_contributions_outstanding => _t('my_contributions_outstanding');
+  String get my_contributions_ack_sent => _t('my_contributions_ack_sent');
+  String get my_contributions_ack_pending => _t('my_contributions_ack_pending');
+  String get my_contributions_ack_failed => _t('my_contributions_ack_failed');
+  String get operational_units_title => _t('operational_units_title');
+  String get operational_unit_detail_title => _t('operational_unit_detail_title');
+  String get ministries_title => _t('ministries_title');
+  String get ministry_detail_title => _t('ministry_detail_title');
+  String get families_title => _t('families_title');
+  String get families_head => _t('families_head');
+  String get families_member_count => _t('families_member_count');
+  String get families_health_score => _t('families_health_score');
+  String get families_attendance => _t('families_attendance');
+  String get families_contributions => _t('families_contributions');
+  String get families_participation => _t('families_participation');
+  String get search_title => _t('search_title');
+  String get search_placeholder => _t('search_placeholder');
+  String get search_group_members => _t('search_group_members');
+  String get search_group_families => _t('search_group_families');
+  String get search_group_events => _t('search_group_events');
+  String get search_group_assignments => _t('search_group_assignments');
+  String get search_group_contributions => _t('search_group_contributions');
+  String get search_group_welfare_cases => _t('search_group_welfare_cases');
+  String get search_group_songs => _t('search_group_songs');
+  String get search_group_rehearsals => _t('search_group_rehearsals');
+  String get welfare_title => _t('welfare_title');
+  String get welfare_open_cases => _t('welfare_open_cases');
+  String get welfare_funds_raised => _t('welfare_funds_raised');
+  String get welfare_raised => _t('welfare_raised');
+  String get welfare_remaining => _t('welfare_remaining');
+  String get welfare_amount => _t('welfare_amount');
+  String get welfare_contribute => _t('welfare_contribute');
+  String get music_title => _t('music_title');
+  String get music_usage_count => _t('music_usage_count');
+  String get rehearsals_title => _t('rehearsals_title');
+  String get rehearsals_readiness => _t('rehearsals_readiness');
+  String get rehearsals_attendance => _t('rehearsals_attendance');
+  String get rehearsals_plan => _t('rehearsals_plan');
+  String get rehearsals_reports => _t('rehearsals_reports');
+  String get rehearsals_prep_score => _t('rehearsals_prep_score');
+  String get welfare_create_title => _t('welfare_create_title');
+  String get welfare_field_title => _t('welfare_field_title');
+  String get welfare_field_description => _t('welfare_field_description');
+  String get welfare_field_member_id => _t('welfare_field_member_id');
+  String get welfare_category => _t('welfare_category');
+  String get welfare_submit_case => _t('welfare_submit_case');
+  String get welfare_assistance_title => _t('welfare_assistance_title');
+  String get welfare_assistance_type => _t('welfare_assistance_type');
+  String get welfare_record_assistance => _t('welfare_record_assistance');
+  String get welfare_reports_title => _t('welfare_reports_title');
+  String get welfare_assistance_total => _t('welfare_assistance_total');
+  String get welfare_tab_overview => _t('welfare_tab_overview');
+  String get welfare_timeline => _t('welfare_timeline');
+  String get welfare_timeline_empty => _t('welfare_timeline_empty');
+  String get welfare_contributions => _t('welfare_contributions');
+  String get welfare_offline_banner => _t('welfare_offline_banner');
+  String get music_favorites => _t('music_favorites');
+  String get music_favorite => _t('music_favorite');
+  String get music_unfavorite => _t('music_unfavorite');
+  String get music_recent => _t('music_recent');
+  String get music_lyrics => _t('music_lyrics');
+  String get music_assets => _t('music_assets');
+  String get common_back => _t('common_back');
+  String get common_next => _t('common_next');
+  String get common_retry => _t('common_retry');
+  String get search_group_welfare_categories => _t('search_group_welfare_categories');
+  String get search_group_choir_documents => _t('search_group_choir_documents');
+  String get search_group_choir_meetings => _t('search_group_choir_meetings');
+  String get search_group_welfare_assistance => _t('search_group_welfare_assistance');
 }
 
 class _AppLocalizationsDelegate

@@ -156,8 +156,19 @@ export const rwMessages: Record<string, string> = {
     'Andika nimero ya telefoni y\'u Rwanda (urug. 0781234567).',
   PHONE_REQUIRED: 'Nimero ya telefoni irakenewe kugira ngo ukomeze.',
   NOTIFICATION_CONTRIBUTION_CONFIRMED_TITLE: 'Imisanzu yemejwe',
+  NOTIFICATION_CONTRIBUTION_SUBMITTED_HEAD_TITLE: 'Impano nshya itegereje isuzuma',
+  NOTIFICATION_CONTRIBUTION_SUBMITTED_HEAD_BODY:
+    '{name} yatanze impano isaba isuzuma n’umuryango wawe.',
+  NOTIFICATION_CONTRIBUTION_CONFIRMED_MEMBER_BODY:
+    'Impano yemejwe. Amafaranga yemejwe: {amount} {currency}',
+  NOTIFICATION_CONTRIBUTION_REJECTED_TITLE: 'Impano yanze',
+  NOTIFICATION_CONTRIBUTION_REJECTED_MEMBER_BODY:
+    'Impano yanze. Impamvu: {reason}',
   NOTIFICATION_CONTRIBUTION_CONFIRMED_BODY:
     'Imisanzu yawe yemejwe kandi yanditswe.',
+  CONTRIBUTION_THANK_YOU_TITLE: 'Murakoze, {memberName}',
+  CONTRIBUTION_THANK_YOU_MESSAGE:
+    'Murakoze ku misanzu yanyu ya {contributionType} ya {amount} {currency}. Nomero y\'umunyamuryango: {memberNumber}.',
   TOO_MANY_REQUESTS: 'Ugerageje inshuro nyinshi. Tegereza gato hanyuma ugerageze.',
   NOTIFICATION_MEMBER_APPROVED_TITLE: 'Kwiyandikisha kwemewe',
   NOTIFICATION_MEMBER_APPROVED_BODY:
@@ -165,6 +176,19 @@ export const rwMessages: Record<string, string> = {
   NOTIFICATION_MEMBER_REJECTED_TITLE: 'Amakuru y\'iyandikisha',
   NOTIFICATION_MEMBER_REJECTED_BODY:
     'Kwiyandikisha kwawe ntikwemewe. Vugana n\'umuyobozi w\'umurimo ubafashe.',
-
+  WELFARE_NOTIFY_OPENED_TITLE: 'Ubusabane bushya',
+  WELFARE_NOTIFY_OPENED_BODY: 'Ubusabane bushya bwasohowe: {title}',
+  WELFARE_NOTIFY_APPROVED_TITLE: 'Ubusabane bwemewe',
+  WELFARE_NOTIFY_APPROVED_BODY: 'Ubusabane bwemewe: {title}',
+  WELFARE_NOTIFY_CLOSED_TITLE: 'Ubusabane bwarangiye',
+  WELFARE_NOTIFY_CLOSED_BODY: 'Ubusabane bwarangiye: {title}',
+  WELFARE_NOTIFY_FUNDED_TITLE: 'Intego y\'amafaranga yagezweho',
+  WELFARE_NOTIFY_FUNDED_BODY: 'Ubusabane bufite amafaranga ahagije: {title}',
+  WELFARE_NOTIFY_UPDATED_TITLE: 'Ubusabane bwavuguruwe',
+  WELFARE_NOTIFY_UPDATED_BODY: 'Ubusabane bwavuguruwe: {title}',
+  REHEARSAL_NOTIFY_SCHEDULED_TITLE: 'Igihe cyo kwitoza cyagenwe',
+  REHEARSAL_NOTIFY_SCHEDULED_BODY: '{title} ku wa {date}',
+  REHEARSAL_NOTIFY_PLAN_TITLE: 'Gahunda yo kwitoza yavuguruwe',
+  REHEARSAL_NOTIFY_PLAN_BODY: 'Urutonde rw\'indirimbo rwavuguruwe kuri {title}',
 };
 

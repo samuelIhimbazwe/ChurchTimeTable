@@ -1,5 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { MemberStatus, MinistryScope, Prisma } from '@prisma/client';
+import {
+  MemberStatus,
+  MinistryScope,
+  NotificationRuleTrigger,
+  Prisma,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -14,6 +19,7 @@ import {
 } from './dto/update-member-status.dto';
 import { BusinessRuleException } from '../common/exceptions/business.exception';
 import { paginate, paginatedResult } from '../common/dto/pagination.dto';
+import { NotificationRuleGateService } from '../pilot-ready/notification-rule-gate.service';
 
 export type MemberRosterItem = {
   id: string;
@@ -31,6 +37,7 @@ export class MembersService {
     private audit: AuditService,
     private notifications: NotificationsService,
     private operationalScope: OperationalScopeService,
+    private ruleGate: NotificationRuleGateService,
   ) {}
 
   async findAll(
@@ -128,9 +135,21 @@ export class MembersService {
       );
     }
 
-    const updated = await this.prisma.member.update({
-      where: { id },
-      data: { status: dto.status },
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const row = await tx.member.update({
+        where: { id },
+        data: { status: dto.status },
+      });
+      await tx.memberStatusHistory.create({
+        data: {
+          memberId: id,
+          fromStatus: member.status,
+          toStatus: dto.status,
+          reason: dto.reason,
+          changedByUserId: actorUserId,
+        },
+      });
+      return row;
     });
 
     await this.audit.log({
@@ -142,23 +161,27 @@ export class MembersService {
       newValue: { status: dto.status },
     });
 
-    if (member.status === MemberStatus.PENDING && dto.status === MemberStatus.ACTIVE) {
-      const user = await this.prisma.user.findUnique({
-        where: { id: member.userId },
-        select: { id: true },
-      });
-      if (user) {
-        await this.notifications.notifyMemberApproved(user.id);
-      }
-    } else if (
-      member.status === MemberStatus.PENDING &&
-      dto.status === MemberStatus.INACTIVE
+    if (
+      (member.status === MemberStatus.NEW_MEMBER ||
+        member.status === MemberStatus.PROBATION) &&
+      dto.status === MemberStatus.ACTIVE
     ) {
       const user = await this.prisma.user.findUnique({
         where: { id: member.userId },
         select: { id: true },
       });
-      if (user) {
+      if (user && (await this.ruleGate.allows(NotificationRuleTrigger.REQUEST_APPROVED))) {
+        await this.notifications.notifyMemberApproved(user.id);
+      }
+    } else if (
+      member.status === MemberStatus.NEW_MEMBER &&
+      dto.status === MemberStatus.TEMPORARILY_INACTIVE
+    ) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: member.userId },
+        select: { id: true },
+      });
+      if (user && (await this.ruleGate.allows(NotificationRuleTrigger.REQUEST_REJECTED))) {
         await this.notifications.notifyMemberRejected(user.id);
       }
     }

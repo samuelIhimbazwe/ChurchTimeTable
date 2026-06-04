@@ -39,6 +39,11 @@ class AppShell extends ConsumerWidget {
       case AppRouter.settings:
       case AppRouter.language:
       case AppRouter.members:
+      case AppRouter.families:
+      case AppRouter.ministries:
+      case AppRouter.ministryDetail:
+      case AppRouter.operationalUnits:
+      case AppRouter.operationalUnitDetail:
         return true;
       default:
         return false;
@@ -224,12 +229,12 @@ class AppShell extends ConsumerWidget {
   ) {
     final items = <_ShellDestination>[
       _ShellDestination(
-        route: auth.isStaff
+        route: auth.canAccessLeaderDashboard
             ? AppRouter.leaderDashboard
             : AppRouter.memberDashboard,
         icon: Icons.dashboard_outlined,
         selectedIcon: Icons.dashboard,
-        label: auth.isStaff
+        label: auth.canAccessLeaderDashboard
             ? l10n.dashboard_leader_title
             : l10n.dashboard_member_title,
       ),
@@ -253,7 +258,7 @@ class AppShell extends ConsumerWidget {
       );
     }
 
-    if (auth.isStaff) {
+    if (auth.canAccessLeaderDashboard) {
       add(
         route: AppRouter.operational,
         icon: Icons.dashboard_outlined,
@@ -287,17 +292,14 @@ class AppShell extends ConsumerWidget {
         icon: Icons.fact_check_outlined,
         selectedIcon: Icons.fact_check,
         label: l10n.nav_attendance,
-        show: canMarkAttendance(auth.permissions) ||
-            hasProtocolTeamHead(auth.permissions),
+        show: canAccessAttendanceNav(auth.permissions),
       );
       add(
         route: AppRouter.coverage,
         icon: Icons.shield_outlined,
         selectedIcon: Icons.shield,
         label: l10n.nav_coverage,
-        show: auth.hasPermission('swap:manage') ||
-            hasProtocolTeamHead(auth.permissions) ||
-            hasProtocolCoordination(auth.permissions),
+        show: canAccessCoverageNav(auth.permissions),
       );
       add(
         route: AppRouter.swaps,
@@ -332,14 +334,43 @@ class AppShell extends ConsumerWidget {
         icon: Icons.account_balance_wallet_outlined,
         selectedIcon: Icons.account_balance_wallet,
         label: l10n.nav_finance,
-        show: auth.hasPermission('finance:read'),
+        show: canAccessFinanceNav(auth.permissions),
       );
       add(
         route: AppRouter.budgets,
         icon: Icons.pie_chart_outline,
         selectedIcon: Icons.pie_chart,
         label: l10n.nav_budgets,
-        show: auth.hasPermission('finance:write'),
+        show: canAccessFinanceNav(auth.permissions) &&
+            hasEffectivePermission(auth.permissions, 'choir.finance.manage'),
+      );
+      add(
+        route: AppRouter.members,
+        icon: Icons.people_outlined,
+        selectedIcon: Icons.people,
+        label: l10n.nav_members,
+        show: auth.hasPermission('member:manage'),
+      );
+      add(
+        route: AppRouter.families,
+        icon: Icons.family_restroom_outlined,
+        selectedIcon: Icons.family_restroom,
+        label: l10n.families_title,
+        show: canViewFamilies(auth.permissions),
+      );
+      add(
+        route: AppRouter.ministries,
+        icon: Icons.church_outlined,
+        selectedIcon: Icons.church,
+        label: l10n.ministries_title,
+        show: canViewMinistries(auth.permissions),
+      );
+      add(
+        route: AppRouter.operationalUnits,
+        icon: Icons.groups_outlined,
+        selectedIcon: Icons.groups,
+        label: l10n.operational_units_title,
+        show: canViewOperationalUnits(auth.permissions),
       );
       add(
         route: AppRouter.sync,

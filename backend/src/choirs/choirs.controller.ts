@@ -1,0 +1,121 @@
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  ChoirJoinRequestStatus,
+  ChoirJoinRequestType,
+} from '@prisma/client';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { JwtPayload } from '../common/decorators/current-user.decorator';
+import { ChoirId } from '../common/decorators/choir-id.decorator';
+import { ChoirContextService } from './choir-context.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { ChoirDiscoveryService } from '../member-portal/choir-discovery.service';
+import { ChoirJoinRequestsService } from '../member-portal/choir-join-requests.service';
+import { ChoirMembershipRulesService } from '../member-portal/choir-membership-rules.service';
+
+import { IsString } from 'class-validator';
+
+export class SwitchChoirDto {
+  @IsString()
+  choirId!: string;
+}
+
+@Controller('choirs')
+@UseGuards(JwtAuthGuard, PhoneOperationalGuard)
+export class ChoirsController {
+  constructor(
+    private choirContext: ChoirContextService,
+    private prisma: PrismaService,
+    private discovery: ChoirDiscoveryService,
+    private joinRequests: ChoirJoinRequestsService,
+    private rules: ChoirMembershipRulesService,
+  ) {}
+
+  @Get()
+  list(@CurrentUser() user: JwtPayload) {
+    return this.choirContext.listUserChoirs(user.sub);
+  }
+
+  @Get('active')
+  async active(@CurrentUser() user: JwtPayload, @ChoirId() choirId: string) {
+    const choir = await this.choirContext.resolveChoir(user.sub, choirId);
+    const memberships = await this.choirContext.listUserChoirs(user.sub);
+    const membership = memberships.find((m) => m.id === choir.id);
+    return {
+      ...choir,
+      role: membership?.role ?? 'MEMBER',
+    };
+  }
+
+  @Post('switch')
+  async switch(@CurrentUser() user: JwtPayload, @Body() dto: SwitchChoirDto) {
+    const choir = await this.choirContext.resolveChoir(user.sub, dto.choirId);
+    return {
+      choirId: choir.id,
+      name: choir.name,
+      code: choir.code,
+    };
+  }
+
+  @Get('catalog')
+  async catalog() {
+    return this.prisma.choir.findMany({
+      where: { isActive: true },
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true, code: true, description: true },
+    });
+  }
+
+  @Get('public')
+  listPublic(@CurrentUser() user: JwtPayload) {
+    return this.discovery.listPublic(user.sub);
+  }
+
+  @Get('membership-rules')
+  membershipRules(@CurrentUser() user: JwtPayload) {
+    return this.rules.describeMembershipRules(user.sub);
+  }
+
+  @Post('join-requests')
+  submitJoin(
+    @CurrentUser() user: JwtPayload,
+    @Body()
+    body: {
+      choirId: string;
+      requestType?: ChoirJoinRequestType;
+      reason?: string;
+    },
+  ) {
+    return this.joinRequests.submit(user.sub, body);
+  }
+
+  @Get('join-requests')
+  listJoin(
+    @CurrentUser() user: JwtPayload,
+    @Query('choirId') choirId?: string,
+    @Query('status') status?: ChoirJoinRequestStatus,
+  ) {
+    return this.joinRequests.list(user.sub, { choirId, status });
+  }
+
+  @Patch('join-requests/:id')
+  reviewJoin(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+    @Body()
+    body: {
+      status?: 'APPROVED' | 'REJECTED' | 'NEEDS_INFO';
+      reviewNotes?: string;
+      withdraw?: boolean;
+    },
+  ) {
+    if (body.withdraw) {
+      return this.joinRequests.withdraw(user.sub, id);
+    }
+    return this.joinRequests.review(user.sub, id, {
+      status: body.status!,
+      reviewNotes: body.reviewNotes,
+    });
+  }
+}

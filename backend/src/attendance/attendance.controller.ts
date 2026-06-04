@@ -45,14 +45,11 @@ import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard'
 import { RolesGuard } from '../common/guards/roles.guard';
 
 import {
-
   RequireAnyPermissions,
-
   RequirePermissions,
-
 } from '../common/decorators/roles.decorator';
 
-import { PERMISSIONS } from '../common/constants/roles';
+import { ADMIN_SYNC_ACCESS, PERMISSIONS } from '../common/constants/roles';
 
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
@@ -206,7 +203,7 @@ export class AttendanceController {
 
   @Get('scoring/weights')
 
-  @RequirePermissions(PERMISSIONS.SYNC_ADMIN)
+  @RequireAnyPermissions(...ADMIN_SYNC_ACCESS)
 
   getScoringWeights() {
 
@@ -218,7 +215,7 @@ export class AttendanceController {
 
   @Patch('scoring/weights')
 
-  @RequirePermissions(PERMISSIONS.SYNC_ADMIN)
+  @RequireAnyPermissions(...ADMIN_SYNC_ACCESS)
 
   updateScoringWeights(@Body() dto: UpdateAttendanceWeightsDto) {
 
@@ -259,8 +256,6 @@ export class AttendanceController {
     PERMISSIONS.PROTOCOL_OVERSIGHT_SCOPE,
 
     PERMISSIONS.CHOIR_OVERSIGHT,
-
-    PERMISSIONS.REPORT_EXPORT,
 
   )
 

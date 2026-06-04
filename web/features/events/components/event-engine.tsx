@@ -18,8 +18,11 @@ import { OperationalScreen } from "@/components/ui/operational-screen";
 import { CmmsAlert } from "@/components/ui/cmms-alert";
 import { getApiErrorMessage } from "@/core/api/errors";
 import type { EventFormInput, EventItem, EventStatus, EventType, MinistryScope } from "@/core/api/types";
+import { hasEffectivePermission } from "@/core/auth/governance-permissions";
+import { useSessionStore } from "@/core/auth/session-store";
 import { formatMemberPickerLabel } from "@/core/members/member-labels";
 import { useEventAssignmentsQuery, useEventsQuery, useCreateEventMutation, useUpdateEventMutation, useCancelEventMutation, useValidateAssignmentMutation, useCreateAssignmentMutation, useBulkAssignMutation, useChoirRotationPoolQuery, useAutoAssignChoirRotationMutation } from "@/features/events/hooks/use-event-engine";
+import { RehearsalEventWorkspace } from "@/features/rehearsals/components/rehearsal-event-workspace";
 
 type CalendarView = "month" | "week" | "agenda";
 
@@ -44,12 +47,16 @@ const recurrencePresets = ["NONE", "WEEKLY", "BIWEEKLY", "MONTHLY"];
 
 export function EventEngine() {
   const t = useTranslations("events");
+  const profile = useSessionStore((state) => state.profile);
+  const canWriteEvents =
+    profile != null && hasEffectivePermission(profile.permissions, "event:write");
   const [view, setView] = useState<CalendarView>("month");
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [ministryFilter, setMinistryFilter] = useState<MinistryScope | "ALL">("ALL");
   const [typeFilter, setTypeFilter] = useState<EventType | "ALL">("ALL");
   const [editorOpen, setEditorOpen] = useState(false);
   const [assignmentOpen, setAssignmentOpen] = useState(false);
+  const [rehearsalWorkspaceOpen, setRehearsalWorkspaceOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<EventItem | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -119,6 +126,16 @@ export function EventEngine() {
     }
   }
 
+  function onOpenEventWorkspace(event: EventItem) {
+    if (event.type === "REHEARSAL") {
+      setSelectedEvent(event);
+      setRehearsalWorkspaceOpen(true);
+      return;
+    }
+    setSelectedEvent(event);
+    setAssignmentOpen(true);
+  }
+
   async function onAssignMember(memberId: string, role?: string) {
     if (!selectedEvent) {
       return;
@@ -171,15 +188,17 @@ export function EventEngine() {
       <CmmsCard
         description={t("subtitle")}
         headerAction={
-          <CmmsButton
-            onClick={() => {
-              setEditingEvent(null);
-              setError(null);
-              setEditorOpen(true);
-            }}
-          >
-            {t("createEvent")}
-          </CmmsButton>
+          canWriteEvents ? (
+            <CmmsButton
+              onClick={() => {
+                setEditingEvent(null);
+                setError(null);
+                setEditorOpen(true);
+              }}
+            >
+              {t("createEvent")}
+            </CmmsButton>
+          ) : undefined
         }
       >
         <div className="flex flex-wrap items-center gap-4">
@@ -258,58 +277,57 @@ export function EventEngine() {
         <CmmsEmptyState
           title={t("calendar.emptyTitle")}
           description={t("calendar.noEvents")}
-          actionLabel={t("createEvent")}
-          onAction={() => {
-            setEditingEvent(null);
-            setError(null);
-            setEditorOpen(true);
-          }}
+          actionLabel={canWriteEvents ? t("createEvent") : undefined}
+          onAction={
+            canWriteEvents
+              ? () => {
+                  setEditingEvent(null);
+                  setError(null);
+                  setEditorOpen(true);
+                }
+              : undefined
+          }
         />
       ) : view === "month" ? (
         <MonthGrid
           t={t}
           cells={monthCells}
+          canWriteEvents={canWriteEvents}
           onEdit={(event) => {
             setEditingEvent(event);
             setEditorOpen(true);
           }}
-          onAssign={(event) => {
-            setSelectedEvent(event);
-            setAssignmentOpen(true);
-          }}
+          onAssign={onOpenEventWorkspace}
           onCancel={onCancelEvent}
         />
       ) : view === "week" ? (
         <WeekView
           t={t}
           blocks={weeklyBlocks}
+          canWriteEvents={canWriteEvents}
           onEdit={(event) => {
             setEditingEvent(event);
             setEditorOpen(true);
           }}
-          onAssign={(event) => {
-            setSelectedEvent(event);
-            setAssignmentOpen(true);
-          }}
+          onAssign={onOpenEventWorkspace}
           onCancel={onCancelEvent}
         />
       ) : (
         <AgendaView
           t={t}
           groups={groupedAgenda}
+          canWriteEvents={canWriteEvents}
           onEdit={(event) => {
             setEditingEvent(event);
             setEditorOpen(true);
           }}
-          onAssign={(event) => {
-            setSelectedEvent(event);
-            setAssignmentOpen(true);
-          }}
+          onAssign={onOpenEventWorkspace}
           onCancel={onCancelEvent}
         />
       )}
 
-      <EventEditorModal
+      {canWriteEvents ? (
+        <EventEditorModal
         key={editingEvent?.id ?? "new"}
         open={editorOpen}
         onClose={() => {
@@ -321,6 +339,7 @@ export function EventEngine() {
         labels={t}
         submitting={createEventMutation.isPending || updateEventMutation.isPending}
       />
+      ) : null}
 
       <AssignmentModal
         open={assignmentOpen}
@@ -336,6 +355,15 @@ export function EventEngine() {
         onAssignMember={onAssignMember}
         onAutoAssign={onAutoAssign}
       />
+
+      {selectedEvent && selectedEvent.type === "REHEARSAL" ? (
+        <RehearsalEventWorkspace
+          open={rehearsalWorkspaceOpen}
+          onClose={() => setRehearsalWorkspaceOpen(false)}
+          eventId={selectedEvent.id}
+          eventTitle={selectedEvent.title}
+        />
+      ) : null}
     </OperationalScreen>
   );
 }
@@ -343,12 +371,14 @@ export function EventEngine() {
 function MonthGrid({
   t,
   cells,
+  canWriteEvents,
   onEdit,
   onAssign,
   onCancel,
 }: {
   t: (key: string) => string;
   cells: Array<{ date: Date; inMonth: boolean; events: EventItem[] }>;
+  canWriteEvents: boolean;
   onEdit: (event: EventItem) => void;
   onAssign: (event: EventItem) => void;
   onCancel: (eventId: string) => void;
@@ -376,6 +406,7 @@ function MonthGrid({
                 <EventChip
                   key={event.id}
                   event={event}
+                  canWriteEvents={canWriteEvents}
                   onEdit={onEdit}
                   onAssign={onAssign}
                   onCancel={onCancel}
@@ -397,12 +428,14 @@ function MonthGrid({
 function WeekView({
   t,
   blocks,
+  canWriteEvents,
   onEdit,
   onAssign,
   onCancel,
 }: {
   t: (key: string) => string;
   blocks: Array<{ date: Date; events: EventItem[] }>;
+  canWriteEvents: boolean;
   onEdit: (event: EventItem) => void;
   onAssign: (event: EventItem) => void;
   onCancel: (eventId: string) => void;
@@ -421,6 +454,7 @@ function WeekView({
                   <EventChip
                     key={event.id}
                     event={event}
+                    canWriteEvents={canWriteEvents}
                     onEdit={onEdit}
                     onAssign={onAssign}
                     onCancel={onCancel}
@@ -440,12 +474,14 @@ function WeekView({
 function AgendaView({
   t,
   groups,
+  canWriteEvents,
   onEdit,
   onAssign,
   onCancel,
 }: {
   t: (key: string) => string;
   groups: Array<{ label: string; events: EventItem[] }>;
+  canWriteEvents: boolean;
   onEdit: (event: EventItem) => void;
   onAssign: (event: EventItem) => void;
   onCancel: (eventId: string) => void;
@@ -488,13 +524,15 @@ function AgendaView({
             header: t("table.actions"),
             render: (row) => (
               <div className="flex flex-wrap gap-2">
-                <CmmsButton variant="secondary" size="sm" onClick={() => onEdit(row.event)}>
-                  {t("actions.edit")}
-                </CmmsButton>
+                {canWriteEvents ? (
+                  <CmmsButton variant="secondary" size="sm" onClick={() => onEdit(row.event)}>
+                    {t("actions.edit")}
+                  </CmmsButton>
+                ) : null}
                 <CmmsButton variant="secondary" size="sm" onClick={() => onAssign(row.event)}>
                   {t("actions.assign")}
                 </CmmsButton>
-                {row.event.status !== "CANCELLED" ? (
+                {canWriteEvents && row.event.status !== "CANCELLED" ? (
                   <CmmsButton
                     variant="danger"
                     size="sm"
@@ -514,11 +552,13 @@ function AgendaView({
 
 function EventChip({
   event,
+  canWriteEvents,
   onEdit,
   onAssign,
   onCancel,
 }: {
   event: EventItem;
+  canWriteEvents: boolean;
   onEdit: (event: EventItem) => void;
   onAssign: (event: EventItem) => void;
   onCancel: (eventId: string) => void;
@@ -530,13 +570,15 @@ function EventChip({
         {formatTimeRange(event.startTime, event.endTime)}
       </p>
       <div className="mt-2 flex flex-wrap gap-1">
-        <button className="text-[11px] text-[var(--primary)]" onClick={() => onEdit(event)}>
-          Edit
-        </button>
+        {canWriteEvents ? (
+          <button className="text-[11px] text-[var(--primary)]" onClick={() => onEdit(event)}>
+            Edit
+          </button>
+        ) : null}
         <button className="text-[11px] text-[var(--primary)]" onClick={() => onAssign(event)}>
           Assign
         </button>
-        {event.status !== "CANCELLED" ? (
+        {canWriteEvents && event.status !== "CANCELLED" ? (
           <button
             className="text-[11px] text-[var(--danger)]"
             onClick={() => onCancel(event.id)}
@@ -713,10 +755,12 @@ function AssignmentModal({
   autoAssigning,
   onAssignMember,
   onAutoAssign,
+  rehearsalPlan,
 }: {
   open: boolean;
   onClose: () => void;
   event: EventItem | null;
+  rehearsalPlan?: React.ReactNode;
   assignments: Array<{
     id: string;
     memberId: string;
@@ -878,6 +922,7 @@ function AssignmentModal({
             />
           )}
         </CmmsCard>
+        {rehearsalPlan}
       </div>
     </CmmsModal>
   );

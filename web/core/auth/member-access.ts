@@ -1,7 +1,8 @@
 import type { AuthProfile } from "@/core/api/types";
 
 export function isPendingMember(profile: AuthProfile | null | undefined): boolean {
-  return profile?.member?.status === "PENDING";
+  const status = profile?.member?.status;
+  return status === "NEW_MEMBER" || status === "PENDING";
 }
 
 export function needsOnboardingWelcome(

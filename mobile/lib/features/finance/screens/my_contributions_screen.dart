@@ -52,6 +52,21 @@ class _MyContributionsScreenState extends ConsumerState<MyContributionsScreen> {
     return '${amount.toStringAsFixed(0)} RWF';
   }
 
+  String _acknowledgmentLabel(Map<String, dynamic> item, dynamic l10n) {
+    final status = item['thankYouDeliveryStatus']?.toString();
+    if (status == null || status.isEmpty) return '';
+    switch (status) {
+      case 'SENT':
+        return '\n${l10n.my_contributions_ack_sent}';
+      case 'PENDING':
+        return '\n${l10n.my_contributions_ack_pending}';
+      case 'FAILED':
+        return '\n${l10n.my_contributions_ack_failed}';
+      default:
+        return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -101,7 +116,8 @@ class _MyContributionsScreenState extends ConsumerState<MyContributionsScreen> {
                                       '—',
                                 ),
                                 subtitle: Text(
-                                  '${item['date']} · ${item['contributionType']} · ${item['status']}',
+                                  '${item['date']} · ${item['contributionType']} · ${item['status']}'
+                                  '${_acknowledgmentLabel(item, l10n)}',
                                 ),
                                 trailing: Text(_formatAmount(item['amount'])),
                               ),

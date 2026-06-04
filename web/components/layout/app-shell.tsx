@@ -18,6 +18,7 @@ import {
   getShellPageMeta,
 } from "@/components/layout/navigation";
 import { CmmsModal } from "@/components/ui/cmms-modal";
+import { SearchDropdown } from "@/features/search/components/search-dropdown";
 import { PhoneMigrationBanner } from "@/features/profile/components/phone-migration-banner";
 
 export function AppShell({
@@ -82,6 +83,7 @@ export function AppShell({
             experience={experience}
             onOpenMenu={() => setMenuOpen(true)}
             onLogout={handleLogout}
+            search={<SearchDropdown profile={profile} />}
           />
           <main className="cmms-page-stack mt-6 min-w-0">
             <PhoneMigrationBanner profile={profile} />

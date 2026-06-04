@@ -15,6 +15,7 @@ import { useAdminDashboardQuery } from "@/features/dashboard/hooks/use-dashboard
 import { DashboardAlertsPanel } from "@/features/dashboard/components/dashboard-alerts-panel";
 import { hasWidget } from "@/features/dashboard/hooks/use-dashboard-widgets";
 import { AttendanceWeightsPanel } from "@/features/attendance/components/attendance-weights-panel";
+import { canManageAdminSync } from "@/core/auth/governance-permissions";
 import { useSessionStore } from "@/core/auth/session-store";
 
 export function SuperAdminDashboard({
@@ -131,7 +132,9 @@ export function SuperAdminDashboard({
       </div>
       ) : null}
 
-      {hasWidget(widgets, "attendanceWeights") && profile?.permissions.includes("sync:admin") ? (
+      {hasWidget(widgets, "attendanceWeights") &&
+      profile &&
+      canManageAdminSync(profile.permissions) ? (
         <AttendanceWeightsPanel />
       ) : null}
 

@@ -40,6 +40,11 @@ export const CHOIR_OFFICER_META: Record<
     titleEn: 'Choir Committee',
     titleFr: 'Comité de la chorale',
   },
+  [ROLES.CHOIR_FAMILY_COORDINATOR]: {
+    titleRw: "Umuvugizi w'imiryango y'Abakorali",
+    titleEn: 'Choir Family Coordinator',
+    titleFr: 'Coordinateur des familles de chorale',
+  },
   [ROLES.CHOIR_LEADER]: {
     titleRw: "Umuyobozi wa Korali (his)",
     titleEn: 'Choir Leader (legacy)',

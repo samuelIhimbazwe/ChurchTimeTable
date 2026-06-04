@@ -46,7 +46,7 @@ export function PendingMembersQueue() {
     queryKey: ["members", "pending", ministry],
     queryFn: () =>
       fetchMembers({
-        status: "PENDING",
+        status: "NEW_MEMBER",
         ministry: ministry || undefined,
         limit: 200,
       }),

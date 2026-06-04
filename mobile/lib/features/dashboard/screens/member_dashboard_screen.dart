@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/auth/governance_permissions.dart';
 import '../../../core/localization/l10n.dart';
 import '../../../core/models/dashboard_models.dart';
 import '../../../core/routing/app_router.dart';
 import '../../../core/widgets/localized_card.dart';
 import '../../../core/widgets/mobile_tab_shell.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../choir/providers/choir_providers.dart';
 import '../providers/dashboard_providers.dart';
 
 class MemberDashboardScreen extends ConsumerWidget {
@@ -38,9 +40,21 @@ class MemberDashboardScreen extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Text(
-                l10n.dashboard_welcome(name),
-                style: Theme.of(context).textTheme.titleLarge,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.dashboard_welcome(name),
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pushNamed(AppRouter.myProfile);
+                    },
+                    child: Text(l10n.member_profile_title),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               LocalizedCard(
@@ -48,6 +62,12 @@ class MemberDashboardScreen extends ConsumerWidget {
                 subtitle: member?['ministry']?.toString(),
                 leading: const CircleAvatar(child: Icon(Icons.person)),
               ),
+              if (canViewDevotion(auth.permissions)) ...[
+                const SizedBox(height: 12),
+                _DevotionDashboardCard(
+                  onOpen: () => Navigator.of(context).pushNamed(AppRouter.devotions),
+                ),
+              ],
                 if (score != null) ...[
                   const SizedBox(height: 12),
                   LocalizedCard(
@@ -136,6 +156,11 @@ class MemberDashboardScreen extends ConsumerWidget {
                     title: l10n.nav_notifications,
                     route: AppRouter.notifications,
                   ),
+                _NavTile(
+                  icon: Icons.home_outlined,
+                  title: 'Member portal',
+                  route: AppRouter.memberPortalHome,
+                ),
                 if (auth.hasPermission('discipline:read_all'))
                   _NavTile(
                     icon: Icons.gavel,
@@ -144,7 +169,7 @@ class MemberDashboardScreen extends ConsumerWidget {
                   ),
                 if (perms.financeSnapshot ||
                     member?['ministry'] == 'CHOIR' ||
-                    auth.hasPermission('finance:read'))
+                    canAccessFinanceNav(auth.permissions))
                   _NavTile(
                     icon: Icons.account_balance_wallet,
                     title: l10n.nav_finance,
@@ -209,6 +234,46 @@ class _NavTile extends StatelessWidget {
       leading: Icon(icon),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => Navigator.pushNamed(context, route),
+    );
+  }
+}
+
+class _DevotionDashboardCard extends ConsumerWidget {
+  const _DevotionDashboardCard({required this.onOpen});
+
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final async = ref.watch(devotionWidgetProvider);
+    return async.when(
+      loading: () => LocalizedCard(
+        title: l10n.devotion_center_title,
+        subtitle: l10n.common_loading,
+        leading: const Icon(Icons.menu_book_outlined),
+        onTap: onOpen,
+      ),
+      error: (_, __) => LocalizedCard(
+        title: l10n.devotion_center_title,
+        subtitle: l10n.devotion_open_center,
+        leading: const Icon(Icons.menu_book_outlined),
+        onTap: onOpen,
+      ),
+      data: (widget) {
+        final pinned = widget['pinned'] as Map<String, dynamic>?;
+        final verse = widget['verseOfDay'] as Map<String, dynamic>?;
+        final subtitle = pinned?['title'] as String? ??
+            verse?['verseReference'] as String? ??
+            l10n.devotion_open_center;
+        return LocalizedCard(
+          title: l10n.devotion_center_title,
+          subtitle: subtitle,
+          leading: const Icon(Icons.menu_book_outlined),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: onOpen,
+        );
+      },
     );
   }
 }

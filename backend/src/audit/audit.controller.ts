@@ -2,8 +2,8 @@ import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { AuditService } from './audit.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
-import { RequirePermissions } from '../common/decorators/roles.decorator';
-import { PERMISSIONS } from '../common/constants/roles';
+import { RequireAnyPermissions } from '../common/decorators/roles.decorator';
+import { ADMIN_AUDIT_ACCESS } from '../common/constants/roles';
 import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Controller('audit')
@@ -12,7 +12,7 @@ export class AuditController {
   constructor(private auditService: AuditService) {}
 
   @Get()
-  @RequirePermissions(PERMISSIONS.AUDIT_READ)
+  @RequireAnyPermissions(...ADMIN_AUDIT_ACCESS)
   findAll(
     @Query() query: PaginationDto & { entity?: string; entityId?: string },
   ) {

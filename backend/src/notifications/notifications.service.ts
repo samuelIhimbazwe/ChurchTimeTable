@@ -84,6 +84,10 @@ export class NotificationsService {
 
     data?: Record<string, unknown>,
 
+    choirId?: string,
+
+    ministryId?: string,
+
   ) {
 
     const notification = await this.prisma.notification.create({
@@ -91,6 +95,10 @@ export class NotificationsService {
       data: {
 
         userId,
+
+        choirId: choirId ?? null,
+
+        ministryId: ministryId ?? null,
 
         type,
 
@@ -768,11 +776,34 @@ export class NotificationsService {
 
 
 
-  async listForUser(userId: string, page = 1, limit = 20, unreadOnly = false) {
-
+  async listForUser(
+    userId: string,
+    page = 1,
+    limit = 20,
+    options: {
+      unreadOnly?: boolean;
+      archived?: boolean;
+      q?: string;
+      type?: NotificationType;
+    } = {},
+  ) {
+    const { unreadOnly = false, archived = false, q, type } = options;
     const { skip, take } = { skip: (page - 1) * limit, take: limit };
 
-    const where = { userId, ...(unreadOnly ? { read: false } : {}) };
+    const where: Prisma.NotificationWhereInput = {
+      userId,
+      archived,
+      ...(unreadOnly ? { read: false } : {}),
+      ...(type ? { type } : {}),
+      ...(q?.trim()
+        ? {
+            OR: [
+              { title: { contains: q.trim() } },
+              { body: { contains: q.trim() } },
+            ],
+          }
+        : {}),
+    };
 
     const [items, total] = await Promise.all([
 
@@ -805,15 +836,31 @@ export class NotificationsService {
 
 
   async markRead(id: string, userId: string) {
-
     return this.prisma.notification.updateMany({
-
       where: { id, userId },
-
       data: { read: true },
-
     });
+  }
 
+  async markAllRead(userId: string) {
+    return this.prisma.notification.updateMany({
+      where: { userId, read: false, archived: false },
+      data: { read: true },
+    });
+  }
+
+  async archive(id: string, userId: string) {
+    return this.prisma.notification.updateMany({
+      where: { id, userId },
+      data: { archived: true, read: true },
+    });
+  }
+
+  async unarchive(id: string, userId: string) {
+    return this.prisma.notification.updateMany({
+      where: { id, userId },
+      data: { archived: false },
+    });
   }
 
   async notifyMemberApproved(userId: string) {
@@ -834,7 +881,49 @@ export class NotificationsService {
     });
   }
 
-  /** Sprint F hook — in-app notice only; thank-you workflow deferred. */
+  /** Sprint F — localized thank-you acknowledgment in the member notification feed. */
+  async sendContributionThankYou(event: {
+    userId: string;
+    memberName: string;
+    memberNumber: string;
+    contributionType: string;
+    amount: number;
+    currency: string;
+    contributionId: string;
+    referenceNumber: string;
+  }) {
+    const locale = await this.userLocale(event.userId);
+    const params = {
+      memberName: event.memberName,
+      memberNumber: event.memberNumber,
+      contributionType: event.contributionType,
+      amount: event.amount,
+      currency: event.currency,
+    };
+    const title = this.i18n.translate(
+      locale,
+      'CONTRIBUTION_THANK_YOU_TITLE',
+      undefined,
+      params,
+    );
+    const body = this.i18n.translate(
+      locale,
+      'CONTRIBUTION_THANK_YOU_MESSAGE',
+      undefined,
+      params,
+    );
+    return this.create(event.userId, NotificationType.GENERAL, title, body, {
+      kind: 'contribution_thank_you',
+      contributionId: event.contributionId,
+      referenceNumber: event.referenceNumber,
+      amount: event.amount,
+      currency: event.currency,
+      contributionType: event.contributionType,
+      memberNumber: event.memberNumber,
+    });
+  }
+
+  /** Sprint E — legacy confirmation notice (superseded by thank-you workflow). */
   async onContributionConfirmed(event: {
     userId: string;
     amount: number;

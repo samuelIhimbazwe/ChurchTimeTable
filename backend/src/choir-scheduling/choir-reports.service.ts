@@ -1,0 +1,105 @@
+import { ForbiddenException, Injectable } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
+import { PermissionsResolver } from '../auth/permissions.resolver';
+import { CHOIR_SCHEDULING_AUDIT } from './choir-scheduling.constants';
+import { hasChoirOpsReport } from './choir-scheduling-access.util';
+
+@Injectable()
+export class ChoirReportsService {
+  constructor(
+    private prisma: PrismaService,
+    private audit: AuditService,
+    private permissions: PermissionsResolver,
+  ) {}
+
+  private async assertReport(actorUserId: string) {
+    const resolved = await this.permissions.resolveForUser(actorUserId);
+    if (!hasChoirOpsReport(resolved.permissions)) {
+      throw new ForbiddenException('Denied');
+    }
+    return resolved;
+  }
+
+  async participationReport(actorUserId: string, choirId: string) {
+    await this.assertReport(actorUserId);
+    return this.prisma.choirMemberParticipationProfile.findMany({
+      where: { choirId },
+      include: {
+        member: { select: { firstName: true, lastName: true } },
+        badges: true,
+      },
+      orderBy: { overallParticipationScore: 'desc' },
+    });
+  }
+
+  async attendanceByType(
+    actorUserId: string,
+    choirId: string,
+    activityType: 'SERVICE' | 'REHEARSAL' | 'PRAYER',
+  ) {
+    await this.assertReport(actorUserId);
+    const activities = await this.prisma.choirActivity.findMany({
+      where: {
+        choirId,
+        activityType:
+          activityType === 'REHEARSAL'
+            ? { in: ['REHEARSAL', 'SPECIAL_REHEARSAL', 'TRAINING'] }
+            : activityType,
+      },
+      include: {
+        attendances: {
+          include: {
+            member: { select: { firstName: true, lastName: true } },
+          },
+        },
+      },
+      orderBy: { startAt: 'desc' },
+      take: 50,
+    });
+    return activities;
+  }
+
+  async choirHealth(actorUserId: string, choirId: string) {
+    await this.assertReport(actorUserId);
+    const profiles = await this.prisma.choirMemberParticipationProfile.findMany({
+      where: { choirId },
+    });
+    const avg =
+      profiles.length > 0
+        ? profiles.reduce((s, p) => s + p.overallParticipationScore, 0) /
+          profiles.length
+        : 0;
+    const missing = profiles.filter((p) => p.unexcusedAbsences > 2).length;
+    return {
+      memberCount: profiles.length,
+      averageParticipation: Math.round(avg * 10) / 10,
+      membersAtRisk: missing,
+      serviceRateAvg:
+        profiles.length > 0
+          ? profiles.reduce((s, p) => s + p.serviceAttendanceRate, 0) /
+            profiles.length
+          : 0,
+    };
+  }
+
+  exportCsv(actorUserId: string, choirId: string, report: string): string {
+    void this.assertReport(actorUserId);
+    const header = 'memberId,overallScore,serviceRate,rehearsalRate,prayerRate\n';
+    void choirId;
+    void report;
+    return header;
+  }
+
+  async logExport(actorUserId: string, choirId: string, format: string) {
+    await this.assertReport(actorUserId);
+    await this.audit.log({
+      userId: actorUserId,
+      action: CHOIR_SCHEDULING_AUDIT.REPORT_EXPORTED,
+      entity: 'ChoirReport',
+      entityId: choirId,
+      newValue: { format } as Prisma.InputJsonValue,
+    });
+  }
+}

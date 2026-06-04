@@ -21,6 +21,8 @@ import {
 import { AuditService } from '../audit/audit.service';
 import { ReceiptUploadService } from './receipt/receipt-upload.service';
 import { ContributionService } from './contribution.service';
+import { ContributionScopeService } from './contribution-scope.service';
+import { ThankYouService } from './thank-you.service';
 
 @Injectable()
 export class FinanceGovernanceService {
@@ -30,6 +32,8 @@ export class FinanceGovernanceService {
     private audit: AuditService,
     private receiptUpload: ReceiptUploadService,
     private contributions: ContributionService,
+    private contributionScope: ContributionScopeService,
+    private thankYou: ThankYouService,
   ) {}
 
   async scopeForUser(actorUserId: string): Promise<FinanceScopeContext> {
@@ -135,6 +139,10 @@ export class FinanceGovernanceService {
     const confirmationQueue = ctx.executiveSummaryOnly
       ? []
       : await this.contributions.getConfirmationQueue(actorUserId);
+    const thankYouMetrics = await this.getThankYouMetrics(scopes);
+    const acknowledgmentQueue = ctx.executiveSummaryOnly
+      ? []
+      : await this.thankYou.getAcknowledgmentQueue(actorUserId);
 
     return {
       ministryScopes: scopes,
@@ -182,11 +190,20 @@ export class FinanceGovernanceService {
       contributions: {
         ...contributionStats,
         confirmationQueue,
+        thankYou: thankYouMetrics,
+        acknowledgmentQueue,
       },
     };
   }
 
+  async getThankYouMetrics(ministryScopes: MinistryScope[]) {
+    return this.thankYou.getThankYouMetrics(ministryScopes);
+  }
+
   async memberContributions(actorUserId: string) {
+    const actor = await this.contributionScope.resolveActor(actorUserId);
+    this.contributionScope.assertCanViewOwn(actor);
+
     const ctx = await this.scopeForUser(actorUserId);
     if (!ctx.memberId) {
       throw new ForbiddenException('Member profile required');
@@ -239,6 +256,8 @@ export class FinanceGovernanceService {
         status: record.status,
         receiptUrl: record.receiptUrl,
         referenceNumber: record.referenceNumber,
+        thankYouDeliveryStatus: record.thankYouDeliveryStatus,
+        thankYouSentAt: record.thankYouSentAt,
         source: 'contribution_record' as const,
       })),
     ].sort((a, b) => b.date.localeCompare(a.date));
@@ -548,6 +567,13 @@ export class FinanceGovernanceService {
         contributionGrowth: [],
         contributionTypeDistribution: [],
         confirmationQueue: [],
+        thankYou: {
+          totalSent: 0,
+          totalPending: 0,
+          totalFailed: 0,
+          lastSentAt: null,
+        },
+        acknowledgmentQueue: [],
       },
     };
   }

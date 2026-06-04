@@ -51,6 +51,18 @@ class ApiClient {
     _dio.options.headers['Accept-Language'] = languageCode;
   }
 
+  static const mainChoirId = '00000000-0000-0000-0000-000000000001';
+
+  Future<void> setActiveChoirId(String choirId) async {
+    await _storage.write(key: 'active_choir_id', value: choirId);
+    _dio.options.headers['x-choir-id'] = choirId;
+  }
+
+  Future<void> loadActiveChoirId() async {
+    final choirId = await _storage.read(key: 'active_choir_id');
+    _dio.options.headers['x-choir-id'] = choirId ?? mainChoirId;
+  }
+
   Future<String?> refreshAccessToken() async {
     _refreshFuture ??= _performRefresh();
     try {

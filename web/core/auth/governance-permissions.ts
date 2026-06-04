@@ -59,9 +59,80 @@ export function hasOperationalLeaderDashboard(permissions: string[]): boolean {
     hasProtocolOversight(permissions) ||
     hasProtocolCoordination(permissions) ||
     hasProtocolTeamHead(permissions) ||
-    hasChoirOperations(permissions) ||
-    permissions.includes("report:export")
+    hasChoirOperations(permissions)
   );
+}
+
+/** Church / ministry leadership dashboard — excludes report:export */
+export const LEADER_DASHBOARD_ACCESS_PERMISSIONS = [
+  PROTOCOL_OVERSIGHT,
+  PROTOCOL_TEAM_MANAGE,
+  PROTOCOL_OPERATIONAL_MONITOR,
+  PROTOCOL_TEAM_HEAD,
+  "attendance.mark",
+  PROTOCOL_ATTENDANCE_MANAGE,
+  CHOIR_OVERSIGHT,
+  CHOIR_OPERATIONS_MANAGE,
+  "choir.events.manage",
+  CHOIR_ATTENDANCE_MANAGE,
+  "member:manage",
+  "event:write",
+  "assignment:write",
+  "attendance:write",
+  "swap:manage",
+  "discipline:manage",
+  "family:manage",
+] as const;
+
+export function canAccessLeaderDashboard(permissions: string[]): boolean {
+  return hasAnyEffectivePermission(permissions, [...LEADER_DASHBOARD_ACCESS_PERMISSIONS]);
+}
+
+export function canManageFamilies(permissions: string[]): boolean {
+  return hasEffectivePermission(permissions, "family:manage");
+}
+
+export function canViewFamilies(permissions: string[]): boolean {
+  return hasAnyEffectivePermission(permissions, ["family:view", "family:manage"]);
+}
+
+export function canManageWelfare(permissions: string[]): boolean {
+  return hasEffectivePermission(permissions, "choir.welfare.manage");
+}
+
+export function canViewWelfare(permissions: string[]): boolean {
+  return hasAnyEffectivePermission(permissions, [
+    "choir.welfare.view",
+    "choir.welfare.manage",
+  ]);
+}
+
+export function canManageMusic(permissions: string[]): boolean {
+  return hasEffectivePermission(permissions, "choir.music.manage");
+}
+
+export function canViewMusic(permissions: string[]): boolean {
+  return hasAnyEffectivePermission(permissions, [
+    "choir.music.view",
+    "choir.music.manage",
+  ]);
+}
+
+export function canManageRehearsals(permissions: string[]): boolean {
+  return hasAnyEffectivePermission(permissions, [
+    "choir.rehearsal.manage",
+    "choir.operations.manage",
+  ]);
+}
+
+export function canViewRehearsals(permissions: string[]): boolean {
+  return hasAnyEffectivePermission(permissions, [
+    "choir.rehearsal.view",
+    "choir.rehearsal.manage",
+    "choir.music.view",
+    "choir.music.manage",
+    "event:read",
+  ]);
 }
 
 export function canMarkAttendance(permissions: string[]): boolean {
@@ -86,7 +157,6 @@ export const ATTENDANCE_ACCESS_PERMISSIONS = [
   CHOIR_ATTENDANCE_MANAGE,
   CHOIR_OVERSIGHT,
   CHOIR_OPERATIONS_MANAGE,
-  "report:export",
 ] as const;
 
 export const COVERAGE_ACCESS_PERMISSIONS = [
@@ -96,7 +166,6 @@ export const COVERAGE_ACCESS_PERMISSIONS = [
   PROTOCOL_TEAM_MANAGE,
   PROTOCOL_OVERSIGHT,
   PROTOCOL_OPERATIONAL_MONITOR,
-  "report:export",
 ] as const;
 
 export function canAccessAttendanceWorkspace(permissions: string[]): boolean {
@@ -152,13 +221,11 @@ export function canAccessFinanceStewardship(permissions: string[]): boolean {
     hasChoirFinanceView(permissions) ||
     hasProtocolFinanceView(permissions) ||
     hasEffectivePermission(permissions, MINISTRY_FINANCE_OVERSIGHT) ||
-    permissions.includes("finance:read")
+    hasEffectivePermission(permissions, "finance.view")
   );
 }
 
 export const FINANCE_ACCESS_PERMISSIONS = [
-  "finance:read",
-  "finance:write",
   CHOIR_FINANCE_VIEW,
   CHOIR_FINANCE_MANAGE,
   CHOIR_FINANCE_APPROVE,
@@ -167,7 +234,33 @@ export const FINANCE_ACCESS_PERMISSIONS = [
   PROTOCOL_FINANCE_APPROVE,
   MINISTRY_FINANCE_OVERSIGHT,
   PROTOCOL_OVERSIGHT,
+  "finance.view",
 ] as const;
+
+/** Navigation-only finance gate — scoped claims, not legacy finance:read alone */
+export const FINANCE_NAV_PERMISSIONS = FINANCE_ACCESS_PERMISSIONS;
+
+export function canAccessFinanceNav(permissions: string[]): boolean {
+  return FINANCE_NAV_PERMISSIONS.some((p) => hasEffectivePermission(permissions, p));
+}
+
+export const CHOIR_CONTRIBUTION_VIEW_ALL = "choir.contribution.view.all";
+export const CHOIR_CONTRIBUTION_ADJUST = "choir.contribution.adjust";
+
+export const EXECUTIVE_STEWARDSHIP_PERMISSIONS = [
+  CHOIR_CONTRIBUTION_VIEW_ALL,
+] as const;
+
+export function canAccessExecutiveStewardship(permissions: string[]): boolean {
+  return hasEffectivePermission(permissions, CHOIR_CONTRIBUTION_VIEW_ALL);
+}
+
+export function canReviewContributionAdjustments(permissions: string[]): boolean {
+  return (
+    canAccessExecutiveStewardship(permissions) ||
+    hasEffectivePermission(permissions, CHOIR_CONTRIBUTION_ADJUST)
+  );
+}
 
 export function canAccessCoverageWorkspace(permissions: string[]): boolean {
   return COVERAGE_ACCESS_PERMISSIONS.some((p) =>
@@ -230,4 +323,35 @@ export function isChoirOnlyOperations(permissions: string[]): boolean {
 /** Ministry-wide protocol roster visibility (not choir report:export) */
 export function canViewProtocolWideRoster(permissions: string[]): boolean {
   return hasProtocolOversight(permissions) || hasProtocolCoordination(permissions);
+}
+
+export const ADMIN_AUDIT_VIEW = 'admin.audit.view';
+export const ADMIN_SYNC_MANAGE = 'admin.sync.manage';
+export const ADMIN_SETTINGS_VIEW = 'admin.settings.view';
+export const ADMIN_SETTINGS_MANAGE = 'admin.settings.manage';
+export const ADMIN_USERS_VIEW = 'admin.users.view';
+export const ADMIN_USERS_MANAGE = 'admin.users.manage';
+export const ADMIN_ROLES_VIEW = 'admin.roles.view';
+export const ADMIN_ROLES_MANAGE = 'admin.roles.manage';
+
+export const PLATFORM_ADMIN_VIEW_PERMISSIONS = [
+  ADMIN_AUDIT_VIEW,
+  ADMIN_SETTINGS_VIEW,
+  ADMIN_USERS_VIEW,
+  ADMIN_ROLES_VIEW,
+  ADMIN_SYNC_MANAGE,
+] as const;
+
+export function canViewAdminAudit(permissions: string[]): boolean {
+  return hasEffectivePermission(permissions, ADMIN_AUDIT_VIEW);
+}
+
+export function canManageAdminSync(permissions: string[]): boolean {
+  return hasEffectivePermission(permissions, ADMIN_SYNC_MANAGE);
+}
+
+export function hasPlatformAdminAccess(permissions: string[]): boolean {
+  return PLATFORM_ADMIN_VIEW_PERMISSIONS.some((p) =>
+    hasEffectivePermission(permissions, p),
+  );
 }

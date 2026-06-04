@@ -1,3 +1,4 @@
+import { ForbiddenException } from '@nestjs/common';
 import { MinistryScope } from '@prisma/client';
 import { PERMISSIONS } from '../constants/roles';
 import type { OperationalScopeContext } from '../../governance/operational-scope.types';
@@ -56,25 +57,15 @@ export function buildFinanceScopeContext(
   if (hasOversight) {
     ministryScopes.push(MinistryScope.CHOIR, MinistryScope.PROTOCOL);
   } else {
-    if (hasAnyEffectivePermission(permissions, CHOIR_FINANCE_VIEW_CLAIMS)) {
+    if (
+      hasAnyEffectivePermission(permissions, CHOIR_FINANCE_VIEW_CLAIMS) ||
+      hasEffectivePermission(permissions, PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST) ||
+      hasEffectivePermission(permissions, PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL)
+    ) {
       ministryScopes.push(MinistryScope.CHOIR);
     }
     if (hasAnyEffectivePermission(permissions, PROTOCOL_FINANCE_VIEW_CLAIMS)) {
       ministryScopes.push(MinistryScope.PROTOCOL);
-    }
-    // Legacy choir finance bundle
-    if (
-      ministryScopes.length === 0 &&
-      (hasEffectivePermission(permissions, PERMISSIONS.FINANCE_READ) ||
-        hasEffectivePermission(permissions, PERMISSIONS.FINANCE_WRITE))
-    ) {
-      if (
-        operational.memberId &&
-        (operational.canChoirOperations ||
-          operational.ministryIds.includes('CHOIR'))
-      ) {
-        ministryScopes.push(MinistryScope.CHOIR);
-      }
     }
   }
 
@@ -115,4 +106,30 @@ export function canAccessMinistryFinance(
   scope: MinistryScope,
 ): boolean {
   return ctx.ministryScopes.includes(scope);
+}
+
+/** Sprint 10 choir treasurer / coordinator contribution record stewardship */
+export function assertContributionStewardScope(
+  ctx: FinanceScopeContext,
+  ministry: MinistryScope,
+): void {
+  if (!canAccessMinistryFinance(ctx, ministry)) {
+    throw new ForbiddenException('Finance access denied for this ministry');
+  }
+
+  if (
+    (ministry === MinistryScope.CHOIR || ministry === MinistryScope.BOTH) &&
+    hasEffectivePermission(ctx.permissions, PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST)
+  ) {
+    return;
+  }
+
+  const canManage =
+    (ministry === MinistryScope.CHOIR && ctx.canManageChoir) ||
+    (ministry === MinistryScope.PROTOCOL && ctx.canManageProtocol) ||
+    (ministry === MinistryScope.BOTH &&
+      (ctx.canManageChoir || ctx.canManageProtocol));
+  if (!canManage && !ctx.canApproveChoir && !ctx.canApproveProtocol) {
+    throw new ForbiddenException('Cannot manage contributions for this ministry');
+  }
 }

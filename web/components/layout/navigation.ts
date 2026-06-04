@@ -1,6 +1,13 @@
 import type { DashboardExperience } from "@/core/auth/rbac";
 
 import { hasPermission } from "@/core/auth/rbac";
+import {
+  ATTENDANCE_ACCESS_PERMISSIONS,
+  COVERAGE_ACCESS_PERMISSIONS,
+  EXECUTIVE_STEWARDSHIP_PERMISSIONS,
+  FINANCE_NAV_PERMISSIONS,
+  PLATFORM_ADMIN_VIEW_PERMISSIONS,
+} from "@/core/auth/governance-permissions";
 import { shouldHideOperationalNavigation } from "@/core/auth/phone-enforcement";
 
 import type { AuthProfile } from "@/core/api/types";
@@ -60,6 +67,48 @@ export function getShellNavigationGroups(
       requiredPermissions: ["member:manage"],
     },
     {
+      href: "/dashboard/families",
+      label: t("shell.navFamilies"),
+      description: t("shell.familiesSummary"),
+      requiredPermissions: ["family:view", "family:manage"],
+    },
+    {
+      href: "/dashboard/ministries",
+      label: t("shell.navMinistries"),
+      description: t("shell.ministriesSummary"),
+      requiredPermissions: ["ministry.view", "ministry.manage"],
+    },
+    {
+      href: "/dashboard/units",
+      label: t("shell.navUnits"),
+      description: t("shell.unitsSummary"),
+      requiredPermissions: [
+        "operational_unit.view",
+        "operational_unit.manage",
+      ],
+    },
+    {
+      href: "/dashboard/church",
+      label: t("shell.navChurchIntelligence"),
+      description: t("shell.churchIntelligenceSummary"),
+      requiredPermissions: [
+        "church.intelligence.view",
+        "church.governance.view",
+      ],
+    },
+    {
+      href: "/dashboard/operations",
+      label: t("shell.navChurchOperations"),
+      description: t("shell.churchOperationsSummary"),
+      requiredPermissions: ["operations.view", "operations.manage"],
+    },
+    {
+      href: "/dashboard/assets",
+      label: t("shell.navAssets"),
+      description: t("shell.assetsSummary"),
+      requiredPermissions: ["asset.view", "asset.manage"],
+    },
+    {
       href: "/dashboard/events",
       label: t("shell.navEvents"),
       description: t("shell.eventsSummary"),
@@ -69,20 +118,7 @@ export function getShellNavigationGroups(
       href: "/dashboard/attendance",
       label: t("shell.navAttendance"),
       description: t("shell.attendanceSummary"),
-      requiredPermissions: [
-        "event:read",
-        "attendance:write",
-        "attendance.mark",
-        "protocol.attendance.manage",
-        "protocol.team.head",
-        "protocol.team.manage",
-        "protocol.oversight",
-        "protocol.operational.monitor",
-        "choir.attendance.manage",
-        "choir.oversight",
-        "choir.operations.manage",
-        "report:export",
-      ],
+      requiredPermissions: [...ATTENDANCE_ACCESS_PERMISSIONS],
     },
     {
       href: "/dashboard/operational",
@@ -102,15 +138,7 @@ export function getShellNavigationGroups(
       href: "/dashboard/coverage",
       label: t("shell.navCoverage"),
       description: t("shell.coverageSummary"),
-      requiredPermissions: [
-        "swap:manage",
-        "event:read",
-        "protocol.team.head",
-        "protocol.team.manage",
-        "protocol.oversight",
-        "protocol.operational.monitor",
-        "report:export",
-      ],
+      requiredPermissions: [...COVERAGE_ACCESS_PERMISSIONS],
     },
     {
       href: "/dashboard/governance",
@@ -126,13 +154,108 @@ export function getShellNavigationGroups(
       href: "/dashboard/finance",
       label: t("shell.navFinance"),
       description: t("shell.financeSummary"),
+      requiredPermissions: [...FINANCE_NAV_PERMISSIONS],
+    },
+    {
+      href: "/dashboard/stewardship",
+      label: t("shell.navExecutiveStewardship"),
+      description: t("shell.executiveStewardshipSummary"),
+      requiredPermissions: [...EXECUTIVE_STEWARDSHIP_PERMISSIONS],
+    },
+    {
+      href: "/dashboard/choir",
+      label: t("shell.navChoirOperations"),
+      description: t("shell.choirOperationsSummary"),
       requiredPermissions: [
-        "finance:read",
-        "choir.finance.view",
-        "choir.finance.manage",
-        "protocol.finance.view",
-        "protocol.finance.manage",
-        "ministry.finance.oversight",
+        "choir.welfare.view",
+        "choir.music.view",
+        "choir.rehearsal.manage",
+        "choir.contribution.view.all",
+        "choir.operations.manage",
+      ],
+    },
+    {
+      href: "/dashboard/welfare",
+      label: t("shell.navWelfare"),
+      description: t("shell.welfareSummary"),
+      requiredPermissions: ["choir.welfare.view", "choir.welfare.manage"],
+    },
+    {
+      href: "/dashboard/music",
+      label: t("shell.navMusic"),
+      description: t("shell.musicSummary"),
+      requiredPermissions: ["choir.music.view", "choir.music.manage"],
+    },
+    {
+      href: "/dashboard/rehearsals",
+      label: t("shell.navRehearsals"),
+      description: t("shell.rehearsalsSummary"),
+      requiredPermissions: [
+        "choir.rehearsal.view",
+        "choir.rehearsal.manage",
+        "event:read",
+      ],
+    },
+    {
+      href: "/dashboard/devotions",
+      label: t("shell.navDevotions"),
+      description: t("shell.devotionsSummary"),
+      requiredPermissions: ["choir.devotion.view"],
+    },
+    {
+      href: "/dashboard/choir/roles",
+      label: t("shell.navChoirRoles"),
+      description: t("shell.choirRolesSummary"),
+      requiredPermissions: ["choir.custom_role.manage"],
+    },
+    {
+      href: "/dashboard/choir/reports",
+      label: t("shell.navChoirReports"),
+      description: t("shell.choirReportsSummary"),
+      requiredPermissions: [
+        "choir.welfare.view",
+        "choir.welfare.manage",
+        "choir.music.view",
+        "choir.music.manage",
+        "choir.rehearsal.view",
+        "choir.rehearsal.manage",
+        "choir.operations.manage",
+      ],
+    },
+    {
+      href: "/dashboard/choir/documents",
+      label: t("shell.navChoirDocuments"),
+      description: t("shell.choirDocumentsSummary"),
+      requiredPermissions: [
+        "choir.document.manage",
+        "choir.operations.manage",
+      ],
+    },
+    {
+      href: "/dashboard/choir/meetings",
+      label: t("shell.navChoirMeetings"),
+      description: t("shell.choirMeetingsSummary"),
+      requiredPermissions: [
+        "choir.meeting.manage",
+        "choir.operations.manage",
+      ],
+    },
+    {
+      href: "/dashboard/choir/uniforms",
+      label: t("shell.navChoirUniforms"),
+      description: t("shell.choirUniformsSummary"),
+      requiredPermissions: [
+        "choir.uniform.manage",
+        "choir.operations.manage",
+      ],
+    },
+    {
+      href: "/dashboard/choir/equipment",
+      label: t("shell.navChoirEquipment"),
+      description: t("shell.choirEquipmentSummary"),
+      requiredPermissions: [
+        "choir.equipment.manage",
+        "choir.operations.manage",
       ],
     },
     {
@@ -150,9 +273,14 @@ export function getShellNavigationGroups(
       description: t("shell.profileSummary"),
     },
     {
-      href: "/dashboard/finance/my-contributions",
+      href: "/dashboard/contributions",
       label: t("shell.navMyContributions"),
       description: t("shell.myContributionsSummary"),
+    },
+    {
+      href: "/dashboard/family/contributions",
+      label: t("shell.navFamilyContributions"),
+      description: t("shell.familyContributionsSummary"),
     },
   ];
 
@@ -161,7 +289,7 @@ export function getShellNavigationGroups(
       href: "/dashboard/admin",
       label: t("shell.navAdmin"),
       description: t("shell.adminSummary"),
-      experiences: ["super-admin"],
+      requiredPermissions: [...PLATFORM_ADMIN_VIEW_PERMISSIONS],
     },
   ];
 
@@ -184,9 +312,25 @@ export function getShellNavigationGroups(
   ];
 
   return filterPhoneRestrictedItems(
-    groups.filter((group) => group.items.length > 0),
+    filterFamilyContributionsNav(
+      groups.filter((group) => group.items.length > 0),
+      profile,
+    ),
     profile,
   );
+}
+
+function filterFamilyContributionsNav(
+  groups: ShellNavGroup[],
+  profile: AuthProfile | null,
+): ShellNavGroup[] {
+  const familyHref = "/dashboard/family/contributions";
+  const showFamily = profile?.member?.id != null;
+
+  return groups.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => item.href !== familyHref || showFamily),
+  }));
 }
 
 function filterPhoneRestrictedItems(
@@ -200,7 +344,10 @@ function filterPhoneRestrictedItems(
   const allowedHrefs = new Set([
     "/dashboard",
     "/dashboard/settings/profile",
-    "/dashboard/finance/my-contributions",
+    "/dashboard/contributions",
+    "/dashboard/contributions/new",
+    "/dashboard/family/contributions",
+    "/dashboard/family/contributions/pending",
     "/dashboard/notifications",
   ]);
 
@@ -230,6 +377,13 @@ export function getShellPageMeta(
     return {
       title: t("shell.navPendingMembers"),
       subtitle: t("shell.pendingMembersSummary"),
+    };
+  }
+
+  if (/^\/dashboard\/members\/[^/]+$/.test(pathname)) {
+    return {
+      title: t("shell.navMembers"),
+      subtitle: t("shell.memberProfileSummary"),
     };
   }
 
@@ -272,6 +426,104 @@ export function getShellPageMeta(
     return {
       title: t("shell.navAttendance"),
       subtitle: t("shell.attendanceSummary"),
+    };
+  }
+
+  if (pathname.startsWith("/dashboard/contributions/new")) {
+    return {
+      title: t("contributions.form.title"),
+      subtitle: t("contributions.form.subtitle"),
+    };
+  }
+
+  if (pathname.match(/\/dashboard\/contributions\/[^/]+$/)) {
+    return {
+      title: t("contributions.detail.title"),
+      subtitle: t("contributions.detail.subtitle"),
+    };
+  }
+
+  if (pathname.startsWith("/dashboard/family/goals")) {
+    return {
+      title: t("familyContributions.goals.title"),
+      subtitle: t("familyContributions.goals.subtitle"),
+    };
+  }
+
+  if (pathname.startsWith("/dashboard/family/rankings")) {
+    return {
+      title: t("familyContributions.rankings.title"),
+      subtitle: t("familyContributions.rankings.subtitle"),
+    };
+  }
+
+  if (pathname.startsWith("/dashboard/family/contributions/pending")) {
+    return {
+      title: t("familyContributions.pending.title"),
+      subtitle: t("familyContributions.pending.subtitle"),
+    };
+  }
+
+  if (pathname.match(/\/dashboard\/family\/contributions\/[^/]+$/)) {
+    return {
+      title: t("familyContributions.detail.title"),
+      subtitle: t("familyContributions.detail.subtitle"),
+    };
+  }
+
+  if (pathname.startsWith("/dashboard/family/contributions")) {
+    return {
+      title: t("familyContributions.hub.title"),
+      subtitle: t("familyContributions.hub.subtitle"),
+    };
+  }
+
+  if (pathname.startsWith("/dashboard/stewardship/campaigns")) {
+    return {
+      title: t("executiveStewardship.campaigns.title"),
+      subtitle: t("executiveStewardship.campaigns.subtitle"),
+    };
+  }
+
+  if (pathname.startsWith("/dashboard/stewardship/families")) {
+    return {
+      title: t("executiveStewardship.families.title"),
+      subtitle: t("executiveStewardship.families.subtitle"),
+    };
+  }
+
+  if (pathname.startsWith("/dashboard/stewardship/contributors")) {
+    return {
+      title: t("executiveStewardship.contributors.title"),
+      subtitle: t("executiveStewardship.contributors.subtitle"),
+    };
+  }
+
+  if (pathname.startsWith("/dashboard/stewardship/needs-attention")) {
+    return {
+      title: t("executiveStewardship.needsAttention.title"),
+      subtitle: t("executiveStewardship.needsAttention.subtitle"),
+    };
+  }
+
+  if (pathname.startsWith("/dashboard/stewardship/adjustments")) {
+    return {
+      title: t("executiveStewardship.adjustments.title"),
+      subtitle: t("executiveStewardship.adjustments.subtitle"),
+    };
+  }
+
+  if (pathname.startsWith("/dashboard/stewardship")) {
+    return {
+      title: t("executiveStewardship.hub.title"),
+      subtitle: t("executiveStewardship.hub.subtitle"),
+    };
+  }
+
+  if (pathname.startsWith("/dashboard/contributions")) {
+    return {
+      title: t("contributions.title"),
+      subtitle: t("contributions.subtitle"),
     };
   }
 

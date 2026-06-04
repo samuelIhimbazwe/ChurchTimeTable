@@ -1,11 +1,11 @@
-import { ProtectedRoute } from "@/components/auth/protected-route";
-import { MyContributionsDashboard } from "@/features/finance/components/my-contributions-dashboard";
+import { redirect } from "@/i18n/routing";
 
-/** Member stewardship — `/dashboard/finance/my-contributions` (locale-prefixed). */
-export default function MyContributionsPage() {
-  return (
-    <ProtectedRoute>
-      <MyContributionsDashboard />
-    </ProtectedRoute>
-  );
+/** Legacy path — Contribution Center (10.3.1). */
+export default async function LegacyMyContributionsPage({
+  params,
+}: Readonly<{
+  params: Promise<{ locale: string }>;
+}>) {
+  const { locale } = await params;
+  redirect({ href: "/dashboard/contributions", locale });
 }

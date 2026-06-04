@@ -1,17 +1,14 @@
 import { PERMISSIONS } from '../common/constants/roles';
 
 import {
-
+  canViewAdminAudit,
+  canManageAdminSync,
   hasChoirOperations,
-
   hasEffectivePermission,
-
   hasProtocolCoordination,
-
   hasProtocolOversight,
-
   hasProtocolTeamHeadAuthority,
-
+  LEADER_DASHBOARD_ACCESS_CLAIMS,
 } from '../common/governance/governance-permissions.util';
 
 
@@ -31,6 +28,8 @@ export type DashboardWidgetCategory =
   | 'communications'
 
   | 'analytics'
+
+  | 'operations'
 
   | 'admin';
 
@@ -66,19 +65,7 @@ export const LEADER_WIDGETS: DashboardWidgetDefinition[] = [
 
     priority: 10,
 
-    permissions: [
-
-      PERMISSIONS.PROTOCOL_OVERSIGHT_SCOPE,
-
-      PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE,
-
-      PERMISSIONS.PROTOCOL_OPERATIONAL_MONITOR,
-
-      PERMISSIONS.CHOIR_OVERSIGHT,
-
-      PERMISSIONS.REPORT_EXPORT,
-
-    ],
+    permissions: [...LEADER_DASHBOARD_ACCESS_CLAIMS],
 
     anyOf: true,
 
@@ -139,6 +126,210 @@ export const LEADER_WIDGETS: DashboardWidgetDefinition[] = [
     priority: 25,
 
     permissions: [PERMISSIONS.PROTOCOL_OVERSIGHT_SCOPE, PERMISSIONS.CHOIR_OVERSIGHT],
+
+    anyOf: true,
+
+  },
+
+  {
+
+    id: 'assetInventory',
+
+    category: 'operations',
+
+    priority: 26,
+
+    permissions: [PERMISSIONS.ASSET_VIEW, PERMISSIONS.ASSET_REPORT],
+
+    anyOf: true,
+
+  },
+
+  {
+
+    id: 'ministryFinance',
+
+    category: 'finance',
+
+    priority: 27,
+
+    permissions: [
+      PERMISSIONS.MINISTRY_FINANCE_VIEW,
+      PERMISSIONS.MINISTRY_FINANCE_REPORT,
+      PERMISSIONS.MINISTRY_FINANCE_OVERSIGHT,
+    ],
+
+    anyOf: true,
+
+  },
+
+  {
+
+    id: 'churchHealth',
+
+    category: 'analytics',
+
+    priority: 28,
+
+    permissions: [
+      PERMISSIONS.CHURCH_INTELLIGENCE_VIEW,
+      PERMISSIONS.CHURCH_GOVERNANCE_VIEW,
+    ],
+
+    anyOf: true,
+
+  },
+
+  {
+
+    id: 'ministryHealth',
+
+    category: 'analytics',
+
+    priority: 29,
+
+    permissions: [
+      PERMISSIONS.CHURCH_INTELLIGENCE_VIEW,
+      PERMISSIONS.CHURCH_GOVERNANCE_VIEW,
+    ],
+
+    anyOf: true,
+
+  },
+
+  {
+
+    id: 'operationalUnitHealth',
+
+    category: 'analytics',
+
+    priority: 30,
+
+    permissions: [
+      PERMISSIONS.CHURCH_INTELLIGENCE_VIEW,
+      PERMISSIONS.CHURCH_GOVERNANCE_VIEW,
+    ],
+
+    anyOf: true,
+
+  },
+
+  {
+
+    id: 'governanceAlerts',
+
+    category: 'operations',
+
+    priority: 31,
+
+    permissions: [
+      PERMISSIONS.CHURCH_GOVERNANCE_VIEW,
+      PERMISSIONS.CHURCH_INTELLIGENCE_VIEW,
+    ],
+
+    anyOf: true,
+
+  },
+
+  {
+
+    id: 'recentActivity',
+
+    category: 'communications',
+
+    priority: 32,
+
+    permissions: [
+      PERMISSIONS.CHURCH_INTELLIGENCE_VIEW,
+      PERMISSIONS.CHURCH_GOVERNANCE_VIEW,
+    ],
+
+    anyOf: true,
+
+  },
+
+  {
+
+    id: 'leadershipActivity',
+
+    category: 'analytics',
+
+    priority: 33,
+
+    permissions: [
+      PERMISSIONS.CHURCH_INTELLIGENCE_VIEW,
+      PERMISSIONS.CHURCH_GOVERNANCE_VIEW,
+    ],
+
+    anyOf: true,
+
+  },
+
+  {
+
+    id: 'upcomingOperations',
+
+    category: 'operations',
+
+    priority: 34,
+
+    permissions: [PERMISSIONS.OPERATIONS_VIEW, PERMISSIONS.OPERATIONS_MANAGE],
+
+    anyOf: true,
+
+  },
+
+  {
+
+    id: 'missingAssignments',
+
+    category: 'operations',
+
+    priority: 35,
+
+    permissions: [PERMISSIONS.OPERATIONS_VIEW, PERMISSIONS.OPERATIONS_MANAGE],
+
+    anyOf: true,
+
+  },
+
+  {
+
+    id: 'pendingConfirmations',
+
+    category: 'operations',
+
+    priority: 36,
+
+    permissions: [PERMISSIONS.OPERATIONS_VIEW, PERMISSIONS.OPERATIONS_ASSIGNMENT_CONFIRM],
+
+    anyOf: true,
+
+  },
+
+  {
+
+    id: 'operationsConflicts',
+
+    category: 'operations',
+
+    priority: 37,
+
+    permissions: [PERMISSIONS.OPERATIONS_VIEW, PERMISSIONS.OPERATIONS_MANAGE],
+
+    anyOf: true,
+
+  },
+
+  {
+
+    id: 'protocolOperationsPanel',
+
+    category: 'operations',
+
+    priority: 38,
+
+    permissions: [PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.PROTOCOL_MANAGE],
 
     anyOf: true,
 
@@ -245,8 +436,6 @@ export const LEADER_WIDGETS: DashboardWidgetDefinition[] = [
     permissions: [
 
       PERMISSIONS.FINANCE_VIEW_SCOPE,
-
-      PERMISSIONS.FINANCE_READ,
 
       PERMISSIONS.PROTOCOL_FINANCE_VIEW,
 
@@ -370,8 +559,6 @@ export const LEADER_WIDGETS: DashboardWidgetDefinition[] = [
 
     permissions: [
 
-      PERMISSIONS.FINANCE_READ,
-
       PERMISSIONS.FINANCE_VIEW_SCOPE,
 
       PERMISSIONS.PROTOCOL_FINANCE_VIEW,
@@ -424,7 +611,9 @@ export const LEADER_WIDGETS: DashboardWidgetDefinition[] = [
 
     priority: 95,
 
-    permissions: [PERMISSIONS.AUDIT_READ],
+    permissions: [PERMISSIONS.ADMIN_AUDIT_VIEW],
+
+    anyOf: true,
 
   },
 
@@ -458,23 +647,23 @@ export const MEMBER_WIDGETS: DashboardWidgetDefinition[] = [
 
 export const ADMIN_WIDGETS: DashboardWidgetDefinition[] = [
 
-  { id: 'systemKpis', category: 'admin', priority: 10, permissions: [PERMISSIONS.AUDIT_READ] },
+  { id: 'systemKpis', category: 'admin', priority: 10, permissions: [PERMISSIONS.ADMIN_AUDIT_VIEW], anyOf: true },
 
-  { id: 'systemHealth', category: 'admin', priority: 20, permissions: [PERMISSIONS.AUDIT_READ] },
+  { id: 'systemHealth', category: 'admin', priority: 20, permissions: [PERMISSIONS.ADMIN_SETTINGS_VIEW, PERMISSIONS.ADMIN_SETTINGS_MANAGE], anyOf: true },
 
-  { id: 'auditTrend', category: 'admin', priority: 30, permissions: [PERMISSIONS.AUDIT_READ] },
+  { id: 'auditTrend', category: 'admin', priority: 30, permissions: [PERMISSIONS.ADMIN_AUDIT_VIEW], anyOf: true },
 
-  { id: 'roleDistribution', category: 'admin', priority: 40, permissions: [PERMISSIONS.AUDIT_READ] },
+  { id: 'roleDistribution', category: 'admin', priority: 40, permissions: [PERMISSIONS.ADMIN_ROLES_VIEW, PERMISSIONS.ADMIN_ROLES_MANAGE], anyOf: true },
 
-  { id: 'syncDiagnostics', category: 'admin', priority: 50, permissions: [PERMISSIONS.SYNC_ADMIN, PERMISSIONS.AUDIT_READ], anyOf: true },
+  { id: 'syncDiagnostics', category: 'admin', priority: 50, permissions: [PERMISSIONS.ADMIN_SYNC_MANAGE, PERMISSIONS.ADMIN_AUDIT_VIEW], anyOf: true },
 
-  { id: 'attendanceWeights', category: 'admin', priority: 55, permissions: [PERMISSIONS.SYNC_ADMIN] },
+  { id: 'attendanceWeights', category: 'admin', priority: 55, permissions: [PERMISSIONS.ADMIN_SYNC_MANAGE], anyOf: true },
 
-  { id: 'governanceAnalytics', category: 'analytics', priority: 60, permissions: [PERMISSIONS.AUDIT_READ] },
+  { id: 'governanceAnalytics', category: 'analytics', priority: 60, permissions: [PERMISSIONS.ADMIN_AUDIT_VIEW], anyOf: true },
 
-  { id: 'auditActivity', category: 'admin', priority: 70, permissions: [PERMISSIONS.AUDIT_READ] },
+  { id: 'auditActivity', category: 'admin', priority: 70, permissions: [PERMISSIONS.ADMIN_AUDIT_VIEW], anyOf: true },
 
-  { id: 'alertsPanel', category: 'admin', priority: 15, permissions: [PERMISSIONS.AUDIT_READ] },
+  { id: 'alertsPanel', category: 'admin', priority: 15, permissions: [PERMISSIONS.ADMIN_AUDIT_VIEW], anyOf: true },
 
 ];
 
@@ -538,6 +727,8 @@ export function resolvePermissionFlags(
 
     operationsManager: has('operationsManagerPanel'),
 
+    protocolOperations: has('protocolOperationsPanel'),
+
     protocolCoordinator: has('protocolCoordinatorPanel'),
 
     protocolPresident: has('protocolPresidentPanel'),
@@ -574,7 +765,9 @@ export function resolvePermissionFlags(
 
     choirOperations: hasChoirOperations(permissions),
 
-    auditInsights: hasEffectivePermission(permissions, PERMISSIONS.AUDIT_READ),
+    auditInsights: canViewAdminAudit(permissions),
+
+    platformSyncAdmin: canManageAdminSync(permissions),
 
   };
 

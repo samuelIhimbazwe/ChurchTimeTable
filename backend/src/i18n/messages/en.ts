@@ -162,6 +162,18 @@ export const enMessages: Record<string, string> = {
   NOTIFICATION_CONTRIBUTION_CONFIRMED_TITLE: 'Contribution confirmed',
   NOTIFICATION_CONTRIBUTION_CONFIRMED_BODY:
     'Your contribution has been confirmed and recorded.',
+  NOTIFICATION_CONTRIBUTION_CONFIRMED_MEMBER_BODY:
+    'Contribution confirmed. Confirmed amount: {amount} {currency}',
+  NOTIFICATION_CONTRIBUTION_REJECTED_TITLE: 'Contribution rejected',
+  NOTIFICATION_CONTRIBUTION_REJECTED_MEMBER_BODY:
+    'Contribution rejected. Reason: {reason}',
+  NOTIFICATION_CONTRIBUTION_SUBMITTED_HEAD_TITLE:
+    'New contribution awaiting review',
+  NOTIFICATION_CONTRIBUTION_SUBMITTED_HEAD_BODY:
+    '{name} submitted a contribution for your family to review.',
+  CONTRIBUTION_THANK_YOU_TITLE: 'Thank you, {memberName}',
+  CONTRIBUTION_THANK_YOU_MESSAGE:
+    'Thank you for your faithful {contributionType} contribution of {amount} {currency}. Member number: {memberNumber}.',
   TOO_MANY_REQUESTS: 'Too many attempts. Please wait a moment and try again.',
   NOTIFICATION_MEMBER_APPROVED_TITLE: 'Registration approved',
   NOTIFICATION_MEMBER_APPROVED_BODY:
@@ -170,5 +182,19 @@ export const enMessages: Record<string, string> = {
   NOTIFICATION_MEMBER_REJECTED_BODY:
     'Your registration was not approved. Contact your ministry leader for help.',
 
+  WELFARE_NOTIFY_OPENED_TITLE: 'Welfare case opened',
+  WELFARE_NOTIFY_OPENED_BODY: 'A new welfare case was opened: {title}',
+  WELFARE_NOTIFY_APPROVED_TITLE: 'Welfare case approved',
+  WELFARE_NOTIFY_APPROVED_BODY: 'Case approved: {title}',
+  WELFARE_NOTIFY_CLOSED_TITLE: 'Welfare case closed',
+  WELFARE_NOTIFY_CLOSED_BODY: 'Case closed: {title}',
+  WELFARE_NOTIFY_FUNDED_TITLE: 'Funding goal reached',
+  WELFARE_NOTIFY_FUNDED_BODY: 'Case funded: {title}',
+  WELFARE_NOTIFY_UPDATED_TITLE: 'Welfare case updated',
+  WELFARE_NOTIFY_UPDATED_BODY: 'Case updated: {title}',
+  REHEARSAL_NOTIFY_SCHEDULED_TITLE: 'Rehearsal scheduled',
+  REHEARSAL_NOTIFY_SCHEDULED_BODY: '{title} on {date}',
+  REHEARSAL_NOTIFY_PLAN_TITLE: 'Rehearsal plan updated',
+  REHEARSAL_NOTIFY_PLAN_BODY: 'Song list updated for {title}',
 };
 

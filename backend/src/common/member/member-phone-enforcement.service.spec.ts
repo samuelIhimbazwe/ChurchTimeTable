@@ -76,9 +76,14 @@ describe('MemberPhoneEnforcementService', () => {
 
   it('does not enforce on inactive members', async () => {
     mockSettings(true, 'strict');
-    mockMember(MemberStatus.INACTIVE, null);
+    mockMember(MemberStatus.TEMPORARILY_INACTIVE, null);
 
-    expect(service.requiresPhone({ status: MemberStatus.INACTIVE, phone: null }, [ROLES.MEMBER])).toBe(false);
+    expect(
+      service.requiresPhone(
+        { status: MemberStatus.TEMPORARILY_INACTIVE, phone: null },
+        [ROLES.MEMBER],
+      ),
+    ).toBe(false);
     await expect(
       service.assertCanOperate('user-1', [ROLES.MEMBER]),
     ).resolves.toBeUndefined();
@@ -86,7 +91,7 @@ describe('MemberPhoneEnforcementService', () => {
 
   it('builds auth enforcement state', async () => {
     mockSettings(true, 'strict');
-    mockMember(MemberStatus.PENDING, null);
+    mockMember(MemberStatus.NEW_MEMBER, null);
 
     const state = await service.buildAuthEnforcementState('user-1', [
       ROLES.MEMBER,

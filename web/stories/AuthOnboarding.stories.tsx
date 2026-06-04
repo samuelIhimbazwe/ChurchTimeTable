@@ -16,7 +16,7 @@ function PendingStory() {
         firstName: "Marie",
         lastName: "Uwera",
         ministry: "CHOIR",
-        status: "PENDING",
+        status: "NEW_MEMBER",
       },
     },
     status: "ready",

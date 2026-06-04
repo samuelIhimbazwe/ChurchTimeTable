@@ -52,8 +52,78 @@ bool hasOperationalLeaderDashboard(List<String> permissions) {
   return hasProtocolOversight(permissions) ||
       hasProtocolCoordination(permissions) ||
       hasProtocolTeamHead(permissions) ||
-      hasChoirOperations(permissions) ||
-      permissions.contains('report:export');
+      hasChoirOperations(permissions);
+}
+
+const leaderDashboardAccessPermissions = [
+  protocolOversight,
+  protocolTeamManage,
+  protocolOperationalMonitor,
+  protocolTeamHead,
+  'attendance.mark',
+  protocolAttendanceManage,
+  choirOversight,
+  choirOperationsManage,
+  'choir.events.manage',
+  choirAttendanceManage,
+  'member:manage',
+  'event:write',
+  'assignment:write',
+  'attendance:write',
+  'swap:manage',
+  'discipline:manage',
+  'family:manage',
+];
+
+bool canAccessLeaderDashboard(List<String> permissions) {
+  return hasAnyEffectivePermission(permissions, leaderDashboardAccessPermissions);
+}
+
+const attendanceAccessPermissions = [
+  'event:read',
+  'attendance:write',
+  'attendance.mark',
+  protocolAttendanceManage,
+  protocolTeamHead,
+  protocolTeamManage,
+  protocolOversight,
+  protocolOperationalMonitor,
+  choirAttendanceManage,
+  choirOversight,
+  choirOperationsManage,
+];
+
+const coverageAccessPermissions = [
+  'event:read',
+  'swap:manage',
+  protocolTeamHead,
+  protocolTeamManage,
+  protocolOversight,
+  protocolOperationalMonitor,
+];
+
+const financeAccessPermissions = [
+  'choir.finance.view',
+  'choir.finance.manage',
+  'choir.finance.approve',
+  'protocol.finance.view',
+  'protocol.finance.manage',
+  'protocol.finance.approve',
+  'ministry.finance.oversight',
+  protocolOversight,
+  'finance.view',
+];
+
+bool canAccessAttendanceNav(List<String> permissions) {
+  return hasAnyEffectivePermission(permissions, attendanceAccessPermissions);
+}
+
+bool canAccessCoverageNav(List<String> permissions) {
+  return hasAnyEffectivePermission(permissions, coverageAccessPermissions);
+}
+
+bool canAccessFinanceNav(List<String> permissions) {
+  return hasAnyEffectivePermission(permissions, financeAccessPermissions);
 }
 
 String? resolveOperationalDashboardRole(List<String> permissions) {
@@ -70,6 +140,100 @@ bool canManageCommitteeGovernance(List<String> permissions) {
     'committee.role.manage',
     'member:manage',
   ]);
+}
+
+bool canViewFamilies(List<String> permissions) {
+  return hasAnyEffectivePermission(permissions, ['family:view', 'family:manage']);
+}
+
+bool canViewMinistries(List<String> permissions) {
+  return hasAnyEffectivePermission(permissions, [
+    'ministry.view',
+    'ministry.manage',
+    'ministry.member.view',
+    'ministry.member.manage',
+  ]);
+}
+
+bool canViewOperationalUnits(List<String> permissions) {
+  return hasAnyEffectivePermission(permissions, [
+    'operational_unit.view',
+    'operational_unit.manage',
+    'operational_unit.member.view',
+    'operational_unit.member.manage',
+  ]);
+}
+
+bool canViewAssets(List<String> permissions) {
+  return hasAnyEffectivePermission(permissions, [
+    'asset.view',
+    'asset.manage',
+    'asset.report',
+  ]);
+}
+
+bool canViewMinistryFinance(List<String> permissions) {
+  return hasAnyEffectivePermission(permissions, [
+    'ministry.finance.view',
+    'ministry.finance.manage',
+    'ministry.finance.report',
+    'ministry.finance.oversight',
+  ]);
+}
+
+bool canViewChurchIntelligence(List<String> permissions) {
+  return hasAnyEffectivePermission(permissions, [
+    'church.intelligence.view',
+    'church.governance.view',
+    'church.reports.view',
+  ]);
+}
+
+bool canViewWelfare(List<String> permissions) {
+  return hasAnyEffectivePermission(permissions, [
+    'choir.welfare.view',
+    'choir.welfare.manage',
+  ]);
+}
+
+bool canManageWelfare(List<String> permissions) {
+  return hasEffectivePermission(permissions, 'choir.welfare.manage');
+}
+
+bool canViewDevotion(List<String> permissions) {
+  return hasAnyEffectivePermission(permissions, [
+    'choir.devotion.view',
+    'choir.devotion.create',
+    'choir.devotion.publish',
+    'choir.devotion.manage',
+  ]);
+}
+
+bool canManageRehearsals(List<String> permissions) {
+  return hasAnyEffectivePermission(permissions, [
+    'choir.rehearsal.manage',
+    'choir.operations.manage',
+  ]);
+}
+
+bool canViewMusic(List<String> permissions) {
+  return hasAnyEffectivePermission(permissions, [
+    'choir.music.view',
+    'choir.music.manage',
+  ]);
+}
+
+bool canViewRehearsals(List<String> permissions) {
+  return hasAnyEffectivePermission(permissions, [
+    'choir.rehearsal.view',
+    'choir.rehearsal.manage',
+    'choir.music.view',
+    'choir.music.manage',
+  ]);
+}
+
+bool canManageFamilies(List<String> permissions) {
+  return hasEffectivePermission(permissions, 'family:manage');
 }
 
 bool canMarkAttendance(List<String> permissions) {
@@ -103,4 +267,29 @@ bool canAccessMemberRoster(List<String> permissions) {
 
 bool canManageMemberDirectory(List<String> permissions) {
   return hasEffectivePermission(permissions, 'member:manage');
+}
+
+const adminAuditView = 'admin.audit.view';
+const adminSyncManage = 'admin.sync.manage';
+const adminSettingsView = 'admin.settings.view';
+
+const platformAdminViewPermissions = [
+  adminAuditView,
+  adminSettingsView,
+  'admin.users.view',
+  'admin.roles.view',
+  adminSyncManage,
+];
+
+bool canViewAdminAudit(List<String> permissions) {
+  return hasEffectivePermission(permissions, adminAuditView);
+}
+
+bool canManageAdminSync(List<String> permissions) {
+  return hasEffectivePermission(permissions, adminSyncManage);
+}
+
+bool hasPlatformAdminAccess(List<String> permissions) {
+  return platformAdminViewPermissions
+      .any((p) => hasEffectivePermission(permissions, p));
 }
