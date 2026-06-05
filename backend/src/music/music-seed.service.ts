@@ -1,6 +1,9 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { MAIN_CHOIR_ID } from '../common/constants/choir.constants';
+import {
+  MAIN_CHOIR_CODE,
+  MAIN_CHOIR_ID,
+} from '../common/constants/choir.constants';
 
 const CATEGORIES = [
   { code: 'worship', name: 'Worship', sortOrder: 10 },
@@ -26,6 +29,18 @@ export class MusicSeedService implements OnModuleInit {
   constructor(private prisma: PrismaService) {}
 
   async onModuleInit() {
+    await this.prisma.choir.upsert({
+      where: { id: MAIN_CHOIR_ID },
+      create: {
+        id: MAIN_CHOIR_ID,
+        code: MAIN_CHOIR_CODE,
+        name: 'Main Choir',
+        description: 'Default choir — all legacy MVP data belongs here.',
+        isActive: true,
+      },
+      update: { isActive: true },
+    });
+
     for (const c of CATEGORIES) {
       await this.prisma.songCategory.upsert({
         where: { choirId_code: { choirId: MAIN_CHOIR_ID, code: c.code } },
