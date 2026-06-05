@@ -8,9 +8,8 @@ import { Calendar, Clock, MapPin, ChevronRight } from 'lucide-react'
 import { formatDate, formatTime } from '@/lib/utils/format'
 import Link from 'next/link'
 import type { ChoirActivityType } from '@/types'
-import type { BadgeVariant } from '@/components/shared/Badge'
 
-const TYPE_BADGE: Partial<Record<ChoirActivityType, BadgeVariant>> = {
+const TYPE_BADGE: Partial<Record<ChoirActivityType, 'role-choir-president' | 'ministry-choir' | 'ministry-protocol' | 'role-member' | 'role-admin' | 'status-excused'>> = {
   SERVICE:          'role-choir-president',
   REHEARSAL:        'ministry-choir',
   PRAYER:           'ministry-protocol',
@@ -65,7 +64,9 @@ export default function ActivitiesPage() {
       {isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
-            <Card key={i} padding="md" className="animate-skeleton-pulse h-20" />
+            <Card key={i} padding="md" className="animate-skeleton-pulse h-20">
+              <div />
+            </Card>
           ))}
         </div>
       ) : (data?.items?.length ?? 0) === 0 ? (
