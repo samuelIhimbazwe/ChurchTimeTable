@@ -3,14 +3,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-echo ">> prisma db push"
-npx prisma db push --accept-data-loss
-
-if [ "${SEED_DEMO:-false}" = "true" ]; then
-  echo ">> SEED_DEMO=true — running base + pilot seeds"
-  npm run prisma:seed
-  npm run prisma:seed:pilot
-fi
+echo ">> prisma db push (skip generate — already done at build)"
+npx prisma db push --accept-data-loss --skip-generate
 
 echo ">> starting CMMS API"
 exec node dist/main
