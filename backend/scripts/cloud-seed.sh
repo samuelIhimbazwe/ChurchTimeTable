@@ -8,9 +8,7 @@ if [ "${SEED_DEMO:-false}" != "true" ]; then
   exit 0
 fi
 
-echo ">> SEED_DEMO=true — syncing schema and running seeds"
-npx prisma db push --accept-data-loss --skip-generate
-
+echo ">> SEED_DEMO=true — running seeds (schema synced in build)"
 export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=768}"
 export TS_NODE_TRANSPILE_ONLY=true
 

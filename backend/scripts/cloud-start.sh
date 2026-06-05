@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
-# Render / cloud start: sync schema, optional demo seed, run API.
+# Render runtime: no schema sync here (done at build). Start API only.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-echo ">> prisma db push (skip generate — already done at build)"
-npx prisma db push --accept-data-loss --skip-generate
-
+echo ">> checking demo seed (if needed)"
 bash scripts/cloud-seed-if-needed.sh
 
 echo ">> starting CMMS API"
