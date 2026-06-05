@@ -30,6 +30,12 @@ export async function bootstrapProtocolE2e(): Promise<ProtocolE2eContext> {
   await app.init();
 
   const prisma = app.get(PrismaService);
+  await prisma.protocolEngineSettings.upsert({
+    where: { id: 'default' },
+    create: { id: 'default' },
+    update: {},
+  });
+
   const adminRole = await prisma.role.findUniqueOrThrow({
     where: { name: ROLES.SUPER_ADMIN },
   });

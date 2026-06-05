@@ -12,6 +12,7 @@ import {
   ROLES,
 } from '../src/common/constants/roles';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { syncRolePermissions } from './helpers/e2e-app.util';
 
 describe('Dashboard hardening (e2e)', () => {
   let app: INestApplication<App>;
@@ -48,17 +49,7 @@ describe('Dashboard hardening (e2e)', () => {
           data: { name: roleName, description: roleName },
         });
       }
-      await prisma.rolePermission.deleteMany({ where: { roleId: role.id } });
-      for (const code of permissionCodes) {
-        const permission = await prisma.permission.upsert({
-          where: { code },
-          create: { code, description: code },
-          update: {},
-        });
-        await prisma.rolePermission.create({
-          data: { roleId: role.id, permissionId: permission.id },
-        });
-      }
+      await syncRolePermissions(prisma, role.id, permissionCodes);
       await prisma.user.create({
         data: {
           email,
@@ -106,17 +97,9 @@ describe('Dashboard hardening (e2e)', () => {
         data: { name: ROLES.CHURCH_ADMIN, description: 'Church operations admin' },
       });
     }
-    await prisma.rolePermission.deleteMany({ where: { roleId: churchAdminRole.id } });
-    for (const code of CHURCH_ADMIN_OPERATIONAL_PERMISSIONS) {
-      const permission = await prisma.permission.upsert({
-        where: { code },
-        create: { code, description: code },
-        update: {},
-      });
-      await prisma.rolePermission.create({
-        data: { roleId: churchAdminRole.id, permissionId: permission.id },
-      });
-    }
+    await syncRolePermissions(prisma, churchAdminRole.id, [
+      ...CHURCH_ADMIN_OPERATIONAL_PERMISSIONS,
+    ]);
     const churchEmail = `church-dash-${stamp}@test.local`;
     await prisma.user.create({
       data: {

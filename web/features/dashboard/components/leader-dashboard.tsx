@@ -27,18 +27,24 @@ import { hasWidget } from "@/features/dashboard/hooks/use-dashboard-widgets";
 import { CmmsDashboardSkeleton } from "@/components/ui/cmms-skeleton";
 import { CmmsPageSection } from "@/components/ui/cmms-page-section";
 import { useLeaderDashboardQuery } from "@/features/dashboard/hooks/use-dashboard-queries";
+import { LeadershipActionCenters } from "@/features/dashboard/components/action-centers/leadership-action-centers";
+import type { ChartPoint } from "@/core/api/types";
 
 function attendanceRateTrend(
-  points: Array<{ present: number; total: number }> | undefined,
+  points: ChartPoint[] | undefined,
   t: (key: string, values?: Record<string, string | number>) => string,
 ): { value: string; direction: "up" | "down" | "neutral" } | undefined {
   if (!points?.length || points.length < 2) return undefined;
-  const withData = points.filter((p) => p.total > 0);
+  const withData = points.filter((p) => (p.total ?? 0) > 0);
   if (withData.length < 2) return undefined;
   const prev = withData[withData.length - 2];
   const latest = withData[withData.length - 1];
-  const prevRate = Math.round((prev.present / prev.total) * 100);
-  const latestRate = Math.round((latest.present / latest.total) * 100);
+  const prevPresent = prev.present ?? 0;
+  const latestPresent = latest.present ?? 0;
+  const prevTotal = prev.total ?? 0;
+  const latestTotal = latest.total ?? 0;
+  const prevRate = Math.round((prevPresent / prevTotal) * 100);
+  const latestRate = Math.round((latestPresent / latestTotal) * 100);
   const delta = latestRate - prevRate;
   if (delta === 0) {
     return { value: t("metricTrendNeutral"), direction: "neutral" };
@@ -75,6 +81,8 @@ export function LeaderDashboard() {
 
   return (
     <div className="cmms-page-stack">
+      <LeadershipActionCenters />
+
       {hasWidget(widgets, "alertsPanel") && data.alerts.length > 0 ? (
         <DashboardAlertsPanel alerts={data.alerts} />
       ) : null}

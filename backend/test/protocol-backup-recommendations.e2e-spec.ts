@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { closeE2eApp } from './helpers/e2e-app.util';
 import { bootstrapProtocolE2e } from './helpers/protocol-e2e.helper';
 
 describe('Protocol backup recommendations (e2e)', () => {
@@ -21,6 +22,6 @@ describe('Protocol backup recommendations (e2e)', () => {
     expect(backups.status).toBe(200);
     expect(Array.isArray(backups.body.data)).toBe(true);
 
-    await ctx.app.close();
+    await closeE2eApp(ctx.app);
   });
 });

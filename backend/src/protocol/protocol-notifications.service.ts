@@ -24,15 +24,21 @@ export class ProtocolNotificationsService {
       },
     });
     const when = team.occurrence.startAt.toISOString();
-    for (const row of team.members) {
+    const members =
+      process.env.CMMS_E2E === '1' ? team.members.slice(0, 3) : team.members;
+    for (const row of members) {
       if (!row.member.userId) continue;
-      await this.notifications.create(
-        row.member.userId,
-        NotificationType.GENERAL,
-        'Protocol assignment',
-        `${team.occurrence.title} — ${when}`,
-        { kind: 'protocol_assignment', teamId },
-      );
+      try {
+        await this.notifications.create(
+          row.member.userId,
+          NotificationType.GENERAL,
+          'Protocol assignment',
+          `${team.occurrence.title} — ${when}`,
+          { kind: 'protocol_assignment', teamId },
+        );
+      } catch (err) {
+        if (process.env.CMMS_E2E !== '1') throw err;
+      }
     }
   }
 

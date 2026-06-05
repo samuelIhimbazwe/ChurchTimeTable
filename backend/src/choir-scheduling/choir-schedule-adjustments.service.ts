@@ -92,7 +92,15 @@ export class ChoirScheduleAdjustmentsService {
       newValue: data as Prisma.InputJsonValue,
     });
 
-    void this.notify.notifyScheduleChange(data.occurrenceId, data.reason);
+    const notifyPromise = this.notify.notifyScheduleChange(
+      data.occurrenceId,
+      data.reason,
+    );
+    if (process.env.CMMS_E2E === '1') {
+      await notifyPromise;
+    } else {
+      void notifyPromise;
+    }
 
     return adjustment;
   }

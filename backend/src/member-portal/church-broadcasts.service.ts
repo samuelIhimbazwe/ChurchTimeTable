@@ -76,11 +76,16 @@ export class ChurchBroadcastsService {
       newValue: data as Prisma.InputJsonValue,
     });
 
-    void this.notify.notifyBroadcastStarted({
+    const notifyPromise = this.notify.notifyBroadcastStarted({
       id: row.id,
       title: row.title,
       isLive: row.isLive,
     });
+    if (process.env.CMMS_E2E === '1') {
+      await notifyPromise;
+    } else {
+      void notifyPromise;
+    }
 
     return row;
   }

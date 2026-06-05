@@ -1,27 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { CmmsButton } from "@/components/ui/cmms-button";
 import { CmmsModal } from "@/components/ui/cmms-modal";
-import { completeOnboardingRequest } from "@/core/api/http";
+import { completeOnboardingRequest, trackUxEvent } from "@/core/api/http";
 import type { AuthProfile } from "@/core/api/types";
 import { needsOnboardingWelcome } from "@/core/auth/member-access";
 import { useSessionStore } from "@/core/auth/session-store";
 
 function resolveWelcomeKey(profile: AuthProfile): string {
-  const ministry = profile.member?.ministry;
   const roles = profile.roles;
 
   if (roles.includes("SUPER_ADMIN")) return "welcomeSuperAdmin";
   if (roles.some((role) => role.includes("PRESIDENT") || role.includes("LEADER"))) {
-    return ministry === "PROTOCOL" ? "welcomeProtocolLeader" : "welcomeChoirLeader";
+    return roles.some((r) => r.includes("PROTOCOL"))
+      ? "welcomeProtocolLeader"
+      : "welcomeChoirLeader";
   }
   if (roles.some((role) => role.includes("COMMITTEE"))) return "welcomeCommittee";
-  if (ministry === "PROTOCOL") return "welcomeProtocolMember";
-  if (ministry === "BOTH") return "welcomeBothMember";
-  return "welcomeChoirMember";
+  return "welcomeChurchMember";
 }
 
 export function FirstLoginWelcome() {
@@ -31,16 +30,23 @@ export function FirstLoginWelcome() {
   const [open, setOpen] = useState(() => needsOnboardingWelcome(profile));
   const [submitting, setSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (open) {
+      void trackUxEvent("onboarding_shown");
+    }
+  }, [open]);
+
   if (!profile || !open) {
     return null;
   }
 
   const messageKey = resolveWelcomeKey(profile);
 
-  async function handleContinue() {
+  async function finish() {
     setSubmitting(true);
     try {
       await completeOnboardingRequest();
+      await trackUxEvent("onboarding_completed");
       setProfile({
         ...profile!,
         onboardingCompleted: true,
@@ -59,14 +65,21 @@ export function FirstLoginWelcome() {
       open={open}
       onClose={() => setOpen(false)}
       title={t("title")}
-      closeLabel={t("continue")}
+      closeLabel={t("skip")}
     >
       <div className="space-y-4">
-        <p className="text-base leading-7 text-[var(--muted-foreground)]">{t(messageKey)}</p>
+        <p className="text-base leading-7 text-[var(--muted-foreground)]">
+          {messageKey === "welcomeChurchMember" ? t("message") : t(messageKey)}
+        </p>
         <p className="text-sm leading-6 text-[var(--muted-foreground)]">{t("nextSteps")}</p>
-        <CmmsButton type="button" onClick={handleContinue} disabled={submitting} fullWidth>
-          {submitting ? t("continuing") : t("continue")}
-        </CmmsButton>
+        <div className="flex flex-wrap gap-3">
+          <CmmsButton type="button" variant="ghost" onClick={() => setOpen(false)}>
+            {t("skip")}
+          </CmmsButton>
+          <CmmsButton type="button" onClick={finish} disabled={submitting} fullWidth>
+            {submitting ? t("continuing") : t("continue")}
+          </CmmsButton>
+        </div>
       </div>
     </CmmsModal>
   );

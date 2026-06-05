@@ -152,7 +152,12 @@ export class ProtocolTeamsService {
       });
     }
     await this.backups.persistForTeam(teamId);
-    void this.notifications.notifyTeamAssigned(teamId);
+    const notifyPromise = this.notifications.notifyTeamAssigned(teamId);
+    if (process.env.CMMS_E2E === '1') {
+      await notifyPromise;
+    } else {
+      void notifyPromise;
+    }
   }
 
   private getTeamInternal(teamId: string) {

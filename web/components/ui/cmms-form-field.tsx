@@ -2,6 +2,7 @@ import { cn } from "@/core/utils/cn";
 
 export function CmmsFormField({
   label,
+  htmlFor,
   hint,
   error,
   required,
@@ -9,6 +10,7 @@ export function CmmsFormField({
   className,
 }: Readonly<{
   label: string;
+  htmlFor?: string;
   hint?: string;
   error?: string;
   required?: boolean;
@@ -17,7 +19,10 @@ export function CmmsFormField({
 }>) {
   return (
     <div className={cn("space-y-2", className)}>
-      <label className="cmms-text-label block text-[var(--foreground)]">
+      <label
+        htmlFor={htmlFor}
+        className="cmms-text-label block text-[var(--foreground)]"
+      >
         {label}
         {required ? <span className="text-[var(--primary)]"> *</span> : null}
       </label>

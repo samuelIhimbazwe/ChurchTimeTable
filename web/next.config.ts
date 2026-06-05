@@ -5,7 +5,8 @@ import type { NextConfig } from "next";
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 const nextConfig: NextConfig = {
-  typedRoutes: true,
+  // Typed routes conflict with locale-prefixed Link hrefs across many screens.
+  typedRoutes: false,
   turbopack: {
     root: path.resolve(__dirname),
   },

@@ -1,9 +1,19 @@
 import request from 'supertest';
+import { closeE2eApp } from './helpers/e2e-app.util';
 import { bootstrapProtocolE2e } from './helpers/protocol-e2e.helper';
 
 describe('Protocol team leaders (e2e)', () => {
+  let ctx: Awaited<ReturnType<typeof bootstrapProtocolE2e>>;
+
+  beforeAll(async () => {
+    ctx = await bootstrapProtocolE2e();
+  });
+
+  afterAll(async () => {
+    await closeE2eApp(ctx.app);
+  });
+
   it('creates leader and assigns to team', async () => {
-    const ctx = await bootstrapProtocolE2e();
 
     const leader = await request(ctx.app.getHttpServer())
       .post('/api/v1/protocol/team-leaders')
@@ -26,7 +36,5 @@ describe('Protocol team leaders (e2e)', () => {
 
     expect(team.status).toBe(201);
     expect(team.body.data.teamLeader).toBeTruthy();
-
-    await ctx.app.close();
   });
 });

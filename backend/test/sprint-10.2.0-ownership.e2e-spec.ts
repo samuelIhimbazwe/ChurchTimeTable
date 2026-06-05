@@ -13,7 +13,7 @@ import {
 import { AppModule } from '../src/app.module';
 import { ResponseInterceptor } from '../src/common/interceptors/response.interceptor';
 import {
-  CHURCH_ADMIN_ACCOUNT_PERMISSIONS,
+  CHURCH_ADMIN_OPERATIONAL_PERMISSIONS,
   PERMISSIONS,
   ROLES,
 } from '../src/common/constants/roles';
@@ -54,14 +54,21 @@ describe('Sprint 10.2.0 — data ownership (e2e)', () => {
       update: {},
     });
     await prisma.rolePermission.deleteMany({ where: { roleId: role.id } });
-    for (const code of permissionCodes) {
+    for (const code of [...new Set(permissionCodes)]) {
       const permission = await prisma.permission.upsert({
         where: { code },
         create: { code, description: code },
         update: {},
       });
-      await prisma.rolePermission.create({
-        data: { roleId: role.id, permissionId: permission.id },
+      await prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: {
+            roleId: role.id,
+            permissionId: permission.id,
+          },
+        },
+        create: { roleId: role.id, permissionId: permission.id },
+        update: {},
       });
     }
     return role;
@@ -102,14 +109,21 @@ describe('Sprint 10.2.0 — data ownership (e2e)', () => {
     const memberId = user.member!.id;
 
     if (options?.extraPermissions?.length) {
-      for (const code of options.extraPermissions) {
+      for (const code of [...new Set(options.extraPermissions)]) {
         const permission = await prisma.permission.upsert({
           where: { code },
           create: { code, description: code },
           update: {},
         });
-        await prisma.rolePermission.create({
-          data: { roleId: role.id, permissionId: permission.id },
+        await prisma.rolePermission.upsert({
+          where: {
+            roleId_permissionId: {
+              roleId: role.id,
+              permissionId: permission.id,
+            },
+          },
+          create: { roleId: role.id, permissionId: permission.id },
+          update: {},
         });
       }
     }
@@ -196,7 +210,7 @@ describe('Sprint 10.2.0 — data ownership (e2e)', () => {
       PERMISSIONS.CHOIR_FAMILY_VIEW,
     ]);
     await grantRolePermissions(ROLES.CHURCH_ADMIN, [
-      ...CHURCH_ADMIN_ACCOUNT_PERMISSIONS,
+      ...CHURCH_ADMIN_OPERATIONAL_PERMISSIONS,
     ]);
 
     const familyA = await prisma.family.create({

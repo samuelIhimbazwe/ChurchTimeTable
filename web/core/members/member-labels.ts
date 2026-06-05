@@ -21,6 +21,8 @@ export function formatMemberPickerLabel(input: {
 
 export function formatMemberDirectoryPrimary(input: {
   memberNumber?: string | null;
-}): string | null {
-  return input.memberNumber ?? null;
+  firstName?: string | null;
+  lastName?: string | null;
+}): string {
+  return formatMemberPickerLabel(input);
 }

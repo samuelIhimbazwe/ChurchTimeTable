@@ -20,7 +20,7 @@ describe('Cross-ministry asset isolation MF-4 (e2e)', () => {
         ownerId: ctx.youthMinistryId,
         ownershipPercentage: 100,
       })
-      .expect(200);
+      .expect(201);
   });
 
   afterAll(async () => {

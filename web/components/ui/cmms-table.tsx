@@ -2,7 +2,7 @@ import { cn } from "@/core/utils/cn";
 import { CmmsEmptyState } from "@/components/ui/cmms-empty-state";
 
 export interface CmmsTableColumn<T> {
-  key: string;
+  key?: string;
   header: string;
   className?: string;
   render: (row: T) => React.ReactNode;
@@ -24,13 +24,19 @@ export function CmmsTable<T>({
 }>) {
   if (!rows.length) {
     if (typeof emptyState === "string") {
-      return <CmmsEmptyState title={emptyState} className={className} />;
+      return (
+        <div className={cn("min-w-0", className)}>
+          <CmmsEmptyState title={emptyState} />
+        </div>
+      );
     }
     if (emptyState) {
       return <div className={cn("min-w-0", className)}>{emptyState}</div>;
     }
     return (
-      <CmmsEmptyState title="No records yet" className={className} />
+      <div className={cn("min-w-0", className)}>
+        <CmmsEmptyState title="No records yet" />
+      </div>
     );
   }
 
@@ -45,9 +51,9 @@ export function CmmsTable<T>({
         <table className="min-w-full border-collapse text-left text-sm">
           <thead className="sticky top-0 z-[1] bg-[var(--surface-muted)] text-[var(--muted-foreground)]">
             <tr>
-              {columns.map((column) => (
+              {columns.map((column, columnIndex) => (
                 <th
-                  key={column.key}
+                  key={column.key ?? `${column.header}-${columnIndex}`}
                   className={cn(
                     "cmms-text-label px-4 py-3.5 uppercase tracking-wide",
                     column.className,
@@ -64,9 +70,9 @@ export function CmmsTable<T>({
                 key={index}
                 className="cmms-interactive border-t border-[var(--border)] align-top text-[var(--foreground)] hover:bg-[var(--surface-subtle)]"
               >
-                {columns.map((column) => (
+                {columns.map((column, columnIndex) => (
                   <td
-                    key={column.key}
+                    key={column.key ?? `${column.header}-${columnIndex}`}
                     className={cn("px-4 py-3.5 leading-relaxed", column.className)}
                   >
                     {column.render(row)}

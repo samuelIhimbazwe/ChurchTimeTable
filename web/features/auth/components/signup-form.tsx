@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { CmmsAlert } from "@/components/ui/cmms-alert";
@@ -12,14 +12,25 @@ import {
   fetchCurrentUser,
   getApiErrorMessage,
   registerRequest,
+  trackUxEvent,
 } from "@/core/api/http";
 import { getPostAuthPath } from "@/core/auth/member-access";
 import { useSessionStore } from "@/core/auth/session-store";
 import { Link, useRouter } from "@/i18n/routing";
 import { PasswordInput } from "@/features/auth/components/password-input";
 
-type Ministry = "CHOIR" | "PROTOCOL" | "BOTH";
 type Step = 1 | 2 | 3 | 4;
+type ChurchRelationship = "EXISTING" | "NEW_TO_CHURCH" | "VISITOR" | "RETURNING";
+
+const INTEREST_OPTIONS = [
+  { value: "CHOIR", labelKey: "interestChoir" as const },
+  { value: "PROTOCOL", labelKey: "interestProtocol" as const },
+  { value: "YOUTH", labelKey: "interestYouth" as const },
+  { value: "WOMEN", labelKey: "interestWomen" as const },
+  { value: "MEN", labelKey: "interestMen" as const },
+  { value: "INTERCESSORS", labelKey: "interestIntercessors" as const },
+  { value: "CHILDREN", labelKey: "interestChildren" as const },
+];
 
 export function SignupForm() {
   const t = useTranslations("onboarding.signup");
@@ -33,17 +44,20 @@ export function SignupForm() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [ministry, setMinistry] = useState<Ministry>("CHOIR");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [churchRelationship, setChurchRelationship] =
+    useState<ChurchRelationship>("NEW_TO_CHURCH");
+  const [relationshipNotes, setRelationshipNotes] = useState("");
+  const [interests, setInterests] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const ministryDescription = useMemo(() => {
-    if (ministry === "PROTOCOL") return t("ministryProtocolDescription");
-    if (ministry === "BOTH") return t("ministryBothDescription");
-    return t("ministryChoirDescription");
-  }, [ministry, t]);
+  function toggleInterest(value: string) {
+    setInterests((current) =>
+      current.includes(value) ? current.filter((v) => v !== value) : [...current, value],
+    );
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -62,9 +76,12 @@ export function SignupForm() {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         phone: phone.trim() || undefined,
-        ministry,
+        churchRelationship,
+        interests,
+        relationshipNotes: relationshipNotes.trim() || undefined,
         preferredLanguage: locale,
       });
+      await trackUxEvent("signup_completed", { interests, churchRelationship });
       const profile = await fetchCurrentUser();
       setSession({ accessToken, profile });
       router.replace(getPostAuthPath(profile));
@@ -75,9 +92,16 @@ export function SignupForm() {
     }
   }
 
+  const relationshipLabel = {
+    EXISTING: t("relationshipExisting"),
+    NEW_TO_CHURCH: t("relationshipNew"),
+    VISITOR: t("relationshipVisitor"),
+    RETURNING: t("relationshipReturning"),
+  }[churchRelationship];
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2" aria-hidden>
         {[1, 2, 3, 4].map((value) => (
           <div
             key={value}
@@ -93,28 +117,33 @@ export function SignupForm() {
 
       {step === 1 ? (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-[var(--foreground)]">{t("stepIdentityTitle")}</h2>
+          <h2 className="text-lg font-semibold text-[var(--foreground)]">
+            {t("stepIdentityTitle")}
+          </h2>
           <CmmsInput
             id="firstName"
             label={t("firstName")}
             value={firstName}
-            onChange={(event) => setFirstName(event.target.value)}
+            onChange={(e) => setFirstName(e.target.value)}
             required
+            autoComplete="given-name"
           />
           <CmmsInput
             id="lastName"
             label={t("lastName")}
             value={lastName}
-            onChange={(event) => setLastName(event.target.value)}
+            onChange={(e) => setLastName(e.target.value)}
             required
+            autoComplete="family-name"
           />
           <CmmsInput
             id="email"
             type="email"
             label={ta("email")}
             value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
             required
+            autoComplete="email"
           />
           <CmmsInput
             id="phone"
@@ -122,33 +151,9 @@ export function SignupForm() {
             label={t("phone")}
             hint={t("phoneOptional")}
             value={phone}
-            onChange={(event) => setPhone(event.target.value)}
+            onChange={(e) => setPhone(e.target.value)}
+            autoComplete="tel"
           />
-        </div>
-      ) : null}
-
-      {step === 2 ? (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-[var(--foreground)]">{t("stepMinistryTitle")}</h2>
-          <CmmsFormField label={t("ministryLabel")} required>
-            <CmmsSelect
-              value={ministry}
-              onChange={(event) => setMinistry(event.target.value as Ministry)}
-            >
-              <option value="CHOIR">{t("ministryChoir")}</option>
-              <option value="PROTOCOL">{t("ministryProtocol")}</option>
-              <option value="BOTH">{t("ministryBoth")}</option>
-            </CmmsSelect>
-          </CmmsFormField>
-          <p className="rounded-[var(--radius-xl)] bg-[var(--surface-subtle)] px-4 py-3 text-sm leading-6 text-[var(--muted-foreground)]">
-            {ministryDescription}
-          </p>
-        </div>
-      ) : null}
-
-      {step === 3 ? (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-[var(--foreground)]">{t("stepSecurityTitle")}</h2>
           <PasswordInput
             id="password"
             label={ta("password")}
@@ -167,9 +172,62 @@ export function SignupForm() {
         </div>
       ) : null}
 
+      {step === 2 ? (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-[var(--foreground)]">
+            {t("stepRelationshipTitle")}
+          </h2>
+          <CmmsFormField label={t("stepRelationshipTitle")} required>
+            <CmmsSelect
+              value={churchRelationship}
+              onChange={(e) => setChurchRelationship(e.target.value as ChurchRelationship)}
+            >
+              <option value="EXISTING">{t("relationshipExisting")}</option>
+              <option value="NEW_TO_CHURCH">{t("relationshipNew")}</option>
+              <option value="VISITOR">{t("relationshipVisitor")}</option>
+              <option value="RETURNING">{t("relationshipReturning")}</option>
+            </CmmsSelect>
+          </CmmsFormField>
+          <CmmsInput
+            id="relationshipNotes"
+            label={t("relationshipNotes")}
+            hint={t("relationshipNotesHint")}
+            value={relationshipNotes}
+            onChange={(e) => setRelationshipNotes(e.target.value)}
+          />
+        </div>
+      ) : null}
+
+      {step === 3 ? (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-[var(--foreground)]">
+            {t("stepInterestsTitle")}
+          </h2>
+          <p className="text-sm text-[var(--muted-foreground)]">{t("interestsHint")}</p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {INTEREST_OPTIONS.map((option) => (
+              <label
+                key={option.value}
+                className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-lg)] border border-[var(--border)] px-3 py-2 text-sm"
+              >
+                <input
+                  type="checkbox"
+                  checked={interests.includes(option.value)}
+                  onChange={() => toggleInterest(option.value)}
+                  className="size-4 accent-[var(--primary)]"
+                />
+                {t(option.labelKey)}
+              </label>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {step === 4 ? (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-[var(--foreground)]">{t("stepReviewTitle")}</h2>
+          <h2 className="text-lg font-semibold text-[var(--foreground)]">
+            {t("stepReviewTitle")}
+          </h2>
           <dl className="space-y-3 rounded-[var(--radius-xl)] border border-[var(--border)] p-4 text-sm">
             <div>
               <dt className="text-[var(--muted-foreground)]">{t("reviewName")}</dt>
@@ -182,17 +240,25 @@ export function SignupForm() {
               <dd className="font-medium text-[var(--foreground)]">{email}</dd>
             </div>
             <div>
-              <dt className="text-[var(--muted-foreground)]">{t("ministryLabel")}</dt>
+              <dt className="text-[var(--muted-foreground)]">{t("reviewRelationship")}</dt>
+              <dd className="font-medium text-[var(--foreground)]">{relationshipLabel}</dd>
+            </div>
+            <div>
+              <dt className="text-[var(--muted-foreground)]">{t("reviewInterests")}</dt>
               <dd className="font-medium text-[var(--foreground)]">
-                {ministry === "CHOIR"
-                  ? t("ministryChoir")
-                  : ministry === "PROTOCOL"
-                    ? t("ministryProtocol")
-                    : t("ministryBoth")}
+                {interests.length
+                  ? interests
+                      .map((i) => INTEREST_OPTIONS.find((o) => o.value === i)?.labelKey)
+                      .filter(Boolean)
+                      .map((key) => t(key!))
+                      .join(", ")
+                  : t("reviewNone")}
               </dd>
             </div>
           </dl>
-          <p className="text-sm leading-6 text-[var(--muted-foreground)]">{t("approvalExplanation")}</p>
+          <p className="text-sm leading-6 text-[var(--muted-foreground)]">
+            {t("approvalExplanation")}
+          </p>
         </div>
       ) : null}
 
@@ -200,17 +266,25 @@ export function SignupForm() {
 
       <div className="flex flex-wrap gap-3">
         {step > 1 ? (
-          <CmmsButton type="button" variant="secondary" onClick={() => setStep((current) => (current - 1) as Step)}>
+          <CmmsButton
+            type="button"
+            variant="secondary"
+            onClick={() => setStep((s) => (s - 1) as Step)}
+          >
             {t("back")}
           </CmmsButton>
         ) : null}
         {step < 4 ? (
           <CmmsButton
             type="button"
-            onClick={() => setStep((current) => (current + 1) as Step)}
+            onClick={() => setStep((s) => (s + 1) as Step)}
             disabled={
-              (step === 1 && (!firstName || !lastName || !email)) ||
-              (step === 3 && (!password || password.length < 6))
+              (step === 1 &&
+                (!firstName ||
+                  !lastName ||
+                  !email ||
+                  password.length < 6 ||
+                  password !== confirmPassword))
             }
           >
             {t("continue")}

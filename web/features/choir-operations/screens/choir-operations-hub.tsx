@@ -7,6 +7,7 @@ import { OperationalScreen } from "@/components/ui/operational-screen";
 import { Link } from "@/i18n/routing";
 import { useSessionStore } from "@/core/auth/session-store";
 import { hasEffectivePermission } from "@/core/auth/governance-permissions";
+import { LeadershipActionCenters } from "@/features/dashboard/components/action-centers/leadership-action-centers";
 
 const LINKS = [
   { href: "/dashboard/stewardship", perm: "choir.contribution.view.all", key: "stewardship" },
@@ -32,6 +33,11 @@ export function ChoirOperationsHubPage() {
         <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
         <p className="mt-1 text-sm text-[var(--muted-foreground)]">{t("subtitle")}</p>
       </header>
+
+      <LeadershipActionCenters
+        showProtocolCoordinator={false}
+        showProtocolTeamLeader={false}
+      />
 
       <CmmsCard title={t("modulesTitle")}>
         <ul className="grid gap-3 sm:grid-cols-2">

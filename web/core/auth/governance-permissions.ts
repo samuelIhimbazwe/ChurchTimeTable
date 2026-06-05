@@ -355,3 +355,31 @@ export function hasPlatformAdminAccess(permissions: string[]): boolean {
     hasEffectivePermission(permissions, p),
   );
 }
+
+export const CHOIR_JOIN_REVIEW = "choir.join.review";
+export const CHOIR_OPS_VIEW = "choir.ops.view";
+export const CHOIR_OPS_MANAGE = "choir.ops.manage";
+export const PROTOCOL_CLAIM_REVIEW = "protocol.claim.review";
+
+export function canAccessChoirPresidentActionCenter(permissions: string[]): boolean {
+  return hasAnyEffectivePermission(permissions, [
+    CHOIR_JOIN_REVIEW,
+    CHOIR_OPS_VIEW,
+    CHOIR_OPS_MANAGE,
+    CHOIR_OVERSIGHT,
+    CHOIR_OPERATIONS_MANAGE,
+  ]);
+}
+
+export function canAccessProtocolCoordinatorActionCenter(permissions: string[]): boolean {
+  return hasAnyEffectivePermission(permissions, [
+    PROTOCOL_OVERSIGHT,
+    PROTOCOL_TEAM_MANAGE,
+    PROTOCOL_OPERATIONAL_MONITOR,
+    PROTOCOL_CLAIM_REVIEW,
+  ]);
+}
+
+export function canAccessProtocolTeamLeaderActionCenter(permissions: string[]): boolean {
+  return hasProtocolTeamHead(permissions);
+}

@@ -90,11 +90,11 @@ export function AssetReportsPage() {
         ← Assets
       </Link>
       {isLoading && <DashboardStateCard title="Loading report…" />}
-      {data && (
+      {data != null ? (
         <pre className="overflow-auto rounded border bg-muted p-4 text-xs">
           {JSON.stringify(data, null, 2)}
         </pre>
-      )}
+      ) : null}
     </OperationalScreen>
   );
 }

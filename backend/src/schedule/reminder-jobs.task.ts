@@ -10,6 +10,9 @@ export class ReminderJobsTask {
 
   @Cron(CronExpression.EVERY_HOUR)
   async handleHourlyReminders() {
+    if (process.env.DISABLE_REMINDER_CRON === '1') {
+      return;
+    }
     try {
       await this.reminders.runAll();
     } catch (err) {

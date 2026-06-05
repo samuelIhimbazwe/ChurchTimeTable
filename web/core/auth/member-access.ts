@@ -1,4 +1,8 @@
 import type { AuthProfile } from "@/core/api/types";
+import {
+  canAccessLeaderDashboard,
+  hasPlatformAdminAccess,
+} from "@/core/auth/governance-permissions";
 
 export function isPendingMember(profile: AuthProfile | null | undefined): boolean {
   const status = profile?.member?.status;
@@ -21,5 +25,13 @@ export function getPostAuthPath(profile: AuthProfile | null): string {
   if (isPendingMember(profile)) {
     return "/pending-approval";
   }
-  return "/dashboard";
+
+  if (
+    hasPlatformAdminAccess(profile.permissions) ||
+    canAccessLeaderDashboard(profile.permissions)
+  ) {
+    return "/dashboard";
+  }
+
+  return "/dashboard/member";
 }

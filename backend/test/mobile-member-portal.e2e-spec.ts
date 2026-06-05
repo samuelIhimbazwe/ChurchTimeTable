@@ -2,6 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { bootstrapMemberPortalE2e } from './helpers/member-portal-e2e.helper';
+import { closeE2eApp } from './helpers/e2e-app.util';
 
 describe('Mobile member portal APIs (e2e)', () => {
   let app: INestApplication<App>;
@@ -14,7 +15,7 @@ describe('Mobile member portal APIs (e2e)', () => {
   });
 
   afterAll(async () => {
-    await app.close();
+    await closeE2eApp(app);
   });
 
   it('serves member portal home summary', async () => {

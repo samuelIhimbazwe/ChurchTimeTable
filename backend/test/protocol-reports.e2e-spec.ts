@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { closeE2eApp } from './helpers/e2e-app.util';
 import { bootstrapProtocolE2e } from './helpers/protocol-e2e.helper';
 
 describe('Protocol reports (e2e)', () => {
@@ -14,6 +15,6 @@ describe('Protocol reports (e2e)', () => {
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveProperty('teams');
 
-    await ctx.app.close();
+    await closeE2eApp(ctx.app);
   });
 });

@@ -32,9 +32,9 @@ export function FamilyDetailPanel({
   busy: boolean;
   onEdit: () => void;
   onDelete: () => void;
-  onAddMember: (memberId: string, role?: string) => Promise<void>;
-  onRemoveMember: (memberId: string) => Promise<void>;
-  onSetHead: (memberId: string) => Promise<void>;
+  onAddMember: (memberId: string, role?: string) => Promise<unknown>;
+  onRemoveMember: (memberId: string) => Promise<unknown>;
+  onSetHead: (memberId: string) => Promise<unknown>;
 }>) {
   const t = useTranslations("families");
   const [memberId, setMemberId] = useState("");

@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { closeE2eApp } from './helpers/e2e-app.util';
 import {
   bootstrapMemberPortalE2e,
   MemberPortalE2eContext,
@@ -12,7 +13,7 @@ describe('Protocol membership claims', () => {
   });
 
   afterAll(async () => {
-    await ctx.app.close();
+    await closeE2eApp(ctx.app);
   });
 
   it('submits and approves a claim', async () => {

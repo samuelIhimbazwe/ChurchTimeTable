@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { closeE2eApp } from './helpers/e2e-app.util';
 import { bootstrapProtocolE2e } from './helpers/protocol-e2e.helper';
 
 describe('Protocol attendance grades (e2e)', () => {
@@ -29,6 +30,6 @@ describe('Protocol attendance grades (e2e)', () => {
     expect(record.status).toBe(201);
     expect(record.body.data.attendanceScoreEarned).toBe(100);
 
-    await ctx.app.close();
+    await closeE2eApp(ctx.app);
   });
 });

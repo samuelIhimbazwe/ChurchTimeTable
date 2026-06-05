@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { closeE2eApp } from './helpers/e2e-app.util';
 import {
   bootstrapAssetE2e,
   createTestAsset,
@@ -14,7 +15,7 @@ describe('Asset search MF-4 (e2e)', () => {
   });
 
   afterAll(async () => {
-    await ctx.app.close();
+    await closeE2eApp(ctx.app);
   });
 
   it('includes assets in global search for admin', async () => {

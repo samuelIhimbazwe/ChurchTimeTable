@@ -12,6 +12,7 @@ import {
   ROLES,
 } from '../src/common/constants/roles';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { syncRolePermissions } from './helpers/e2e-app.util';
 
 describe('Admin permission separation (e2e)', () => {
   let app: INestApplication<App>;
@@ -45,17 +46,9 @@ describe('Admin permission separation (e2e)', () => {
       });
     }
 
-    await prisma.rolePermission.deleteMany({ where: { roleId: churchAdminRole.id } });
-    for (const code of CHURCH_ADMIN_ACCOUNT_PERMISSIONS) {
-      const permission = await prisma.permission.upsert({
-        where: { code },
-        create: { code, description: code },
-        update: {},
-      });
-      await prisma.rolePermission.create({
-        data: { roleId: churchAdminRole.id, permissionId: permission.id },
-      });
-    }
+    await syncRolePermissions(prisma, churchAdminRole.id, [
+      ...CHURCH_ADMIN_ACCOUNT_PERMISSIONS,
+    ]);
 
     const superAdminRole = await prisma.role.findUniqueOrThrow({
       where: { name: ROLES.SUPER_ADMIN },

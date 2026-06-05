@@ -29,7 +29,7 @@ describe('Asset maintenance MF-4 (e2e)', () => {
           Date.now() + 86400000 * 90,
         ).toISOString(),
       })
-      .expect(200);
+      .expect(201);
   });
 
   it('lists upcoming maintenance for admin', async () => {

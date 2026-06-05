@@ -37,14 +37,21 @@ describe('Sprint 10.2.1 — member submission (e2e)', () => {
       update: {},
     });
     await prisma.rolePermission.deleteMany({ where: { roleId: role.id } });
-    for (const code of permissions) {
+    for (const code of [...new Set(permissions)]) {
       const permission = await prisma.permission.upsert({
         where: { code },
         create: { code, description: code },
         update: {},
       });
-      await prisma.rolePermission.create({
-        data: { roleId: role.id, permissionId: permission.id },
+      await prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: {
+            roleId: role.id,
+            permissionId: permission.id,
+          },
+        },
+        create: { roleId: role.id, permissionId: permission.id },
+        update: {},
       });
     }
     return role;

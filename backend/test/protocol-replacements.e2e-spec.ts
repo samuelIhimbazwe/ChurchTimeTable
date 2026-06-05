@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { closeE2eApp } from './helpers/e2e-app.util';
 import { bootstrapProtocolE2e } from './helpers/protocol-e2e.helper';
 
 describe('Protocol replacements (e2e)', () => {
@@ -43,6 +44,6 @@ describe('Protocol replacements (e2e)', () => {
     });
     expect(attendance?.outcome).toBe('ABSENT_SELF_REPLACED');
 
-    await ctx.app.close();
+    await closeE2eApp(ctx.app);
   });
 });

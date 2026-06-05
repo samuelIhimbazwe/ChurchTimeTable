@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
+import { closeE2eApp } from './helpers/e2e-app.util';
 import { App } from 'supertest/types';
 import * as bcrypt from 'bcrypt';
 import { MemberStatus } from '@prisma/client';
@@ -36,6 +37,11 @@ describe('Operational Units MF-2 (e2e)', () => {
 
     const music = await prisma.ministry.findUniqueOrThrow({ where: { code: 'MUSIC' } });
     musicMinistryId = music.id;
+    await prisma.ministrySettings.upsert({
+      where: { ministryId: musicMinistryId },
+      create: { ministryId: musicMinistryId, allowOperationalUnits: true },
+      update: { allowOperationalUnits: true },
+    });
 
     const mainChoir = await prisma.operationalUnit.findFirstOrThrow({
       where: { ministryId: musicMinistryId, code: 'MAIN_CHOIR' },
@@ -122,7 +128,7 @@ describe('Operational Units MF-2 (e2e)', () => {
   });
 
   afterAll(async () => {
-    await app.close();
+    await closeE2eApp(app);
   });
 
   it('lists seeded operational units', async () => {
@@ -176,7 +182,7 @@ describe('Operational Units MF-2 (e2e)', () => {
 
   it('assigns leadership and preserves history', async () => {
     const position = await app.get(PrismaService).operationalUnitLeadershipPosition.findFirstOrThrow({
-      where: { operationalUnitId: mainChoirUnitId, name: 'President' },
+      where: { operationalUnitId: mainChoirUnitId, name: 'Choir President' },
     });
 
     const assignRes = await request(app.getHttpServer())

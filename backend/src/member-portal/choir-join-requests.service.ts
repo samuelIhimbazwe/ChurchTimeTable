@@ -172,11 +172,16 @@ export class ChoirJoinRequestsService {
       newValue: data as Prisma.InputJsonValue,
     });
 
-    void this.notify.notifyJoinRequestReviewed({
+    const notifyPromise = this.notify.notifyJoinRequestReviewed({
       member: { userId: request.member.userId },
       choir: updated.choir,
       status: data.status,
     });
+    if (process.env.CMMS_E2E === '1') {
+      await notifyPromise;
+    } else {
+      void notifyPromise;
+    }
 
     return updated;
   }

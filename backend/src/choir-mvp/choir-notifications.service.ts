@@ -5,6 +5,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { I18nService } from '../i18n/i18n.service';
 
 const SPAM_WINDOW_MS = 24 * 60 * 60 * 1000;
+const E2E_AUDIENCE_LIMIT = 3;
 
 @Injectable()
 export class ChoirNotificationsService {
@@ -13,6 +14,14 @@ export class ChoirNotificationsService {
     private notifications: NotificationsService,
     private i18n: I18nService,
   ) {}
+
+  private async runBestEffort(task: () => Promise<void>) {
+    try {
+      await task();
+    } catch (err) {
+      if (process.env.CMMS_E2E !== '1') throw err;
+    }
+  }
 
   private async shouldNotify(
     userId: string,
@@ -59,28 +68,30 @@ export class ChoirNotificationsService {
   }
 
   async notifyWelfareCaseOpened(caseId: string, title: string, memberUserId?: string) {
-    const leaders = await this.leaderUserIds();
-    for (const userId of leaders) {
-      if (!(await this.shouldNotify(userId, 'welfare_case_opened', caseId))) continue;
-      await this.notifyUser(
-        userId,
-        'WELFARE_NOTIFY_OPENED_TITLE',
-        'WELFARE_NOTIFY_OPENED_BODY',
-        { title },
-        { kind: 'welfare_case_opened', entityId: caseId, caseId },
-      );
-    }
-    if (memberUserId && !leaders.includes(memberUserId)) {
-      if (await this.shouldNotify(memberUserId, 'welfare_case_opened', caseId)) {
+    await this.runBestEffort(async () => {
+      const leaders = await this.leaderUserIds();
+      for (const userId of leaders) {
+        if (!(await this.shouldNotify(userId, 'welfare_case_opened', caseId))) continue;
         await this.notifyUser(
-          memberUserId,
+          userId,
           'WELFARE_NOTIFY_OPENED_TITLE',
           'WELFARE_NOTIFY_OPENED_BODY',
           { title },
           { kind: 'welfare_case_opened', entityId: caseId, caseId },
         );
       }
-    }
+      if (memberUserId && !leaders.includes(memberUserId)) {
+        if (await this.shouldNotify(memberUserId, 'welfare_case_opened', caseId)) {
+          await this.notifyUser(
+            memberUserId,
+            'WELFARE_NOTIFY_OPENED_TITLE',
+            'WELFARE_NOTIFY_OPENED_BODY',
+            { title },
+            { kind: 'welfare_case_opened', entityId: caseId, caseId },
+          );
+        }
+      }
+    });
   }
 
   async notifyWelfareStatusChange(
@@ -89,75 +100,81 @@ export class ChoirNotificationsService {
     status: WelfareCaseStatus,
     memberUserId?: string,
   ) {
-    const key =
-      status === WelfareCaseStatus.APPROVED
-        ? 'approved'
-        : status === WelfareCaseStatus.CLOSED
-          ? 'closed'
-          : status === WelfareCaseStatus.FUNDED ||
-              status === WelfareCaseStatus.PARTIALLY_FUNDED
-            ? 'funded'
-            : 'updated';
+    await this.runBestEffort(async () => {
+      const key =
+        status === WelfareCaseStatus.APPROVED
+          ? 'approved'
+          : status === WelfareCaseStatus.CLOSED
+            ? 'closed'
+            : status === WelfareCaseStatus.FUNDED ||
+                status === WelfareCaseStatus.PARTIALLY_FUNDED
+              ? 'funded'
+              : 'updated';
 
-    const titleKey =
-      key === 'approved'
-        ? 'WELFARE_NOTIFY_APPROVED_TITLE'
-        : key === 'closed'
-          ? 'WELFARE_NOTIFY_CLOSED_TITLE'
-          : key === 'funded'
-            ? 'WELFARE_NOTIFY_FUNDED_TITLE'
-            : 'WELFARE_NOTIFY_UPDATED_TITLE';
+      const titleKey =
+        key === 'approved'
+          ? 'WELFARE_NOTIFY_APPROVED_TITLE'
+          : key === 'closed'
+            ? 'WELFARE_NOTIFY_CLOSED_TITLE'
+            : key === 'funded'
+              ? 'WELFARE_NOTIFY_FUNDED_TITLE'
+              : 'WELFARE_NOTIFY_UPDATED_TITLE';
 
-    const bodyKey =
-      key === 'approved'
-        ? 'WELFARE_NOTIFY_APPROVED_BODY'
-        : key === 'closed'
-          ? 'WELFARE_NOTIFY_CLOSED_BODY'
-          : key === 'funded'
-            ? 'WELFARE_NOTIFY_FUNDED_BODY'
-            : 'WELFARE_NOTIFY_UPDATED_BODY';
+      const bodyKey =
+        key === 'approved'
+          ? 'WELFARE_NOTIFY_APPROVED_BODY'
+          : key === 'closed'
+            ? 'WELFARE_NOTIFY_CLOSED_BODY'
+            : key === 'funded'
+              ? 'WELFARE_NOTIFY_FUNDED_BODY'
+              : 'WELFARE_NOTIFY_UPDATED_BODY';
 
-    const targets = new Set(await this.leaderUserIds());
-    if (memberUserId) targets.add(memberUserId);
+      const targets = new Set(await this.leaderUserIds());
+      if (memberUserId) targets.add(memberUserId);
 
-    for (const userId of targets) {
-      if (!(await this.shouldNotify(userId, `welfare_case_${key}`, caseId))) continue;
-      await this.notifyUser(
-        userId,
-        titleKey,
-        bodyKey,
-        { title },
-        { kind: `welfare_case_${key}`, entityId: caseId, caseId, status },
-      );
-    }
+      for (const userId of targets) {
+        if (!(await this.shouldNotify(userId, `welfare_case_${key}`, caseId))) continue;
+        await this.notifyUser(
+          userId,
+          titleKey,
+          bodyKey,
+          { title },
+          { kind: `welfare_case_${key}`, entityId: caseId, caseId, status },
+        );
+      }
+    });
   }
 
   async notifyRehearsalScheduled(eventId: string, title: string, startTime: Date) {
-    const userIds = await this.rehearsalAudienceUserIds();
-    for (const userId of userIds) {
-      if (!(await this.shouldNotify(userId, 'rehearsal_scheduled', eventId))) continue;
-      await this.notifyUser(
-        userId,
-        'REHEARSAL_NOTIFY_SCHEDULED_TITLE',
-        'REHEARSAL_NOTIFY_SCHEDULED_BODY',
-        { title, date: startTime.toISOString().slice(0, 10) },
-        { kind: 'rehearsal_scheduled', entityId: eventId, eventId },
-      );
-    }
+    await this.runBestEffort(async () => {
+      const userIds = await this.rehearsalAudienceUserIds();
+      for (const userId of userIds) {
+        if (!(await this.shouldNotify(userId, 'rehearsal_scheduled', eventId))) continue;
+        await this.notifyUser(
+          userId,
+          'REHEARSAL_NOTIFY_SCHEDULED_TITLE',
+          'REHEARSAL_NOTIFY_SCHEDULED_BODY',
+          { title, date: startTime.toISOString().slice(0, 10) },
+          { kind: 'rehearsal_scheduled', entityId: eventId, eventId },
+        );
+      }
+    });
   }
 
   async notifyRehearsalPlanUpdated(eventId: string, title: string) {
-    const userIds = await this.rehearsalAudienceUserIds();
-    for (const userId of userIds) {
-      if (!(await this.shouldNotify(userId, 'rehearsal_plan_updated', eventId))) continue;
-      await this.notifyUser(
-        userId,
-        'REHEARSAL_NOTIFY_PLAN_TITLE',
-        'REHEARSAL_NOTIFY_PLAN_BODY',
-        { title },
-        { kind: 'rehearsal_plan_updated', entityId: eventId, eventId },
-      );
-    }
+    await this.runBestEffort(async () => {
+      const userIds = await this.rehearsalAudienceUserIds();
+      for (const userId of userIds) {
+        if (!(await this.shouldNotify(userId, 'rehearsal_plan_updated', eventId))) continue;
+        await this.notifyUser(
+          userId,
+          'REHEARSAL_NOTIFY_PLAN_TITLE',
+          'REHEARSAL_NOTIFY_PLAN_BODY',
+          { title },
+          { kind: 'rehearsal_plan_updated', entityId: eventId, eventId },
+        );
+      }
+    });
   }
 
   private async leaderUserIds(): Promise<string[]> {
@@ -175,6 +192,7 @@ export class ChoirNotificationsService {
         },
       },
       select: { userId: true },
+      ...(process.env.CMMS_E2E === '1' ? { take: E2E_AUDIENCE_LIMIT } : {}),
     });
     return [...new Set(rows.map((row) => row.userId))];
   }
@@ -186,7 +204,7 @@ export class ChoirNotificationsService {
         member: { ministry: 'CHOIR', status: 'ACTIVE' },
       },
       select: { id: true },
-      take: 500,
+      take: process.env.CMMS_E2E === '1' ? E2E_AUDIENCE_LIMIT : 500,
     });
     return rows.map((row) => row.id);
   }

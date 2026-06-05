@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Route } from "next";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { PLATFORM_ADMIN_VIEW_PERMISSIONS } from "@/core/auth/governance-permissions";
 
@@ -83,7 +84,7 @@ export default function AdminDeploymentPage() {
               ) : null}
               {"href" in section && section.href ? (
                 <Link
-                  href={section.href}
+                  href={section.href as Route}
                   className="text-primary mt-3 inline-block text-sm underline"
                 >
                   Open

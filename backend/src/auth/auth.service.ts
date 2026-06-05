@@ -64,7 +64,7 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(dto.password, 10);
     const user = await this.prisma.$transaction(async (tx) => {
       const memberNumber = await this.memberNumberService.generateMemberNumber(tx);
-      return tx.user.create({
+      const created = await tx.user.create({
         data: {
           email: dto.email,
           passwordHash,
@@ -74,16 +74,26 @@ export class AuthService {
               firstName: dto.firstName,
               lastName: dto.lastName,
               phone: dto.phone,
-              ministry: dto.ministry ?? 'CHOIR',
+              ministry: 'BOTH',
               status: MemberStatus.NEW_MEMBER,
               onboardingCompleted: false,
               memberNumber,
+              profile: {
+                create: {
+                  churchRelationship: dto.churchRelationship ?? 'NEW_TO_CHURCH',
+                  signupInterests: dto.interests?.length
+                    ? (dto.interests as unknown as import('@prisma/client').Prisma.InputJsonValue)
+                    : undefined,
+                  notes: dto.relationshipNotes?.trim() || undefined,
+                },
+              },
             },
           },
           userRoles: { create: { roleId: memberRole.id } },
         },
         include: { member: true },
       });
+      return created;
     });
 
     return this.issueSession(user.id, user.email);

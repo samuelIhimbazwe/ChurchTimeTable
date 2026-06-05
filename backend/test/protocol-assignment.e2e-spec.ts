@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { closeE2eApp } from './helpers/e2e-app.util';
 import { bootstrapProtocolE2e } from './helpers/protocol-e2e.helper';
 
 describe('Protocol assignment (e2e)', () => {
@@ -23,6 +24,6 @@ describe('Protocol assignment (e2e)', () => {
     expect(team.status).toBe(201);
     expect(team.body.data.members.length).toBe(3);
 
-    await ctx.app.close();
+    await closeE2eApp(ctx.app);
   });
 });

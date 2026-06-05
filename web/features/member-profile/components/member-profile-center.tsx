@@ -11,7 +11,7 @@ import { CmmsTabs } from "@/components/ui/cmms-tabs";
 import { CmmsDashboardSkeleton } from "@/components/ui/cmms-skeleton";
 import { OperationalScreen } from "@/components/ui/operational-screen";
 import { getApiErrorMessage } from "@/core/api/http";
-import { formatMemberDirectoryPrimary } from "@/core/members/member-labels";
+import { formatMemberPickerLabel } from "@/core/members/member-labels";
 import {
   DashboardStatCard,
   formatCurrency,
@@ -94,7 +94,8 @@ function timelineTypeLabel(type: string, t: (key: string) => string) {
 
 function voicePartLabel(part: string | null | undefined, t: (key: string) => string) {
   if (!part || part === "UNSPECIFIED") return t("voicePart.unspecified");
-  return t(`voiceParts.${part}`, { defaultValue: part });
+  const key = `voiceParts.${part}` as "voiceParts.SOPRANO";
+  return t(key);
 }
 
 export function MemberProfileCenter({ memberId }: Readonly<{ memberId: string }>) {
@@ -149,7 +150,7 @@ export function MemberProfileCenter({ memberId }: Readonly<{ memberId: string }>
 
   const data = centerQuery.data;
   const caps = data.capabilities;
-  const displayName = formatMemberDirectoryPrimary({
+  const displayName = formatMemberPickerLabel({
     memberNumber: data.member.memberNumber,
     firstName: data.member.firstName,
     lastName: data.member.lastName,

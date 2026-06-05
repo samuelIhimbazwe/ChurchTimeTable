@@ -40,8 +40,15 @@ describe('Sprint 10.2.4 — ledger posting (e2e)', () => {
       create: { code: PERMISSIONS.CHOIR_CONTRIBUTION_SUBMIT, description: 'submit' },
       update: {},
     });
-    await prisma.rolePermission.create({
-      data: { roleId: role.id, permissionId: p.id },
+    await prisma.rolePermission.upsert({
+      where: {
+        roleId_permissionId: {
+          roleId: role.id,
+          permissionId: p.id,
+        },
+      },
+      create: { roleId: role.id, permissionId: p.id },
+      update: {},
     });
   }
 

@@ -278,6 +278,12 @@ async function main() {
     update: {},
   });
 
+  await prisma.protocolEngineSettings.upsert({
+    where: { id: 'default' },
+    create: { id: 'default' },
+    update: {},
+  });
+
   const portalChoirs: Array<{
     code: string;
     name: string;

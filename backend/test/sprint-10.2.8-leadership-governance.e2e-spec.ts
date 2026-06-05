@@ -47,8 +47,15 @@ describe('Sprint 10.2.8 — leadership governance (e2e)', () => {
         create: { code, description: code },
         update: {},
       });
-      await prisma.rolePermission.create({
-        data: { roleId: role.id, permissionId: p.id },
+      await prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: {
+            roleId: role.id,
+            permissionId: p.id,
+          },
+        },
+        create: { roleId: role.id, permissionId: p.id },
+        update: {},
       });
     }
 

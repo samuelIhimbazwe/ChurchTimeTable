@@ -2,6 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { bootstrapPilotE2eApp } from './pilot-ready-e2e.helper';
+import { closeE2eApp } from './helpers/e2e-app.util';
 
 describe('Notification integration (e2e)', () => {
   let app: INestApplication<App>;
@@ -14,7 +15,7 @@ describe('Notification integration (e2e)', () => {
   });
 
   afterAll(async () => {
-    await app.close();
+    await closeE2eApp(app);
   });
 
   it('lists notification rules including choir assignment', async () => {

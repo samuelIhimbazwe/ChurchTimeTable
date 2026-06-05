@@ -6,6 +6,7 @@ import { fetchCurrentUser, refreshSession, signOut } from "@/core/api/http";
 import { useSessionStore } from "@/core/auth/session-store";
 import { QueryProvider } from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
+import { ChurchBrandingProvider } from "@/core/branding/church-branding-context";
 
 function SessionBootstrap({
   children,
@@ -73,9 +74,11 @@ export function AppProviders({
 }>) {
   return (
     <ThemeProvider>
-      <QueryProvider>
-        <SessionBootstrap>{children}</SessionBootstrap>
-      </QueryProvider>
+      <ChurchBrandingProvider>
+        <QueryProvider>
+          <SessionBootstrap>{children}</SessionBootstrap>
+        </QueryProvider>
+      </ChurchBrandingProvider>
     </ThemeProvider>
   );
 }

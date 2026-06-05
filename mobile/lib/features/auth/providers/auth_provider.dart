@@ -30,7 +30,8 @@ class AuthState {
       profile?['member']?['status'] as String? ??
       profile?['member']?['status']?.toString();
 
-  bool get isPendingApproval => memberStatus == 'PENDING';
+  bool get isPendingApproval =>
+      memberStatus == 'PENDING' || memberStatus == 'NEW_MEMBER';
 
   bool get needsOnboardingWelcome {
     if (!isAuthenticated || isPendingApproval) return false;
@@ -153,7 +154,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String firstName,
     required String lastName,
     String? phone,
-    String ministry = 'CHOIR',
+    String churchRelationship = 'NEW_TO_CHURCH',
+    List<String> interests = const [],
     String? preferredLanguage,
   }) async {
     state = AuthState(initialized: true, loading: true);
@@ -166,7 +168,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
           'firstName': firstName,
           'lastName': lastName,
           if (phone != null && phone.isNotEmpty) 'phone': phone,
-          'ministry': ministry,
+          'churchRelationship': churchRelationship,
+          if (interests.isNotEmpty) 'interests': interests,
           if (preferredLanguage != null) 'preferredLanguage': preferredLanguage,
         },
       );

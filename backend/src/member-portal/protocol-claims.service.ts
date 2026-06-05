@@ -127,10 +127,15 @@ export class ProtocolClaimsService {
       newValue: data as Prisma.InputJsonValue,
     });
 
-    void this.notify.notifyProtocolClaimReviewed({
+    const notifyPromise = this.notify.notifyProtocolClaimReviewed({
       member: { userId: claim.member.userId },
       status: data.status,
     });
+    if (process.env.CMMS_E2E === '1') {
+      await notifyPromise;
+    } else {
+      void notifyPromise;
+    }
 
     return updated;
   }

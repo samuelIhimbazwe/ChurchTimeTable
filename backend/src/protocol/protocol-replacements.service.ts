@@ -134,7 +134,13 @@ export class ProtocolReplacementsService {
     if (status === 'APPROVED') {
       await this.performance.refreshMemberStats(request.originalMemberId);
       await this.performance.refreshMemberStats(request.replacementMemberId);
-      void this.notifications.notifyReplacementApproved(requestId);
+      const notifyPromise =
+        this.notifications.notifyReplacementApproved(requestId);
+      if (process.env.CMMS_E2E === '1') {
+        await notifyPromise;
+      } else {
+        void notifyPromise;
+      }
     }
 
     await this.audit.log({

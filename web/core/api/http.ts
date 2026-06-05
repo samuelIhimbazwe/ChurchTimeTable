@@ -155,7 +155,9 @@ export interface RegisterInput {
   firstName: string;
   lastName: string;
   phone?: string;
-  ministry?: "CHOIR" | "PROTOCOL" | "BOTH";
+  churchRelationship?: "EXISTING" | "NEW_TO_CHURCH" | "VISITOR" | "RETURNING";
+  interests?: string[];
+  relationshipNotes?: string;
   preferredLanguage?: string;
 }
 
@@ -164,6 +166,42 @@ export async function registerRequest(input: RegisterInput) {
   const token = response.data.data.accessToken;
   useSessionStore.getState().setAccessToken(token);
   return token;
+}
+
+export async function trackUxEvent(
+  eventType: string,
+  metadata?: Record<string, unknown>,
+) {
+  try {
+    await http.post("/analytics/ux", { eventType, metadata });
+  } catch {
+    try {
+      await http.post("/church/public/analytics", { eventType, metadata });
+    } catch {
+      /* best-effort analytics */
+    }
+  }
+}
+
+export async function fetchChurchWelcome() {
+  const response = await http.get<ApiEnvelope<Record<string, unknown>>>(
+    "/church/public/welcome",
+  );
+  return response.data.data;
+}
+
+export async function fetchChurchBranding() {
+  const response = await http.get<ApiEnvelope<Record<string, unknown>>>(
+    "/church/public/branding",
+  );
+  return response.data.data;
+}
+
+export async function fetchPublicChoirs() {
+  const response = await http.get<ApiEnvelope<Array<Record<string, unknown>>>>(
+    "/church/public/choirs",
+  );
+  return response.data.data ?? [];
 }
 
 export async function completeOnboardingRequest() {
@@ -601,7 +639,13 @@ export interface CommitteeMemberAssignment {
   id: string;
   memberId: string;
   roleId: string;
-  member: { id: string; firstName: string; lastName: string; ministry: string };
+  member: {
+    id: string;
+    memberNumber?: string | null;
+    firstName: string;
+    lastName: string;
+    ministry: string;
+  };
   role: { id: string; name: string };
 }
 
@@ -1614,7 +1658,11 @@ export interface SongSummary {
   usageCount: number;
 }
 
-export async function fetchMusicSongs(params?: { q?: string; page?: number }) {
+export async function fetchMusicSongs(params?: {
+  q?: string;
+  page?: number;
+  limit?: number;
+}) {
   const response = await http.get<ApiEnvelope<ApiListResponse<SongSummary>>>(
     "/choir/music/songs",
     { params },

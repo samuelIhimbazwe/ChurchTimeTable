@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { closeE2eApp } from './helpers/e2e-app.util';
 import { bootstrapProtocolE2e } from './helpers/protocol-e2e.helper';
 
 describe('Protocol statistics (e2e)', () => {
@@ -19,6 +20,6 @@ describe('Protocol statistics (e2e)', () => {
     expect(settings.status).toBe(200);
     expect(settings.body.data.maxOfficialServicesPerMonth).toBe(3);
 
-    await ctx.app.close();
+    await closeE2eApp(ctx.app);
   });
 });

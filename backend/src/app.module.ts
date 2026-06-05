@@ -48,6 +48,7 @@ import { ProtocolModule } from './protocol/protocol.module';
 import { ChoirSchedulingModule } from './choir-scheduling/choir-scheduling.module';
 import { MemberPortalModule } from './member-portal/member-portal.module';
 import { PilotReadyModule } from './pilot-ready/pilot-ready.module';
+import { AuthUxModule } from './auth-ux/auth-ux.module';
 import { ChoirContextMiddleware } from './common/middleware/choir-context.middleware';
 
 @Module({
@@ -89,6 +90,7 @@ import { ChoirContextMiddleware } from './common/middleware/choir-context.middle
     ChoirSchedulingModule,
     MemberPortalModule,
     PilotReadyModule,
+    AuthUxModule,
     SystemModule,
     NotificationsModule,
     SyncModule,

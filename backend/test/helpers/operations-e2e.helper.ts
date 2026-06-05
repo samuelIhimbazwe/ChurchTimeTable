@@ -79,6 +79,25 @@ export async function bootstrapOperationsE2e(): Promise<OperationsE2eContext> {
       endAt: end.toISOString(),
     });
 
+  const adminUser = await prisma.user.findFirstOrThrow({
+    where: { email: `mf7-admin-${ts}@test.local` },
+    include: { member: true },
+  });
+  const protocolUnit = await prisma.operationalUnit.findFirstOrThrow({
+    where: { code: 'PROTOCOL_TEAM' },
+  });
+  const presidentPosition =
+    await prisma.operationalUnitLeadershipPosition.findFirstOrThrow({
+      where: { operationalUnitId: protocolUnit.id, name: 'President' },
+    });
+  await prisma.operationalUnitLeadershipAssignment.create({
+    data: {
+      operationalUnitId: protocolUnit.id,
+      memberId: adminUser.member!.id,
+      positionId: presidentPosition.id,
+    },
+  });
+
   return {
     app,
     prisma,

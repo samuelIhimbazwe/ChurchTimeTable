@@ -16,7 +16,7 @@ import { JwtService } from '@nestjs/jwt';
 import { AppModule } from '../src/app.module';
 import { ResponseInterceptor } from '../src/common/interceptors/response.interceptor';
 import {
-  CHURCH_ADMIN_ACCOUNT_PERMISSIONS,
+  CHURCH_ADMIN_OPERATIONAL_PERMISSIONS,
   PERMISSIONS,
   ROLES,
 } from '../src/common/constants/roles';
@@ -52,14 +52,21 @@ describe('Sprint 10.2.5 — goals & lists (e2e)', () => {
       update: {},
     });
     await prisma.rolePermission.deleteMany({ where: { roleId: role.id } });
-    for (const code of permissions) {
+    for (const code of [...new Set(permissions)]) {
       const p = await prisma.permission.upsert({
         where: { code },
         create: { code, description: code },
         update: {},
       });
-      await prisma.rolePermission.create({
-        data: { roleId: role.id, permissionId: p.id },
+      await prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: {
+            roleId: role.id,
+            permissionId: p.id,
+          },
+        },
+        create: { roleId: role.id, permissionId: p.id },
+        update: {},
       });
     }
     return role;
@@ -169,7 +176,7 @@ describe('Sprint 10.2.5 — goals & lists (e2e)', () => {
       PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
       PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
     ]);
-    await grantRole(ROLES.CHURCH_ADMIN, [...CHURCH_ADMIN_ACCOUNT_PERMISSIONS]);
+    await grantRole(ROLES.CHURCH_ADMIN, [...CHURCH_ADMIN_OPERATIONAL_PERMISSIONS]);
 
     const familyA = await prisma.family.create({
       data: {

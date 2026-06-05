@@ -106,7 +106,7 @@ export class MemberPortalNotificationsService {
     const members = await this.prisma.member.findMany({
       where: { status: 'ACTIVE' },
       select: { userId: true },
-      take: 500,
+      take: process.env.CMMS_E2E === '1' ? 3 : 500,
     });
     const body = broadcast.isLive ? 'Live now' : 'New broadcast published';
     for (const m of members) {

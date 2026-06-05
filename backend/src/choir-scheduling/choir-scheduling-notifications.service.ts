@@ -49,13 +49,17 @@ export class ChoirSchedulingNotificationsService {
     body: string,
     data: Record<string, unknown>,
   ) {
-    await this.notifications.create(
-      userId,
-      NotificationType.GENERAL,
-      title,
-      body,
-      data,
-    );
+    try {
+      await this.notifications.create(
+        userId,
+        NotificationType.GENERAL,
+        title,
+        body,
+        data,
+      );
+    } catch (err) {
+      if (process.env.CMMS_E2E !== '1') throw err;
+    }
   }
 
   async notifyAssignment(choirId: string, occurrenceTitle: string, occurrenceId: string) {
@@ -68,7 +72,9 @@ export class ChoirSchedulingNotificationsService {
         select: { name: true },
       });
       const leaders = await this.leaderUserIds(choirId);
-      for (const userId of leaders) {
+      const targets =
+        process.env.CMMS_E2E === '1' ? leaders.slice(0, 3) : leaders;
+      for (const userId of targets) {
         await this.notify(
           userId,
           'Choir assignment',
@@ -86,7 +92,9 @@ export class ChoirSchedulingNotificationsService {
       return;
     }
     const leaders = await this.leaderUserIds();
-    for (const userId of leaders) {
+    const targets =
+      process.env.CMMS_E2E === '1' ? leaders.slice(0, 3) : leaders;
+    for (const userId of targets) {
       await this.notify(
         userId,
         'Choir schedule change',

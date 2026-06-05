@@ -3,6 +3,7 @@ import {
   bootstrapChoirSchedulingE2e,
   ChoirSchedulingE2eContext,
 } from './helpers/choir-scheduling-e2e.helper';
+import { closeE2eApp } from './helpers/e2e-app.util';
 
 describe('Choir notifications (CHOIR-2)', () => {
   let ctx: ChoirSchedulingE2eContext;
@@ -12,10 +13,11 @@ describe('Choir notifications (CHOIR-2)', () => {
   });
 
   afterAll(async () => {
-    await ctx.app.close();
+    await closeE2eApp(ctx.app);
   });
 
   it('creates notifications on assignment', async () => {
+    const startedAt = new Date();
     const res = await request(ctx.app.getHttpServer())
       .post('/api/v1/choir/scheduling/assignments')
       .set('Authorization', `Bearer ${ctx.adminToken}`)
@@ -26,14 +28,22 @@ describe('Choir notifications (CHOIR-2)', () => {
       });
     expect([200, 201]).toContain(res.status);
 
-    const notes = await ctx.prisma.notification.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 20,
-    });
-    const choirNote = notes.find((n) => {
-      const data = n.data as { kind?: string } | null;
-      return data?.kind === 'choir_assignment';
-    });
+    let choirNote: { id: string } | undefined;
+    for (let attempt = 0; attempt < 15; attempt += 1) {
+      const notes = await ctx.prisma.notification.findMany({
+        where: { createdAt: { gte: startedAt } },
+        orderBy: { createdAt: 'desc' },
+      });
+      choirNote = notes.find((n) => {
+        const data = n.data as { kind?: string } | null;
+        return (
+          data?.kind === 'choir_assignment' ||
+          n.title.toLowerCase().includes('choir assignment')
+        );
+      });
+      if (choirNote) break;
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
     expect(choirNote).toBeDefined();
   });
 });

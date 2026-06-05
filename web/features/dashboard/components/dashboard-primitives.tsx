@@ -17,14 +17,16 @@ export function DashboardStatCard({
   value: string | number;
   description?: string;
   trend?: { value: string; direction?: "up" | "down" | "neutral" };
-  tone?: "default" | "accent" | "warning";
+  tone?: "default" | "accent" | "warning" | "danger";
 }>) {
   const toneClass =
     tone === "accent"
       ? "border-transparent bg-[var(--surface-muted)]"
       : tone === "warning"
         ? "border-[var(--warning)]/20 bg-[var(--warning-surface)]"
-        : "bg-[var(--surface)]";
+        : tone === "danger"
+          ? "border-[var(--danger)]/20 bg-[var(--danger-surface)]"
+          : "bg-[var(--surface)]";
 
   const trendClass =
     trend?.direction === "up"
@@ -54,16 +56,59 @@ export function DashboardStatCard({
   );
 }
 
-export function DashboardStateCard({
-  title,
-  message,
-}: Readonly<{
-  title: string;
-  message: string;
-}>) {
+type DashboardStateCardProps =
+  | Readonly<{
+      label: string;
+      value: string | number;
+      loading?: boolean;
+      description?: string;
+    }>
+  | Readonly<{
+      title?: string;
+      message?: string;
+      description?: string;
+      variant?: "error" | "loading";
+      className?: string;
+      children?: never;
+    }>
+  | Readonly<{
+      title?: string;
+      message?: string;
+      variant?: "error" | "loading";
+      className?: string;
+      children: React.ReactNode;
+    }>;
+
+export function DashboardStateCard(props: DashboardStateCardProps) {
+  if ("label" in props) {
+    return (
+      <DashboardStatCard
+        label={props.label}
+        value={props.loading ? "…" : props.value}
+        description={props.description}
+        tone={props.loading ? "accent" : "default"}
+      />
+    );
+  }
+
+  if ("children" in props) {
+    return (
+      <CmmsCard title={props.title} className={props.className}>
+        <div
+          className={cn(
+            props.variant === "error" && "text-[var(--danger)]",
+            props.variant === "loading" && "text-[var(--muted-foreground)]",
+          )}
+        >
+          {props.children}
+        </div>
+      </CmmsCard>
+    );
+  }
+
   return (
-    <CmmsCard title={title}>
-      <CmmsEmptyState title={message} />
+    <CmmsCard title={props.title} className={props.className}>
+      <CmmsEmptyState title={props.message ?? props.description ?? props.title ?? "…"} />
     </CmmsCard>
   );
 }

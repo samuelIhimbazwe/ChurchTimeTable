@@ -6,6 +6,11 @@ export async function fetchProtocolDashboard() {
   return res.data.data;
 }
 
+export async function fetchProtocolTeamLeaderDashboard() {
+  const res = await http.get<ApiEnvelope<unknown>>("/protocol/dashboard/team-leader");
+  return res.data.data;
+}
+
 export async function fetchProtocolMemberDashboard() {
   const res = await http.get<ApiEnvelope<unknown>>("/protocol/dashboard/me");
   return res.data.data;
@@ -60,5 +65,10 @@ export async function fetchProtocolCategoryRankings(
   const res = await http.get<ApiEnvelope<unknown[]>>("/protocol/rankings/categories", {
     params: { year, month, category },
   });
+  return res.data.data;
+}
+
+export async function fetchProtocolSettings() {
+  const res = await http.get<ApiEnvelope<unknown>>("/protocol/settings");
   return res.data.data;
 }

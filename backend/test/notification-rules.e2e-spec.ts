@@ -31,5 +31,11 @@ describe('Notification rules (e2e)', () => {
       .send({ enabled: false });
     expect(patch.status).toBe(200);
     expect(patch.body.data.enabled).toBe(false);
+
+    await request(app.getHttpServer())
+      .patch(`/api/v1/pilot/notification-rules/${trigger}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ enabled: true })
+      .expect(200);
   });
 });

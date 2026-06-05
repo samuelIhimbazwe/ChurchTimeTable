@@ -318,5 +318,12 @@ describe('Ministries MF-1 (e2e)', () => {
       orderBy: { createdAt: 'desc' },
     });
     expect(audit).toBeTruthy();
+
+    // Restore seed default — later e2e suites create units under MUSIC ministry.
+    await request(app.getHttpServer())
+      .patch(`/api/v1/ministries/${musicMinistryId}/settings`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ allowOperationalUnits: true })
+      .expect(200);
   });
 });

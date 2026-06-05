@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 
 import { OperationalScreen } from "@/components/ui/operational-screen";
+import { LeadershipActionCenters } from "@/features/dashboard/components/action-centers/leadership-action-centers";
 import {
   fetchProtocolDashboard,
   fetchProtocolMembers,
@@ -22,17 +24,28 @@ type ProtocolTab =
   | "reports"
   | "members";
 
-const TABS: { id: ProtocolTab; href: string; label: string }[] = [
-  { id: "overview", href: "/dashboard/protocol", label: "Overview" },
-  { id: "teams", href: "/dashboard/protocol/teams", label: "Teams" },
-  { id: "attendance", href: "/dashboard/protocol/attendance", label: "Attendance" },
-  { id: "replacements", href: "/dashboard/protocol/replacements", label: "Replacements" },
-  { id: "rankings", href: "/dashboard/protocol/rankings", label: "Rankings" },
-  { id: "reports", href: "/dashboard/protocol/reports", label: "Reports" },
-  { id: "members", href: "/dashboard/protocol/members", label: "Members" },
+const TAB_IDS: ProtocolTab[] = [
+  "overview",
+  "teams",
+  "attendance",
+  "replacements",
+  "rankings",
+  "reports",
+  "members",
 ];
 
+const TAB_HREFS: Record<ProtocolTab, string> = {
+  overview: "/dashboard/protocol",
+  teams: "/dashboard/protocol/teams",
+  attendance: "/dashboard/protocol/attendance",
+  replacements: "/dashboard/protocol/replacements",
+  rankings: "/dashboard/protocol/rankings",
+  reports: "/dashboard/protocol/reports",
+  members: "/dashboard/protocol/members",
+};
+
 export function ProtocolPage({ tab }: { tab: ProtocolTab }) {
+  const t = useTranslations("protocolOps");
   const now = new Date();
   const dashboardQuery = useQuery({
     queryKey: ["protocol", "dashboard"],
@@ -75,43 +88,51 @@ export function ProtocolPage({ tab }: { tab: ProtocolTab }) {
   } | null;
 
   return (
-    <OperationalScreen
-      title="Protocol operations"
-      description="Temporary service teams, attendance, replacements, and performance (PROTOCOL-1)"
-    >
-      <nav className="mb-6 flex flex-wrap gap-2 text-xs uppercase tracking-wide text-muted-foreground">
-        {TABS.map((t) => (
+    <OperationalScreen title={t("title")} description={t("description")}>
+      <nav
+        className="mb-6 flex flex-wrap gap-2 text-xs uppercase tracking-wide text-muted-foreground"
+        aria-label={t("title")}
+      >
+        {TAB_IDS.map((id) => (
           <Link
-            key={t.id}
-            href={t.href}
-            className={`rounded border px-2 py-1 ${tab === t.id ? "bg-primary text-primary-foreground" : ""}`}
+            key={id}
+            href={TAB_HREFS[id]}
+            className={`rounded border px-2 py-1 ${tab === id ? "bg-primary text-primary-foreground" : ""}`}
+            aria-current={tab === id ? "page" : undefined}
           >
-            {t.label}
+            {t(`tabs.${id}`)}
           </Link>
         ))}
       </nav>
 
-      {tab === "overview" && dash && (
-        <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-sm">
-          <div className="rounded border p-3">Upcoming teams: {dash.upcomingTeams}</div>
-          <div className="rounded border p-3">
-            Pending replacements: {dash.pendingReplacements}
-          </div>
-          <div className="rounded border p-3">
-            Attendance rate: {dash.attendanceRate}%
-          </div>
-          <div className="rounded border p-3">
-            Follow-up: {dash.needsFollowUp?.length ?? 0}
-          </div>
+      {tab === "overview" ? (
+        <div className="mb-6 space-y-6">
+          <LeadershipActionCenters showChoirPresident={false} />
+          {dash ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-sm">
+              <div className="rounded border p-3">
+                {t("stats.upcomingTeams")}: {dash.upcomingTeams}
+              </div>
+              <div className="rounded border p-3">
+                {t("stats.pendingReplacements")}: {dash.pendingReplacements}
+              </div>
+              <div className="rounded border p-3">
+                {t("stats.attendanceRate")}: {dash.attendanceRate}%
+              </div>
+              <div className="rounded border p-3">
+                {t("stats.followUp")}: {dash.needsFollowUp?.length ?? 0}
+              </div>
+            </div>
+          ) : null}
         </div>
-      )}
+      ) : null}
 
       {tab === "teams" && (
         <ul className="space-y-2 text-sm">
-          {(teamsQuery.data as Array<{ id: string; occurrence: { title: string; startAt: string }; status: string; members: unknown[] }> | undefined)?.map((t) => (
-            <li key={t.id} className="rounded border p-3">
-              {t.occurrence.title} — {new Date(t.occurrence.startAt).toLocaleString()} —{" "}
-              {t.status} ({t.members.length} members)
+          {(teamsQuery.data as Array<{ id: string; occurrence: { title: string; startAt: string }; status: string; members: unknown[] }> | undefined)?.map((team) => (
+            <li key={team.id} className="rounded border p-3">
+              {team.occurrence.title} — {new Date(team.occurrence.startAt).toLocaleString()} —{" "}
+              {team.status} ({team.members.length} members)
             </li>
           ))}
         </ul>
@@ -119,8 +140,8 @@ export function ProtocolPage({ tab }: { tab: ProtocolTab }) {
 
       {tab === "attendance" && (
         <p className="text-sm text-muted-foreground">
-          Select a published team from Teams, then record outcomes via the API or mobile app.
-          Teams loaded: {(teamsQuery.data as unknown[] | undefined)?.length ?? 0}
+          {t("attendanceHint")} {t("teamsLoaded")}:{" "}
+          {(teamsQuery.data as unknown[] | undefined)?.length ?? 0}
         </p>
       )}
 
@@ -144,7 +165,7 @@ export function ProtocolPage({ tab }: { tab: ProtocolTab }) {
         </ul>
       )}
 
-      {tab === "reports" && settingsQuery.data && (
+      {tab === "reports" && settingsQuery.data != null ? (
         <div className="space-y-2 text-sm">
           <p>Export CSV reports from the API:</p>
           <code className="block rounded border p-2 text-xs">
@@ -155,7 +176,7 @@ export function ProtocolPage({ tab }: { tab: ProtocolTab }) {
             GET /api/v1/protocol/reports/reliability/export
           </code>
         </div>
-      )}
+      ) : null}
 
       {tab === "members" && (
         <ul className="space-y-2 text-sm">

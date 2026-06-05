@@ -28,14 +28,14 @@ describe('Asset assignment MF-4 (e2e)', () => {
         assignedToId: ctx.youthMinistryId,
         purpose: 'Conference',
       })
-      .expect(200);
+      .expect(201);
     assignmentId = assign.body.data.id;
 
     await request(ctx.app.getHttpServer())
       .post(`/api/v1/assets/${assetId}/assignments/${assignmentId}/return`)
       .set('Authorization', `Bearer ${ctx.adminToken}`)
       .send({ notes: 'Returned after event' })
-      .expect(200);
+      .expect(201);
   });
 
   it('lists assignment history', async () => {

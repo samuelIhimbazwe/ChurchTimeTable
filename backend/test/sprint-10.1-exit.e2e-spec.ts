@@ -12,6 +12,7 @@ import {
   ROLES,
 } from '../src/common/constants/roles';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { syncRolePermissions } from './helpers/e2e-app.util';
 import { MAIN_CHOIR_ID } from '../src/common/constants/choir.constants';
 
 const EXPECTED_CATALOG_CODES = [
@@ -186,17 +187,9 @@ describe('Sprint 10.1 exit criteria (e2e)', () => {
         update: {},
       });
 
-      await prisma.rolePermission.deleteMany({ where: { roleId: churchAdminRole.id } });
-      for (const code of CHURCH_ADMIN_ACCOUNT_PERMISSIONS) {
-        const permission = await prisma.permission.upsert({
-          where: { code },
-          create: { code, description: code },
-          update: {},
-        });
-        await prisma.rolePermission.create({
-          data: { roleId: churchAdminRole.id, permissionId: permission.id },
-        });
-      }
+      await syncRolePermissions(prisma, churchAdminRole.id, [
+        ...CHURCH_ADMIN_ACCOUNT_PERMISSIONS,
+      ]);
 
       const email = `s101-admin-${Date.now()}@test.local`;
       const passwordHash = await bcrypt.hash('TestPass1', 10);
@@ -268,17 +261,7 @@ describe('Sprint 10.1 exit criteria (e2e)', () => {
       create: { name: roleName, description: roleName },
       update: {},
     });
-    await prisma.rolePermission.deleteMany({ where: { roleId: role.id } });
-    for (const code of permissionCodes) {
-      const permission = await prisma.permission.upsert({
-        where: { code },
-        create: { code, description: code },
-        update: {},
-      });
-      await prisma.rolePermission.create({
-        data: { roleId: role.id, permissionId: permission.id },
-      });
-    }
+    await syncRolePermissions(prisma, role.id, permissionCodes);
   }
 
   describe('RBAC — permission union', () => {

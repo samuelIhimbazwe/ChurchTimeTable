@@ -106,11 +106,16 @@ export class ChoirServiceAssignmentsService {
       newValue: data as Prisma.InputJsonValue,
     });
 
-    void this.notify.notifyAssignment(
+    const notifyPromise = this.notify.notifyAssignment(
       data.choirId,
       occurrence.title,
       data.occurrenceId,
     );
+    if (process.env.CMMS_E2E === '1') {
+      await notifyPromise;
+    } else {
+      void notifyPromise;
+    }
 
     return assignment;
   }

@@ -27,7 +27,7 @@ describe('Asset ownership MF-4 (e2e)', () => {
         ownerId: ctx.musicMinistryId,
         ownershipPercentage: 60,
       })
-      .expect(200);
+      .expect(201);
 
     await request(ctx.app.getHttpServer())
       .post(`/api/v1/assets/${assetId}/ownership`)
@@ -46,6 +46,6 @@ describe('Asset ownership MF-4 (e2e)', () => {
       .post(`/api/v1/assets/${id}/ownership`)
       .set('Authorization', `Bearer ${ctx.adminToken}`)
       .send({ ownerType: 'CHURCH', ownerId: 'CHURCH' })
-      .expect(200);
+      .expect(201);
   });
 });

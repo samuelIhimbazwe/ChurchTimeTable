@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { closeE2eApp } from './helpers/e2e-app.util';
 import {
   bootstrapOperationsE2e,
   OperationsE2eContext,
@@ -12,7 +13,7 @@ describe('Operations MF-7 (e2e)', () => {
   });
 
   afterAll(async () => {
-    await ctx.app.close();
+    await closeE2eApp(ctx.app);
   });
 
   it('lists system templates', async () => {

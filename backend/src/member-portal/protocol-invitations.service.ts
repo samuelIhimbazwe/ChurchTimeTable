@@ -66,7 +66,12 @@ export class ProtocolInvitationsService {
       newValue: { memberId: data.memberId } as Prisma.InputJsonValue,
     });
 
-    void this.notify.notifyProtocolInvitation(invitation);
+    const notifyPromise = this.notify.notifyProtocolInvitation(invitation);
+    if (process.env.CMMS_E2E === '1') {
+      await notifyPromise;
+    } else {
+      void notifyPromise;
+    }
 
     return invitation;
   }

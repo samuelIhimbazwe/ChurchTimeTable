@@ -21,7 +21,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _phone = TextEditingController();
   final _password = TextEditingController();
   final _confirmPassword = TextEditingController();
-  String _ministry = 'CHOIR';
+  String _churchRelationship = 'NEW_TO_CHURCH';
+  final Set<String> _interests = {};
   int _step = 0;
   bool _showPassword = false;
 
@@ -52,7 +53,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           firstName: _firstName.text.trim(),
           lastName: _lastName.text.trim(),
           phone: _phone.text.trim(),
-          ministry: _ministry,
+          churchRelationship: _churchRelationship,
+          interests: _interests.toList(),
           preferredLanguage: locale,
         );
     if (!mounted) return;
@@ -82,7 +84,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                LinearProgressIndicator(value: (_step + 1) / 3),
+                LinearProgressIndicator(value: (_step + 1) / 4),
                 const SizedBox(height: 24),
                 if (_step == 0) ...[
                   TextFormField(
@@ -111,19 +113,42 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 ],
                 if (_step == 1) ...[
                   DropdownButtonFormField<String>(
-                    value: _ministry,
-                    decoration: InputDecoration(labelText: l10n.onboarding_signup_ministry),
-                    items: [
-                      DropdownMenuItem(value: 'CHOIR', child: Text(l10n.onboarding_signup_ministry_choir)),
-                      DropdownMenuItem(value: 'PROTOCOL', child: Text(l10n.onboarding_signup_ministry_protocol)),
-                      DropdownMenuItem(value: 'BOTH', child: Text(l10n.onboarding_signup_ministry_both)),
+                    value: _churchRelationship,
+                    decoration: const InputDecoration(labelText: 'Church relationship'),
+                    items: const [
+                      DropdownMenuItem(value: 'EXISTING', child: Text('Existing church member')),
+                      DropdownMenuItem(value: 'NEW_TO_CHURCH', child: Text('New member')),
+                      DropdownMenuItem(value: 'VISITOR', child: Text('Visitor')),
+                      DropdownMenuItem(value: 'RETURNING', child: Text('Returning member')),
                     ],
-                    onChanged: (value) => setState(() => _ministry = value ?? 'CHOIR'),
+                    onChanged: (value) =>
+                        setState(() => _churchRelationship = value ?? 'NEW_TO_CHURCH'),
                   ),
-                  const SizedBox(height: 12),
-                  Text(_ministryDescription(l10n)),
                 ],
                 if (_step == 2) ...[
+                  Text('Interests (optional — no membership granted)', style: Theme.of(context).textTheme.bodySmall),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: ['CHOIR', 'PROTOCOL', 'YOUTH', 'WOMEN', 'MEN'].map((interest) {
+                      final selected = _interests.contains(interest);
+                      return FilterChip(
+                        label: Text(interest),
+                        selected: selected,
+                        onSelected: (value) {
+                          setState(() {
+                            if (value) {
+                              _interests.add(interest);
+                            } else {
+                              _interests.remove(interest);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ],
+                if (_step == 3) ...[
                   TextFormField(
                     controller: _password,
                     decoration: InputDecoration(
@@ -160,12 +185,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     if (_step > 0) const SizedBox(width: 12),
                     Expanded(
                       child: CmmsButton(
-                        label: _step < 2 ? l10n.onboarding_signup_continue : l10n.onboarding_signup_submit,
+                        label: _step < 3 ? l10n.onboarding_signup_continue : l10n.onboarding_signup_submit,
                         isLoading: auth.loading,
                         onPressed: auth.loading
                             ? null
                             : () {
-                                if (_step < 2) {
+                                if (_step < 3) {
                                   if (_formKey.currentState!.validate()) {
                                     setState(() => _step += 1);
                                   }
@@ -187,16 +212,5 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         ),
       ),
     );
-  }
-
-  String _ministryDescription(dynamic l10n) {
-    switch (_ministry) {
-      case 'PROTOCOL':
-        return l10n.onboarding_signup_ministry_protocol_desc;
-      case 'BOTH':
-        return l10n.onboarding_signup_ministry_both_desc;
-      default:
-        return l10n.onboarding_signup_ministry_choir_desc;
-    }
   }
 }

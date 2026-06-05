@@ -636,6 +636,7 @@ model User {
   churchBroadcastsCreated           ChurchBroadcast[] @relation("BroadcastCreator")
   choirJoinRequestsReviewed         ChoirJoinRequest[] @relation("ChoirJoinReviewerUser")
   importJobsUploaded                ImportJob[]
+  uxAnalyticsEvents                 UxAnalyticsEvent[]
   notificationDeliveryLogs        NotificationDeliveryLog[] @relation("NotificationDeliveryRecipient")
 
   @@index([email])
@@ -1527,6 +1528,8 @@ model MemberProfile {
   skillsJson            Json?
   instrumentsJson       Json?
   availabilityJson      Json?
+  churchRelationship    ChurchRelationshipType?
+  signupInterests       Json?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
   member                Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
@@ -3743,4 +3746,27 @@ model ChurchConfiguration {
   goLiveE2eVerified  Boolean  @default(false)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+}
+
+// --- Auth UX (AUTH-UX-1) ---
+
+enum ChurchRelationshipType {
+  EXISTING
+  NEW_TO_CHURCH
+  VISITOR
+  RETURNING
+}
+
+model UxAnalyticsEvent {
+  id        String   @id @default(uuid())
+  userId    String?
+  eventType String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([eventType])
+  @@index([userId])
+  @@index([createdAt])
 }

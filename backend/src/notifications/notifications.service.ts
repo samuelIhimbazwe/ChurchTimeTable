@@ -91,56 +91,34 @@ export class NotificationsService {
   ) {
 
     const notification = await this.prisma.notification.create({
-
       data: {
-
         userId,
-
         choirId: choirId ?? null,
-
         ministryId: ministryId ?? null,
-
         type,
-
         title,
-
         body,
-
         data: (data as Prisma.InputJsonValue) ?? undefined,
-
       },
-
     });
 
-
-
-    const user = await this.prisma.user.findUnique({
-
-      where: { id: userId },
-
-      select: { fcmToken: true },
-
-    });
-
-    if (user?.fcmToken) {
-
-      const stringData: Record<string, string> = {};
-
-      if (data) {
-
-        for (const [k, v] of Object.entries(data)) {
-
-          stringData[k] = String(v);
-
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { fcmToken: true },
+      });
+      if (user?.fcmToken) {
+        const stringData: Record<string, string> = {};
+        if (data) {
+          for (const [k, v] of Object.entries(data)) {
+            stringData[k] = String(v);
+          }
         }
-
+        await this.fcm.sendToToken(user.fcmToken, title, body, stringData, userId);
       }
-
-      await this.fcm.sendToToken(user.fcmToken, title, body, stringData, userId);
-
+    } catch {
+      /* FCM lookup/send is best-effort */
     }
-
-
 
     return notification;
 
