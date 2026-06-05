@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Calendar, Users, Music, Shield,
   DollarSign, FileText, Settings2, Home, Clock,
-  Heart, ChevronLeft, ChevronRight, Landmark, Mic,
+  Heart, ChevronLeft, ChevronRight, Landmark,
   CheckCircle2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'

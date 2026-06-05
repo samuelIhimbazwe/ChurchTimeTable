@@ -1,6 +1,5 @@
 'use client'
 
-import { useAuthStore } from '@/stores'
 import { useDashboard } from '@/lib/hooks'
 import {
   Card, CardHeader, CardTitle, CardDescription,
