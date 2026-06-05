@@ -1,20 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import {
-  AttendanceOperationalStatus,
-  EventStatus,
   MinistryScope,
-  ReplacementStatus,
-  SwapStatus,
+  OperationAssignmentStatus,
+  OperationOccurrenceStatus,
+  ProtocolReplacementStatus,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { AttendanceScoringService } from '../attendance/attendance-scoring.service';
-import { AttendanceGovernanceService } from '../attendance/attendance-governance.service';
+import { ParticipationScoringService } from '../common/participation/participation-scoring.service';
+import { ParticipationGovernanceService } from '../common/participation/participation-governance.service';
+import { ParticipationRecordsService } from '../common/participation/participation-records.service';
 import { ReportsService } from '../reports/reports.service';
 import { OperationalScopeService } from '../governance/operational-scope.service';
 import { FinanceGovernanceService } from '../finance/finance-governance.service';
 import {
-  hasProtocolCoordination,
-  hasProtocolOversight,
   canViewDisciplineIntelligence,
   canViewFinanceIntelligence,
 } from '../common/governance/governance-permissions.util';
@@ -55,12 +53,18 @@ export interface MinistryKpi {
   trendDirection: 'up' | 'down' | 'stable';
 }
 
+const PUBLISHED_STATUSES = [
+  OperationOccurrenceStatus.PUBLISHED,
+  OperationOccurrenceStatus.APPROVED,
+];
+
 @Injectable()
 export class MinistryIntelligenceService {
   constructor(
     private prisma: PrismaService,
-    private scoring: AttendanceScoringService,
-    private governance: AttendanceGovernanceService,
+    private scoring: ParticipationScoringService,
+    private governance: ParticipationGovernanceService,
+    private records: ParticipationRecordsService,
     private reports: ReportsService,
     private operationalScope: OperationalScopeService,
     private financeGovernance: FinanceGovernanceService,
@@ -72,7 +76,6 @@ export class MinistryIntelligenceService {
   ): Promise<MinistryAlert[]> {
     const alerts: MinistryAlert[] = [];
     const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const trendStart = new Date(now);
     trendStart.setMonth(trendStart.getMonth() - 3);
 
@@ -80,45 +83,31 @@ export class MinistryIntelligenceService {
       ? await this.operationalScope.buildForUser(context.userId)
       : null;
     const memberIds = scopeCtx?.scopedMemberIds ?? [];
-    const memberFilter = memberIds.length ? { memberId: { in: memberIds } } : {};
-    const absentMemberFilter = memberIds.length
-      ? { absentMemberId: { in: memberIds } }
-      : {};
 
     const canFinance = canViewFinanceIntelligence(permissions);
     const canDiscipline = canViewDisciplineIntelligence(permissions);
 
+    const replacementFilter = memberIds.length
+      ? { originalMemberId: { in: memberIds } }
+      : {};
+
     const [
       pendingReplacements,
-      pendingSwaps,
       overloadMembers,
       teams,
       disciplineRecs,
       unpaidDues,
-      escalated,
     ] = await Promise.all([
-      this.prisma.replacement.count({
+      this.prisma.protocolReplacementRequest.count({
         where: {
-          status: {
-            in: [ReplacementStatus.REQUESTED, ReplacementStatus.LEADER_PENDING],
-          },
-          ...absentMemberFilter,
+          status: ProtocolReplacementStatus.PENDING,
+          ...replacementFilter,
         },
       }),
-      this.prisma.swap.count({
-        where: {
-          status: { in: [SwapStatus.REQUESTED, SwapStatus.LEADER_PENDING] },
-          ...(memberIds.length
-            ? {
-                OR: [
-                  { requesterId: { in: memberIds } },
-                  { targetId: { in: memberIds } },
-                ],
-              }
-            : {}),
-        },
-      }),
-      this.overloadRiskMembers(monthStart, memberIds),
+      this.overloadRiskMembers(
+        new Date(now.getFullYear(), now.getMonth(), 1),
+        memberIds,
+      ),
       this.prisma.protocolServiceTeam.findMany({
         where: {
           status: 'ACTIVE',
@@ -134,13 +123,6 @@ export class MinistryIntelligenceService {
       canFinance
         ? this.prisma.memberDues.count({ where: { paid: false } })
         : Promise.resolve(0),
-      this.prisma.attendance.count({
-        where: {
-          escalated: true,
-          ...memberFilter,
-          event: { ministryScope: { in: ['PROTOCOL', 'BOTH'] } },
-        },
-      }),
     ]);
 
     if (pendingReplacements > 0) {
@@ -152,18 +134,6 @@ export class MinistryIntelligenceService {
         message: `${pendingReplacements} replacement request(s) need coordination.`,
         count: pendingReplacements,
         actionHint: 'Review coverage and assign replacements promptly.',
-      });
-    }
-
-    if (pendingSwaps >= 3) {
-      alerts.push({
-        id: 'pending-swaps',
-        type: 'unresolved_replacement',
-        severity: 'warning',
-        title: 'Pending swap requests',
-        message: `${pendingSwaps} swap requests are awaiting review.`,
-        count: pendingSwaps,
-        actionHint: 'Process swap requests to maintain schedule fairness.',
       });
     }
 
@@ -218,18 +188,6 @@ export class MinistryIntelligenceService {
       });
     }
 
-    if (escalated > 0) {
-      alerts.push({
-        id: 'escalation-pending',
-        type: 'escalation_pending',
-        severity: 'critical',
-        title: 'Escalated attendance cases',
-        message: `${escalated} attendance case(s) require coordinator attention.`,
-        count: escalated,
-        actionHint: 'Review escalated cases in attendance governance.',
-      });
-    }
-
     const attendanceTrend = await this.buildAttendanceTrendSignal(trendStart, now);
     if (attendanceTrend === 'down') {
       alerts.push({
@@ -273,30 +231,35 @@ export class MinistryIntelligenceService {
             ? { ministry: MinistryScope.BOTH }
             : { ministry: scope };
 
+        const ministryKey =
+          scope === MinistryScope.BOTH ? ('ALL' as const) : scope;
+
         const [
           activeMembers,
           monthRecords,
           prevRecords,
           pendingReplacements,
-          pendingSwaps,
           openDiscipline,
           voluntaryCount,
         ] = await Promise.all([
           this.prisma.member.count({ where: { status: 'ACTIVE', ...memberFilter } }),
-          this.fetchScopedAttendance(monthStart, now, scope),
-          this.fetchScopedAttendance(prevStart, prevEnd, scope),
+          this.records.fetchScoreInputs({
+            since: monthStart,
+            until: now,
+            ministry: ministryKey,
+          }),
+          this.records.fetchScoreInputs({
+            since: prevStart,
+            until: prevEnd,
+            ministry: ministryKey,
+          }),
           this.countScopedReplacements(scope),
-          this.countScopedSwaps(scope),
           this.prisma.disciplineCase.count({
             where: { stage: { not: 'CLOSED' }, ministry: scope },
           }),
-          this.prisma.attendance.count({
-            where: {
-              voluntaryExtra: true,
-              createdAt: { gte: monthStart },
-              event: this.eventScopeFilter(scope),
-            },
-          }),
+          this.records.fetchRecords({ since: monthStart, ministry: ministryKey }).then(
+            (rows) => rows.filter((r) => r.voluntaryExtra).length,
+          ),
         ]);
 
         const monthScore = this.scoring.scoreRecords(monthRecords, weights);
@@ -312,7 +275,7 @@ export class MinistryIntelligenceService {
           attendanceRate: monthRecords.length ? monthScore.percentage : null,
           reliabilityScore: monthRecords.length ? monthScore.percentage : null,
           pendingReplacements,
-          pendingSwaps,
+          pendingSwaps: pendingReplacements,
           openDiscipline,
           voluntaryServiceCount: voluntaryCount,
           trendDirection,
@@ -327,28 +290,30 @@ export class MinistryIntelligenceService {
     const trendStart = new Date(now.getFullYear(), now.getMonth() - 11, 1);
 
     const [assignments, replacements, voluntaryExtras] = await Promise.all([
-      this.prisma.eventAssignment.findMany({
+      this.prisma.operationAssignment.findMany({
         where: {
-          countsOfficialQuota: true,
-          event: { startTime: { gte: monthStart }, status: EventStatus.SCHEDULED },
+          assignmentType: 'PROTOCOL_TEAM',
+          status: { in: [OperationAssignmentStatus.PENDING, OperationAssignmentStatus.CONFIRMED] },
+          occurrence: {
+            startAt: { gte: monthStart },
+            status: { in: PUBLISHED_STATUSES },
+          },
+          memberId: { not: null },
         },
         select: { memberId: true },
       }),
-      this.prisma.replacement.findMany({
+      this.prisma.protocolReplacementRequest.findMany({
         where: { createdAt: { gte: trendStart } },
-        select: {
-          createdAt: true,
-          voluntaryExtraService: true,
-          countsOfficialQuota: true,
-        },
+        select: { createdAt: true, status: true },
       }),
-      this.prisma.attendance.count({
-        where: { voluntaryExtra: true, createdAt: { gte: monthStart } },
-      }),
+      this.records.fetchRecords({ since: monthStart }).then((rows) =>
+        rows.filter((r) => r.voluntaryExtra).length,
+      ),
     ]);
 
     const assignmentCounts = assignments.reduce<Record<string, number>>(
       (acc, row) => {
+        if (!row.memberId) return acc;
         acc[row.memberId] = (acc[row.memberId] ?? 0) + 1;
         return acc;
       },
@@ -362,7 +327,7 @@ export class MinistryIntelligenceService {
     const underloaded = await this.findUnderloadedMembers(monthStart);
 
     const replacementDependency = replacements.filter(
-      (r) => !r.voluntaryExtraService && r.countsOfficialQuota,
+      (r) => r.status === ProtocolReplacementStatus.APPROVED,
     ).length;
 
     return {
@@ -407,7 +372,6 @@ export class MinistryIntelligenceService {
     };
   }
 
-  /** Sprint 8: ministry-scoped finance stewardship analytics */
   async financeAnalytics(options?: {
     actorUserId: string;
     ministryScope?: MinistryScope;
@@ -458,21 +422,13 @@ export class MinistryIntelligenceService {
     const since = new Date();
     since.setMonth(since.getMonth() - 6);
 
-    const latenessRows = await this.prisma.attendance.findMany({
-      where: {
-        operationalStatus: AttendanceOperationalStatus.LATE,
-        createdAt: { gte: since },
-      },
-      select: { memberId: true, lateMinutes: true, createdAt: true },
-    });
-
-    const latenessByMember = latenessRows.reduce<Record<string, number>>(
-      (acc, row) => {
+    const latenessRows = await this.records.fetchRecords({ since });
+    const latenessByMember = latenessRows
+      .filter((row) => row.operationalStatus === 'LATE')
+      .reduce<Record<string, number>>((acc, row) => {
         acc[row.memberId] = (acc[row.memberId] ?? 0) + 1;
         return acc;
-      },
-      {},
-    );
+      }, {});
 
     const repeatedLateness = Object.values(latenessByMember).filter(
       (count) => count >= 4,
@@ -537,14 +493,11 @@ export class MinistryIntelligenceService {
 
   async memberPersonalAnalytics(memberId: string) {
     const history = await this.governance.memberHistory(memberId);
-    const [replacements, swaps, contributions] = await Promise.all([
-      this.prisma.replacement.count({
+    const [replacements, contributions] = await Promise.all([
+      this.prisma.protocolReplacementRequest.count({
         where: {
-          OR: [{ absentMemberId: memberId }, { coverMemberId: memberId }],
+          OR: [{ originalMemberId: memberId }, { replacementMemberId: memberId }],
         },
-      }),
-      this.prisma.swap.count({
-        where: { OR: [{ requesterId: memberId }, { targetId: memberId }] },
       }),
       this.prisma.memberDues.findMany({
         where: { memberId },
@@ -561,7 +514,7 @@ export class MinistryIntelligenceService {
       latenessCount: history.latenessCount,
       voluntaryServiceCount: history.voluntaryServiceCount,
       replacementCount: replacements,
-      swapCount: swaps,
+      swapCount: 0,
       contributionCompliance: contributions.length
         ? Math.round((paid / contributions.length) * 100)
         : null,
@@ -572,30 +525,33 @@ export class MinistryIntelligenceService {
     const alerts: MinistryAlert[] = [];
     const now = new Date();
 
-    const [pendingSwaps, upcomingAssignments, unpaidDues] = await Promise.all([
-      this.prisma.swap.count({
+    const [pendingReplacements, upcomingAssignments, unpaidDues] = await Promise.all([
+      this.prisma.protocolReplacementRequest.count({
         where: {
-          OR: [{ requesterId: memberId }, { targetId: memberId }],
-          status: { in: [SwapStatus.REQUESTED, SwapStatus.LEADER_PENDING] },
+          OR: [{ originalMemberId: memberId }, { replacementMemberId: memberId }],
+          status: ProtocolReplacementStatus.PENDING,
         },
       }),
-      this.prisma.eventAssignment.count({
+      this.prisma.operationAssignment.count({
         where: {
           memberId,
-          event: { status: EventStatus.SCHEDULED, startTime: { gte: now } },
+          occurrence: {
+            status: { in: PUBLISHED_STATUSES },
+            startAt: { gte: now },
+          },
         },
       }),
       this.prisma.memberDues.count({ where: { memberId, paid: false } }),
     ]);
 
-    if (pendingSwaps > 0) {
+    if (pendingReplacements > 0) {
       alerts.push({
-        id: `member-swap-${memberId}`,
+        id: `member-replacement-${memberId}`,
         type: 'unresolved_replacement',
         severity: 'info',
-        title: 'Swap request pending',
-        message: 'You have a swap request awaiting review.',
-        count: pendingSwaps,
+        title: 'Replacement request pending',
+        message: 'You have a replacement request awaiting review.',
+        count: pendingReplacements,
       });
     }
 
@@ -624,54 +580,38 @@ export class MinistryIntelligenceService {
     return alerts;
   }
 
-  private eventScopeFilter(scope: MinistryScope) {
+  private memberScopeFilter(scope: MinistryScope) {
     if (scope === MinistryScope.BOTH) {
-      return { ministryScope: MinistryScope.BOTH };
+      return { ministry: MinistryScope.BOTH };
     }
-    return { ministryScope: { in: [scope, MinistryScope.BOTH] } };
-  }
-
-  private async fetchScopedAttendance(from: Date, to: Date, scope: MinistryScope) {
-    return this.prisma.attendance.findMany({
-      where: {
-        createdAt: { gte: from, lte: to },
-        event: this.eventScopeFilter(scope),
-      },
-      select: { operationalStatus: true, voluntaryExtra: true },
-    });
+    return { ministry: scope };
   }
 
   private async countScopedReplacements(scope: MinistryScope) {
-    return this.prisma.replacement.count({
+    return this.prisma.protocolReplacementRequest.count({
       where: {
-        status: {
-          in: [ReplacementStatus.REQUESTED, ReplacementStatus.LEADER_PENDING],
-        },
-        event: this.eventScopeFilter(scope),
-      },
-    });
-  }
-
-  private async countScopedSwaps(scope: MinistryScope) {
-    return this.prisma.swap.count({
-      where: {
-        status: { in: [SwapStatus.REQUESTED, SwapStatus.LEADER_PENDING] },
-        event: this.eventScopeFilter(scope),
+        status: ProtocolReplacementStatus.PENDING,
+        originalMember: this.memberScopeFilter(scope),
       },
     });
   }
 
   private async overloadRiskMembers(since: Date, memberIds?: string[]) {
-    const assignments = await this.prisma.eventAssignment.findMany({
+    const assignments = await this.prisma.operationAssignment.findMany({
       where: {
-        countsOfficialQuota: true,
-        event: { startTime: { gte: since }, status: EventStatus.SCHEDULED },
+        assignmentType: 'PROTOCOL_TEAM',
+        status: { in: [OperationAssignmentStatus.PENDING, OperationAssignmentStatus.CONFIRMED] },
+        occurrence: {
+          startAt: { gte: since },
+          status: { in: PUBLISHED_STATUSES },
+        },
         ...(memberIds?.length ? { memberId: { in: memberIds } } : {}),
       },
       select: { memberId: true },
     });
 
     const counts = assignments.reduce<Record<string, number>>((acc, row) => {
+      if (!row.memberId) return acc;
       acc[row.memberId] = (acc[row.memberId] ?? 0) + 1;
       return acc;
     }, {});
@@ -687,14 +627,20 @@ export class MinistryIntelligenceService {
       select: { id: true },
     });
 
-    const assignments = await this.prisma.eventAssignment.findMany({
+    const assignments = await this.prisma.operationAssignment.findMany({
       where: {
-        event: { startTime: { gte: since }, status: EventStatus.SCHEDULED },
+        occurrence: {
+          startAt: { gte: since },
+          status: { in: PUBLISHED_STATUSES },
+        },
+        memberId: { not: null },
       },
       select: { memberId: true },
     });
 
-    const assigned = new Set(assignments.map((a) => a.memberId));
+    const assigned = new Set(
+      assignments.map((a) => a.memberId).filter((id): id is string => Boolean(id)),
+    );
     return activeMembers.filter((m) => !assigned.has(m.id)).map((m) => m.id);
   }
 
@@ -706,14 +652,8 @@ export class MinistryIntelligenceService {
     const weights = await this.scoring.getWeights();
 
     const [firstHalf, secondHalf] = await Promise.all([
-      this.prisma.attendance.findMany({
-        where: { createdAt: { gte: start, lt: mid } },
-        select: { operationalStatus: true, voluntaryExtra: true },
-      }),
-      this.prisma.attendance.findMany({
-        where: { createdAt: { gte: mid, lte: end } },
-        select: { operationalStatus: true, voluntaryExtra: true },
-      }),
+      this.records.fetchScoreInputs({ since: start, until: mid }),
+      this.records.fetchScoreInputs({ since: mid, until: end }),
     ]);
 
     const firstScore = this.scoring.scoreRecords(firstHalf, weights).percentage;
@@ -725,11 +665,7 @@ export class MinistryIntelligenceService {
   }
 
   private buildReplacementTrend(
-    rows: Array<{
-      createdAt: Date;
-      voluntaryExtraService: boolean;
-      countsOfficialQuota: boolean;
-    }>,
+    rows: Array<{ createdAt: Date; status: ProtocolReplacementStatus }>,
     start: Date,
     end: Date,
   ) {
@@ -743,34 +679,11 @@ export class MinistryIntelligenceService {
       const key = this.monthKey(row.createdAt);
       const bucket = series.find((item) => item.key === key);
       if (!bucket) continue;
-      if (row.voluntaryExtraService || !row.countsOfficialQuota) {
-        bucket.voluntary += 1;
-      } else {
+      if (row.status === ProtocolReplacementStatus.APPROVED) {
         bucket.official += 1;
+      } else {
+        bucket.voluntary += 1;
       }
-    }
-
-    return series.map(({ key, ...entry }) => entry);
-  }
-
-  private buildFinanceTrend(
-    txs: Array<{ createdAt: Date; type: string; amount: unknown }>,
-    start: Date,
-  ) {
-    const end = new Date();
-    const series = this.createMonthlySeries(start, end).map((entry) => ({
-      ...entry,
-      income: 0,
-      expense: 0,
-    }));
-
-    for (const tx of txs) {
-      const key = this.monthKey(tx.createdAt);
-      const bucket = series.find((item) => item.key === key);
-      if (!bucket) continue;
-      const amt = Number(tx.amount);
-      if (tx.type === 'INCOME') bucket.income += amt;
-      else bucket.expense += amt;
     }
 
     return series.map(({ key, ...entry }) => entry);

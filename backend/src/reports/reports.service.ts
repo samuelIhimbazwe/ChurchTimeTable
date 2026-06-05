@@ -1,40 +1,63 @@
 import { Injectable } from '@nestjs/common';
-import { EventType, MinistryScope, Prisma } from '@prisma/client';
+import { MinistryScope, Prisma } from '@prisma/client';
 import PDFDocument from 'pdfkit';
 import { PrismaService } from '../prisma/prisma.service';
+import { ParticipationRecordsService } from '../common/participation/participation-records.service';
+import type { ParticipationScoreInput } from '../common/participation/participation-records.service';
+import { ParticipationScoringService } from '../common/participation/participation-scoring.service';
 
 @Injectable()
 export class ReportsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private participationRecords: ParticipationRecordsService,
+    private participationScoring: ParticipationScoringService,
+  ) {}
 
-  async attendanceSummary(from?: string, to?: string, ministryScope?: string) {
-    const where: Prisma.AttendanceWhereInput = {};
-    if (from || to) {
-      where.createdAt = {};
-      if (from) where.createdAt.gte = new Date(from);
-      if (to) where.createdAt.lte = new Date(to);
-    }
-    if (ministryScope && ministryScope !== 'ALL') {
-      const scope = ministryScope as MinistryScope;
-      where.event = {
-        ministryScope:
-          scope === MinistryScope.BOTH
-            ? MinistryScope.BOTH
-            : { in: [scope, MinistryScope.BOTH] },
-      };
-    }
+  async participationSummary(from?: string, to?: string, ministryScope?: string) {
+    const since = from ? new Date(from) : undefined;
+    const until = to ? new Date(to) : undefined;
+    const ministry =
+      ministryScope && ministryScope !== 'ALL'
+        ? (ministryScope as MinistryScope)
+        : ('ALL' as const);
 
-    const records = await this.prisma.attendance.findMany({ where });
-    const byStatus = { PRESENT: 0, ABSENT: 0, LATE: 0 };
-    for (const r of records) {
-      byStatus[r.physicalStatus]++;
+    const records = await this.participationRecords.fetchRecords({
+      since,
+      until,
+      ministry,
+    });
+
+    const byStatus = {
+      PRESENT: 0,
+      ABSENT: 0,
+      LATE: 0,
+    };
+
+    for (const record of records) {
+      if (
+        record.operationalStatus === 'ATTENDED' ||
+        record.operationalStatus === 'REPLACEMENT_SERVED'
+      ) {
+        byStatus.PRESENT += 1;
+      } else if (record.operationalStatus === 'LATE') {
+        byStatus.LATE += 1;
+      } else {
+        byStatus.ABSENT += 1;
+      }
     }
 
     return {
       total: records.length,
       byStatus,
-      excused: records.filter((r) => r.reasonCategory === 'EXCUSED').length,
+      excused: records.filter((r) => r.operationalStatus === 'EXCUSED_ABSENCE')
+        .length,
     };
+  }
+
+  /** @deprecated Use participationSummary */
+  async attendanceSummary(from?: string, to?: string, ministryScope?: string) {
+    return this.participationSummary(from, to, ministryScope);
   }
 
   async disciplineSummary(ministryScope?: string) {
@@ -67,18 +90,20 @@ export class ReportsService {
     const monthStart = new Date(ref.getFullYear(), ref.getMonth(), 1);
     const monthEnd = new Date(ref.getFullYear(), ref.getMonth() + 1, 0, 23, 59, 59);
 
-    const assignments = await this.prisma.eventAssignment.findMany({
+    const assignments = await this.prisma.operationAssignment.findMany({
       where: {
-        event: {
-          type: EventType.PROTOCOL_SERVICE,
-          startTime: { gte: monthStart, lte: monthEnd },
+        assignmentType: 'PROTOCOL_TEAM',
+        occurrence: {
+          startAt: { gte: monthStart, lte: monthEnd },
         },
+        memberId: { not: null },
       },
       include: { member: true },
     });
 
     const counts: Record<string, { name: string; count: number }> = {};
     for (const a of assignments) {
+      if (!a.memberId || !a.member) continue;
       if (!counts[a.memberId]) {
         counts[a.memberId] = {
           name: `${a.member.firstName} ${a.member.lastName}`,
@@ -133,7 +158,7 @@ export class ReportsService {
   }
 
   async buildAttendancePdf(from?: string, to?: string) {
-    const summary = await this.attendanceSummary(from, to);
+    const summary = await this.participationSummary(from, to);
     const lines = [
       `Generated: ${new Date().toISOString()}`,
       `Total records: ${summary.total}`,
@@ -142,12 +167,13 @@ export class ReportsService {
       `Late: ${summary.byStatus.LATE}`,
       `Excused: ${summary.excused}`,
     ];
-    return this.exportPdf('Attendance Summary Report', lines);
+    return this.exportPdf('Participation Summary Report', lines);
   }
 
   async buildFinancePdf() {
     const summary = await this.financeSummary();
     const lines = [
+      `Generated: ${new Date().toISOString()}`,
       `Income: ${summary.income}`,
       `Expense: ${summary.expense}`,
       `Balance: ${summary.balance}`,
@@ -155,82 +181,50 @@ export class ReportsService {
     return this.exportPdf('Finance Summary Report', lines);
   }
 
+  async responsibilityScoreTrends(months = 6) {
+    const since = new Date();
+    since.setMonth(since.getMonth() - months);
+    const records = await this.participationRecords.fetchRecords({ since });
+    const weights = await this.participationScoring.getWeights();
+    const byMonth = new Map<string, ParticipationScoreInput[]>();
+
+    for (const record of records) {
+      const key = `${record.recordedAt.getFullYear()}-${String(record.recordedAt.getMonth() + 1).padStart(2, '0')}`;
+      const bucket = byMonth.get(key) ?? [];
+      bucket.push({
+        operationalStatus: record.operationalStatus,
+        voluntaryExtra: record.voluntaryExtra,
+      });
+      byMonth.set(key, bucket);
+    }
+
+    return [...byMonth.entries()].map(([month, monthRecords]) => ({
+      month,
+      score: this.participationScoring.scoreRecords(monthRecords, weights),
+    }));
+  }
+
   async buildDisciplinePdf() {
     const summary = await this.disciplineSummary();
     const lines = [
+      `Generated: ${new Date().toISOString()}`,
       `Total cases: ${summary.total}`,
-      ...Object.entries(summary.byStage).map(([k, v]) => `${k}: ${v}`),
+      ...Object.entries(summary.byStage).map(([stage, count]) => `${stage}: ${count}`),
     ];
     return this.exportPdf('Discipline Summary Report', lines);
   }
 
   async buildProtocolQuotaPdf(month?: string) {
-    const data = await this.protocolQuotaCompliance(month);
+    const summary = await this.protocolQuotaCompliance(month);
     const lines = [
-      `Month: ${data.month}`,
-      `Members tracked: ${data.members.length}`,
-      `Violations: ${data.violations.length}`,
-      ...data.violations.map(
-        (v) => `${v.name}: ${v.servicesThisMonth} services`,
+      `Generated: ${new Date().toISOString()}`,
+      `Month: ${summary.month}`,
+      `Members tracked: ${summary.members.length}`,
+      `Violations: ${summary.violations.length}`,
+      ...summary.members.map(
+        (m) => `${m.name}: ${m.servicesThisMonth} services (${m.compliant ? 'ok' : 'over quota'})`,
       ),
     ];
     return this.exportPdf('Protocol Quota Compliance Report', lines);
-  }
-
-  async responsibilityScoreTrends(months = 6) {
-    const since = new Date();
-    since.setMonth(since.getMonth() - months);
-
-    const records = await this.prisma.attendance.findMany({
-      where: { createdAt: { gte: since } },
-      select: {
-        memberId: true,
-        physicalStatus: true,
-        reasonCategory: true,
-        createdAt: true,
-        member: { select: { firstName: true, lastName: true } },
-      },
-    });
-
-    const byMemberMonth = new Map<
-      string,
-      { name: string; buckets: Map<string, { total: number; present: number; excused: number }> }
-    >();
-
-    for (const r of records) {
-      const period = `${r.createdAt.getFullYear()}-${String(r.createdAt.getMonth() + 1).padStart(2, '0')}`;
-      const key = r.memberId;
-      if (!byMemberMonth.has(key)) {
-        byMemberMonth.set(key, {
-          name: `${r.member.firstName} ${r.member.lastName}`,
-          buckets: new Map(),
-        });
-      }
-      const entry = byMemberMonth.get(key)!;
-      const b = entry.buckets.get(period) ?? { total: 0, present: 0, excused: 0 };
-      b.total++;
-      if (r.physicalStatus === 'PRESENT' || r.physicalStatus === 'LATE') {
-        b.present++;
-      }
-      if (r.physicalStatus === 'ABSENT' && r.reasonCategory === 'EXCUSED') {
-        b.excused++;
-      }
-      entry.buckets.set(period, b);
-    }
-
-    return [...byMemberMonth.entries()].map(([memberId, data]) => ({
-      memberId,
-      name: data.name,
-      trends: [...data.buckets.entries()].map(([period, b]) => ({
-        period,
-        totalEvents: b.total,
-        attendanceRate: b.total
-          ? Math.round((b.present / b.total) * 10000) / 100
-          : 0,
-        responsibilityScore: b.total
-          ? Math.round(((b.present + b.excused) / b.total) * 10000) / 100
-          : 0,
-      })),
-    }));
   }
 }

@@ -446,21 +446,15 @@ export class SearchService {
     return { id: '__none__' };
   }
 
-  private buildEventWhere(
+  private buildOccurrenceWhere(
     ctx: OperationalScopeContext,
     query: string,
-  ): Prisma.EventWhereInput {
+  ): Prisma.OperationOccurrenceWhereInput {
     const textFilter = { title: { contains: query } };
     if (this.isGlobalAdmin(ctx)) {
       return textFilter;
     }
-
-    const ministries = this.ministryScopesForActor(ctx);
-    if (!ministries.length) {
-      return { id: '__none__' };
-    }
-
-    return { AND: [textFilter, { ministryScope: { in: ministries } }] };
+    return textFilter;
   }
 
   private perTypeLimit(totalLimit: number, enabledTypes: number): number {
@@ -1228,10 +1222,10 @@ export class SearchService {
     query: string,
     limit: number,
   ): Promise<EventSearchResult[]> {
-    const rows = await this.prisma.event.findMany({
-      where: this.buildEventWhere(ctx, query),
+    const rows = await this.prisma.operationOccurrence.findMany({
+      where: this.buildOccurrenceWhere(ctx, query),
       take: limit,
-      orderBy: { startTime: 'desc' },
+      orderBy: { startAt: 'desc' },
       select: { id: true, title: true },
     });
 
@@ -1247,9 +1241,9 @@ export class SearchService {
     query: string,
     limit: number,
   ): Promise<AssignmentSearchResult[]> {
-    const eventWhere = this.buildEventWhere(ctx, query);
-    const assignmentWhere: Prisma.EventAssignmentWhereInput = {
-      event: eventWhere,
+    const occurrenceWhere = this.buildOccurrenceWhere(ctx, query);
+    const assignmentWhere: Prisma.OperationAssignmentWhereInput = {
+      occurrence: occurrenceWhere,
     };
 
     if (
@@ -1261,20 +1255,20 @@ export class SearchService {
       assignmentWhere.memberId = { in: ctx.scopedMemberIds };
     }
 
-    const rows = await this.prisma.eventAssignment.findMany({
+    const rows = await this.prisma.operationAssignment.findMany({
       where: assignmentWhere,
       take: limit,
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
-        event: { select: { title: true } },
+        occurrence: { select: { title: true } },
       },
     });
 
     return rows.map((row) => ({
       type: 'assignment' as const,
       id: row.id,
-      title: row.event.title,
+      title: row.occurrence.title,
     }));
   }
 
@@ -1506,15 +1500,15 @@ export class SearchService {
     query: string,
     limit: number,
   ): Promise<RehearsalSearchResult[]> {
-    const rows = await this.prisma.event.findMany({
+    const rows = await this.prisma.choirActivity.findMany({
       where: {
         AND: [
-          this.buildEventWhere(ctx, query),
-          { type: 'REHEARSAL' },
+          { title: { contains: query } },
+          { activityType: 'REHEARSAL' },
         ],
       },
       take: limit,
-      orderBy: { startTime: 'asc' },
+      orderBy: { startAt: 'asc' },
       select: { id: true, title: true },
     });
     return rows.map((row) => ({

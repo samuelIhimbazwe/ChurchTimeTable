@@ -35,6 +35,8 @@ describe('Protocol team leaders (e2e)', () => {
       });
 
     expect(team.status).toBe(201);
-    expect(team.body.data.teamLeader).toBeTruthy();
+    expect(
+      team.body.data.teamLeaders?.length || team.body.data.teamLeader,
+    ).toBeTruthy();
   });
 });

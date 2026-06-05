@@ -14,6 +14,12 @@ import {
   hasProtocolTeamLeaderManage,
   hasProtocolView,
 } from './protocol-access.util';
+import { resolveSingingChoirIds } from './protocol-singing-choirs.util';
+
+const leaderInclude = {
+  member: { select: { id: true, firstName: true, lastName: true } },
+  choir: { select: { id: true, name: true, code: true } },
+} as const;
 
 @Injectable()
 export class ProtocolTeamLeadersService {
@@ -134,51 +140,63 @@ export class ProtocolTeamLeadersService {
     return updated;
   }
 
-  /** Recommend team leader for an occurrence team based on singing choir */
+  /** Recommend team leader(s) for an occurrence team based on choirs singing that service. */
   async recommendForTeam(teamId: string) {
     const team = await this.prisma.protocolOccurrenceTeam.findUniqueOrThrow({
       where: { id: teamId },
-      include: {
-        occurrence: {
-          include: {
-            assignments: {
-              where: { assignmentType: 'MAIN_CHOIR' },
-              include: { operationalUnit: true },
-            },
-          },
-        },
-      },
+      select: { occurrenceId: true },
     });
+
+    const singingChoirIds = await resolveSingingChoirIds(
+      this.prisma,
+      team.occurrenceId,
+    );
 
     const nonChoirLeader = await this.prisma.protocolTeamLeader.findFirst({
       where: { active: true, isNonChoirLeader: true },
-      include: {
-        member: { select: { id: true, firstName: true, lastName: true } },
-      },
+      include: leaderInclude,
     });
 
-    const mainAssignment = team.occurrence.assignments[0];
-    if (!mainAssignment) {
-      return { recommended: nonChoirLeader, reason: 'NO_MAIN_CHOIR' };
+    if (singingChoirIds.length === 0) {
+      const fallback = nonChoirLeader;
+      return {
+        recommended: fallback,
+        recommendedLeaders: fallback ? [fallback] : [],
+        nonChoirOption: nonChoirLeader,
+        singingChoirIds,
+        reason: 'NO_SINGING_CHOIR_ASSIGNED',
+      };
     }
 
-    const choirLeaders = await this.prisma.protocolTeamLeader.findMany({
-      where: { active: true, isNonChoirLeader: false, choirId: { not: null } },
-      include: {
-        member: { select: { id: true, firstName: true, lastName: true } },
-        choir: { select: { id: true, name: true, code: true } },
+    const matchedLeaders = await this.prisma.protocolTeamLeader.findMany({
+      where: {
+        active: true,
+        isNonChoirLeader: false,
+        choirId: { in: singingChoirIds },
       },
+      include: leaderInclude,
+      orderBy: [{ choir: { name: 'asc' } }],
     });
 
-    if (choirLeaders.length === 0) {
-      return { recommended: nonChoirLeader, reason: 'FALLBACK_NON_CHOIR' };
+    if (matchedLeaders.length === 0) {
+      const fallback = nonChoirLeader;
+      return {
+        recommended: fallback,
+        recommendedLeaders: fallback ? [fallback] : [],
+        alternatives: [],
+        nonChoirOption: nonChoirLeader,
+        singingChoirIds,
+        reason: 'FALLBACK_NON_CHOIR',
+      };
     }
 
     return {
-      recommended: choirLeaders[0],
-      alternatives: choirLeaders.slice(1),
+      recommended: matchedLeaders[0],
+      recommendedLeaders: matchedLeaders,
+      alternatives: matchedLeaders.slice(1),
       nonChoirOption: nonChoirLeader,
-      reason: 'MAIN_CHOIR_MATCH',
+      singingChoirIds,
+      reason: 'SINGING_CHOIR_MATCH',
     };
   }
 
@@ -197,7 +215,12 @@ export class ProtocolTeamLeadersService {
     }
 
     const assignment = await this.prisma.protocolOccurrenceTeamLeader.upsert({
-      where: { teamId },
+      where: {
+        teamId_protocolTeamLeaderId: {
+          teamId,
+          protocolTeamLeaderId,
+        },
+      },
       create: {
         teamId,
         protocolTeamLeaderId,
@@ -205,7 +228,6 @@ export class ProtocolTeamLeadersService {
         overrideReason,
       },
       update: {
-        protocolTeamLeaderId,
         assignedByUserId: actorUserId,
         overrideReason,
       },
@@ -229,6 +251,50 @@ export class ProtocolTeamLeadersService {
     return assignment;
   }
 
+  /** Assign all leaders recommended for the singing choirs on this team. */
+  async assignRecommendedLeaders(
+    actorUserId: string | null,
+    teamId: string,
+    overrideReason?: string,
+  ) {
+    const rec = await this.recommendForTeam(teamId);
+    const leaders = rec.recommendedLeaders ?? [];
+    const assignments = [];
+    for (const leader of leaders) {
+      if (actorUserId) {
+        assignments.push(
+          await this.assignToTeam(
+            actorUserId,
+            teamId,
+            leader.id,
+            overrideReason,
+          ),
+        );
+      } else {
+        assignments.push(
+          await this.prisma.protocolOccurrenceTeamLeader.upsert({
+            where: {
+              teamId_protocolTeamLeaderId: {
+                teamId,
+                protocolTeamLeaderId: leader.id,
+              },
+            },
+            create: { teamId, protocolTeamLeaderId: leader.id },
+            update: {},
+            include: {
+              protocolTeamLeader: {
+                include: {
+                  member: { select: { firstName: true, lastName: true } },
+                },
+              },
+            },
+          }),
+        );
+      }
+    }
+    return { assignments, recommendation: rec };
+  }
+
   async myTeams(actorUserId: string) {
     const leader = await this.prisma.member.findUnique({
       where: { userId: actorUserId },
@@ -238,7 +304,9 @@ export class ProtocolTeamLeadersService {
 
     return this.prisma.protocolOccurrenceTeam.findMany({
       where: {
-        teamLeader: { protocolTeamLeaderId: leader.protocolTeamLeader.id },
+        teamLeaders: {
+          some: { protocolTeamLeaderId: leader.protocolTeamLeader.id },
+        },
       },
       include: {
         occurrence: { select: { title: true, startAt: true, status: true } },

@@ -1,18 +1,12 @@
 import { Injectable } from '@nestjs/common';
 
 import {
-
   ContributionStatus,
-
-  EventStatus,
-
   WelfareCaseStatus,
-
 } from '@prisma/client';
-
 import { PrismaService } from '../prisma/prisma.service';
-
-import { AttendanceScoringService } from '../attendance/attendance-scoring.service';
+import { ParticipationScoringService } from '../common/participation/participation-scoring.service';
+import { ParticipationRecordsService } from '../common/participation/participation-records.service';
 
 import { ContributionEffectiveAmountService } from '../finance/contribution-effective-amount.service';
 
@@ -72,7 +66,9 @@ export class MemberTimelineService {
 
     private access: MemberProfileAccessService,
 
-    private attendanceScoring: AttendanceScoringService,
+    private participationScoring: ParticipationScoringService,
+
+    private participationRecords: ParticipationRecordsService,
 
     private effective: ContributionEffectiveAmountService,
 
@@ -180,35 +176,23 @@ export class MemberTimelineService {
 
     if (showAttendance) {
 
-      const attendance = await this.prisma.attendance.findMany({
-
-        where: { memberId },
-
-        include: {
-
-          event: { select: { title: true, type: true, startTime: true } },
-
-        },
-
-        orderBy: { createdAt: 'desc' },
-
-        take: 80,
-
+      const attendance = await this.participationRecords.fetchRecords({
+        memberIds: [memberId],
       });
 
-      for (const row of attendance) {
+      for (const row of attendance.slice(0, 80)) {
 
         events.push({
 
           type: 'attendance',
 
-          timestamp: (row.event?.startTime ?? row.createdAt).toISOString(),
+          timestamp: row.recordedAt.toISOString(),
 
-          title: row.event?.title ?? 'Attendance',
+          title: 'Participation record',
 
-          summary: `${row.operationalStatus} (${row.physicalStatus})`,
+          summary: row.operationalStatus,
 
-          metadata: { eventId: row.eventId, eventType: row.event?.type },
+          metadata: { operationalStatus: row.operationalStatus },
 
         });
 
@@ -472,13 +456,13 @@ export class MemberTimelineService {
 
 
 
-    const assignments = await this.prisma.eventAssignment.findMany({
+    const assignments = await this.prisma.operationAssignment.findMany({
 
       where: { memberId },
 
       include: {
 
-        event: {
+        occurrence: {
 
           select: {
 
@@ -488,7 +472,7 @@ export class MemberTimelineService {
 
             type: true,
 
-            startTime: true,
+            startAt: true,
 
             status: true,
 
@@ -506,21 +490,22 @@ export class MemberTimelineService {
 
     for (const row of assignments) {
 
-      if (!row.event) continue;
-
-      const isRehearsal = row.event.type === 'REHEARSAL';
+      if (!row.occurrence) continue;
 
       events.push({
 
-        type: isRehearsal ? 'rehearsal' : 'assignment',
+        type: 'assignment',
 
-        timestamp: row.event.startTime.toISOString(),
+        timestamp: row.occurrence.startAt.toISOString(),
 
-        title: row.event.title,
+        title: row.occurrence.title,
 
-        summary: row.event.status,
+        summary: row.occurrence.status,
 
-        metadata: { eventId: row.event.id, eventType: row.event.type },
+        metadata: {
+          occurrenceId: row.occurrence.id,
+          operationType: row.occurrence.type,
+        },
 
       });
 
@@ -598,7 +583,7 @@ export class MemberTimelineService {
 
 
 
-    const score = await this.attendanceScoring.scoreMember(memberId);
+    const score = await this.participationScoring.scoreMember(memberId);
 
 
 

@@ -15,7 +15,7 @@ export class ChurchWelcomeService {
     const in30 = new Date(now);
     in30.setDate(in30.getDate() + 30);
 
-    const [branding, verse, services, events, broadcasts, live] = await Promise.all([
+    const [branding, verse, services, broadcasts, live] = await Promise.all([
       this.branding.getPublicBranding(),
       this.prisma.devotion.findFirst({
         where: {
@@ -32,15 +32,6 @@ export class ChurchWelcomeService {
         orderBy: { startAt: 'asc' },
         take: 5,
         select: { id: true, title: true, startAt: true, endAt: true },
-      }),
-      this.prisma.event.findMany({
-        where: {
-          status: 'SCHEDULED',
-          startTime: { gte: now, lte: in30 },
-        },
-        orderBy: { startTime: 'asc' },
-        take: 5,
-        select: { id: true, title: true, startTime: true, location: true },
       }),
       this.prisma.churchBroadcast.findMany({
         orderBy: { createdAt: 'desc' },
@@ -64,7 +55,7 @@ export class ChurchWelcomeService {
       branding,
       verseOfDay: verse,
       upcomingServices: services,
-      upcomingEvents: events,
+      upcomingEvents: services,
       recentBroadcasts: broadcasts,
       liveBroadcast: live,
     };

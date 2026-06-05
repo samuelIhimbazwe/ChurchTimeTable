@@ -6,7 +6,11 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ServiceQuotaEngine } from './service-quota.engine';
-import { PROTOCOL_UNIT_CODE } from './protocol.constants';
+import { PROTOCOL_TEAM_SIZING, PROTOCOL_UNIT_CODE } from './protocol.constants';
+import {
+  mapMembersToSingingChoirs,
+  resolveSingingChoirIds,
+} from './protocol-singing-choirs.util';
 
 export type ProtocolMemberRecommendation = {
   memberId: string;
@@ -15,7 +19,7 @@ export type ProtocolMemberRecommendation = {
   quotaStatus: 'AVAILABLE' | 'LOW_PRIORITY';
   officialServicesMonth: number;
   score: number;
-  choirUnitCode?: string;
+  singingChoirId?: string;
 };
 
 @Injectable()
@@ -34,21 +38,7 @@ export class ProtocolAssignmentEngine {
     const settings = await this.quota.getSettings();
     const occurrence = await this.prisma.operationOccurrence.findUniqueOrThrow({
       where: { id: params.occurrenceId },
-      include: {
-        template: true,
-        assignments: {
-          include: {
-            operationalUnit: {
-              include: {
-                memberships: {
-                  where: { status: 'ACTIVE' },
-                  include: { member: true },
-                },
-              },
-            },
-          },
-        },
-      },
+      include: { template: true },
     });
 
     const protocolUnit = await this.prisma.operationalUnit.findFirst({
@@ -69,29 +59,26 @@ export class ProtocolAssignmentEngine {
       .map((m) => m.member)
       .filter((m) => m.status === MemberStatus.ACTIVE);
 
-    const mainChoirMemberIds = new Set<string>();
-    for (const assignment of occurrence.assignments) {
-      if (
-        assignment.assignmentType === 'MAIN_CHOIR' &&
-        assignment.operationalUnit.code === 'MAIN_CHOIR'
-      ) {
-        for (const m of assignment.operationalUnit.memberships) {
-          if (m.member.status === MemberStatus.ACTIVE) {
-            mainChoirMemberIds.add(m.memberId);
-          }
-        }
-      }
-    }
+    const singingChoirIds = await resolveSingingChoirIds(
+      this.prisma,
+      params.occurrenceId,
+    );
+    const memberChoirMap = await mapMembersToSingingChoirs(
+      this.prisma,
+      protocolMembers.map((m) => m.id),
+      singingChoirIds,
+    );
 
     const scored: ProtocolMemberRecommendation[] = [];
 
     for (const member of protocolMembers) {
       const quota = await this.quota.quotaStatus(member.id, occurrence.startAt);
-      const inMainChoir = mainChoirMemberIds.has(member.id);
+      const affiliated = memberChoirMap.get(member.id) ?? [];
+      const primaryChoirId = affiliated[0];
       let score = 100 - quota.officialCount * 20;
 
       if (params.mode === 'SUNDAY') {
-        if (inMainChoir) {
+        if (primaryChoirId) {
           score += 50;
         } else {
           score += 10;
@@ -107,7 +94,7 @@ export class ProtocolAssignmentEngine {
         if (quota.status === 'LOW_PRIORITY') {
           score -= 60;
         }
-        score += inMainChoir ? 5 : 15;
+        score += primaryChoirId ? 5 : 15;
       }
 
       scored.push({
@@ -117,22 +104,82 @@ export class ProtocolAssignmentEngine {
         quotaStatus: quota.status,
         officialServicesMonth: quota.officialCount,
         score,
-        choirUnitCode: inMainChoir ? 'MAIN_CHOIR' : undefined,
+        singingChoirId: primaryChoirId,
       });
     }
 
     scored.sort((a, b) => b.score - a.score);
 
     if (params.mode === 'SUNDAY') {
-      const choir = scored.filter((s) => s.choirUnitCode === 'MAIN_CHOIR');
-      const nonChoir = scored.filter((s) => !s.choirUnitCode);
-      const limit = params.nonChoirLimit ?? settings.maxNonChoirMembers;
-      return [...choir, ...nonChoir.slice(0, limit)];
+      const nonChoirLimit = params.nonChoirLimit ?? settings.maxNonChoirMembers;
+      return this.composeSundayTeam(scored, singingChoirIds, nonChoirLimit);
     }
 
     const limit =
       params.teamSize ?? Math.max(6, Math.ceil(protocolMembers.length / 3));
     return scored.slice(0, limit);
+  }
+
+  private composeSundayTeam(
+    scored: ProtocolMemberRecommendation[],
+    singingChoirIds: string[],
+    nonChoirLimit: number,
+  ): ProtocolMemberRecommendation[] {
+    const selected: ProtocolMemberRecommendation[] = [];
+    const used = new Set<string>();
+
+    const takeFrom = (pool: ProtocolMemberRecommendation[], max: number) => {
+      const picks: ProtocolMemberRecommendation[] = [];
+      for (const row of pool) {
+        if (used.has(row.memberId)) continue;
+        if (picks.length >= max) break;
+        picks.push(row);
+        used.add(row.memberId);
+      }
+      return picks;
+    };
+
+    const byChoir = new Map<string, ProtocolMemberRecommendation[]>();
+    for (const choirId of singingChoirIds) {
+      byChoir.set(
+        choirId,
+        scored.filter((s) => s.singingChoirId === choirId),
+      );
+    }
+    const nonChoirPool = scored.filter((s) => !s.singingChoirId);
+
+    if (singingChoirIds.length === 1) {
+      const choirId = singingChoirIds[0];
+      selected.push(
+        ...takeFrom(
+          byChoir.get(choirId) ?? [],
+          PROTOCOL_TEAM_SIZING.ONE_SINGING_CHOIR_MAX,
+        ),
+      );
+      selected.push(...takeFrom(nonChoirPool, nonChoirLimit));
+    } else if (singingChoirIds.length >= 2) {
+      for (const choirId of singingChoirIds.slice(0, 2)) {
+        selected.push(
+          ...takeFrom(
+            byChoir.get(choirId) ?? [],
+            PROTOCOL_TEAM_SIZING.TWO_SINGING_CHOIRS_EACH_MAX,
+          ),
+        );
+      }
+      selected.push(...takeFrom(nonChoirPool, nonChoirLimit));
+    } else {
+      selected.push(...takeFrom(scored, PROTOCOL_TEAM_SIZING.TEAM_SIZE_MAX));
+    }
+
+    if (selected.length < PROTOCOL_TEAM_SIZING.TEAM_SIZE_MIN) {
+      const filler = takeFrom(
+        scored,
+        PROTOCOL_TEAM_SIZING.TEAM_SIZE_MIN - selected.length,
+      );
+      selected.push(...filler);
+    }
+
+    return selected.slice(0, PROTOCOL_TEAM_SIZING.TEAM_SIZE_MAX);
   }
 
   /** Low-participation mode for special events and non-Sunday services */
@@ -177,7 +224,12 @@ export class ProtocolAssignmentEngine {
     }
 
     scored.sort((a, b) => b.score - a.score);
-    const limit = params.teamSize ?? Math.max(6, Math.ceil(scored.length / 3));
+    const limit =
+      params.teamSize ??
+      Math.min(
+        PROTOCOL_TEAM_SIZING.TEAM_SIZE_MAX,
+        Math.max(PROTOCOL_TEAM_SIZING.TEAM_SIZE_MIN, Math.ceil(scored.length / 3)),
+      );
     return scored.slice(0, limit);
   }
 }

@@ -5,6 +5,7 @@ import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
 import { ResponseInterceptor } from '../src/common/interceptors/response.interceptor';
+import { randomUUID } from 'crypto';
 
 describe('Sync API (e2e)', () => {
   let app: INestApplication<App>;
@@ -36,20 +37,32 @@ describe('Sync API (e2e)', () => {
 
   afterAll(() => app.close());
 
-  it('POST /sync/batch applies attendance', async () => {
-    const eventRes = await request(app.getHttpServer())
-      .post('/api/v1/events')
+  it('POST /sync/batch applies discipline case', async () => {
+    const entityId = randomUUID();
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/sync/batch')
       .set('Authorization', `Bearer ${token}`)
       .send({
-        title: 'Sync Test Event',
-        type: 'CHOIR_SERVICE',
-        startTime: new Date(Date.now() + 86400000).toISOString(),
-        endTime: new Date(Date.now() + 90000000).toISOString(),
-        ministryScope: 'CHOIR',
-      });
+        items: [
+          {
+            entity: 'DisciplineCase',
+            entityId,
+            clientUpdatedAt: new Date().toISOString(),
+            payload: {
+              memberId,
+              ministry: 'CHOIR',
+              title: 'Sync test case',
+              description: 'Created via sync batch e2e',
+            },
+          },
+        ],
+      })
+      .expect(201);
 
-    const eventId = eventRes.body.data.id;
+    expect(res.body.data.results[0].status).toBe('applied');
+  });
 
+  it('POST /sync/batch rejects legacy attendance entity', async () => {
     const res = await request(app.getHttpServer())
       .post('/api/v1/sync/batch')
       .set('Authorization', `Bearer ${token}`)
@@ -57,10 +70,10 @@ describe('Sync API (e2e)', () => {
         items: [
           {
             entity: 'Attendance',
-            entityId: `${eventId}_${memberId}`,
+            entityId: randomUUID(),
             clientUpdatedAt: new Date().toISOString(),
             payload: {
-              eventId,
+              eventId: randomUUID(),
               memberId,
               physicalStatus: 'PRESENT',
             },
@@ -69,6 +82,6 @@ describe('Sync API (e2e)', () => {
       })
       .expect(201);
 
-    expect(res.body.data.results[0].status).toBe('applied');
+    expect(res.body.data.results[0].status).toBe('rejected');
   });
 });

@@ -1,4 +1,5 @@
-import { AttendanceOperationalStatus, ContributionStatus } from '@prisma/client';
+import { ContributionStatus } from '@prisma/client';
+import { ParticipationOperationalStatus } from '../common/participation/participation.constants';
 import {
   computeContributionScore,
   computeHealthScore,
@@ -42,11 +43,10 @@ describe('FamilyMetricsService helpers', () => {
 describe('FamilyMetricsService', () => {
   const prisma = {
     member: { findMany: jest.fn() },
-    attendance: { findMany: jest.fn() },
     contributionRecord: { findMany: jest.fn() },
     memberDues: { findMany: jest.fn() },
     financeTransaction: { findMany: jest.fn() },
-    eventAssignment: { findMany: jest.fn() },
+    operationAssignment: { findMany: jest.fn() },
     choirCommitteeMember: { findMany: jest.fn() },
     protocolCommitteeMember: { findMany: jest.fn() },
     protocolServiceTeamMember: { findMany: jest.fn() },
@@ -59,8 +59,24 @@ describe('FamilyMetricsService', () => {
     ensureFamilyInScope: jest.fn(),
     buildScopeWhere: jest.fn(),
   };
-  const attendanceScoring = {
+  const participationScoring = {
     scoreRecords: jest.fn().mockReturnValue({ percentage: 85 }),
+  };
+  const participationRecords = {
+    fetchRecords: jest.fn().mockResolvedValue([
+      {
+        memberId: 'member-1',
+        operationalStatus: 'ATTENDED' as ParticipationOperationalStatus,
+        voluntaryExtra: false,
+        recordedAt: new Date(),
+      },
+      {
+        memberId: 'member-1',
+        operationalStatus: 'UNEXCUSED_ABSENCE' as ParticipationOperationalStatus,
+        voluntaryExtra: false,
+        recordedAt: new Date(),
+      },
+    ]),
   };
   const visibility = {
     filterFamilyMetrics: jest.fn((payload) => payload),
@@ -69,25 +85,15 @@ describe('FamilyMetricsService', () => {
   const service = new FamilyMetricsService(
     prisma as never,
     familiesService as never,
-    attendanceScoring as never,
+    participationScoring as never,
+    participationRecords as never,
     visibility as never,
   );
 
   beforeEach(() => {
     jest.clearAllMocks();
     prisma.member.findMany.mockResolvedValue([{ id: 'member-1' }]);
-    prisma.attendance.findMany.mockResolvedValue([
-      {
-        memberId: 'member-1',
-        operationalStatus: AttendanceOperationalStatus.ATTENDED,
-        voluntaryExtra: false,
-      },
-      {
-        memberId: 'member-1',
-        operationalStatus: AttendanceOperationalStatus.UNEXCUSED_ABSENCE,
-        voluntaryExtra: false,
-      },
-    ]);
+    prisma.operationAssignment.findMany.mockResolvedValue([{ memberId: 'member-1' }]);
     prisma.contributionRecord.findMany.mockResolvedValue([
       {
         memberId: 'member-1',
@@ -102,7 +108,6 @@ describe('FamilyMetricsService', () => {
     ]);
     prisma.memberDues.findMany.mockResolvedValue([]);
     prisma.financeTransaction.findMany.mockResolvedValue([]);
-    prisma.eventAssignment.findMany.mockResolvedValue([{ memberId: 'member-1' }]);
     prisma.choirCommitteeMember.findMany.mockResolvedValue([]);
     prisma.protocolCommitteeMember.findMany.mockResolvedValue([]);
     prisma.protocolServiceTeamMember.findMany.mockResolvedValue([]);
@@ -119,12 +124,12 @@ describe('FamilyMetricsService', () => {
         attendanceRecords: [
           {
             memberId: 'member-1',
-            operationalStatus: AttendanceOperationalStatus.ATTENDED,
+            operationalStatus: 'ATTENDED' as ParticipationOperationalStatus,
             voluntaryExtra: false,
           },
           {
             memberId: 'member-1',
-            operationalStatus: AttendanceOperationalStatus.UNEXCUSED_ABSENCE,
+            operationalStatus: 'UNEXCUSED_ABSENCE' as ParticipationOperationalStatus,
             voluntaryExtra: false,
           },
         ],

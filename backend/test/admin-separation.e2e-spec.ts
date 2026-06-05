@@ -141,7 +141,7 @@ describe('Admin permission separation (e2e)', () => {
       .expect(403);
 
     await request(app.getHttpServer())
-      .get('/api/v1/events')
+      .get('/api/v1/operations/occurrences')
       .set('Authorization', `Bearer ${churchAdminToken}`)
       .expect(403);
 

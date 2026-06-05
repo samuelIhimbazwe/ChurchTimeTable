@@ -24,13 +24,13 @@ export class SystemController {
     return this.prisma.$transaction([
       this.prisma.user.count(),
       this.prisma.member.count(),
-      this.prisma.event.count(),
+      this.prisma.operationOccurrence.count(),
       this.prisma.auditLog.count(),
       this.prisma.syncConflict.count(),
-    ]).then(([users, members, events, auditLogs, syncConflicts]) => ({
+    ]).then(([users, members, operationOccurrences, auditLogs, syncConflicts]) => ({
       users,
       members,
-      events,
+      operationOccurrences,
       auditLogs,
       syncConflicts,
     }));

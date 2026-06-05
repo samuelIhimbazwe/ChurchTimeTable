@@ -323,7 +323,10 @@ async function main() {
 
   for (const choir of await prisma.choir.findMany({ where: { isActive: true } })) {
     const isChildren = choir.code.includes('CHILDREN');
-    const isFifth = choir.code.includes('FIFTH') || choir.code.includes('5TH');
+    const isFifth =
+      choir.code.includes('FIFTH') ||
+      choir.code.includes('5TH') ||
+      choir.code === 'BEULAH';
     await prisma.choirServiceEligibility.upsert({
       where: { choirId: choir.id },
       create: {

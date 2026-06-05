@@ -49,7 +49,7 @@ export class DataQualityService {
       select: { id: true, name: true, code: true },
     });
 
-    const orphanAssignments = await this.prisma.eventAssignment.count({
+    const orphanAssignments = await this.prisma.operationAssignment.count({
       where: { member: { status: { not: 'ACTIVE' } } },
     });
 

@@ -38,10 +38,10 @@ export class DemoModeService {
       update: { demoModeEnabled: true },
     });
 
-    const [members, choirs, events, protocolTeams] = await Promise.all([
+    const [members, choirs, occurrences, protocolTeams] = await Promise.all([
       this.prisma.member.count(),
       this.prisma.choir.count({ where: { isActive: true } }),
-      this.prisma.event.count(),
+      this.prisma.operationOccurrence.count(),
       this.prisma.protocolServiceTeam.count(),
     ]);
 
@@ -50,7 +50,7 @@ export class DemoModeService {
       generated: {
         members,
         choirs,
-        events,
+        events: occurrences,
         protocolTeams,
       },
       message:

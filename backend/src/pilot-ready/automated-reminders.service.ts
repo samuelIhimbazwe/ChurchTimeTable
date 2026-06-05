@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
-  EventStatus,
-  EventType,
+  ChoirActivityType,
   NotificationRuleTrigger,
   NotificationType,
+  OperationOccurrenceStatus,
   ReminderJobStatus,
 } from '@prisma/client';
 import type { Prisma } from '@prisma/client';
@@ -71,11 +71,10 @@ export class AutomatedRemindersService {
     const windowEnd = new Date(now.getTime() + REHEARSAL_WINDOW_HOURS.max * 60 * 60 * 1000);
 
     try {
-      const events = await this.prisma.event.findMany({
+      const activities = await this.prisma.choirActivity.findMany({
         where: {
-          type: EventType.REHEARSAL,
-          status: EventStatus.SCHEDULED,
-          startTime: { gte: windowStart, lte: windowEnd },
+          activityType: ChoirActivityType.REHEARSAL,
+          startAt: { gte: windowStart, lte: windowEnd },
         },
         include: {
           choir: { select: { id: true, name: true } },
@@ -83,20 +82,19 @@ export class AutomatedRemindersService {
       });
 
       let recipientCount = 0;
-      for (const event of events) {
-        const choirId = event.choirId;
-        if (!choirId) continue;
+      for (const activity of activities) {
+        const choirId = activity.choirId;
         const memberships = await this.prisma.choirMembership.findMany({
           where: { choirId, isActive: true },
           select: { userId: true },
         });
-        const date = event.startTime.toISOString().slice(0, 10);
-        const time = event.startTime.toISOString().slice(11, 16);
-        const location = event.location ?? 'TBD';
-        const choirName = event.choir?.name ?? 'Choir';
+        const date = activity.startAt.toISOString().slice(0, 10);
+        const time = activity.startAt.toISOString().slice(11, 16);
+        const location = activity.location ?? 'TBD';
+        const choirName = activity.choir?.name ?? 'Choir';
 
         for (const m of memberships) {
-          const dedupeKey = `rehearsal-tomorrow:${event.id}:${m.userId}`;
+          const dedupeKey = `rehearsal-tomorrow:${activity.id}:${m.userId}`;
           const title = 'Rehearsal tomorrow';
           const body = `${choirName} — ${date} ${time} at ${location}`;
           const sent = await this.safeDeliver({
@@ -109,13 +107,13 @@ export class AutomatedRemindersService {
             choirId,
             data: {
               kind: 'rehearsal_tomorrow',
-              eventId: event.id,
+              choirActivityId: activity.id,
               date,
               time,
               location,
               choir: choirName,
             },
-            metadata: { eventId: event.id, choirId },
+            metadata: { choirActivityId: activity.id, choirId },
           });
           if (sent) recipientCount += 1;
         }
@@ -127,7 +125,7 @@ export class AutomatedRemindersService {
         status: 'SUCCESS',
         recipientCount,
         nextRunAt,
-        metadata: { eventsProcessed: events.length },
+        metadata: { activitiesProcessed: activities.length },
       });
       return 'SUCCESS';
     } catch (err) {
@@ -181,35 +179,34 @@ export class AutomatedRemindersService {
         const targetEnd = new Date(targetStart);
         targetEnd.setHours(23, 59, 59, 999);
 
-        const events = await this.prisma.event.findMany({
+        const occurrences = await this.prisma.operationOccurrence.findMany({
           where: {
-            status: EventStatus.SCHEDULED,
-            startTime: { gte: targetStart, lte: targetEnd },
+            status: {
+              in: [OperationOccurrenceStatus.PUBLISHED, OperationOccurrenceStatus.APPROVED],
+            },
+            startAt: { gte: targetStart, lte: targetEnd },
           },
           take: this.isE2e() ? 25 : undefined,
           include: {
-            choir: { select: { name: true } },
             assignments: {
+              where: { memberId: { not: null } },
               include: { member: { select: { userId: true } } },
             },
           },
         });
 
-        for (const event of events) {
-          const date = event.startTime.toISOString().slice(0, 10);
-          const time = event.startTime.toISOString().slice(11, 16);
-          const location = event.location ?? 'TBD';
-          const choirName = event.choir?.name;
+        for (const occurrence of occurrences) {
+          const date = occurrence.startAt.toISOString().slice(0, 10);
+          const time = occurrence.startAt.toISOString().slice(11, 16);
 
-          for (const assignment of event.assignments) {
-            const userId = assignment.member.userId;
-            const dedupeKey = `event-reminder:${event.id}:${userId}:${days}d`;
+          for (const assignment of occurrence.assignments) {
+            const userId = assignment.member?.userId;
+            if (!userId) continue;
+            const dedupeKey = `event-reminder:${occurrence.id}:${userId}:${days}d`;
             const label =
               days === 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`;
             const title = `Event reminder (${label})`;
-            const body = `${event.title} — ${date} ${time} at ${location}${
-              choirName ? ` (${choirName})` : ''
-            }`;
+            const body = `${occurrence.title} — ${date} ${time}`;
 
             const sent = await this.safeDeliver({
               recipientUserId: userId,
@@ -218,16 +215,14 @@ export class AutomatedRemindersService {
               title,
               body,
               dedupeKey,
-              choirId: event.choirId ?? undefined,
               data: {
                 kind: 'event_reminder',
-                eventId: event.id,
+                occurrenceId: occurrence.id,
                 daysBefore: days,
                 date,
                 time,
-                location,
               },
-              metadata: { eventId: event.id, daysBefore: days },
+              metadata: { occurrenceId: occurrence.id, daysBefore: days },
             });
             if (sent) recipientCount += 1;
           }

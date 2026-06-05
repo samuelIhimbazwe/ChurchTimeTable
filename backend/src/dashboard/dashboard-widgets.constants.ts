@@ -379,13 +379,13 @@ export const LEADER_WIDGETS: DashboardWidgetDefinition[] = [
 
   {
 
-    id: 'upcomingEvents',
+    id: 'upcomingOperations',
 
     category: 'operations',
 
     priority: 40,
 
-    permissions: [PERMISSIONS.EVENT_READ, PERMISSIONS.EVENT_WRITE],
+    permissions: [PERMISSIONS.OPERATIONS_VIEW, PERMISSIONS.OPERATIONS_MANAGE],
 
     anyOf: true,
 
@@ -413,13 +413,13 @@ export const LEADER_WIDGETS: DashboardWidgetDefinition[] = [
 
   {
 
-    id: 'replacementMix',
+    id: 'protocolReplacementMix',
 
     category: 'operations',
 
     priority: 55,
 
-    permissions: [PERMISSIONS.SWAP_MANAGE, PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE],
+    permissions: [PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE],
 
     anyOf: true,
 
@@ -469,7 +469,7 @@ export const LEADER_WIDGETS: DashboardWidgetDefinition[] = [
 
     priority: 70,
 
-    permissions: [PERMISSIONS.EVENT_WRITE],
+    permissions: [PERMISSIONS.OPERATIONS_MANAGE],
 
   },
 
@@ -487,7 +487,7 @@ export const LEADER_WIDGETS: DashboardWidgetDefinition[] = [
 
       PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE,
 
-      PERMISSIONS.EVENT_WRITE,
+      PERMISSIONS.OPERATIONS_MANAGE,
 
     ],
 
@@ -739,7 +739,7 @@ export function resolvePermissionFlags(
 
     teamHead: hasProtocolTeamHeadAuthority(permissions),
 
-    replacements: hasEffectivePermission(permissions, PERMISSIONS.SWAP_MANAGE),
+    replacements: hasEffectivePermission(permissions, PERMISSIONS.PROTOCOL_VIEW),
 
     attendanceTools:
 

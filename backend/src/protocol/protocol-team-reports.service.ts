@@ -36,10 +36,11 @@ export class ProtocolTeamReportsService {
 
     const team = await this.prisma.protocolOccurrenceTeam.findUniqueOrThrow({
       where: { id: teamId },
-      include: { teamLeader: true },
+      include: { teamLeaders: { orderBy: { assignedAt: 'asc' }, take: 1 } },
     });
 
-    if (!team.teamLeader) {
+    const primaryLeader = team.teamLeaders[0];
+    if (!primaryLeader) {
       throw new BadRequestException('Team has no assigned leader');
     }
 
@@ -47,7 +48,7 @@ export class ProtocolTeamReportsService {
       where: { teamId },
       create: {
         teamId,
-        leaderId: team.teamLeader.protocolTeamLeaderId,
+        leaderId: primaryLeader.protocolTeamLeaderId,
         summary: data.summary,
         issues: data.issues,
         recommendations: data.recommendations,

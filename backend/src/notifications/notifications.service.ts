@@ -2,19 +2,11 @@ import { Injectable } from '@nestjs/common';
 
 import {
 
-  Attendance,
-
   DisciplineCase,
-
-  EventAssignment,
 
   NotificationType,
 
   Prisma,
-
-  Swap,
-
-  Replacement,
 
 } from '@prisma/client';
 
@@ -127,295 +119,83 @@ export class NotificationsService {
 
 
   async notifyMemberAssignment(
-
-    assignment: EventAssignment & {
-
-      event?: { title: string };
-
+    assignment: {
+      id: string;
+      memberId: string;
+      occurrenceId: string;
+      occurrence?: { title: string };
     },
-
   ) {
-
     const member = await this.prisma.member.findUnique({
-
       where: { id: assignment.memberId },
-
     });
-
     if (!member) return;
 
-
-
-    const event = assignment.event ??
-
-      (await this.prisma.event.findUnique({
-
-        where: { id: assignment.eventId },
-
+    const occurrence =
+      assignment.occurrence ??
+      (await this.prisma.operationOccurrence.findUnique({
+        where: { id: assignment.occurrenceId },
         select: { title: true },
-
       }));
 
-
-
     const locale = await this.userLocale(member.userId);
-
     const msg = this.i18n.notification(
-
       locale,
-
       'NOTIFICATION_EVENT_ASSIGNMENT_TITLE',
-
       'NOTIFICATION_EVENT_ASSIGNMENT_BODY',
-
-      { eventName: event?.title ?? '' },
-
+      { eventName: occurrence?.title ?? '' },
     );
-
     await this.create(
-
       member.userId,
-
       NotificationType.EVENT_ASSIGNMENT,
-
       msg.title,
-
       msg.body,
-
-      { eventId: assignment.eventId, assignmentId: assignment.id },
-
+      { occurrenceId: assignment.occurrenceId, assignmentId: assignment.id },
     );
-
   }
 
-
-
-  async notifySwap(swap: Swap, action: string) {
-
-    const [target, requester, event] = await Promise.all([
-
-      this.prisma.member.findUnique({ where: { id: swap.targetId } }),
-
-      this.prisma.member.findUnique({ where: { id: swap.requesterId } }),
-
-      this.prisma.event.findUnique({
-
-        where: { id: swap.eventId },
-
-        select: { title: true },
-
-      }),
-
-    ]);
-
-
-
-    const eventName = event?.title ?? '';
-
-
-
-    if (target && requester) {
-
-      const requesterName = this.memberDisplayName(requester);
-
-      const targetName = this.memberDisplayName(target);
-
-
-
-      if (action === 'requested') {
-
-        const locale = await this.userLocale(target.userId);
-
-        const msg = this.i18n.notification(
-
-          locale,
-
-          'NOTIFICATION_SWAP_TITLE',
-
-          'NOTIFICATION_SWAP_REQUESTED_BODY',
-
-          { memberName: requesterName },
-
-        );
-
-        await this.create(
-
-          target.userId,
-
-          NotificationType.SWAP,
-
-          msg.title,
-
-          msg.body,
-
-          { swapId: swap.id, action },
-
-        );
-
-      }
-
-
-
-      if (action === 'accepted' || action === 'rejected') {
-
-        const locale = await this.userLocale(requester.userId);
-
-        const bodyKey =
-
-          action === 'accepted'
-
-            ? 'NOTIFICATION_SWAP_ACCEPTED_BODY'
-
-            : 'NOTIFICATION_SWAP_REJECTED_BODY';
-
-        const msg = this.i18n.notification(
-
-          locale,
-
-          'NOTIFICATION_SWAP_TITLE',
-
-          bodyKey,
-
-          { memberName: targetName },
-
-        );
-
-        await this.create(
-
-          requester.userId,
-
-          NotificationType.SWAP,
-
-          msg.title,
-
-          msg.body,
-
-          { swapId: swap.id, action },
-
-        );
-
-      }
-
-
-
-      if (action === 'approved') {
-
-        const locale = await this.userLocale(requester.userId);
-
-        const msg = this.i18n.notification(
-
-          locale,
-
-          'NOTIFICATION_SWAP_TITLE',
-
-          'NOTIFICATION_SWAP_APPROVED_BODY',
-
-          { memberName: targetName },
-
-        );
-
-        await this.create(
-
-          requester.userId,
-
-          NotificationType.SWAP,
-
-          msg.title,
-
-          msg.body,
-
-          { swapId: swap.id, action },
-
-        );
-
-      }
-
-    }
-
-
-
-    if (action === 'finalized' && requester) {
-
-      const locale = await this.userLocale(requester.userId);
-
-      const msg = this.i18n.notification(
-
-        locale,
-
-        'NOTIFICATION_SWAP_TITLE',
-
-        'NOTIFICATION_SWAP_FINALIZED_BODY',
-
-        { eventName },
-
-      );
-
-      await this.create(
-
-        requester.userId,
-
-        NotificationType.SWAP,
-
-        msg.title,
-
-        msg.body,
-
-        { swapId: swap.id, action },
-
-      );
-
-    }
-
+  /** @deprecated Legacy swap notifications — swaps removed; no-op for compatibility */
+  async notifySwap(
+    _swap: { id: string; eventId: string; targetId: string; requesterId: string },
+    _action: string,
+  ) {
+    return;
   }
 
-  async notifySwapPendingLeader(swap: Swap) {
-    const recipients = await this.protocolOversightUserIds('TEAM_HEAD');
-    for (const userId of recipients) {
-      const locale = await this.userLocale(userId);
-      const event = await this.prisma.event.findUnique({
-        where: { id: swap.eventId },
-        select: { title: true },
-      });
-      const msg = this.i18n.notification(
-        locale,
-        'NOTIFICATION_SWAP_PENDING_LEADER_TITLE',
-        'NOTIFICATION_SWAP_PENDING_LEADER_BODY',
-        { eventName: event?.title ?? '' },
-      );
-      await this.create(userId, NotificationType.SWAP, msg.title, msg.body, {
-        swapId: swap.id,
-        eventId: swap.eventId,
-      });
-    }
+  /** @deprecated Legacy swap notifications — swaps removed; no-op for compatibility */
+  async notifySwapPendingLeader(
+    _swap: { id: string; eventId: string },
+  ) {
+    return;
   }
 
   async notifyReplacement(
-    record: Replacement & {
-      absentMember?: { firstName: string; lastName: string; userId: string };
-      coverMember?: { firstName: string; lastName: string; userId: string } | null;
-      event?: { title: string };
+    record: {
+      id: string;
+      originalMemberId: string;
+      replacementMemberId: string;
+      originalMember?: { firstName: string; lastName: string; userId: string };
+      replacementMember?: { firstName: string; lastName: string; userId: string };
+      occurrenceTitle?: string;
     },
     action: string,
   ) {
-    const eventName =
-      record.event?.title ??
-      (
-        await this.prisma.event.findUnique({
-          where: { id: record.eventId },
-          select: { title: true },
-        })
-      )?.title ??
-      '';
+    const occurrenceName = record.occurrenceTitle ?? '';
 
     const absent =
-      record.absentMember ??
-      (await this.prisma.member.findUnique({ where: { id: record.absentMemberId } }));
+      record.originalMember ??
+      (await this.prisma.member.findUnique({
+        where: { id: record.originalMemberId },
+      }));
     if (!absent) return;
 
     const absentName = this.memberDisplayName(absent);
-    const coverName = record.coverMember
-      ? this.memberDisplayName(record.coverMember)
-      : '';
+    const cover =
+      record.replacementMember ??
+      (await this.prisma.member.findUnique({
+        where: { id: record.replacementMemberId },
+      }));
+    const coverName = cover ? this.memberDisplayName(cover) : '';
 
     const bodyKeyByAction: Record<string, string> = {
       requested: 'NOTIFICATION_REPLACEMENT_REQUESTED_BODY',
@@ -428,11 +208,19 @@ export class NotificationsService {
     if (!bodyKey) return;
 
     const recipientUserIds = new Set<string>();
-    if (action === 'requested' || action === 'rejected' || action === 'approved' || action === 'finalized') {
+    if (
+      action === 'requested' ||
+      action === 'rejected' ||
+      action === 'approved' ||
+      action === 'finalized'
+    ) {
       recipientUserIds.add(absent.userId);
     }
-    if (record.coverMember?.userId && (action === 'cover_assigned' || action === 'approved' || action === 'finalized')) {
-      recipientUserIds.add(record.coverMember.userId);
+    if (
+      cover?.userId &&
+      (action === 'cover_assigned' || action === 'approved' || action === 'finalized')
+    ) {
+      recipientUserIds.add(cover.userId);
     }
     if (action === 'requested' || action === 'cover_assigned') {
       const leaders = await this.protocolOversightUserIds('TEAM_HEAD');
@@ -445,29 +233,21 @@ export class NotificationsService {
         locale,
         'NOTIFICATION_REPLACEMENT_TITLE',
         bodyKey,
-        { memberName: coverName || absentName, eventName },
+        { memberName: coverName || absentName, eventName: occurrenceName },
       );
       await this.create(userId, NotificationType.SWAP, msg.title, msg.body, {
         replacementId: record.id,
-        eventId: record.eventId,
         action,
       });
     }
   }
 
-  async notifyReplacementPendingLeader(
-    record: Replacement & { event?: { title: string } },
-  ) {
+  async notifyReplacementPendingLeader(record: {
+    id: string;
+    occurrenceTitle?: string;
+  }) {
     const recipients = await this.protocolOversightUserIds('TEAM_HEAD');
-    const eventName =
-      record.event?.title ??
-      (
-        await this.prisma.event.findUnique({
-          where: { id: record.eventId },
-          select: { title: true },
-        })
-      )?.title ??
-      '';
+    const eventName = record.occurrenceTitle ?? '';
     for (const userId of recipients) {
       const locale = await this.userLocale(userId);
       const msg = this.i18n.notification(
@@ -478,9 +258,43 @@ export class NotificationsService {
       );
       await this.create(userId, NotificationType.SWAP, msg.title, msg.body, {
         replacementId: record.id,
-        eventId: record.eventId,
       });
     }
+  }
+
+  async notifyReplacementApproved(requestId: string) {
+    const request = await this.prisma.protocolReplacementRequest.findUnique({
+      where: { id: requestId },
+      include: {
+        replacementMember: { select: { userId: true, firstName: true, lastName: true } },
+        teamMember: {
+          include: {
+            team: {
+              include: {
+                occurrence: { select: { title: true, startAt: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!request?.replacementMember.userId) return;
+
+    const occ = request.teamMember.team.occurrence;
+    const locale = await this.userLocale(request.replacementMember.userId);
+    const msg = this.i18n.notification(
+      locale,
+      'NOTIFICATION_REPLACEMENT_TITLE',
+      'NOTIFICATION_REPLACEMENT_APPROVED_BODY',
+      { memberName: this.memberDisplayName(request.replacementMember), eventName: occ.title },
+    );
+    await this.create(
+      request.replacementMember.userId,
+      NotificationType.SWAP,
+      msg.title,
+      msg.body,
+      { kind: 'protocol_replacement_approved', requestId },
+    );
   }
 
   async notifyCoverageEscalation(params: {
@@ -514,7 +328,7 @@ export class NotificationsService {
   }
 
   async notifyReadinessWarning(params: {
-    eventId: string;
+    occurrenceId: string;
     eventTitle: string;
     status: string;
   }) {
@@ -528,36 +342,44 @@ export class NotificationsService {
         { eventName: params.eventTitle, status: params.status },
       );
       await this.create(userId, NotificationType.SWAP, msg.title, msg.body, {
-        eventId: params.eventId,
+        occurrenceId: params.occurrenceId,
         status: params.status,
       });
     }
   }
 
-
-
-  async notifyAttendanceAbsenceRisk(record: Attendance) {
+  async notifyAttendanceAbsenceRisk(record: {
+    id: string;
+    memberId: string;
+    occurrenceId?: string;
+    occurrenceTitle?: string;
+  }) {
     const teamHeadUserId = await this.findProtocolTeamHeadUserId(record.memberId);
     if (!teamHeadUserId) return;
 
-    const [event] = await Promise.all([
-      this.prisma.event.findUnique({
-        where: { id: record.eventId },
-        select: { title: true },
-      }),
-    ]);
+    const occurrenceTitle =
+      record.occurrenceTitle ??
+      (
+        record.occurrenceId
+          ? await this.prisma.operationOccurrence.findUnique({
+              where: { id: record.occurrenceId },
+              select: { title: true },
+            })
+          : null
+      )?.title ??
+      '';
 
     const locale = await this.userLocale(teamHeadUserId);
     const msg = this.i18n.notification(
       locale,
       'NOTIFICATION_ATTENDANCE_ABSENCE_TITLE',
       'NOTIFICATION_ATTENDANCE_ABSENCE_BODY',
-      { eventName: event?.title ?? '' },
+      { eventName: occurrenceTitle },
     );
 
     await this.create(teamHeadUserId, NotificationType.ATTENDANCE, msg.title, msg.body, {
       attendanceId: record.id,
-      eventId: record.eventId,
+      occurrenceId: record.occurrenceId,
     });
   }
 
@@ -623,71 +445,56 @@ export class NotificationsService {
     return users.map((u) => u.id);
   }
 
-  async notifyAttendanceUpdate(record: Attendance) {
-
-    const [member, event] = await Promise.all([
-
+  async notifyAttendanceUpdate(record: {
+    id: string;
+    memberId: string;
+    occurrenceId?: string;
+    status?: string;
+  }) {
+    const [member, occurrence] = await Promise.all([
       this.prisma.member.findUnique({ where: { id: record.memberId } }),
-
-      this.prisma.event.findUnique({
-
-        where: { id: record.eventId },
-
-        select: { title: true },
-
-      }),
-
+      record.occurrenceId
+        ? this.prisma.operationOccurrence.findUnique({
+            where: { id: record.occurrenceId },
+            select: { title: true },
+          })
+        : Promise.resolve(null),
     ]);
-
     if (!member) return;
 
-
-
     const locale = await this.userLocale(member.userId);
-
     const msg = this.i18n.notification(
-
       locale,
-
       'NOTIFICATION_ATTENDANCE_TITLE',
-
       'NOTIFICATION_ATTENDANCE_BODY',
-
-      { eventName: event?.title ?? '' },
-
+      { eventName: occurrence?.title ?? '' },
     );
 
     await this.create(
-
       member.userId,
-
       NotificationType.ATTENDANCE,
-
       msg.title,
-
       msg.body,
-
       {
-
         attendanceId: record.id,
-
-        eventId: record.eventId,
-
-        status: record.physicalStatus,
-
+        occurrenceId: record.occurrenceId,
+        status: record.status,
       },
-
     );
-
   }
 
-  async notifyExcusedReview(record: Attendance, approved: boolean) {
-    const [member, event] = await Promise.all([
+  async notifyExcusedReview(
+    record: { id: string; memberId: string; occurrenceId?: string },
+    approved: boolean,
+  ) {
+    const [member, occurrence] = await Promise.all([
       this.prisma.member.findUnique({ where: { id: record.memberId } }),
-      this.prisma.event.findUnique({
-        where: { id: record.eventId },
-        select: { title: true },
-      }),
+      record.occurrenceId
+        ? this.prisma.operationOccurrence.findUnique({
+            where: { id: record.occurrenceId },
+            select: { title: true },
+          })
+        : Promise.resolve(null),
     ]);
     if (!member) return;
 
@@ -698,12 +505,12 @@ export class NotificationsService {
       approved
         ? 'NOTIFICATION_EXCUSED_APPROVED_BODY'
         : 'NOTIFICATION_EXCUSED_REJECTED_BODY',
-      { eventName: event?.title ?? '' },
+      { eventName: occurrence?.title ?? '' },
     );
 
     await this.create(member.userId, NotificationType.ATTENDANCE, msg.title, msg.body, {
       attendanceId: record.id,
-      eventId: record.eventId,
+      occurrenceId: record.occurrenceId,
       approved,
     });
   }

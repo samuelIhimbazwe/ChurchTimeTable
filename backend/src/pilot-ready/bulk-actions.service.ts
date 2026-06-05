@@ -7,13 +7,8 @@ import { PermissionsResolver } from '../auth/permissions.resolver';
 import { PERMISSIONS } from '../common/constants/roles';
 import { hasEffectivePermission } from '../common/governance/governance-permissions.util';
 import { ChoirContextService } from '../choirs/choir-context.service';
-import { AttendanceService } from '../attendance/attendance.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import {
-  AttendanceOperationalStatus,
-  NotificationType,
-  PhysicalStatus,
-} from '@prisma/client';
+import { ChoirAttendanceOutcome, NotificationType } from '@prisma/client';
 import { PILOT_READY_AUDIT } from './pilot-ready.constants';
 
 @Injectable()
@@ -23,7 +18,6 @@ export class BulkActionsService {
     private audit: AuditService,
     private permissions: PermissionsResolver,
     private choirContext: ChoirContextService,
-    private attendance: AttendanceService,
     private notifications: NotificationsService,
   ) {}
 
@@ -153,40 +147,37 @@ export class BulkActionsService {
     records: Array<{ memberId: string; eventId: string; mark: string }>,
   ) {
     await this.assertBulk(actorUserId);
-    const markMap: Record<
-      string,
-      { physicalStatus: PhysicalStatus; operationalStatus: AttendanceOperationalStatus }
-    > = {
-      ATTENDED: {
-        physicalStatus: PhysicalStatus.PRESENT,
-        operationalStatus: AttendanceOperationalStatus.ATTENDED,
-      },
-      LATE: {
-        physicalStatus: PhysicalStatus.LATE,
-        operationalStatus: AttendanceOperationalStatus.LATE,
-      },
-      EXCUSED_ABSENCE: {
-        physicalStatus: PhysicalStatus.ABSENT,
-        operationalStatus: AttendanceOperationalStatus.EXCUSED_ABSENCE,
-      },
-      UNEXCUSED_ABSENCE: {
-        physicalStatus: PhysicalStatus.ABSENT,
-        operationalStatus: AttendanceOperationalStatus.UNEXCUSED_ABSENCE,
-      },
+    const markMap: Record<string, ChoirAttendanceOutcome> = {
+      ATTENDED: ChoirAttendanceOutcome.PRESENT_FULL,
+      LATE: ChoirAttendanceOutcome.PRESENT_LATE,
+      EXCUSED_ABSENCE: ChoirAttendanceOutcome.ABSENT_EXCUSED,
+      UNEXCUSED_ABSENCE: ChoirAttendanceOutcome.ABSENT_UNEXCUSED,
     };
 
-    return this.attendance.bulkUpsert(
+    const saved = await Promise.all(
       records.map((r) => {
-        const mapped = markMap[r.mark] ?? markMap.ATTENDED;
-        return {
-          memberId: r.memberId,
-          eventId: r.eventId,
-          physicalStatus: mapped.physicalStatus,
-          operationalStatus: mapped.operationalStatus,
-        };
+        const outcome = markMap[r.mark] ?? ChoirAttendanceOutcome.PRESENT_FULL;
+        const activityId = r.eventId;
+        return this.prisma.choirAttendance.upsert({
+          where: {
+            activityId_memberId: { activityId, memberId: r.memberId },
+          },
+          create: {
+            activityId,
+            memberId: r.memberId,
+            outcome,
+            recordedByUserId: actorUserId,
+          },
+          update: {
+            outcome,
+            recordedByUserId: actorUserId,
+            recordedAt: new Date(),
+          },
+        });
       }),
-      actorUserId,
     );
+
+    return { count: saved.length, records: saved };
   }
 
   async protocolAttendance(

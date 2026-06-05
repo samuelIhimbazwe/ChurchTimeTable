@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import {
-  EventType,
+  ChoirActivityType,
   Prisma,
   RehearsalAttendanceStatus,
   RehearsalReadinessStatus,
@@ -77,6 +77,17 @@ export class RehearsalsService {
     return resolved;
   }
 
+  /** API param `eventId` maps to `ChoirActivity.id` (REHEARSAL). */
+  private async resolveRehearsalActivity(activityId: string) {
+    const activity = await this.prisma.choirActivity.findUnique({
+      where: { id: activityId },
+    });
+    if (!activity || activity.activityType !== ChoirActivityType.REHEARSAL) {
+      throw new NotFoundException('Rehearsal not found');
+    }
+    return activity;
+  }
+
   async listVoiceSections() {
     return this.prisma.voiceSection.findMany({
       where: { active: true },
@@ -86,36 +97,37 @@ export class RehearsalsService {
 
   async getPlan(userId: string, eventId: string) {
     await this.assertView(userId);
-    const event = await this.prisma.event.findUnique({ where: { id: eventId } });
-    if (!event || event.type !== EventType.REHEARSAL) {
-      throw new NotFoundException('Rehearsal event not found');
-    }
+    await this.resolveRehearsalActivity(eventId);
     return this.prisma.rehearsalPlan.findUnique({
-      where: { eventId },
+      where: { choirActivityId: eventId },
       include: {
         songs: { include: { song: true }, orderBy: { sortOrder: 'asc' } },
         sections: { include: { voiceSection: true } },
         leader: {
           select: { id: true, firstName: true, lastName: true, memberNumber: true },
         },
-        event: { select: { id: true, title: true, startTime: true, endTime: true, location: true } },
+        choirActivity: {
+          select: {
+            id: true,
+            title: true,
+            startAt: true,
+            endAt: true,
+            location: true,
+          },
+        },
       },
     });
   }
 
   async upsertPlan(userId: string, eventId: string, dto: UpsertRehearsalPlanDto) {
     await this.assertManage(userId);
-    const event = await this.prisma.event.findUnique({ where: { id: eventId } });
-    if (!event || event.type !== EventType.REHEARSAL) {
-      throw new ForbiddenException('Not a rehearsal event');
-    }
+    const activity = await this.resolveRehearsalActivity(eventId);
 
     const result = await this.prisma.$transaction(async (tx) => {
-      const existing = await tx.rehearsalPlan.findUnique({ where: { eventId } });
       const plan = await tx.rehearsalPlan.upsert({
-        where: { eventId },
+        where: { choirActivityId: eventId },
         create: {
-          eventId,
+          choirActivityId: eventId,
           leaderId: dto.leaderId,
           objectives: dto.objectives,
           notes: dto.notes,
@@ -171,10 +183,10 @@ export class RehearsalsService {
       action: 'REHEARSAL_PLAN_UPDATED',
       entity: 'RehearsalPlan',
       entityId: result.id,
-      newValue: { eventId, songCount: dto.songs?.length ?? 0 },
+      newValue: { choirActivityId: eventId, songCount: dto.songs?.length ?? 0 },
     });
 
-    void this.choirNotifications.notifyRehearsalPlanUpdated(eventId, event.title);
+    void this.choirNotifications.notifyRehearsalPlanUpdated(eventId, activity.title);
 
     return this.getPlan(userId, eventId);
   }
@@ -187,7 +199,7 @@ export class RehearsalsService {
         `${row.member.firstName} ${row.member.lastName}: ${row.status}`,
     );
     const buffer = await this.reports.exportPdf('Rehearsal Attendance Report', [
-      `Event: ${eventId}`,
+      `Activity: ${eventId}`,
       `Generated: ${new Date().toISOString()}`,
       ...lines,
     ]);
@@ -208,19 +220,16 @@ export class RehearsalsService {
     }>,
   ) {
     await this.assertManage(userId);
-    const event = await this.prisma.event.findUnique({ where: { id: eventId } });
-    if (!event || event.type !== EventType.REHEARSAL) {
-      throw new NotFoundException('Rehearsal event not found');
-    }
+    await this.resolveRehearsalActivity(eventId);
 
     const saved = await this.prisma.$transaction(
       rows.map((row) =>
         this.prisma.rehearsalAttendance.upsert({
           where: {
-            eventId_memberId: { eventId, memberId: row.memberId },
+            choirActivityId_memberId: { choirActivityId: eventId, memberId: row.memberId },
           },
           create: {
-            eventId,
+            choirActivityId: eventId,
             memberId: row.memberId,
             status: row.status,
             notes: row.notes,
@@ -239,7 +248,7 @@ export class RehearsalsService {
     await this.audit.log({
       userId,
       action: 'REHEARSAL_ATTENDANCE_RECORDED',
-      entity: 'Event',
+      entity: 'ChoirActivity',
       entityId: eventId,
       newValue: { count: saved.length },
     });
@@ -250,7 +259,7 @@ export class RehearsalsService {
   async getAttendance(userId: string, eventId: string) {
     await this.assertView(userId);
     return this.prisma.rehearsalAttendance.findMany({
-      where: { eventId },
+      where: { choirActivityId: eventId },
       include: {
         member: {
           select: {
@@ -296,13 +305,12 @@ export class RehearsalsService {
 
   async dashboard(userId: string) {
     await this.assertView(userId);
-    const upcoming = await this.prisma.event.findMany({
+    const upcoming = await this.prisma.choirActivity.findMany({
       where: {
-        type: EventType.REHEARSAL,
-        startTime: { gte: new Date() },
-        status: { in: ['SCHEDULED', 'IN_PROGRESS'] },
+        activityType: ChoirActivityType.REHEARSAL,
+        startAt: { gte: new Date() },
       },
-      orderBy: { startTime: 'asc' },
+      orderBy: { startAt: 'asc' },
       take: 10,
       include: {
         rehearsalPlan: {
@@ -314,10 +322,10 @@ export class RehearsalsService {
       },
     });
 
-    const enriched = upcoming.map((event) => ({
-      ...event,
-      readiness: this.computeReadiness(event.rehearsalPlan),
-      hasPlan: Boolean(event.rehearsalPlan),
+    const enriched = upcoming.map((activity) => ({
+      ...activity,
+      readiness: this.computeReadiness(activity.rehearsalPlan),
+      hasPlan: Boolean(activity.rehearsalPlan),
     }));
 
     const weakSections = await this.prisma.rehearsalPlanSection.findMany({
@@ -325,7 +333,10 @@ export class RehearsalsService {
         readinessStatus: RehearsalReadinessStatus.NEEDS_PRACTICE,
       },
       take: 10,
-      include: { voiceSection: true, plan: { include: { event: true } } },
+      include: {
+        voiceSection: true,
+        plan: { include: { choirActivity: true } },
+      },
     });
 
     const attendanceTrend = await this.prisma.rehearsalAttendance.groupBy({
@@ -347,7 +358,7 @@ export class RehearsalsService {
         ],
       },
       take: 10,
-      include: { song: true, plan: { include: { event: true } } },
+      include: { song: true, plan: { include: { choirActivity: true } } },
     });
 
     const absentCountsRaw = await this.prisma.rehearsalAttendance.groupBy({
@@ -390,7 +401,7 @@ export class RehearsalsService {
   async analytics(userId: string) {
     await this.assertView(userId);
     const plans = await this.prisma.rehearsalPlan.findMany({
-      include: { songs: true, sections: true, event: true },
+      include: { songs: true, sections: true, choirActivity: true },
       take: 50,
       orderBy: { updatedAt: 'desc' },
     });
@@ -425,7 +436,7 @@ export class RehearsalsService {
         voiceSection: true,
         plan: {
           include: {
-            event: { select: { id: true, title: true, startTime: true } },
+            choirActivity: { select: { id: true, title: true, startAt: true } },
             songs: { include: { song: { select: { id: true, title: true } } } },
           },
         },
@@ -461,15 +472,14 @@ export class RehearsalsService {
 
   async listAttendanceEvents(userId: string) {
     await this.assertView(userId);
-    return this.prisma.event.findMany({
-      where: { type: EventType.REHEARSAL },
-      orderBy: { startTime: 'desc' },
+    return this.prisma.choirActivity.findMany({
+      where: { activityType: ChoirActivityType.REHEARSAL },
+      orderBy: { startAt: 'desc' },
       take: 30,
       select: {
         id: true,
         title: true,
-        startTime: true,
-        status: true,
+        startAt: true,
       },
     });
   }
@@ -487,7 +497,7 @@ export class RehearsalsService {
           include: {
             songs: { include: { song: true } },
             sections: true,
-            event: true,
+            choirActivity: true,
           },
           take: 100,
           orderBy: { updatedAt: 'desc' },
@@ -511,8 +521,8 @@ export class RehearsalsService {
         : 0;
 
     const readinessTrends = plans.map((plan) => ({
-      eventId: plan.eventId,
-      title: plan.event?.title ?? plan.eventId,
+      eventId: plan.choirActivityId,
+      title: plan.choirActivity?.title ?? plan.choirActivityId,
       readiness: this.computeReadiness(plan).overall,
       updatedAt: plan.updatedAt,
     }));
@@ -553,17 +563,17 @@ export class RehearsalsService {
   async exportAttendanceCsv(userId: string, eventId?: string) {
     await this.assertView(userId);
     const rows = await this.prisma.rehearsalAttendance.findMany({
-      where: eventId ? { eventId } : undefined,
+      where: eventId ? { choirActivityId: eventId } : undefined,
       include: {
         member: { select: { firstName: true, lastName: true, memberNumber: true } },
-        event: { select: { title: true, startTime: true } },
+        choirActivity: { select: { title: true, startAt: true } },
       },
       orderBy: { recordedAt: 'desc' },
     });
-    const header = 'event,member,status,recordedAt';
+    const header = 'activity,member,status,recordedAt';
     const lines = rows.map((row) =>
       [
-        `"${row.event.title.replace(/"/g, '""')}"`,
+        `"${row.choirActivity.title.replace(/"/g, '""')}"`,
         `"${row.member.firstName} ${row.member.lastName}"`,
         row.status,
         row.recordedAt.toISOString(),

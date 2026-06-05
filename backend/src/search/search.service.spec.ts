@@ -24,8 +24,8 @@ describe('SearchService', () => {
   const prisma = {
     member: { findMany: jest.fn() },
     family: { findMany: jest.fn() },
-    event: { findMany: jest.fn() },
-    eventAssignment: { findMany: jest.fn() },
+    operationOccurrence: { findMany: jest.fn() },
+    operationAssignment: { findMany: jest.fn() },
     contributionRecord: { findMany: jest.fn() },
   };
   const operationalScope = {
@@ -66,10 +66,10 @@ describe('SearchService', () => {
       },
     ]);
     prisma.family.findMany.mockResolvedValue([]);
-    prisma.event.findMany.mockResolvedValue([
+    prisma.operationOccurrence.findMany.mockResolvedValue([
       { id: 'event-1', title: 'Sunday Choir Service' },
     ]);
-    prisma.eventAssignment.findMany.mockResolvedValue([]);
+    prisma.operationAssignment.findMany.mockResolvedValue([]);
     prisma.contributionRecord.findMany.mockResolvedValue([]);
   });
 
@@ -172,7 +172,7 @@ describe('SearchService', () => {
         lastName: `Member ${index}`,
       })),
     );
-    prisma.event.findMany.mockResolvedValue(
+    prisma.operationOccurrence.findMany.mockResolvedValue(
       Array.from({ length: 8 }, (_, index) => ({
         id: `event-${index}`,
         title: `Event ${index}`,

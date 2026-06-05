@@ -12,13 +12,7 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuditModule } from './audit/audit.module';
 import { AuthModule } from './auth/auth.module';
-import { EventsModule } from './events/events.module';
-import { AssignmentsModule } from './assignments/assignments.module';
-import { AttendanceModule } from './attendance/attendance.module';
 import { MembersModule } from './members/members.module';
-import { SwapsModule } from './swaps/swaps.module';
-import { ReplacementsModule } from './replacements/replacements.module';
-import { CoverageModule } from './coverage/coverage.module';
 import { DisciplineModule } from './discipline/discipline.module';
 import { FinanceModule } from './finance/finance.module';
 import { NotificationsModule } from './notifications/notifications.module';
@@ -26,7 +20,6 @@ import { SyncModule } from './sync/sync.module';
 import { ReportsModule } from './reports/reports.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { UsersModule } from './users/users.module';
-import { ChoirModule } from './choir/choir.module';
 import { SystemModule } from './system/system.module';
 import { AppScheduleModule } from './schedule/schedule.module';
 import { GovernanceModule } from './governance/governance.module';
@@ -62,16 +55,9 @@ import { ChoirContextMiddleware } from './common/middleware/choir-context.middle
     AuditModule,
     AuthModule,
     UsersModule,
-    EventsModule,
-    AssignmentsModule,
-    AttendanceModule,
     MembersModule,
-    SwapsModule,
-    ReplacementsModule,
-    CoverageModule,
     DisciplineModule,
     FinanceModule,
-    ChoirModule,
     GovernanceModule,
     FamiliesModule,
     SearchModule,

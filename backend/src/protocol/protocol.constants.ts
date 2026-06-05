@@ -38,3 +38,13 @@ export function resolveAssignmentMode(
   }
   return operationType === 'SPECIAL_EVENT' ? 'SPECIAL_EVENT' : 'TUESDAY';
 }
+
+/** Sunday protocol team composition (coordinator may override member picks). */
+export const PROTOCOL_TEAM_SIZING = {
+  TEAM_SIZE_MIN: 10,
+  TEAM_SIZE_MAX: 12,
+  ONE_SINGING_CHOIR_MIN: 6,
+  ONE_SINGING_CHOIR_MAX: 7,
+  TWO_SINGING_CHOIRS_EACH_MIN: 3,
+  TWO_SINGING_CHOIRS_EACH_MAX: 4,
+} as const;

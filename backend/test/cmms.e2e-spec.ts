@@ -49,21 +49,14 @@ describe('CMMS API (e2e)', () => {
     expect(res.body.data.email).toBe('admin@church.local');
   });
 
-  it('POST /events creates unified event', async () => {
+  it('GET /system/stats returns platform counts', async () => {
     const res = await request(app.getHttpServer())
-      .post('/api/v1/events')
+      .get('/api/v1/system/stats')
       .set('Authorization', `Bearer ${accessToken}`)
-      .send({
-        title: 'E2E Protocol Service',
-        type: 'PROTOCOL_SERVICE',
-        startTime: new Date(Date.now() + 86400000).toISOString(),
-        endTime: new Date(Date.now() + 90000000).toISOString(),
-        ministryScope: 'PROTOCOL',
-        location: 'Main Hall',
-      })
-      .expect(201);
+      .expect(200);
 
-    expect(res.body.data.id).toBeDefined();
+    expect(res.body.data.members).toBeGreaterThanOrEqual(0);
+    expect(res.body.data.operationOccurrences).toBeGreaterThanOrEqual(0);
   });
 
   it('GET /members/:id/scores/trends returns trend data', async () => {

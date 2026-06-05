@@ -33,7 +33,6 @@ export class MemberPortalDashboardService {
 
     const [
       verseWidget,
-      upcomingEvents,
       announcements,
       broadcasts,
       liveBroadcasts,
@@ -51,15 +50,6 @@ export class MemberPortalDashboardService {
           OR: [{ choirId: MAIN_CHOIR_ID }, { choirId: null }],
         },
         orderBy: { publishedAt: 'desc' },
-      }),
-      this.prisma.event.findMany({
-        where: {
-          status: 'SCHEDULED',
-          startTime: { gte: now, lte: in30 },
-        },
-        orderBy: { startTime: 'asc' },
-        take: 5,
-        select: { id: true, title: true, startTime: true, location: true },
       }),
       this.prisma.choirAnnouncement.findMany({
         where: {
@@ -122,7 +112,7 @@ export class MemberPortalDashboardService {
         upcomingServices: occurrences,
       },
       activities: {
-        upcomingEvents,
+        upcomingEvents: occurrences,
         upcomingChurchActivities: occurrences,
         announcements,
       },

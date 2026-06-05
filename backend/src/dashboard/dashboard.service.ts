@@ -1,15 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import {
-  AttendanceOperationalStatus,
-  EventStatus,
+  OperationAssignmentStatus,
+  OperationOccurrenceStatus,
   Prisma,
-  ReplacementStatus,
-  SwapStatus,
+  ProtocolReplacementStatus,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ReportsService } from '../reports/reports.service';
-import { AttendanceScoringService } from '../attendance/attendance-scoring.service';
-import { AttendanceGovernanceService } from '../attendance/attendance-governance.service';
+import { ParticipationScoringService } from '../common/participation/participation-scoring.service';
+import { ParticipationGovernanceService } from '../common/participation/participation-governance.service';
+import { ParticipationRecordsService } from '../common/participation/participation-records.service';
+import { ParticipationOperationalStatus } from '../common/participation/participation.constants';
 import { MinistryIntelligenceService } from './ministry-intelligence.service';
 import { OperationalScopeService } from '../governance/operational-scope.service';
 import { FinanceGovernanceService } from '../finance/finance-governance.service';
@@ -32,8 +33,9 @@ export class DashboardService {
   constructor(
     private prisma: PrismaService,
     private reports: ReportsService,
-    private attendanceScoring: AttendanceScoringService,
-    private governance: AttendanceGovernanceService,
+    private participationScoring: ParticipationScoringService,
+    private participationGovernance: ParticipationGovernanceService,
+    private participationRecords: ParticipationRecordsService,
     private intelligence: MinistryIntelligenceService,
     private operationalScope: OperationalScopeService,
     private financeGovernance: FinanceGovernanceService,
@@ -64,89 +66,56 @@ export class DashboardService {
       replacementRows,
       monthOperationalRows,
     ] = await Promise.all([
-      this.prisma.event.count({
+      this.prisma.operationOccurrence.count({
         where: {
-          status: EventStatus.SCHEDULED,
-          startTime: { gte: now, lte: weekAhead },
+          status: { in: [OperationOccurrenceStatus.PUBLISHED, OperationOccurrenceStatus.APPROVED] },
+          startAt: { gte: now, lte: weekAhead },
         },
       }),
-      this.prisma.swap.count({
-        where: {
-          status: {
-            in: [SwapStatus.REQUESTED, SwapStatus.LEADER_PENDING],
-          },
-        },
-      }),
-      this.prisma.replacement.count({
-        where: {
-          status: {
-            in: [
-              ReplacementStatus.REQUESTED,
-              ReplacementStatus.LEADER_PENDING,
-            ],
-          },
-        },
+      Promise.resolve(0),
+      this.prisma.protocolReplacementRequest.count({
+        where: { status: ProtocolReplacementStatus.PENDING },
       }),
       this.prisma.disciplineCase.count({
         where: { stage: { not: 'CLOSED' } },
       }),
-      this.reports.attendanceSummary(monthStart.toISOString(), now.toISOString()),
+      this.reports.participationSummary(monthStart.toISOString(), now.toISOString()),
       this.prisma.syncConflict.count({ where: { userId } }),
       this.prisma.auditLog.findMany({
         take: 5,
         orderBy: { createdAt: 'desc' },
         include: { user: { select: { email: true } } },
       }),
-      this.prisma.event.findMany({
+      this.prisma.operationOccurrence.findMany({
         where: {
-          status: EventStatus.SCHEDULED,
-          startTime: { gte: now },
+          status: { in: [OperationOccurrenceStatus.PUBLISHED, OperationOccurrenceStatus.APPROVED] },
+          startAt: { gte: now },
         },
         take: 5,
-        orderBy: { startTime: 'asc' },
+        orderBy: { startAt: 'asc' },
         select: {
           id: true,
           title: true,
-          startTime: true,
-          endTime: true,
-          location: true,
-          ministryScope: true,
+          startAt: true,
+          endAt: true,
           status: true,
         },
       }),
-      this.prisma.attendance.findMany({
-        where: { createdAt: { gte: trendStart } },
-        select: {
-          createdAt: true,
-          operationalStatus: true,
-          voluntaryExtra: true,
-        },
-        orderBy: { createdAt: 'asc' },
-      }),
-      this.prisma.attendance.findMany({
-        where: { createdAt: { gte: reliabilityStart } },
-        select: {
-          memberId: true,
-          operationalStatus: true,
-          voluntaryExtra: true,
-        },
-      }),
+      this.participationRecords.fetchRecords({ since: trendStart }),
+      this.participationRecords.fetchRecords({ since: reliabilityStart }),
       this.prisma.protocolServiceTeam.findMany({
         where: { status: 'ACTIVE' },
         include: { members: true },
       }),
-      this.prisma.replacement.findMany({
+      this.prisma.protocolReplacementRequest.findMany({
         where: { createdAt: { gte: trendStart } },
-        select: { createdAt: true, voluntaryExtraService: true, countsOfficialQuota: true },
+        select: { createdAt: true, status: true },
       }),
-      this.prisma.attendance.findMany({
-        where: { createdAt: { gte: monthStart } },
-        select: { operationalStatus: true, voluntaryExtra: true },
-      }),
+      this.participationRecords.fetchScoreInputs({ since: monthStart }),
     ]);
 
-    const weights = await this.attendanceScoring.getWeights();
-    const monthScore = this.attendanceScoring.scoreRecords(monthOperationalRows, weights);
+    const weights = await this.participationScoring.getWeights();
+    const monthScore = this.participationScoring.scoreRecords(monthOperationalRows, weights);
     const attendanceRate = monthOperationalRows.length ? monthScore.percentage : null;
 
     const canFinance = canViewFinanceIntelligence(permissions);
@@ -174,7 +143,7 @@ export class DashboardService {
         ? this.intelligence.disciplineAnalytics()
         : Promise.resolve(null),
       this.intelligence.ministryHealthScore(userId),
-      this.governance.choirAttendanceSummary(),
+      this.participationGovernance.choirAttendanceSummary(),
     ]);
 
     const permissionWidgets = resolvePermissionFlags(permissions);
@@ -186,9 +155,23 @@ export class DashboardService {
       pendingReplacements,
       attendanceRate,
       attendanceSummary,
-      attendanceTrend: this.buildAttendanceTrend(attendanceTrendRows, trendStart, now),
+      attendanceTrend: this.buildAttendanceTrend(
+        attendanceTrendRows.map((row) => ({
+          createdAt: row.recordedAt,
+          operationalStatus: row.operationalStatus,
+          voluntaryExtra: row.voluntaryExtra,
+        })),
+        trendStart,
+        now,
+      ),
       ministryAnalytics: await this.buildEnhancedMinistryAnalytics(ministryKpis),
-      reliabilityBands: await this.buildReliabilityBands(reliabilityRows),
+      reliabilityBands: await this.buildReliabilityBands(
+        reliabilityRows.map((row) => ({
+          memberId: row.memberId,
+          operationalStatus: row.operationalStatus,
+          voluntaryExtra: row.voluntaryExtra,
+        })),
+      ),
       teamReliability: this.buildTeamReliability(teamRows),
       replacementFrequency: this.buildReplacementFrequency(replacementRows, trendStart, now),
       syncConflicts,
@@ -234,49 +217,43 @@ export class DashboardService {
   }
 
   async memberSummary(userId: string, memberId: string, permissions: string[] = []) {
-    const [upcomingAssignments, pendingSwaps, attendanceRecent, upcomingSchedule, recentNotifications, memberDues] =
+    const now = new Date();
+    const [upcomingAssignments, pendingReplacements, participationRecent, upcomingSchedule, recentNotifications, memberDues] =
       await Promise.all([
-        this.prisma.eventAssignment.count({
+        this.prisma.operationAssignment.count({
           where: {
             memberId,
-            event: {
-              status: EventStatus.SCHEDULED,
-              startTime: { gte: new Date() },
+            status: { in: [OperationAssignmentStatus.PENDING, OperationAssignmentStatus.CONFIRMED] },
+            occurrence: {
+              status: { in: [OperationOccurrenceStatus.PUBLISHED, OperationOccurrenceStatus.APPROVED] },
+              startAt: { gte: now },
             },
           },
         }),
-        this.prisma.swap.count({
+        this.prisma.protocolReplacementRequest.count({
           where: {
-            OR: [{ requesterId: memberId }, { targetId: memberId }],
-            status: {
-              in: [SwapStatus.REQUESTED, SwapStatus.LEADER_PENDING],
-            },
+            OR: [{ originalMemberId: memberId }, { replacementMemberId: memberId }],
+            status: ProtocolReplacementStatus.PENDING,
           },
         }),
-        this.prisma.attendance.findMany({
-          where: { memberId },
-          take: 10,
-          orderBy: { createdAt: 'desc' },
-          include: { event: true },
-        }),
-        this.prisma.eventAssignment.findMany({
+        this.participationRecords.fetchRecords({ memberIds: [memberId] }).then((rows) => rows.slice(0, 10)),
+        this.prisma.operationAssignment.findMany({
           where: {
             memberId,
-            event: {
-              status: EventStatus.SCHEDULED,
-              startTime: { gte: new Date() },
+            occurrence: {
+              status: { in: [OperationOccurrenceStatus.PUBLISHED, OperationOccurrenceStatus.APPROVED] },
+              startAt: { gte: now },
             },
           },
           take: 5,
-          orderBy: { event: { startTime: 'asc' } },
+          orderBy: { occurrence: { startAt: 'asc' } },
           include: {
-            event: {
+            occurrence: {
               select: {
                 id: true,
                 title: true,
-                startTime: true,
-                endTime: true,
-                location: true,
+                startAt: true,
+                endAt: true,
                 status: true,
               },
             },
@@ -295,11 +272,11 @@ export class DashboardService {
       ]);
 
     const [attendanceScore, alerts, personalAnalytics] = await Promise.all([
-      this.attendanceScoring.scoreMember(memberId),
+      this.participationScoring.scoreMember(memberId),
       this.intelligence.generateAlerts(permissions, { userId, memberId }),
       this.intelligence.memberPersonalAnalytics(memberId),
     ]);
-    const attendanceRate = attendanceRecent.length ? attendanceScore.percentage : null;
+    const attendanceRate = participationRecent.length ? attendanceScore.percentage : null;
     const responsibilityScore = attendanceRate;
 
     const protocolTeamHistory = await this.prisma.protocolServiceTeamMember.findMany({
@@ -338,9 +315,21 @@ export class DashboardService {
     return this.visibility.filterMemberSummary(
       {
         upcomingAssignments,
-        upcomingSchedule,
-        pendingSwaps,
-        attendanceRecent,
+        upcomingSchedule: upcomingSchedule.map((row) => ({
+          id: row.id,
+          memberId: row.memberId,
+          event: {
+            id: row.occurrence.id,
+            title: row.occurrence.title,
+            startTime: row.occurrence.startAt,
+            endTime: row.occurrence.endAt,
+            location: null,
+            status: row.occurrence.status,
+          },
+        })),
+        pendingSwaps: 0,
+        pendingReplacements,
+        attendanceRecent: participationRecent,
         recentNotifications,
         attendanceRate,
         responsibilityScore,
@@ -365,11 +354,11 @@ export class DashboardService {
     const staleConflictCutoff = new Date(now);
     staleConflictCutoff.setDate(staleConflictCutoff.getDate() - 7);
 
-    const [users, members, events, auditLogs, syncConflicts, recentAudit, syncConflictItems, auditTrendRows, roles, teamMembers] =
+    const [users, members, occurrences, auditLogs, syncConflicts, recentAudit, syncConflictItems, auditTrendRows, roles, teamMembers] =
       await Promise.all([
         this.prisma.user.count(),
         this.prisma.member.count(),
-        this.prisma.event.count(),
+        this.prisma.operationOccurrence.count(),
         this.prisma.auditLog.count(),
         this.prisma.syncConflict.count(),
         this.prisma.auditLog.findMany({
@@ -409,7 +398,7 @@ export class DashboardService {
       systemStats: {
         users,
         members,
-        events,
+        events: occurrences,
         auditLogs,
         syncConflicts,
       },
@@ -492,13 +481,13 @@ export class DashboardService {
     const ctx = await this.operationalScope.buildForUser(userId);
     switch (role) {
       case 'team-head':
-        return this.governance.teamHeadSummary(userId);
+        return this.participationGovernance.teamHeadSummary(userId);
       case 'coordinator':
-        return this.governance.coordinatorSummary(ctx);
+        return this.participationGovernance.coordinatorSummary(ctx);
       case 'president':
-        return this.governance.presidentSummary(ctx);
+        return this.participationGovernance.presidentSummary(ctx);
       case 'choir-leader':
-        return this.governance.choirAttendanceSummary();
+        return this.participationGovernance.choirAttendanceSummary();
       default:
         return null;
     }
@@ -519,7 +508,7 @@ export class DashboardService {
   }
 
   private buildReplacementFrequency(
-    rows: Array<{ createdAt: Date; voluntaryExtraService: boolean; countsOfficialQuota: boolean }>,
+    rows: Array<{ createdAt: Date; status: string }>,
     start: Date,
     end: Date,
   ) {
@@ -533,7 +522,7 @@ export class DashboardService {
       const key = this.monthKey(row.createdAt);
       const bucket = series.find((item) => item.key === key);
       if (!bucket) continue;
-      if (row.voluntaryExtraService || !row.countsOfficialQuota) {
+      if (row.status === 'PENDING') {
         bucket.voluntary += 1;
       } else {
         bucket.official += 1;
@@ -570,7 +559,7 @@ export class DashboardService {
   private buildAttendanceTrend(
     rows: Array<{
       createdAt: Date;
-      operationalStatus: AttendanceOperationalStatus | null;
+      operationalStatus: ParticipationOperationalStatus | null;
       voluntaryExtra?: boolean;
     }>,
     start: Date,
@@ -590,15 +579,15 @@ export class DashboardService {
       if (!bucket) continue;
 
       const status =
-        row.operationalStatus ?? AttendanceOperationalStatus.UNEXCUSED_ABSENCE;
+        row.operationalStatus ?? 'UNEXCUSED_ABSENCE';
       bucket.total += 1;
       if (
-        status === AttendanceOperationalStatus.ATTENDED ||
-        status === AttendanceOperationalStatus.REPLACEMENT_SERVED ||
-        status === AttendanceOperationalStatus.VOLUNTARY_EXTRA_SERVICE
+        status === 'ATTENDED' ||
+        status === 'REPLACEMENT_SERVED' ||
+        status === 'VOLUNTARY_EXTRA_SERVICE'
       ) {
         bucket.present += 1;
-      } else if (status === AttendanceOperationalStatus.LATE) {
+      } else if (status === 'LATE') {
         bucket.late += 1;
       } else {
         bucket.absent += 1;
@@ -611,15 +600,15 @@ export class DashboardService {
   private async buildReliabilityBands(
     rows: Array<{
       memberId: string;
-      operationalStatus: AttendanceOperationalStatus | null;
+      operationalStatus: ParticipationOperationalStatus | null;
       voluntaryExtra?: boolean;
     }>,
   ) {
-    const weights = await this.attendanceScoring.getWeights();
+    const weights = await this.participationScoring.getWeights();
     const memberRecords = new Map<
       string,
       Array<{
-        operationalStatus: AttendanceOperationalStatus | null;
+        operationalStatus: ParticipationOperationalStatus | null;
         voluntaryExtra?: boolean;
       }>
     >();
@@ -640,7 +629,7 @@ export class DashboardService {
     };
 
     for (const records of memberRecords.values()) {
-      const score = this.attendanceScoring.scoreRecords(records, weights);
+      const score = this.participationScoring.scoreRecords(records, weights);
       if (score.percentage >= 85) bands.strong += 1;
       else if (score.percentage >= 60) bands.steady += 1;
       else bands.watch += 1;

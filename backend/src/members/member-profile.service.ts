@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import {
   ContributionStatus,
-  EventStatus,
+  OperationAssignmentStatus,
+  OperationOccurrenceStatus,
   Prisma,
   WelfareCaseStatus,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { AttendanceScoringService } from '../attendance/attendance-scoring.service';
+import { ParticipationScoringService } from '../common/participation/participation-scoring.service';
+import { ParticipationGovernanceService } from '../common/participation/participation-governance.service';
 import { ContributionEffectiveAmountService } from '../finance/contribution-effective-amount.service';
 import { MemberProfileAccessService } from './member-profile-access.service';
 import { UpdateMemberProfileDto } from './dto/update-member-profile.dto';
@@ -27,7 +29,8 @@ export class MemberProfileService {
   constructor(
     private prisma: PrismaService,
     private access: MemberProfileAccessService,
-    private attendanceScoring: AttendanceScoringService,
+    private participationScoring: ParticipationScoringService,
+    private participationGovernance: ParticipationGovernanceService,
     private effective: ContributionEffectiveAmountService,
     private audit: AuditService,
   ) {}
@@ -70,7 +73,7 @@ export class MemberProfileService {
       include: { family: true },
     });
 
-    const attendanceScore = await this.attendanceScoring.scoreMember(memberId);
+    const attendanceScore = await this.participationScoring.scoreMember(memberId);
 
     let contributionSummary = null;
     if (showContributions) {
@@ -114,26 +117,31 @@ export class MemberProfileService {
       include: { role: { select: { name: true } } },
     });
 
-    const upcomingAssignments = await this.prisma.eventAssignment.findMany({
+    const upcomingAssignments = await this.prisma.operationAssignment.findMany({
       where: {
         memberId,
-        event: {
-          startTime: { gte: new Date() },
-          status: { in: [EventStatus.SCHEDULED, EventStatus.IN_PROGRESS] },
+        status: {
+          in: [OperationAssignmentStatus.PENDING, OperationAssignmentStatus.CONFIRMED],
+        },
+        occurrence: {
+          startAt: { gte: new Date() },
+          status: {
+            in: [OperationOccurrenceStatus.PUBLISHED, OperationOccurrenceStatus.APPROVED],
+          },
         },
       },
       include: {
-        event: {
+        occurrence: {
           select: {
             id: true,
             title: true,
             type: true,
-            startTime: true,
-            location: true,
+            startAt: true,
+            endAt: true,
           },
         },
       },
-      orderBy: { event: { startTime: 'asc' } },
+      orderBy: { occurrence: { startAt: 'asc' } },
       take: 8,
     });
 
@@ -196,11 +204,11 @@ export class MemberProfileService {
         contributionSummary,
         welfareSummary,
         upcomingAssignments: upcomingAssignments.map((row) => ({
-          eventId: row.event.id,
-          title: row.event.title,
-          type: row.event.type,
-          startTime: row.event.startTime,
-          location: row.event.location,
+          occurrenceId: row.occurrence.id,
+          title: row.occurrence.title,
+          type: row.occurrence.type,
+          startAt: row.occurrence.startAt,
+          endAt: row.occurrence.endAt,
         })),
         recentAuditActivity: recentActivity.map((row) => ({
           action: row.action,
@@ -253,7 +261,7 @@ export class MemberProfileService {
     if (!allowed) {
       return {
         allowed: false,
-        score: await this.attendanceScoring.scoreMember(memberId),
+        score: await this.participationScoring.scoreMember(memberId),
         records: [],
         trends: [],
         latenessCount: 0,
@@ -261,32 +269,15 @@ export class MemberProfileService {
       };
     }
 
-    const records = await this.prisma.attendance.findMany({
-      where: { memberId },
-      include: {
-        event: {
-          select: {
-            id: true,
-            title: true,
-            type: true,
-            startTime: true,
-            endTime: true,
-            location: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-    });
-    const score = await this.attendanceScoring.scoreMember(memberId);
+    const history = await this.participationGovernance.memberHistory(memberId);
 
     return {
       allowed: true,
-      score,
-      records,
-      trends: this.buildMonthlyTrend(records),
-      latenessCount: records.filter((r) => r.operationalStatus === 'LATE').length,
-      voluntaryServiceCount: records.filter((r) => r.voluntaryExtra).length,
+      score: history.score,
+      records: history.records,
+      trends: history.trends,
+      latenessCount: history.latenessCount,
+      voluntaryServiceCount: history.voluntaryServiceCount,
     };
   }
 

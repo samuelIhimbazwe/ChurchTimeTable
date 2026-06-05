@@ -1,17 +1,21 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
-  AttendanceOperationalStatus,
   ContributionStatus,
   DueStatus,
-  EventStatus,
   FinanceApprovalStatus,
   MemberStatus,
+  OperationAssignmentStatus,
+  OperationOccurrenceStatus,
   Prisma,
   ProtocolTeamStatus,
   TransactionType,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { AttendanceScoringService } from '../attendance/attendance-scoring.service';
+import { ParticipationScoringService } from '../common/participation/participation-scoring.service';
+import { ParticipationRecordsService } from '../common/participation/participation-records.service';
+import {
+  ParticipationOperationalStatus,
+} from '../common/participation/participation.constants';
 import { ResponseVisibilityService } from '../common/visibility/response-visibility.service';
 import { canViewFinanceIntelligence } from '../common/governance/governance-permissions.util';
 import type { OperationalScopeContext } from '../governance/operational-scope.types';
@@ -22,16 +26,16 @@ const ATTENDANCE_WEIGHT = 0.4;
 const CONTRIBUTION_WEIGHT = 0.3;
 const PARTICIPATION_WEIGHT = 0.3;
 
-const PRESENT_STATUSES: AttendanceOperationalStatus[] = [
-  AttendanceOperationalStatus.ATTENDED,
-  AttendanceOperationalStatus.LATE,
-  AttendanceOperationalStatus.REPLACEMENT_SERVED,
-  AttendanceOperationalStatus.VOLUNTARY_EXTRA_SERVICE,
+const PRESENT_STATUSES: ParticipationOperationalStatus[] = [
+  'ATTENDED',
+  'LATE',
+  'REPLACEMENT_SERVED',
+  'VOLUNTARY_EXTRA_SERVICE',
 ];
 
-const MISSED_STATUSES: AttendanceOperationalStatus[] = [
-  AttendanceOperationalStatus.UNEXCUSED_ABSENCE,
-  AttendanceOperationalStatus.EXCUSED_ABSENCE,
+const MISSED_STATUSES: ParticipationOperationalStatus[] = [
+  'UNEXCUSED_ABSENCE',
+  'EXCUSED_ABSENCE',
 ];
 
 export type FamilyHealthGrade = 'A' | 'B' | 'C' | 'D' | 'F';
@@ -89,7 +93,7 @@ interface MemberAggregateInput {
   activeMemberIds: Set<string>;
   attendanceRecords: Array<{
     memberId: string;
-    operationalStatus: AttendanceOperationalStatus | null;
+    operationalStatus: ParticipationOperationalStatus | null;
     voluntaryExtra: boolean;
   }>;
   contributions: Array<{
@@ -171,7 +175,8 @@ export class FamilyMetricsService {
   constructor(
     private prisma: PrismaService,
     private familiesService: FamiliesService,
-    private attendanceScoring: AttendanceScoringService,
+    private participationScoring: ParticipationScoringService,
+    private participationRecords: ParticipationRecordsService,
     private visibility: ResponseVisibilityService,
   ) {}
 
@@ -191,16 +196,16 @@ export class FamilyMetricsService {
   ): FamilyAttendanceMetrics {
     const attendanceCount = records.filter((record) =>
       PRESENT_STATUSES.includes(
-        record.operationalStatus ?? AttendanceOperationalStatus.UNEXCUSED_ABSENCE,
+        record.operationalStatus ?? 'UNEXCUSED_ABSENCE',
       ),
     ).length;
     const missedCount = records.filter((record) =>
       MISSED_STATUSES.includes(
-        record.operationalStatus ?? AttendanceOperationalStatus.UNEXCUSED_ABSENCE,
+        record.operationalStatus ?? 'UNEXCUSED_ABSENCE',
       ),
     ).length;
 
-    const scoreResult = this.attendanceScoring.scoreRecords(records);
+    const scoreResult = this.participationScoring.scoreRecords(records);
     const attendanceRate =
       records.length > 0 ? scoreResult.percentage : 100;
 
@@ -436,13 +441,9 @@ export class FamilyMetricsService {
         where: { id: { in: memberIds }, status: MemberStatus.ACTIVE },
         select: { id: true },
       }),
-      this.prisma.attendance.findMany({
-        where: { memberId: { in: memberIds }, createdAt: { gte: since } },
-        select: {
-          memberId: true,
-          operationalStatus: true,
-          voluntaryExtra: true,
-        },
+      this.participationRecords.fetchRecords({
+        memberIds,
+        since,
       }),
       this.prisma.contributionRecord.findMany({
         where: { memberId: { in: memberIds } },
@@ -469,12 +470,17 @@ export class FamilyMetricsService {
         },
         select: { memberId: true, amount: true },
       }),
-      this.prisma.eventAssignment.findMany({
+      this.prisma.operationAssignment.findMany({
         where: {
           memberId: { in: memberIds },
-          event: {
-            status: { not: EventStatus.CANCELLED },
-            endTime: { gte: since },
+          status: {
+            in: [OperationAssignmentStatus.PENDING, OperationAssignmentStatus.CONFIRMED],
+          },
+          occurrence: {
+            status: {
+              not: OperationOccurrenceStatus.CANCELLED,
+            },
+            endAt: { gte: since },
           },
         },
         select: { memberId: true },
@@ -513,7 +519,9 @@ export class FamilyMetricsService {
       contributions,
       dues,
       financeTransactions,
-      assignments,
+      assignments: assignments.flatMap((row) =>
+        row.memberId ? [{ memberId: row.memberId }] : [],
+      ),
       choirCommittee,
       protocolCommittee,
       protocolTeams,

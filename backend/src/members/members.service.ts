@@ -3,6 +3,8 @@ import {
   MemberStatus,
   MinistryScope,
   NotificationRuleTrigger,
+  OperationAssignmentStatus,
+  OperationOccurrenceStatus,
   Prisma,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -20,6 +22,7 @@ import {
 import { BusinessRuleException } from '../common/exceptions/business.exception';
 import { paginate, paginatedResult } from '../common/dto/pagination.dto';
 import { NotificationRuleGateService } from '../pilot-ready/notification-rule-gate.service';
+import { ParticipationRecordsService } from '../common/participation/participation-records.service';
 
 export type MemberRosterItem = {
   id: string;
@@ -38,6 +41,7 @@ export class MembersService {
     private notifications: NotificationsService,
     private operationalScope: OperationalScopeService,
     private ruleGate: NotificationRuleGateService,
+    private participationRecords: ParticipationRecordsService,
   ) {}
 
   async findAll(
@@ -190,21 +194,17 @@ export class MembersService {
   }
 
   async getScores(memberId: string) {
-    const records = await this.prisma.attendance.findMany({
-      where: { memberId },
-      select: {
-        physicalStatus: true,
-        reasonCategory: true,
-      },
-    });
+    const records = await this.participationRecords.fetchRecords({ memberIds: [memberId] });
 
     const total = records.length;
     const present = records.filter(
-      (r) => r.physicalStatus === 'PRESENT' || r.physicalStatus === 'LATE',
+      (r) =>
+        r.operationalStatus === 'ATTENDED' ||
+        r.operationalStatus === 'LATE' ||
+        r.operationalStatus === 'REPLACEMENT_SERVED',
     ).length;
     const excused = records.filter(
-      (r) =>
-        r.physicalStatus === 'ABSENT' && r.reasonCategory === 'EXCUSED',
+      (r) => r.operationalStatus === 'EXCUSED_ABSENCE',
     ).length;
 
     const attendanceRate = total ? present / total : 0;
@@ -219,45 +219,50 @@ export class MembersService {
     };
   }
 
-  async getAvailability(memberId: string, eventId?: string) {
+  async getAvailability(memberId: string, occurrenceId?: string) {
     const member = await this.prisma.member.findUnique({ where: { id: memberId } });
     if (!member) throw new NotFoundException('Member not found');
 
     const scores = await this.getScores(memberId);
-    const recentAbsences = await this.prisma.attendance.findMany({
-      where: {
-        memberId,
-        physicalStatus: 'ABSENT',
-        reasonCategory: { in: ['EXCUSED', 'UNEXCUSED'] },
-      },
-      include: { event: { select: { startTime: true } } },
-      take: 10,
-      orderBy: { createdAt: 'desc' },
+    const recentAbsences = await this.participationRecords.fetchRecords({
+      memberIds: [memberId],
     });
-    const unavailableDates = recentAbsences
-      .map((a) => a.event.startTime.toISOString().split('T')[0])
+    const absentRows = recentAbsences
+      .filter(
+        (r) =>
+          r.operationalStatus === 'UNEXCUSED_ABSENCE' ||
+          r.operationalStatus === 'EXCUSED_ABSENCE',
+      )
+      .slice(0, 10);
+    const unavailableDates = absentRows
+      .map((a) => a.recordedAt.toISOString().split('T')[0])
       .filter((d, i, arr) => arr.indexOf(d) === i);
 
-    const conflicts: Array<{ eventId: string; title: string }> = [];
-    if (eventId) {
-      const event = await this.prisma.event.findUnique({ where: { id: eventId } });
-      if (event) {
-        const overlapping = await this.prisma.eventAssignment.findMany({
+    const conflicts: Array<{ occurrenceId: string; title: string }> = [];
+    if (occurrenceId) {
+      const occurrence = await this.prisma.operationOccurrence.findUnique({
+        where: { id: occurrenceId },
+      });
+      if (occurrence) {
+        const overlapping = await this.prisma.operationAssignment.findMany({
           where: {
             memberId,
-            eventId: { not: eventId },
-            event: {
-              status: { not: 'CANCELLED' },
-              startTime: { lt: event.endTime },
-              endTime: { gt: event.startTime },
+            occurrenceId: { not: occurrenceId },
+            status: {
+              in: [OperationAssignmentStatus.PENDING, OperationAssignmentStatus.CONFIRMED],
+            },
+            occurrence: {
+              status: { not: OperationOccurrenceStatus.CANCELLED },
+              startAt: { lt: occurrence.endAt },
+              endAt: { gt: occurrence.startAt },
             },
           },
-          include: { event: { select: { id: true, title: true } } },
+          include: { occurrence: { select: { id: true, title: true } } },
         });
         conflicts.push(
           ...overlapping.map((a) => ({
-            eventId: a.event.id,
-            title: a.event.title,
+            occurrenceId: a.occurrence.id,
+            title: a.occurrence.title,
           })),
         );
       }
@@ -266,7 +271,7 @@ export class MembersService {
     return {
       attendanceRate: scores.attendanceRate,
       unavailableDates,
-      absenceReasons: recentAbsences.map((a) => a.reasonCategory ?? ''),
+      absenceReasons: absentRows.map((a) => a.operationalStatus ?? ''),
       conflicts,
     };
   }
@@ -278,26 +283,25 @@ export class MembersService {
     const since = new Date();
     since.setMonth(since.getMonth() - months);
 
-    const records = await this.prisma.attendance.findMany({
-      where: { memberId, createdAt: { gte: since } },
-      select: {
-        physicalStatus: true,
-        reasonCategory: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: 'asc' },
+    const records = await this.participationRecords.fetchRecords({
+      memberIds: [memberId],
+      since,
     });
 
     const buckets = new Map<string, { total: number; present: number; excused: number }>();
 
     for (const r of records) {
-      const key = `${r.createdAt.getFullYear()}-${String(r.createdAt.getMonth() + 1).padStart(2, '0')}`;
+      const key = `${r.recordedAt.getFullYear()}-${String(r.recordedAt.getMonth() + 1).padStart(2, '0')}`;
       const b = buckets.get(key) ?? { total: 0, present: 0, excused: 0 };
       b.total++;
-      if (r.physicalStatus === 'PRESENT' || r.physicalStatus === 'LATE') {
+      if (
+        r.operationalStatus === 'ATTENDED' ||
+        r.operationalStatus === 'LATE' ||
+        r.operationalStatus === 'REPLACEMENT_SERVED'
+      ) {
         b.present++;
       }
-      if (r.physicalStatus === 'ABSENT' && r.reasonCategory === 'EXCUSED') {
+      if (r.operationalStatus === 'EXCUSED_ABSENCE') {
         b.excused++;
       }
       buckets.set(key, b);

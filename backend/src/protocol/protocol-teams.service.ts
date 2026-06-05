@@ -136,21 +136,7 @@ export class ProtocolTeamsService {
   }
 
   private async finalizeTeam(teamId: string, actorUserId: string | null) {
-    const leaderRec = await this.teamLeaders.recommendForTeam(teamId);
-    if (leaderRec.recommended && actorUserId) {
-      await this.teamLeaders.assignToTeam(
-        actorUserId,
-        teamId,
-        leaderRec.recommended.id,
-      );
-    } else if (leaderRec.recommended) {
-      await this.prisma.protocolOccurrenceTeamLeader.create({
-        data: {
-          teamId,
-          protocolTeamLeaderId: leaderRec.recommended.id,
-        },
-      });
-    }
+    await this.teamLeaders.assignRecommendedLeaders(actorUserId, teamId);
     await this.backups.persistForTeam(teamId);
     const notifyPromise = this.notifications.notifyTeamAssigned(teamId);
     if (process.env.CMMS_E2E === '1') {
@@ -160,8 +146,8 @@ export class ProtocolTeamsService {
     }
   }
 
-  private getTeamInternal(teamId: string) {
-    return this.prisma.protocolOccurrenceTeam.findUniqueOrThrow({
+  private async getTeamInternal(teamId: string) {
+    const team = await this.prisma.protocolOccurrenceTeam.findUniqueOrThrow({
       where: { id: teamId },
       include: {
         members: {
@@ -171,14 +157,16 @@ export class ProtocolTeamsService {
           },
         },
         occurrence: { select: { id: true, title: true, startAt: true } },
-        teamLeader: {
+        teamLeaders: {
           include: {
             protocolTeamLeader: {
               include: {
                 member: { select: { firstName: true, lastName: true } },
+                choir: { select: { id: true, name: true, code: true } },
               },
             },
           },
+          orderBy: { assignedAt: 'asc' },
         },
         backups: {
           include: {
@@ -189,6 +177,10 @@ export class ProtocolTeamsService {
         report: true,
       },
     });
+    return {
+      ...team,
+      teamLeader: team.teamLeaders[0] ?? null,
+    };
   }
 
   async assignTeamLeader(

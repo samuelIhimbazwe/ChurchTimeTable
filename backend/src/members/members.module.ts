@@ -7,7 +7,7 @@ import { GovernanceModule } from '../governance/governance.module';
 import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
 import { AuthModule } from '../auth/auth.module';
 import { FinanceModule } from '../finance/finance.module';
-import { AttendanceModule } from '../attendance/attendance.module';
+import { ParticipationModule } from '../common/participation/participation.module';
 import { AuditModule } from '../audit/audit.module';
 import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
 import { MemberProfileAccessService } from './member-profile-access.service';
@@ -22,7 +22,7 @@ import { MemberTimelineService } from './member-timeline.service';
     MemberPhoneEnforcementModule,
     AuthModule,
     FinanceModule,
-    AttendanceModule,
+    ParticipationModule,
     AuditModule,
     forwardRef(() => PilotReadyModule),
   ],

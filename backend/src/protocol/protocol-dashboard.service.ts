@@ -58,7 +58,7 @@ export class ProtocolDashboardService {
         include: {
           occurrence: { select: { title: true, startAt: true } },
           members: { select: { id: true } },
-          teamLeader: true,
+          teamLeaders: { take: 1 },
         },
       }),
       this.prisma.protocolTeamLeader.findMany({

@@ -25,10 +25,10 @@ export class ProtocolTeamLeaderAccessService {
   async isLeaderForTeam(userId: string, teamId: string): Promise<boolean> {
     const leader = await this.getLeaderForUser(userId);
     if (!leader?.active) return false;
-    const assignment = await this.prisma.protocolOccurrenceTeamLeader.findUnique({
-      where: { teamId },
+    const assignment = await this.prisma.protocolOccurrenceTeamLeader.findFirst({
+      where: { teamId, protocolTeamLeaderId: leader.id },
     });
-    return assignment?.protocolTeamLeaderId === leader.id;
+    return !!assignment;
   }
 
   async canManageTeamAttendance(userId: string, teamId: string): Promise<boolean> {

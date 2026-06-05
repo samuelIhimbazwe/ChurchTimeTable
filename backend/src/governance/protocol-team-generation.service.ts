@@ -1,8 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import type { EventType, Member, Prisma } from '@prisma/client';
+import {
+  ChoirAttendanceOutcome,
+  OperationAssignmentStatus,
+  OperationOccurrenceStatus,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { GenerateProtocolTeamsDto } from './dto/generate-protocol-teams.dto';
+
+type CandidateMember = Member & {
+  operationAssignments: Array<{
+    assignmentType: string;
+    occurrence: { type: string; startAt: Date };
+  }>;
+  choirAttendances: Array<{ outcome: ChoirAttendanceOutcome }>;
+  loadScore: number;
+};
 
 @Injectable()
 export class ProtocolTeamGenerationService {
@@ -84,7 +98,7 @@ export class ProtocolTeamGenerationService {
     return { createdTeams: teams.length, createdAssignments, teams };
   }
 
-  private async loadCandidates(month: number, year: number) {
+  private async loadCandidates(month: number, year: number): Promise<CandidateMember[]> {
     const start = new Date(year, month - 1, 1);
     const end = new Date(year, month, 0, 23, 59, 59, 999);
 
@@ -94,18 +108,27 @@ export class ProtocolTeamGenerationService {
         ministry: { in: ['PROTOCOL', 'BOTH'] },
       },
       include: {
-        assignments: {
+        operationAssignments: {
           where: {
-            event: { startTime: { gte: start, lte: end } },
+            assignmentType: 'PROTOCOL_TEAM',
+            status: {
+              in: [OperationAssignmentStatus.PENDING, OperationAssignmentStatus.CONFIRMED],
+            },
+            occurrence: {
+              startAt: { gte: start, lte: end },
+              status: {
+                in: [OperationOccurrenceStatus.PUBLISHED, OperationOccurrenceStatus.APPROVED],
+              },
+            },
           },
           include: {
-            event: true,
+            occurrence: { select: { type: true, startAt: true } },
           },
         },
-        attendances: {
-          where: { createdAt: { gte: start } },
+        choirAttendances: {
+          where: { recordedAt: { gte: start } },
           take: 8,
-          orderBy: { createdAt: 'desc' },
+          orderBy: { recordedAt: 'desc' },
         },
       },
     });
@@ -120,26 +143,28 @@ export class ProtocolTeamGenerationService {
 
   private computeLoadScore(
     member: Member & {
-      assignments: Array<{ countsOfficialQuota: boolean | null }>;
-      attendances: Array<{ physicalStatus: string }>;
+      operationAssignments: Array<{ assignmentType: string }>;
+      choirAttendances: Array<{ outcome: ChoirAttendanceOutcome }>;
     },
   ) {
-    const officialAssignments = member.assignments.filter(
-      (assignment) => assignment.countsOfficialQuota !== false,
+    const officialAssignments = member.operationAssignments.filter(
+      (assignment) => assignment.assignmentType === 'PROTOCOL_TEAM',
     ).length;
-    const missedRecent = member.attendances.filter(
-      (attendance) => attendance.physicalStatus === 'ABSENT',
+    const missedRecent = member.choirAttendances.filter(
+      (attendance) =>
+        attendance.outcome === ChoirAttendanceOutcome.ABSENT_UNEXCUSED ||
+        attendance.outcome === ChoirAttendanceOutcome.ABSENT_EXCUSED,
     ).length;
     return officialAssignments * 10 + missedRecent * 2;
   }
 
   private countOfficialAssignments(
     member: Member & {
-      assignments: Array<{ countsOfficialQuota: boolean | null }>;
+      operationAssignments: Array<{ assignmentType: string }>;
     },
   ) {
-    return member.assignments.filter(
-      (assignment) => assignment.countsOfficialQuota !== false,
+    return member.operationAssignments.filter(
+      (assignment) => assignment.assignmentType === 'PROTOCOL_TEAM',
     ).length;
   }
 
@@ -162,26 +187,18 @@ export class ProtocolTeamGenerationService {
     return buckets;
   }
 
-  private isChoirCompatible(
-    member: Member & {
-      assignments: Array<{ event: { type: EventType } }>;
-    },
-    serviceType: string,
-  ) {
+  private isChoirCompatible(member: CandidateMember, serviceType: string) {
     if (member.ministry !== 'BOTH') {
       return false;
     }
-    return member.assignments.some((assignment) => assignment.event.type === serviceType);
+    return member.operationAssignments.some(
+      (assignment) =>
+        assignment.assignmentType === 'MAIN_CHOIR' &&
+        assignment.occurrence.type === 'SERVICE',
+    );
   }
 
-  private compatibilityRate(
-    members: Array<
-      Member & {
-        assignments: Array<{ event: { type: EventType } }>;
-      }
-    >,
-    serviceType: string,
-  ) {
+  private compatibilityRate(members: CandidateMember[], serviceType: string) {
     if (!members.length) return 0;
     const compatible = members.filter((member) =>
       this.isChoirCompatible(member, serviceType),

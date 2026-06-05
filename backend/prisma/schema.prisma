@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -182,85 +182,6 @@ enum OperationalUnitType {
   SERVICE_TEAM
   OUTREACH_TEAM
   CUSTOM
-}
-
-enum EventStatus {
-  DRAFT
-  SCHEDULED
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
-}
-
-enum PhysicalStatus {
-  PRESENT
-  ABSENT
-  LATE
-}
-
-enum AttendanceOperationalStatus {
-  ATTENDED
-  LATE
-  EXCUSED_ABSENCE
-  UNEXCUSED_ABSENCE
-  REPLACEMENT_SERVED
-  VOLUNTARY_EXTRA_SERVICE
-}
-
-enum AttendanceReplacementType {
-  OFFICIAL
-  LEADER_ASSIGNED
-  VOLUNTARY
-}
-
-enum AttendanceEscalationLevel {
-  TEAM_HEAD
-  COORDINATOR
-  PRESIDENT
-}
-
-enum ReasonCategory {
-  EXCUSED
-  UNEXCUSED
-}
-
-enum SwapStatus {
-  REQUESTED
-  TARGET_ACCEPTED
-  TARGET_REJECTED
-  LEADER_PENDING
-  APPROVED
-  REJECTED
-  FINALIZED
-  CANCELLED
-}
-
-enum ReplacementStatus {
-  REQUESTED
-  LEADER_PENDING
-  APPROVED
-  REJECTED
-  FINALIZED
-}
-
-enum ReplacementKind {
-  VOLUNTARY
-  LEADER_ASSIGNED
-  EMERGENCY
-}
-
-enum CoverageOperationalType {
-  MUTUAL_SWAP
-  VOLUNTARY_REPLACEMENT
-  OFFICIAL_REPLACEMENT
-  EMERGENCY_REPLACEMENT
-}
-
-enum CoverageApprovalLevel {
-  MEMBER
-  TEAM_HEAD
-  COORDINATOR
-  PRESIDENT
 }
 
 enum OperationalPriority {
@@ -611,7 +532,6 @@ model User {
   notifications Notification[]
   confirmedContributions ContributionRecord[] @relation("ContributionConfirmer")
   thankYouSentContributions ContributionRecord[] @relation("ContributionThankYouSender")
-  approvedAttendance Attendance[] @relation("AttendanceApprover")
   announcementReads ChoirAnnouncementRead[]
   choirMemberships  ChoirMembership[]
   devotionsCreated  Devotion[]          @relation("DevotionAuthor")
@@ -695,12 +615,6 @@ model Member {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  assignments     EventAssignment[]
-  attendances     Attendance[]
-  swapsRequested  Swap[]        @relation("SwapRequester")
-  swapsTarget     Swap[]        @relation("SwapTarget")
-  replacementsAsAbsent Replacement[] @relation("AbsentMember")
-  replacementsAsCover  Replacement[] @relation("CoverMember")
   disciplineCases DisciplineCase[] @relation("DisciplineSubject")
   disciplineReported DisciplineCase[] @relation("DisciplineReporter")
   memberDues      MemberDues[]
@@ -762,163 +676,6 @@ model Member {
   @@index([status])
   @@index([ministry])
   @@index([userId])
-}
-
-model Event {
-  id            String        @id @default(uuid())
-  choirId       String?
-  title         String
-  type          EventType
-  startTime     DateTime
-  endTime       DateTime
-  location      String?
-  ministryScope MinistryScope
-  status        EventStatus   @default(SCHEDULED)
-  serviceSlot   Int?
-  metadata      Json?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  choir         Choir?        @relation(fields: [choirId], references: [id])
-  assignments   EventAssignment[]
-  attendances   Attendance[]
-  swaps         Swap[]
-  replacements  Replacement[]
-  songUsageRecords SongUsageRecord[]
-  rehearsalPlan RehearsalPlan?
-  rehearsalAttendances RehearsalAttendance[]
-
-  @@index([choirId])
-  @@index([startTime, endTime])
-  @@index([type, ministryScope])
-  @@index([status])
-}
-
-model EventAssignment {
-  id             String   @id @default(uuid())
-  eventId        String
-  memberId       String
-  role           String?
-  isOverride     Boolean  @default(false)
-  overrideReason String?
-  overrideById   String?
-  countsOfficialQuota Boolean @default(true)
-  voluntaryExtraService Boolean @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  event          Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  member         Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
-
-  @@unique([eventId, memberId])
-  @@index([eventId])
-  @@index([memberId])
-}
-
-model Attendance {
-  id              String         @id @default(uuid())
-  eventId         String
-  memberId        String
-  physicalStatus  PhysicalStatus
-  reasonCategory  ReasonCategory?
-  reasonType      String?
-  approvedById    String?
-  notes           String?
-  /// Sprint 5 attendance_status — stored as operationalStatus for backward compatibility
-  operationalStatus AttendanceOperationalStatus?
-  excuseReason    String?
-  replacementType AttendanceReplacementType?
-  countsAsOfficial Boolean       @default(true)
-  voluntaryExtra  Boolean         @default(false)
-  lateMinutes     Int?
-  escalated       Boolean         @default(false)
-  escalationLevel AttendanceEscalationLevel?
-  escalationNotes String?
-  excuseEvidenceUrl String?
-  swapId          String?
-  replacementId   String?
-  lockedAt        DateTime?
-  clientUpdatedAt DateTime?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  event           Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  member          Member         @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  approvedBy      User?          @relation("AttendanceApprover", fields: [approvedById], references: [id])
-
-  @@unique([eventId, memberId])
-  @@index([eventId])
-  @@index([memberId])
-  @@index([operationalStatus])
-  @@index([escalated])
-}
-
-model Swap {
-  id              String     @id @default(uuid())
-  eventId         String
-  requesterId     String
-  targetId        String
-  status          SwapStatus @default(REQUESTED)
-  coverageType    CoverageOperationalType @default(MUTUAL_SWAP)
-  reason          String?
-  initiatedByUserId String?
-  approvalLevel   CoverageApprovalLevel @default(TEAM_HEAD)
-  requiresLeader  Boolean    @default(true)
-  leaderApprovedById String?
-  leaderNotes     String?
-  escalated       Boolean    @default(false)
-  escalationReason String?
-  escalationLevel AttendanceEscalationLevel?
-  countsOfficialQuota Boolean @default(true)
-  voluntaryExtraService Boolean @default(false)
-  operationalPriority OperationalPriority @default(NORMAL)
-  resolvedAt      DateTime?
-  resolutionNotes String?
-  finalizedAt     DateTime?
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-  event           Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  requester       Member     @relation("SwapRequester", fields: [requesterId], references: [id])
-  target          Member     @relation("SwapTarget", fields: [targetId], references: [id])
-
-  @@index([eventId])
-  @@index([requesterId])
-  @@index([targetId])
-  @@index([status])
-  @@index([escalated])
-  @@index([approvalLevel])
-}
-
-model Replacement {
-  id              String            @id @default(uuid())
-  eventId         String
-  absentMemberId  String
-  coverMemberId   String?
-  status          ReplacementStatus @default(REQUESTED)
-  selfFound       Boolean           @default(false)
-  kind            ReplacementKind   @default(LEADER_ASSIGNED)
-  reason          String?
-  initiatedByUserId String?
-  approvalLevel   CoverageApprovalLevel @default(TEAM_HEAD)
-  countsOfficialQuota Boolean       @default(true)
-  voluntaryExtraService Boolean     @default(false)
-  escalated       Boolean           @default(false)
-  escalationReason String?
-  escalationLevel AttendanceEscalationLevel?
-  operationalPriority OperationalPriority @default(NORMAL)
-  resolvedAt      DateTime?
-  resolutionNotes String?
-  approvedById    String?
-  notes           String?
-  finalizedAt     DateTime?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  event           Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  absentMember    Member            @relation("AbsentMember", fields: [absentMemberId], references: [id])
-  coverMember     Member?           @relation("CoverMember", fields: [coverMemberId], references: [id])
-
-  @@index([eventId])
-  @@index([absentMemberId])
-  @@index([status])
-  @@index([escalated])
-  @@index([approvalLevel])
 }
 
 model ChoirCommitteeRole {
@@ -1318,7 +1075,6 @@ model Choir {
   devotions             Devotion[]
   customRoles           ChoirCustomRole[]
   families              Family[]
-  events                Event[]
   welfareCases          WelfareCase[]
   songs                 Song[]
   songCategories        SongCategory[]
@@ -1709,13 +1465,11 @@ model SongAsset {
 model SongUsageRecord {
   id        String   @id @default(uuid())
   songId    String
-  eventId   String?
   rehearsalPlanId String?
   leaderId  String?
   usedAt    DateTime @default(now())
   notes     String?
   song      Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
-  event     Event?   @relation(fields: [eventId], references: [id])
   leader    Member?  @relation(fields: [leaderId], references: [id])
 
   @@index([songId])
@@ -1734,17 +1488,17 @@ model VoiceSection {
 }
 
 model RehearsalPlan {
-  id        String   @id @default(uuid())
-  eventId   String   @unique
-  leaderId  String?
-  objectives String?
-  notes     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  leader    Member?  @relation(fields: [leaderId], references: [id])
-  songs     RehearsalPlanSong[]
-  sections  RehearsalPlanSection[]
+  id              String   @id @default(uuid())
+  choirActivityId String   @unique
+  leaderId        String?
+  objectives      String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  choirActivity   ChoirActivity @relation(fields: [choirActivityId], references: [id], onDelete: Cascade)
+  leader          Member?  @relation(fields: [leaderId], references: [id])
+  songs           RehearsalPlanSong[]
+  sections        RehearsalPlanSection[]
 
   @@index([leaderId])
 }
@@ -1780,17 +1534,17 @@ model RehearsalPlanSection {
 
 model RehearsalAttendance {
   id               String                   @id @default(uuid())
-  eventId          String
+  choirActivityId  String
   memberId         String
   status           RehearsalAttendanceStatus
   notes            String?
   recordedByUserId String?
   recordedAt       DateTime                 @default(now())
-  event            Event                    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  choirActivity    ChoirActivity            @relation(fields: [choirActivityId], references: [id], onDelete: Cascade)
   member           Member                   @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
-  @@unique([eventId, memberId])
-  @@index([eventId])
+  @@unique([choirActivityId, memberId])
+  @@index([choirActivityId])
   @@index([memberId])
 }
 
@@ -3009,10 +2763,10 @@ model ProtocolOccurrenceTeam {
   approvedByUserId  String?
   notes             String?
 
-  occurrence OperationOccurrence           @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
-  members    ProtocolOccurrenceTeamMember[]
-  teamLeader ProtocolOccurrenceTeamLeader?
-  backups    ProtocolOccurrenceTeamBackup[]
+  occurrence  OperationOccurrence            @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
+  members     ProtocolOccurrenceTeamMember[]
+  teamLeaders ProtocolOccurrenceTeamLeader[]
+  backups     ProtocolOccurrenceTeamBackup[]
   report     ProtocolTeamReport?
 
   @@index([status])
@@ -3041,7 +2795,7 @@ model ProtocolTeamLeader {
 
 model ProtocolOccurrenceTeamLeader {
   id                   String   @id @default(uuid())
-  teamId               String   @unique
+  teamId               String
   protocolTeamLeaderId String
   assignedByUserId     String?
   overrideReason       String?
@@ -3050,6 +2804,7 @@ model ProtocolOccurrenceTeamLeader {
   team               ProtocolOccurrenceTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
   protocolTeamLeader ProtocolTeamLeader     @relation(fields: [protocolTeamLeaderId], references: [id], onDelete: Restrict)
 
+  @@unique([teamId, protocolTeamLeaderId])
   @@index([protocolTeamLeaderId])
 }
 
@@ -3311,6 +3066,8 @@ model ChoirActivity {
   choir      Choir              @relation(fields: [choirId], references: [id], onDelete: Cascade)
   occurrence OperationOccurrence? @relation(fields: [occurrenceId], references: [id], onDelete: SetNull)
   attendances ChoirAttendance[]
+  rehearsalPlan RehearsalPlan?
+  rehearsalAttendances RehearsalAttendance[]
 
   @@index([choirId, startAt])
   @@index([activityType])

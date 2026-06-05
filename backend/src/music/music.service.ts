@@ -116,7 +116,6 @@ export class MusicService {
           orderBy: { usedAt: 'desc' },
           take: 20,
           include: {
-            event: { select: { id: true, title: true, startTime: true } },
             leader: {
               select: { id: true, firstName: true, lastName: true },
             },

@@ -1,29 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import {
-  AttendanceOperationalStatus,
-  AttendanceReplacementType,
-  ContributionStatus,
-  ContributionType,
-  EventStatus,
-  Prisma,
-} from '@prisma/client';
+import { ContributionStatus, ContributionType, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { AttendanceService } from '../attendance/attendance.service';
-import { UpsertAttendanceDto } from '../attendance/dto/upsert-attendance.dto';
-import { AssignmentsService } from '../assignments/assignments.service';
-import { EventsService } from '../events/events.service';
-import { ReplacementsService } from '../replacements/replacements.service';
 import { SyncBatchDto } from './dto/sync-batch.dto';
 
 @Injectable()
 export class SyncService {
-  constructor(
-    private prisma: PrismaService,
-    private attendanceService: AttendanceService,
-    private assignmentsService: AssignmentsService,
-    private eventsService: EventsService,
-    private replacementsService: ReplacementsService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async processBatch(userId: string, dto: SyncBatchDto) {
     const results: Array<{
@@ -80,56 +62,6 @@ export class SyncService {
   ) {
     const clientTime = new Date(item.clientUpdatedAt);
 
-    if (item.entity === 'Attendance') {
-      const payload = item.payload as {
-        eventId: string;
-        memberId: string;
-        physicalStatus: 'PRESENT' | 'ABSENT' | 'LATE';
-        reasonCategory?: 'EXCUSED' | 'UNEXCUSED';
-        reasonType?: string;
-        operationalStatus?: string;
-        excuseReason?: string;
-        replacementType?: string;
-        countsAsOfficial?: boolean;
-        voluntaryExtra?: boolean;
-        lateMinutes?: number;
-        excuseEvidenceUrl?: string;
-        excuseApproved?: boolean;
-        notes?: string;
-      };
-
-      const existing = await this.prisma.attendance.findUnique({
-        where: {
-          eventId_memberId: {
-            eventId: payload.eventId,
-            memberId: payload.memberId,
-          },
-        },
-      });
-
-      if (existing) {
-        if (this.attendanceService.isLocked(existing)) {
-          throw new Error('Attendance locked server-side');
-        }
-        await this.assertLastWriteWins(existing.clientUpdatedAt, clientTime);
-      }
-
-      await this.attendanceService.upsert(
-        {
-          ...payload,
-          operationalStatus: payload.operationalStatus as
-            | AttendanceOperationalStatus
-            | undefined,
-          replacementType: payload.replacementType as
-            | AttendanceReplacementType
-            | undefined,
-          clientUpdatedAt: item.clientUpdatedAt,
-        } satisfies UpsertAttendanceDto,
-        userId,
-      );
-      return;
-    }
-
     if (item.entity === 'Member') {
       const existing = await this.prisma.member.findUnique({
         where: { id: item.entityId },
@@ -144,115 +76,6 @@ export class SyncService {
           clientUpdatedAt: clientTime,
         },
       });
-      return;
-    }
-
-    if (item.entity === 'Event') {
-      const payload = item.payload as {
-        title: string;
-        type: string;
-        startTime: string;
-        endTime: string;
-        location?: string;
-        ministryScope: string;
-        status?: EventStatus;
-        serviceSlot?: number;
-      };
-
-      const existing = await this.prisma.event.findUnique({
-        where: { id: item.entityId },
-      });
-
-      if (existing) {
-        await this.assertLastWriteWins(existing.updatedAt, clientTime);
-        await this.eventsService.update(
-          item.entityId,
-          {
-            title: payload.title,
-            type: payload.type as never,
-            startTime: payload.startTime,
-            endTime: payload.endTime,
-            location: payload.location,
-            ministryScope: payload.ministryScope as never,
-            status: payload.status,
-            serviceSlot: payload.serviceSlot,
-          },
-          userId,
-        );
-      } else {
-        await this.eventsService.create(
-          {
-            title: payload.title,
-            type: payload.type as never,
-            startTime: payload.startTime,
-            endTime: payload.endTime,
-            location: payload.location,
-            ministryScope: payload.ministryScope as never,
-            status: payload.status,
-            serviceSlot: payload.serviceSlot,
-          },
-          userId,
-        );
-      }
-      return;
-    }
-
-    if (item.entity === 'EventAssignment') {
-      const payload = item.payload as {
-        eventId: string;
-        memberId: string;
-        role?: string;
-        isOverride?: boolean;
-        overrideReason?: string;
-      };
-      await this.assignmentsService.assign(
-        {
-          eventId: payload.eventId,
-          memberId: payload.memberId,
-          role: payload.role,
-          isOverride: payload.isOverride,
-          overrideReason: payload.overrideReason,
-        },
-        userId,
-      );
-      return;
-    }
-
-    if (item.entity === 'Swap') {
-      const payload = item.payload as {
-        eventId: string;
-        requesterId: string;
-        targetId: string;
-      };
-      const existing = await this.prisma.swap.findFirst({
-        where: {
-          eventId: payload.eventId,
-          requesterId: payload.requesterId,
-          targetId: payload.targetId,
-          status: { notIn: ['CANCELLED', 'TARGET_REJECTED'] },
-        },
-      });
-      if (existing) throw new Error('Duplicate swap request');
-      await this.prisma.swap.create({
-        data: {
-          eventId: payload.eventId,
-          requesterId: payload.requesterId,
-          targetId: payload.targetId,
-          status: 'REQUESTED',
-        },
-      });
-      return;
-    }
-
-    if (item.entity === 'Replacement') {
-      const payload = item.payload as {
-        eventId: string;
-        absentMemberId: string;
-        coverMemberId?: string;
-        selfFound?: boolean;
-        notes?: string;
-      };
-      await this.replacementsService.create(payload, userId);
       return;
     }
 

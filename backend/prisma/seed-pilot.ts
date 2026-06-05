@@ -2,7 +2,7 @@
  * Pilot sample data — run after seed.ts:
  *   npx ts-node prisma/seed-pilot.ts
  */
-import { FamilyMemberRole, PrismaClient } from '@prisma/client';
+import { FamilyMemberRole, PrismaClient, OperationOccurrenceStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { ROLES } from '../src/common/constants/roles';
 import { MAIN_CHOIR_ID } from '../src/common/constants/choir.constants';
@@ -170,6 +170,28 @@ async function assignProtocolCommitteeRole(
   });
 }
 
+async function upsertOperationAssignment(
+  occurrenceId: string,
+  operationalUnitId: string,
+  assignmentType: 'MAIN_CHOIR' | 'PROTOCOL_TEAM' | 'CHILDREN_CHOIR',
+) {
+  return prisma.operationAssignment.upsert({
+    where: {
+      occurrenceId_operationalUnitId: { occurrenceId, operationalUnitId },
+    },
+    create: {
+      occurrenceId,
+      operationalUnitId,
+      assignmentType,
+      status: 'CONFIRMED',
+    },
+    update: {
+      assignmentType,
+      status: 'CONFIRMED',
+    },
+  });
+}
+
 async function main() {
   await upsertPilotUser(
     'choir.president@church.local',
@@ -305,69 +327,71 @@ async function main() {
   const protocolEnd = new Date(nextSunday);
   protocolEnd.setHours(10, 30, 0, 0);
 
-  const existingChoir = await prisma.event.findFirst({
+  const adminUser = await prisma.user.findFirst({
+    where: { email: 'admin@church.local' },
+    select: { id: true },
+  });
+  if (!adminUser) {
+    throw new Error('Run prisma/seed.ts before seed-pilot.ts');
+  }
+
+  const [choirUnit, protocolUnit] = await Promise.all([
+    prisma.operationalUnit.findFirst({ where: { code: 'MAIN_CHOIR' } }),
+    prisma.operationalUnit.findFirst({ where: { code: 'PROTOCOL_TEAM' } }),
+  ]);
+  if (!choirUnit || !protocolUnit) {
+    throw new Error('Operational units missing — run prisma/seed.ts first');
+  }
+
+  const existingChoirOccurrence = await prisma.operationOccurrence.findFirst({
     where: { title: 'Iteraniro rya Korali — Serivisi 1' },
   });
-  const choirEvent =
-    existingChoir ??
-    (await prisma.event.create({
+  const choirOccurrence =
+    existingChoirOccurrence ??
+    (await prisma.operationOccurrence.create({
       data: {
-      title: 'Iteraniro rya Korali — Serivisi 1',
-      type: 'CHOIR_SERVICE',
-      ministryScope: 'CHOIR',
-      status: 'SCHEDULED',
-      startTime: nextSunday,
-      endTime: choirEnd,
-      location: 'Salle principale',
-      serviceSlot: 1,
-      metadata: { recurrenceRule: 'WEEKLY', description: 'Pilot choir service' },
+        type: 'SERVICE',
+        title: 'Iteraniro rya Korali — Serivisi 1',
+        status: OperationOccurrenceStatus.PUBLISHED,
+        startAt: nextSunday,
+        endAt: choirEnd,
+        createdById: adminUser.id,
       },
     }));
 
-  const existingProtocol = await prisma.event.findFirst({
+  const existingProtocolOccurrence = await prisma.operationOccurrence.findFirst({
     where: { title: 'Serivisi Protocol — Ukwezi 1' },
   });
-  const protocolEvent =
-    existingProtocol ??
-    (await prisma.event.create({
+  const protocolOccurrence =
+    existingProtocolOccurrence ??
+    (await prisma.operationOccurrence.create({
       data: {
-      title: 'Serivisi Protocol — Ukwezi 1',
-      type: 'PROTOCOL_SERVICE',
-      ministryScope: 'PROTOCOL',
-      status: 'SCHEDULED',
-      startTime: protocolStart,
-      endTime: protocolEnd,
-      location: 'Entrée principale',
-      metadata: { description: 'Pilot protocol service' },
+        type: 'SERVICE',
+        title: 'Serivisi Protocol — Ukwezi 1',
+        status: OperationOccurrenceStatus.PUBLISHED,
+        startAt: protocolStart,
+        endAt: protocolEnd,
+        createdById: adminUser.id,
       },
     }));
 
-  const choirMemberIds = members
-    .filter((u) => u.member?.ministry === 'CHOIR')
-    .map((u) => u.member!.id);
-  const protocolMemberIds = members
-    .filter((u) => u.member?.ministry === 'PROTOCOL')
-    .map((u) => u.member!.id);
+  await upsertOperationAssignment(
+    choirOccurrence.id,
+    choirUnit.id,
+    'MAIN_CHOIR',
+  );
 
-  for (const memberId of choirMemberIds) {
-    await prisma.eventAssignment.upsert({
-      where: {
-        eventId_memberId: { eventId: choirEvent.id, memberId },
-      },
-      create: { eventId: choirEvent.id, memberId },
-      update: {},
-    });
-  }
+  await upsertOperationAssignment(
+    protocolOccurrence.id,
+    protocolUnit.id,
+    'PROTOCOL_TEAM',
+  );
 
-  for (const memberId of protocolMemberIds.slice(0, 3)) {
-    await prisma.eventAssignment.upsert({
-      where: {
-        eventId_memberId: { eventId: protocolEvent.id, memberId },
-      },
-      create: { eventId: protocolEvent.id, memberId },
-      update: {},
-    });
-  }
+  await prisma.churchConfiguration.upsert({
+    where: { id: 'default' },
+    create: { id: 'default', demoModeEnabled: true },
+    update: { demoModeEnabled: true },
+  });
 
   const pilotFamily = await prisma.family.upsert({
     where: {
@@ -413,7 +437,7 @@ async function main() {
   console.log('  MEMBER (singers):         member1@church.local, member2@church.local');
   console.log('  PENDING (QA onboarding):  pending.choir@church.local, pending.protocol@church.local');
   console.log('  Admin:                    admin@church.local / Admin@123');
-  console.log('  Events:', choirEvent.title, '|', protocolEvent.title);
+  console.log('  Occurrences:', choirOccurrence.title, '|', protocolOccurrence.title);
 }
 
 main()
