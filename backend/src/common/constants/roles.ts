@@ -1,5 +1,9 @@
 export const ROLES = {
   MEMBER: 'MEMBER',
+  /** Primary choir administrator — reviews joins, manages choir position roles */
+  CHOIR_ADMIN: 'CHOIR_ADMIN',
+  /** Primary protocol administrator — reviews claims, manages protocol roles */
+  PROTOCOL_ADMIN: 'PROTOCOL_ADMIN',
   /** Legacy — same access as CHOIR_PRESIDENT; prefer officer roles below */
   CHOIR_LEADER: 'CHOIR_LEADER',
   /** Choir officer positions (customize permissions in seed.ts) */
@@ -101,6 +105,17 @@ export const PERMISSIONS = {
   CHOIR_DEVOTION_CREATE: 'choir.devotion.create',
   CHOIR_DEVOTION_PUBLISH: 'choir.devotion.publish',
   CHOIR_DEVOTION_MANAGE: 'choir.devotion.manage',
+  /** Choir rules charter — view/share with all members */
+  CHOIR_RULES_VIEW: 'choir.rules.view',
+  CHOIR_RULES_MANAGE: 'choir.rules.manage',
+  /** Direct member notices (warnings, discipline outcomes, welfare follow-up) */
+  CHOIR_MEMBER_NOTIFY: 'choir.member.notify',
+  /** Prayer / intercession inbox for spiritual leadership */
+  CHOIR_INTERCESSION_MANAGE: 'choir.intercession.manage',
+  /** Fasting, prayer programs, spiritual calendar for singers */
+  CHOIR_SPIRITUAL_PROGRAM_MANAGE: 'choir.spiritual.program.manage',
+  /** Secretary — consolidated read access to choir records */
+  CHOIR_RECORDS_VIEW: 'choir.records.view',
   CHOIR_CUSTOM_ROLE_MANAGE: 'choir.custom_role.manage',
 
   /** Ministry Foundation (MF-1) — global ministry namespace */

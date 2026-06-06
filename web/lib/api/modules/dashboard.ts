@@ -12,7 +12,7 @@ export const dashboardApi = {
 
   getLeaderSummary: () =>
     apiClient.get<never, LeaderDashboardSummary>(
-      '/dashboard/leader'),
+      '/dashboard/leader-summary'),
 
   getAdminSummary: () =>
     apiClient.get<never, AdminDashboardSummary>(

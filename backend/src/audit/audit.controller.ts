@@ -3,7 +3,7 @@ import { AuditService } from './audit.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { RequireAnyPermissions } from '../common/decorators/roles.decorator';
-import { ADMIN_AUDIT_ACCESS } from '../common/constants/roles';
+import { ADMIN_AUDIT_ACCESS, PERMISSIONS } from '../common/constants/roles';
 import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Controller('audit')
@@ -12,7 +12,11 @@ export class AuditController {
   constructor(private auditService: AuditService) {}
 
   @Get()
-  @RequireAnyPermissions(...ADMIN_AUDIT_ACCESS)
+  @RequireAnyPermissions(
+    ...ADMIN_AUDIT_ACCESS,
+    PERMISSIONS.AUDIT_READ,
+    PERMISSIONS.CHOIR_RECORDS_VIEW,
+  )
   findAll(
     @Query() query: PaginationDto & { entity?: string; entityId?: string },
   ) {

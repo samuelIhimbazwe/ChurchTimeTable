@@ -13,6 +13,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ChoirDiscoveryService } from '../member-portal/choir-discovery.service';
 import { ChoirJoinRequestsService } from '../member-portal/choir-join-requests.service';
 import { ChoirMembershipRulesService } from '../member-portal/choir-membership-rules.service';
+import { ChoirMembersService } from './choir-members.service';
 
 import { IsString } from 'class-validator';
 
@@ -30,6 +31,7 @@ export class ChoirsController {
     private discovery: ChoirDiscoveryService,
     private joinRequests: ChoirJoinRequestsService,
     private rules: ChoirMembershipRulesService,
+    private choirMembers: ChoirMembersService,
   ) {}
 
   @Get()
@@ -77,6 +79,37 @@ export class ChoirsController {
     return this.rules.describeMembershipRules(user.sub);
   }
 
+  @Get(':choirId/members')
+  listMembers(
+    @CurrentUser() user: JwtPayload,
+    @Param('choirId') choirId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.choirMembers.listMembers(user.sub, choirId, {
+      page: page ? Number(page) : undefined,
+      limit: limit ? Number(limit) : undefined,
+      search,
+    });
+  }
+
+  @Get('position-roles')
+  listPositionRoles(
+    @CurrentUser() user: JwtPayload,
+    @Query('choirId') choirId: string,
+  ) {
+    return this.joinRequests.listPositionRoles(user.sub, choirId);
+  }
+
+  @Post('members/assign-position')
+  assignMemberPosition(
+    @CurrentUser() user: JwtPayload,
+    @Body() body: { choirId: string; memberId: string; roleId: string },
+  ) {
+    return this.joinRequests.assignMemberPosition(user.sub, body);
+  }
+
   @Post('join-requests')
   submitJoin(
     @CurrentUser() user: JwtPayload,
@@ -107,6 +140,7 @@ export class ChoirsController {
     body: {
       status?: 'APPROVED' | 'REJECTED' | 'NEEDS_INFO';
       reviewNotes?: string;
+      assignedRoleId?: string;
       withdraw?: boolean;
     },
   ) {
@@ -116,6 +150,7 @@ export class ChoirsController {
     return this.joinRequests.review(user.sub, id, {
       status: body.status!,
       reviewNotes: body.reviewNotes,
+      assignedRoleId: body.assignedRoleId,
     });
   }
 }

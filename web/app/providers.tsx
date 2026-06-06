@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
 import ToastContainer from '@/components/shared/Toast'
+import { AuthSessionRestore } from '@/components/auth/AuthSessionRestore'
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -16,6 +17,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <AuthSessionRestore />
       {children}
       <ToastContainer />
     </QueryClientProvider>

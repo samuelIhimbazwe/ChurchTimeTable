@@ -112,11 +112,53 @@ export class ContributionGovernanceService {
         claimedAmount: true,
         confirmedAmount: true,
         amount: true,
+        discrepancyAmount: true,
+        discrepancyReason: true,
+        paymentAt: true,
         createdAt: true,
+        adjustments: { select: { adjustmentAmount: true } },
+        member: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
+        contributionTypeCatalog: { select: { name: true } },
       },
     });
 
-    return { items: records };
+    return {
+      items: records.map((record) => {
+        const confirmed = record.confirmedAmount ?? record.amount;
+        const effective = this.effectiveAmount.compute(
+          confirmed,
+          record.adjustments,
+        );
+        const member = record.member;
+        return {
+          id: record.id,
+          referenceNumber: record.referenceNumber,
+          status: record.status,
+          familyId: record.familyId,
+          memberId: record.memberId,
+          memberName: member
+            ? `${member.firstName} ${member.lastName}`.trim()
+            : null,
+          claimedAmount: Number(record.claimedAmount ?? record.amount),
+          confirmedAmount: record.confirmedAmount
+            ? Number(record.confirmedAmount)
+            : null,
+          effectiveAmount: effective,
+          discrepancyAmount: record.discrepancyAmount
+            ? Number(record.discrepancyAmount)
+            : null,
+          discrepancyReason: record.discrepancyReason,
+          typeName: record.contributionTypeCatalog?.name ?? null,
+          paymentAt: record.paymentAt,
+          createdAt: record.createdAt,
+        };
+      }),
+    };
   }
 
   async approveFamily(
@@ -279,6 +321,18 @@ export class ContributionGovernanceService {
     await this.thankYou.sendContributionThankYou(contributionId, actorUserId, {
       automatic: true,
     });
+
+    if (discrepancyAmount !== 0 && discrepancyReason) {
+      await this.notifyDiscrepancyStakeholders({
+        familyId: record.familyId!,
+        contributionId,
+        claimedAmount,
+        confirmedAmount,
+        discrepancyAmount,
+        discrepancyReason,
+        memberName: `${record.member.firstName} ${record.member.lastName}`.trim(),
+      });
+    }
 
     const withThankYou = await this.prisma.contributionRecord.findUniqueOrThrow({
       where: { id: contributionId },
@@ -557,6 +611,82 @@ export class ContributionGovernanceService {
         rejectionReason,
       },
     );
+  }
+
+  private async notifyDiscrepancyStakeholders(params: {
+    familyId: string;
+    contributionId: string;
+    claimedAmount: number;
+    confirmedAmount: number;
+    discrepancyAmount: number;
+    discrepancyReason: string;
+    memberName: string;
+  }) {
+    const family = await this.prisma.family.findUnique({
+      where: { id: params.familyId },
+      select: { choirId: true, familyName: true },
+    });
+    if (!family?.choirId) return;
+
+    const roles = await this.prisma.choirCommitteeRole.findMany({
+      where: {
+        choirId: family.choirId,
+        name: { in: ['family_coordinator', 'treasurer'] },
+      },
+      select: { id: true, name: true },
+    });
+    if (!roles.length) return;
+
+    const assignments = await this.prisma.choirCommitteeMember.findMany({
+      where: {
+        choirId: family.choirId,
+        roleId: { in: roles.map((r) => r.id) },
+      },
+      include: {
+        member: { select: { userId: true } },
+      },
+    });
+
+    const recipientUserIds = new Set<string>();
+    for (const row of assignments) {
+      if (row.member.userId) recipientUserIds.add(row.member.userId);
+    }
+
+    for (const userId of recipientUserIds) {
+      const locale = await this.resolveUserLocale(userId);
+      const title = this.i18n.translate(
+        locale,
+        'NOTIFICATION_CONTRIBUTION_DISCREPANCY_TITLE',
+        'Contribution amount mismatch',
+      );
+      const body = this.i18n.translate(
+        locale,
+        'NOTIFICATION_CONTRIBUTION_DISCREPANCY_BODY',
+        `${params.memberName} in ${family.familyName}: claimed ${params.claimedAmount}, confirmed ${params.confirmedAmount}. ${params.discrepancyReason}`,
+        {
+          family: family.familyName,
+          member: params.memberName,
+          claimed: String(params.claimedAmount),
+          confirmed: String(params.confirmedAmount),
+          reason: params.discrepancyReason,
+        },
+      );
+
+      await this.notifications.create(
+        userId,
+        NotificationType.GENERAL,
+        title,
+        body,
+        {
+          kind: 'contribution_discrepancy',
+          contributionId: params.contributionId,
+          familyId: params.familyId,
+          claimedAmount: params.claimedAmount,
+          confirmedAmount: params.confirmedAmount,
+          discrepancyAmount: params.discrepancyAmount,
+        },
+      );
+    }
   }
 
   private async resolveUserLocale(userId: string) {

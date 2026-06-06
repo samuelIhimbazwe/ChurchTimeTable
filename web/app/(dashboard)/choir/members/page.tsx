@@ -1,11 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { choirApi } from '@/lib/api'
 import {
   Card, Badge, Avatar, SkeletonMemberRow, PermissionGate,
 } from '@/components/shared'
+import { useOptionalChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
+import { useChoirAccess } from '@/lib/hooks/useChoirAccess'
+import { parseChoirIdFromPath } from '@/lib/choir/paths'
 import { Search, Download } from 'lucide-react'
 import type { ChoirMember, ScoreBand } from '@/types'
 
@@ -15,11 +19,23 @@ const SCORE_BADGE = (band: ScoreBand) =>
 
 export default function ChoirMembersPage() {
   const [search, setSearch] = useState('')
-  const [choirId] = useState('default')
+  const pathname = usePathname()
+  const choirCtx = useOptionalChoirDashboardCtx()
+  const { activeChoirMemberships } = useChoirAccess()
+
+  const choirId = useMemo(
+    () =>
+      choirCtx?.choirId ??
+      parseChoirIdFromPath(pathname) ??
+      activeChoirMemberships[0]?.id ??
+      '',
+    [choirCtx?.choirId, pathname, activeChoirMemberships],
+  )
 
   const { data, isLoading } = useQuery({
     queryKey: ['choir-members', choirId, search],
-    queryFn:  () => choirApi.getMembers(choirId, { search, limit: 50 }),
+    queryFn: () => choirApi.getMembers(choirId, { search, limit: 50 }),
+    enabled: !!choirId,
   })
 
   const filtered = data?.items ?? []
@@ -40,7 +56,6 @@ export default function ChoirMembersPage() {
         </PermissionGate>
       </div>
 
-      {/* Search */}
       <div className="relative">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
         <input
@@ -53,7 +68,11 @@ export default function ChoirMembersPage() {
       </div>
 
       <Card padding="none">
-        {isLoading ? (
+        {!choirId ? (
+          <p className="text-center text-text-muted py-12 text-sm">
+            Open this page from your choir dashboard.
+          </p>
+        ) : isLoading ? (
           <ul className="divide-y divide-border">
             {Array.from({ length: 8 }).map((_, i) => (
               <li key={i} className="px-4">

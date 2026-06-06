@@ -3,57 +3,73 @@
 import { useState } from 'react'
 import {
   Bell, Search, HelpCircle, ChevronDown,
-  Sun, Moon, LogOut, User, Settings,
+  Sun, Moon, LogOut, User, Settings, Menu,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores/index'
 import { useLogout } from '@/lib/hooks'
 
 interface TopBarProps {
-  pageTitle:    string
-  userName?:    string
-  userRole?:    string
-  unreadCount?: number
+  pageTitle:     string
+  userName?:     string
+  userRole?:     string
+  unreadCount?:  number
+  onMenuClick?:  () => void
+  onSearchClick?:() => void
+  onNotifClick?: () => void
+  notifOpen?:    boolean
 }
 
 export default function TopBar({
   pageTitle,
-  userName    = 'User',
-  userRole    = 'Member',
-  unreadCount = 0,
+  userName     = 'User',
+  userRole     = 'Member',
+  unreadCount  = 0,
+  onMenuClick,
+  onSearchClick,
+  onNotifClick,
+  notifOpen    = false,
 }: TopBarProps) {
-  const collapsed  = useUIStore((s) => s.sidebarCollapsed)
-  const theme      = useUIStore((s) => s.theme)
-  const setTheme   = useUIStore((s) => s.setTheme)
+  const collapsed = useUIStore((s) => s.sidebarCollapsed)
+  const theme     = useUIStore((s) => s.theme)
+  const setTheme  = useUIStore((s) => s.setTheme)
   const [menuOpen, setMenuOpen] = useState(false)
 
   const { mutate: logout, isPending: loggingOut } = useLogout()
 
   const initials = userName
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
+    .split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
 
   return (
     <header
       className={cn(
         'fixed top-0 right-0 z-30 h-16',
-        'flex items-center justify-between px-6 gap-4',
+        'flex items-center justify-between px-4 sm:px-6 gap-4',
         'bg-surface border-b border-border',
-        'transition-[left] duration-normal ease-out',
-        collapsed ? 'left-16' : 'left-[240px]',
+        'left-0',
+        'lg:transition-[left] lg:duration-normal lg:ease-out',
+        'lg:left-[240px]',
+        collapsed && 'lg:left-16',
       )}
     >
-      <h1 className="font-body font-semibold text-xl text-text-primary truncate">
-        {pageTitle}
-      </h1>
-
-      <div className="flex items-center gap-2 shrink-0">
-
-        {/* Search */}
+      <div className="flex items-center gap-3">
         <button
+          onClick={onMenuClick}
+          aria-label="Open menu"
+          className="lg:hidden p-2 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors"
+        >
+          <Menu size={20} />
+        </button>
+
+        <h1 className="font-body font-semibold text-xl text-text-primary truncate max-w-[160px] sm:max-w-none">
+          {pageTitle}
+        </h1>
+      </div>
+
+      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+
+        <button
+          onClick={onSearchClick}
           aria-label="Open search"
           className={cn(
             'hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-md',
@@ -69,7 +85,14 @@ export default function TopBar({
           </kbd>
         </button>
 
-        {/* Theme */}
+        <button
+          onClick={onSearchClick}
+          aria-label="Search"
+          className="sm:hidden p-2 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors"
+        >
+          <Search size={18} />
+        </button>
+
         <button
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           aria-label="Toggle theme"
@@ -78,18 +101,22 @@ export default function TopBar({
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
         </button>
 
-        {/* Help */}
         <button
           aria-label="Help"
-          className="p-2 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors duration-fast"
+          className="hidden sm:block p-2 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors duration-fast"
         >
           <HelpCircle size={18} />
         </button>
 
-        {/* Notifications */}
         <button
+          onClick={onNotifClick}
           aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ''}`}
-          className="relative p-2 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors duration-fast"
+          className={cn(
+            'relative p-2 rounded-md transition-colors duration-fast',
+            notifOpen
+              ? 'bg-surface-overlay text-text-primary'
+              : 'text-text-muted hover:text-text-primary hover:bg-surface-raised',
+          )}
         >
           <Bell size={18} className={unreadCount ? 'animate-bell-wiggle' : ''} />
           {unreadCount > 0 && (
@@ -103,16 +130,12 @@ export default function TopBar({
           )}
         </button>
 
-        {/* Avatar + dropdown */}
         <div className="relative">
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Open profile menu"
+            aria-label="Profile menu"
             aria-expanded={menuOpen}
-            className={cn(
-              'flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-md',
-              'hover:bg-surface-raised transition-colors duration-fast',
-            )}
+            className="flex items-center gap-2 pl-2 pr-2 sm:pr-3 py-1.5 rounded-md hover:bg-surface-raised transition-colors duration-fast"
           >
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary-700 text-text-inverse text-xs font-semibold shrink-0">
               {initials}
@@ -126,14 +149,9 @@ export default function TopBar({
             <ChevronDown size={14} className="text-text-muted hidden md:block" />
           </button>
 
-          {/* Dropdown */}
           {menuOpen && (
             <>
-              {/* Backdrop */}
-              <div
-                className="fixed inset-0 z-40"
-                onClick={() => setMenuOpen(false)}
-              />
+              <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
               <div className={cn(
                 'absolute right-0 top-full mt-2 z-50',
                 'w-52 bg-surface rounded-lg border border-border shadow-overlay',
@@ -144,9 +162,9 @@ export default function TopBar({
                   <p className="text-xs text-text-muted">{userRole}</p>
                 </div>
                 <div className="py-1">
-                  <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-secondary hover:bg-surface-raised hover:text-text-primary transition-colors">
+                  <a href="/portal/profile" className="flex items-center gap-3 px-4 py-2 text-sm text-text-secondary hover:bg-surface-raised hover:text-text-primary transition-colors">
                     <User size={15} /> My Profile
-                  </button>
+                  </a>
                   <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-secondary hover:bg-surface-raised hover:text-text-primary transition-colors">
                     <Settings size={15} /> Preferences
                   </button>

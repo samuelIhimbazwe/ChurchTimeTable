@@ -161,11 +161,16 @@ export function canViewFamilies(permissions: string[]): boolean {
   return hasAnyEffectivePermission(permissions, [
     PERMISSIONS.FAMILY_VIEW,
     PERMISSIONS.FAMILY_MANAGE,
+    PERMISSIONS.CHOIR_FAMILY_VIEW,
+    PERMISSIONS.CHOIR_FAMILY_MANAGE,
   ]);
 }
 
 export function canManageFamilies(permissions: string[]): boolean {
-  return hasEffectivePermission(permissions, PERMISSIONS.FAMILY_MANAGE);
+  return hasAnyEffectivePermission(permissions, [
+    PERMISSIONS.FAMILY_MANAGE,
+    PERMISSIONS.CHOIR_FAMILY_MANAGE,
+  ]);
 }
 
 const FINANCE_INTELLIGENCE_CLAIMS = [

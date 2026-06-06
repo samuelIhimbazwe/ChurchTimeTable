@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -126,6 +126,16 @@ enum DevotionType {
   VERSE_OF_DAY
   ENCOURAGEMENT
   ANNOUNCEMENT
+  TWO_DAY_PRAYER
+  TESTIMONY
+  GRATITUDE
+  PRAISE
+}
+
+enum PrayerRequestStatus {
+  PENDING
+  IN_PRAYER
+  COMPLETED
 }
 
 enum UniformItemStatus {
@@ -558,6 +568,7 @@ model User {
   importJobsUploaded                ImportJob[]
   uxAnalyticsEvents                 UxAnalyticsEvent[]
   notificationDeliveryLogs        NotificationDeliveryLog[] @relation("NotificationDeliveryRecipient")
+  prayerRequestsSubmitted           PrayerRequest[]           @relation("PrayerRequestSubmitter")
 
   @@index([email])
 }
@@ -672,6 +683,7 @@ model Member {
   protocolMembershipClaims             ProtocolMembershipClaim[]
   protocolInvitationsSent              ProtocolInvitation[] @relation("ProtocolInviter")
   protocolClaimsReviewed               ProtocolMembershipClaim[] @relation("ProtocolClaimReviewer")
+  prayerRequests                       PrayerRequest[]
 
   @@index([status])
   @@index([ministry])
@@ -1067,6 +1079,8 @@ model Choir {
   leaderDisplayName String?
   isPublicJoinable Boolean @default(true)
   isActive    Boolean  @default(true)
+  showMemberCountPublic Boolean @default(false)
+  publicProfileJson     Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -1123,6 +1137,7 @@ model Devotion {
   verseReference      String?
   verseText           String?
   type                DevotionType
+  prayerDate          DateTime?
   isPinned            Boolean                @default(false)
   publishedAt         DateTime?
   expiresAt           DateTime?
@@ -1207,6 +1222,12 @@ model Family {
   headMemberId       String?
   delegationEnabled  Boolean                   @default(false)
   notes              String?
+  /// MoMo / bank details shown to members when paying family contributions
+  paymentMomoNumber      String?
+  paymentMomoAccountName String?
+  paymentBankAccount     String?
+  paymentBankName        String?
+  paymentInstructions    String?
   createdAt          DateTime                  @default(now())
   updatedAt          DateTime                  @updatedAt
   choir              Choir?                    @relation(fields: [choirId], references: [id])
@@ -1790,6 +1811,8 @@ model Ministry {
   funds                  MinistryFund[]
   budgets                MinistryBudget[]
   expenses               MinistryExpense[]
+  prayerRequests         PrayerRequest[]
+  weeklyActivities       ChurchWeeklyActivity[]
 
   @@index([isActive])
 }
@@ -3526,4 +3549,44 @@ model UxAnalyticsEvent {
   @@index([eventType])
   @@index([userId])
   @@index([createdAt])
+}
+
+model PrayerRequest {
+  id          String              @id @default(uuid())
+  content     String
+  isAnonymous Boolean             @default(true)
+  displayName String?
+  memberId    String?
+  userId      String?
+  ministryId  String
+  status      PrayerRequestStatus @default(PENDING)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  ministry Ministry @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  member   Member?  @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  user     User?    @relation("PrayerRequestSubmitter", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([ministryId, status])
+  @@index([createdAt])
+}
+
+model ChurchWeeklyActivity {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  dayOfWeek   Int
+  startTime   String
+  endTime     String?
+  location    String?
+  ministryId  String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ministry Ministry? @relation(fields: [ministryId], references: [id], onDelete: SetNull)
+
+  @@index([dayOfWeek, isActive])
+  @@index([ministryId])
 }

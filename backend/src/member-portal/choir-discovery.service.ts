@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ChoirMembershipRulesService } from './choir-membership-rules.service';
 
 @Injectable()
 export class ChoirDiscoveryService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private choirRules: ChoirMembershipRulesService,
+  ) {}
 
   async listPublic(actorUserId?: string) {
     let memberId: string | undefined;
@@ -16,7 +20,7 @@ export class ChoirDiscoveryService {
     }
 
     const choirs = await this.prisma.choir.findMany({
-      where: { isActive: true, isPublicJoinable: true },
+      where: { isActive: true },
       orderBy: { name: 'asc' },
       include: {
         _count: { select: { memberships: { where: { isActive: true } } } },
@@ -30,16 +34,35 @@ export class ChoirDiscoveryService {
       },
     });
 
-    return choirs.map((c) => ({
+    const mapped = choirs.map((c) => ({
       id: c.id,
       name: c.name,
       code: c.code,
       description: c.description,
       choirKind: c.choirKind,
       leader: c.leaderDisplayName,
-      membershipCount: c._count.memberships,
+      isPublicJoinable: c.isPublicJoinable,
+      membershipCount: c.showMemberCountPublic ? c._count.memberships : undefined,
+      showMemberCount: c.showMemberCountPublic,
       joinStatus: memberId ? (c.joinRequests[0]?.status ?? null) : null,
       pendingRequestId: memberId ? (c.joinRequests[0]?.id ?? null) : null,
     }));
+
+    if (!actorUserId) return mapped;
+
+    const visibleIds = new Set(
+      (
+        await this.choirRules.filterPortalVisibleChoirIds(
+          actorUserId,
+          choirs.map((c) => ({
+            id: c.id,
+            code: c.code,
+            choirKind: c.choirKind,
+          })),
+        )
+      ).map((c) => c.id),
+    );
+
+    return mapped.filter((c) => visibleIds.has(c.id));
   }
 }

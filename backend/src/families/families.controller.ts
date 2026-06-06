@@ -17,6 +17,7 @@ import {
   UpdateFamilyDto,
 } from './dto/create-family.dto';
 import { UpdateFamilyMemberDto } from './dto/update-family-member.dto';
+import { UpdateFamilyPaymentDto } from './dto/update-family-payment.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -55,13 +56,23 @@ export class FamiliesController {
   ) {}
 
   @Get('metrics/overview')
-  @RequireAnyPermissions(PERMISSIONS.FAMILY_VIEW, PERMISSIONS.FAMILY_MANAGE)
+  @RequireAnyPermissions(
+    PERMISSIONS.FAMILY_VIEW,
+    PERMISSIONS.FAMILY_MANAGE,
+    PERMISSIONS.CHOIR_FAMILY_VIEW,
+    PERMISSIONS.CHOIR_FAMILY_MANAGE,
+  )
   metricsOverview(@CurrentUser() user: JwtPayload) {
     return this.familyMetricsService.getOverview(user.sub);
   }
 
   @Get()
-  @RequireAnyPermissions(PERMISSIONS.FAMILY_VIEW, PERMISSIONS.FAMILY_MANAGE)
+  @RequireAnyPermissions(
+    PERMISSIONS.FAMILY_VIEW,
+    PERMISSIONS.FAMILY_MANAGE,
+    PERMISSIONS.CHOIR_FAMILY_VIEW,
+    PERMISSIONS.CHOIR_FAMILY_MANAGE,
+  )
   async list(@CurrentUser() user: JwtPayload, @Query() query: FamilyListQueryDto) {
     const result = await this.familiesService.list(
       user.sub,
@@ -104,7 +115,12 @@ export class FamiliesController {
   }
 
   @Get(':id/metrics')
-  @RequireAnyPermissions(PERMISSIONS.FAMILY_VIEW, PERMISSIONS.FAMILY_MANAGE)
+  @RequireAnyPermissions(
+    PERMISSIONS.FAMILY_VIEW,
+    PERMISSIONS.FAMILY_MANAGE,
+    PERMISSIONS.CHOIR_FAMILY_VIEW,
+    PERMISSIONS.CHOIR_FAMILY_MANAGE,
+  )
   familyMetrics(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.familyMetricsService.getFamilyMetrics(user.sub, id);
   }
@@ -116,7 +132,12 @@ export class FamiliesController {
   }
 
   @Get(':id')
-  @RequireAnyPermissions(PERMISSIONS.FAMILY_VIEW, PERMISSIONS.FAMILY_MANAGE)
+  @RequireAnyPermissions(
+    PERMISSIONS.FAMILY_VIEW,
+    PERMISSIONS.FAMILY_MANAGE,
+    PERMISSIONS.CHOIR_FAMILY_VIEW,
+    PERMISSIONS.CHOIR_FAMILY_MANAGE,
+  )
   findOne(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.familiesService.findOne(user.sub, id);
   }
@@ -135,6 +156,21 @@ export class FamiliesController {
     @Body() dto: UpdateFamilyDto,
   ) {
     return this.familiesService.update(user.sub, id, dto);
+  }
+
+  @Patch(':id/payment-instructions')
+  @RequireAnyPermissions(
+    PERMISSIONS.FAMILY_MANAGE,
+    PERMISSIONS.CHOIR_FAMILY_MANAGE,
+    PERMISSIONS.FAMILY_VIEW,
+    PERMISSIONS.CHOIR_FAMILY_VIEW,
+  )
+  updatePaymentInstructions(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+    @Body() dto: UpdateFamilyPaymentDto,
+  ) {
+    return this.familiesService.updatePaymentInstructions(user.sub, id, dto);
   }
 
   @Delete(':id')

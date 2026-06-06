@@ -100,6 +100,7 @@ export class DevotionsService {
         type: dto.type,
         isPinned: dto.isPinned ?? false,
         expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
+        prayerDate: dto.prayerDate ? new Date(dto.prayerDate) : null,
         createdById: userId,
       },
     });

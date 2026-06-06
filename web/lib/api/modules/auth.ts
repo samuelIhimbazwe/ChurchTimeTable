@@ -89,5 +89,5 @@ export const authApi = {
   },
 
   completeOnboarding: () =>
-    apiClient.patch<never, void>('/auth/onboarding/complete'),
+    apiClient.patch<never, void>('/auth/onboarding-complete'),
 }

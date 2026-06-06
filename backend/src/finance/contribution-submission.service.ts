@@ -49,6 +49,17 @@ export class ContributionSubmissionService {
       throw new BadRequestException('Contribution type is not available');
     }
 
+    let notes = dto.notes?.trim() ?? undefined;
+    if (catalog.code === 'other') {
+      const label = dto.customTypeLabel?.trim();
+      if (!label || label.length < 2) {
+        throw new BadRequestException(
+          'customTypeLabel is required when contribution type is Other',
+        );
+      }
+      notes = notes ? `Other: ${label}. ${notes}` : `Other: ${label}`;
+    }
+
     let campaignId: string | null = null;
     if (dto.contributionCampaignId) {
       const campaign = await this.prisma.contributionCampaign.findUnique({
@@ -89,7 +100,7 @@ export class ContributionSubmissionService {
         status: ContributionStatus.SUBMITTED,
         referenceNumber,
         receiptUrl: dto.receiptUrl ?? undefined,
-        notes: dto.notes,
+        notes,
       },
       include: {
         member: {
@@ -265,6 +276,29 @@ export class ContributionSubmissionService {
       select: { id: true, code: true, name: true },
     });
 
+    const familyMember = ctx.memberId
+      ? await this.prisma.familyMember.findUnique({
+          where: { memberId: ctx.memberId },
+          include: {
+            family: {
+              select: {
+                id: true,
+                familyCode: true,
+                familyName: true,
+                paymentMomoNumber: true,
+                paymentMomoAccountName: true,
+                paymentBankAccount: true,
+                paymentBankName: true,
+                paymentInstructions: true,
+                headMember: {
+                  select: { firstName: true, lastName: true },
+                },
+              },
+            },
+          },
+        })
+      : null;
+
     const campaigns = await this.prisma.contributionCampaign.findMany({
       where: {
         status: ContributionCampaignStatus.ACTIVE,
@@ -282,6 +316,23 @@ export class ContributionSubmissionService {
 
     return {
       types,
+      family: familyMember
+        ? {
+            id: familyMember.family.id,
+            code: familyMember.family.familyCode,
+            name: familyMember.family.familyName,
+            headName: familyMember.family.headMember
+              ? `${familyMember.family.headMember.firstName} ${familyMember.family.headMember.lastName}`.trim()
+              : null,
+            payment: {
+              momoNumber: familyMember.family.paymentMomoNumber,
+              momoAccountName: familyMember.family.paymentMomoAccountName,
+              bankAccount: familyMember.family.paymentBankAccount,
+              bankName: familyMember.family.paymentBankName,
+              instructions: familyMember.family.paymentInstructions,
+            },
+          }
+        : null,
       campaigns: campaigns.map((c) => ({
         id: c.id,
         name: c.name,

@@ -78,6 +78,18 @@ export class ChurchBrandingController {
       coverImageUrl?: string | null;
       primaryColor?: string | null;
       welcomeMessage?: string | null;
+      location?: {
+        address?: string | null;
+        city?: string | null;
+        latitude?: number | null;
+        longitude?: number | null;
+        mapEmbedUrl?: string | null;
+        directionsUrl?: string | null;
+      };
+      streaming?: {
+        igaburoLiveStreamEnabled?: boolean;
+        defaultLiveStreamUrl?: string | null;
+      };
     },
   ) {
     return this.branding.updateBranding(_userId, body);

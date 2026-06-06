@@ -9,6 +9,7 @@ import { ChoirDiscoveryService } from '../member-portal/choir-discovery.service'
 import { ChoirJoinRequestsService } from '../member-portal/choir-join-requests.service';
 import { ChoirMembershipRulesService } from '../member-portal/choir-membership-rules.service';
 import { MemberPortalNotificationsService } from '../member-portal/member-portal-notifications.service';
+import { ChoirMembersService } from './choir-members.service';
 import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
 
 @Module({
@@ -26,6 +27,7 @@ import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
     ChoirJoinRequestsService,
     ChoirMembershipRulesService,
     MemberPortalNotificationsService,
+    ChoirMembersService,
   ],
   exports: [ChoirContextService, ChoirMembershipRulesService],
 })

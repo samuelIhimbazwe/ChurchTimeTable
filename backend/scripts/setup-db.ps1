@@ -17,7 +17,13 @@ function Use-Postgres {
 }
 
 function Use-Sqlite {
-  Copy-Item .env.sqlite .env -Force
+  if (Test-Path .env.sqlite) {
+    Copy-Item .env.sqlite .env -Force
+  } elseif (Test-Path .env.sqlite.example) {
+    Copy-Item .env.sqlite.example .env -Force
+  } else {
+    Write-Error "Missing .env.sqlite or .env.sqlite.example"
+  }
   $schema = Get-Content prisma\schema.prisma -Raw
   if ($schema -match 'provider = "postgresql"') {
     $schema = $schema -replace 'provider = "postgresql"', 'provider = "sqlite"'

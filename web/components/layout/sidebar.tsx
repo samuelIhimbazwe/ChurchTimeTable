@@ -2,121 +2,44 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import {
-  LayoutDashboard, Calendar, Users, Music, Shield,
-  DollarSign, FileText, Settings2, Home, Clock,
-  Heart, ChevronLeft, ChevronRight, Landmark,
-  CheckCircle2,
-} from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useUIStore } from '@/stores/index'
+import { useUIStore, useAuthStore } from '@/stores/index'
+import { getNavForContext, getPortalNavForUser } from '@/lib/navigation/role-nav'
+import { getComposedChoirNav } from '@/lib/navigation/choir-nav'
+import { getComposedProtocolNav } from '@/lib/navigation/protocol-nav'
+import { parseChoirIdFromPath } from '@/lib/choir/paths'
+import { isProtocolDashboardPath } from '@/lib/protocol/paths'
+import { useChoirAccess } from '@/lib/hooks/useChoirAccess'
+import { useChoirDashboardContext } from '@/lib/hooks/useChoirDashboardContext'
+import { useProtocolDashboardContext } from '@/lib/hooks/useProtocolDashboardContext'
 
-/* ── Nav config ── */
-type NavItem = { label: string; icon: React.ElementType; path: string }
-type NavSection = { section?: string; items: NavItem[] }
+const EMPTY_PERMISSIONS: string[] = []
 
-const NAV_BY_ROLE: Record<string, NavSection[]> = {
-  SUPER_ADMIN: [
-    { items: [
-      { label: 'Dashboard',   icon: LayoutDashboard, path: '/dashboard' },
-      { label: 'Members',     icon: Users,           path: '/members' },
-      { label: 'Events',      icon: Calendar,        path: '/events' },
-    ]},
-    { section: 'Ministries', items: [
-      { label: 'Choir',       icon: Music,           path: '/choir' },
-      { label: 'Protocol',    icon: Shield,          path: '/protocol' },
-      { label: 'Governance',  icon: Landmark,        path: '/governance' },
-    ]},
-    { section: 'Management', items: [
-      { label: 'Finance',     icon: DollarSign,      path: '/finance' },
-      { label: 'Reports',     icon: FileText,        path: '/reports' },
-      { label: 'System',      icon: Settings2,       path: '/system' },
-    ]},
-  ],
-  CHOIR_PRESIDENT: [
-    { items: [
-      { label: 'Dashboard',     icon: LayoutDashboard, path: '/choir' },
-    ]},
-    { section: 'Operations', items: [
-      { label: 'Activities',    icon: Calendar,        path: '/choir/activities' },
-      { label: 'Roster',        icon: Users,           path: '/choir/members' },
-      { label: 'Attendance',    icon: CheckCircle2,    path: '/choir/activities' },
-    ]},
-    { section: 'Leadership', items: [
-      { label: 'Stewardship',   icon: DollarSign,      path: '/choir/stewardship' },
-      { label: 'Welfare',       icon: Heart,           path: '/choir/welfare' },
-      { label: 'Discipline',    icon: Shield,          path: '/choir/discipline' },
-      { label: 'Reports',       icon: FileText,        path: '/choir/reports' },
-    ]},
-  ],
-  CHOIR_SECRETARY: [
-    { items: [
-      { label: 'Dashboard',     icon: LayoutDashboard, path: '/choir' },
-    ]},
-    { section: 'Operations', items: [
-      { label: 'Activities',    icon: Calendar,        path: '/choir/activities' },
-      { label: 'Roster',        icon: Users,           path: '/choir/members' },
-    ]},
-  ],
-  CHOIR_TREASURER: [
-    { items: [
-      { label: 'Dashboard',     icon: LayoutDashboard, path: '/choir' },
-    ]},
-    { section: 'Finance', items: [
-      { label: 'Stewardship',   icon: DollarSign,      path: '/choir/stewardship' },
-      { label: 'Reports',       icon: FileText,        path: '/choir/reports' },
-    ]},
-  ],
-  CHOIR_REHEARSAL_DIRECTOR: [
-    { items: [
-      { label: 'Dashboard',     icon: LayoutDashboard, path: '/choir' },
-    ]},
-    { section: 'Rehearsals', items: [
-      { label: 'Activities',    icon: Calendar,        path: '/choir/activities' },
-      { label: 'Roster',        icon: Users,           path: '/choir/members' },
-    ]},
-  ],
-  PROTOCOL_LEADER: [
-    { items: [
-      { label: 'Dashboard',   icon: LayoutDashboard, path: '/dashboard' },
-      { label: 'Events',      icon: Calendar,        path: '/events' },
-    ]},
-    { section: 'Protocol', items: [
-      { label: 'Assignments', icon: Shield,          path: '/protocol/assignments' },
-      { label: 'Members',     icon: Users,           path: '/protocol/members' },
-      { label: 'Reports',     icon: FileText,        path: '/protocol/reports' },
-    ]},
-  ],
-  CHURCH_ADMIN: [
-    { items: [
-      { label: 'Dashboard',   icon: LayoutDashboard, path: '/dashboard' },
-      { label: 'Members',     icon: Users,           path: '/members' },
-      { label: 'Events',      icon: Calendar,        path: '/events' },
-    ]},
-    { section: 'Management', items: [
-      { label: 'Choir',       icon: Music,           path: '/choir' },
-      { label: 'Protocol',    icon: Shield,          path: '/protocol' },
-      { label: 'Finance',     icon: DollarSign,      path: '/finance' },
-      { label: 'Reports',     icon: FileText,        path: '/reports' },
-    ]},
-  ],
-  MEMBER: [
-    { items: [
-      { label: 'My Portal',   icon: Home,            path: '/portal' },
-      { label: 'Events',      icon: Calendar,        path: '/events' },
-      { label: 'My Schedule', icon: Clock,           path: '/portal/schedule' },
-      { label: 'Welfare',     icon: Heart,           path: '/portal/welfare' },
-    ]},
-  ],
-}
-
-/* ── Component ── */
 export default function Sidebar({ role = 'MEMBER' }: { role?: string }) {
   const pathname  = usePathname()
   const collapsed = useUIStore((s) => s.sidebarCollapsed)
   const toggle    = useUIStore((s) => s.toggleSidebar)
+  const authRole  = useAuthStore((s) => s.user?.role) ?? role
+  const permissions = useAuthStore((s) => s.user?.permissions ?? EMPTY_PERMISSIONS)
+  const { canAccessChoirArea, isChoirMember, isLoading: loadingChoirAccess, activeChoirMemberships } = useChoirAccess()
+  const choirId = parseChoirIdFromPath(pathname)
+  const inProtocolArea = isProtocolDashboardPath(pathname)
+  const { data: choirCtx, isLoading: loadingChoirCtx } = useChoirDashboardContext(choirId)
+  const { data: protocolCtx, isLoading: loadingProtocolCtx } = useProtocolDashboardContext(inProtocolArea)
 
-  const sections = NAV_BY_ROLE[role] ?? NAV_BY_ROLE.MEMBER
+  const sections = (() => {
+    if (loadingChoirAccess || (choirId && loadingChoirCtx) || (inProtocolArea && loadingProtocolCtx)) {
+      return getPortalNavForUser(authRole, { canAccessChoirArea: false, isChoirMember: false }, permissions)
+    }
+    if (choirId && choirCtx) {
+      return getComposedChoirNav(choirId, choirCtx.choir.name, choirCtx.permissions)
+    }
+    if (inProtocolArea && protocolCtx?.canAccess) {
+      return getComposedProtocolNav(protocolCtx.ministry.name, protocolCtx.permissions)
+    }
+    return getNavForContext(pathname, authRole, { canAccessChoirArea, isChoirMember }, permissions, activeChoirMemberships)
+  })()
 
   return (
     <aside
@@ -176,7 +99,6 @@ export default function Sidebar({ role = 'MEMBER' }: { role?: string }) {
                         collapsed && 'justify-center px-0 w-10 mx-auto',
                       )}
                     >
-                      {/* Gold active bar */}
                       {active && (
                         <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-gold-500 rounded-full" />
                       )}

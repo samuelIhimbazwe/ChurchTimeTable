@@ -1,18 +1,119 @@
 import { apiClient } from '../client'
-import type { Family, Contribution } from '@/types'
+import type { Contribution, Family, Paginated } from '@/types'
+
+export interface FamilyListItem extends Family {
+  familyCode?: string
+  healthScore?: number
+  healthGrade?: string
+}
+
+export interface FamilyMetricsOverview {
+  totalFamilies: number
+  averageHealthScore: number
+  topFamilies: Array<{
+    id: string
+    familyCode: string
+    familyName: string
+    score: number
+    grade: string
+  }>
+  needsAttention: Array<{
+    id: string
+    familyCode: string
+    familyName: string
+    score: number
+    grade: string
+  }>
+}
+
+export interface FamilyMetricsDetail {
+  familyId: string
+  familyCode: string
+  familyName: string
+  attendance: { attendanceRate: number; attendanceCount: number; missedCount: number }
+  contributions: { confirmedAmount: number; pendingAmount: number; contributionCount: number } | null
+  participation: { activeAssignments: number; activeLeaders: number; activeMembers: number }
+  health: { score: number; grade: string }
+}
+
+function headName(row: Record<string, unknown>): string {
+  const head = row.headMember as { firstName?: string; lastName?: string } | null | undefined
+  if (head) return `${head.firstName ?? ''} ${head.lastName ?? ''}`.trim()
+  return String(row.headName ?? '—')
+}
+
+function toFamily(row: Record<string, unknown>): FamilyListItem {
+  return {
+    id: String(row.id ?? ''),
+    name: String(row.familyName ?? row.name ?? 'Family'),
+    headName: headName(row),
+    memberCount: Number(
+      row.memberCount
+        ?? (typeof row._count === 'object' && row._count && 'members' in (row._count as object)
+          ? (row._count as { members?: number }).members
+          : 0)
+        ?? 0,
+    ),
+    totalContributions: Number(row.totalContributions ?? row.confirmedAmount ?? 0),
+    rank: row.rank != null ? Number(row.rank) : undefined,
+    familyCode: row.familyCode != null ? String(row.familyCode) : undefined,
+    healthScore: row.healthScore != null ? Number(row.healthScore) : undefined,
+    healthGrade: row.healthGrade != null ? String(row.healthGrade) : undefined,
+  }
+}
+
+function normalizeList(raw: unknown): FamilyListItem[] {
+  if (Array.isArray(raw)) return raw.map((r) => toFamily(r as Record<string, unknown>))
+  if (raw && typeof raw === 'object' && 'items' in raw) {
+    return (raw as Paginated<Record<string, unknown>>).items.map(toFamily)
+  }
+  return []
+}
 
 export const familiesApi = {
-  getAll: () =>
-    apiClient.get<never, Family[]>('/families'),
+  getAll: async (params?: {
+    includeMetrics?: boolean
+    page?: number
+    limit?: number
+    familyId?: string
+    search?: string
+  }): Promise<FamilyListItem[]> => {
+    const raw = await apiClient.get<never, unknown>('/families', {
+      params: {
+        ...params,
+        includeMetrics: params?.includeMetrics ? 'true' : undefined,
+      },
+    })
+    return normalizeList(raw)
+  },
 
-  getById: (id: string) =>
-    apiClient.get<never, Family>(`/families/${id}`),
+  getMetricsOverview: () =>
+    apiClient.get<never, FamilyMetricsOverview>('/families/metrics/overview'),
+
+  getMetrics: (id: string) =>
+    apiClient.get<never, FamilyMetricsDetail>(`/families/${id}/metrics`),
+
+  getById: async (id: string) => {
+    const raw = await apiClient.get<never, Record<string, unknown>>(`/families/${id}`)
+    return {
+      ...toFamily(raw),
+      members: raw.members as unknown[] | undefined,
+      notes: raw.notes as string | undefined,
+    }
+  },
+
+  updatePaymentInstructions: (
+    familyId: string,
+    data: {
+      paymentMomoNumber?: string | null
+      paymentMomoAccountName?: string | null
+      paymentBankAccount?: string | null
+      paymentBankName?: string | null
+      paymentInstructions?: string | null
+    },
+  ) =>
+    apiClient.patch<never, unknown>(`/families/${familyId}/payment-instructions`, data),
 
   getContributions: (id: string) =>
-    apiClient.get<never, Contribution[]>(
-      `/families/${id}/contributions`),
-
-  approveContribution: (familyId: string, contributionId: string) =>
-    apiClient.patch<never, void>(
-      `/families/${familyId}/contributions/${contributionId}/approve`, {}),
+    apiClient.get<never, Contribution[]>(`/families/${id}/contributions`),
 }

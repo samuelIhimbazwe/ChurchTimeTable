@@ -4,19 +4,26 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/stores'
 
+/** Everyone lands on the church member portal first; ministry dashboards are entered deliberately. */
 const ROLE_HOME: Record<string, string> = {
-  MEMBER:                  '/portal',
-  CHOIR_SECRETARY:         '/choir',
-  CHOIR_PRESIDENT:         '/choir',
-  CHOIR_VICE_PRESIDENT:    '/choir',
-  CHOIR_TREASURER:         '/choir',
-  CHOIR_REHEARSAL_DIRECTOR:'/choir',
-  CHOIR_LOGISTICS:         '/choir',
-  CHOIR_FAMILY_COORDINATOR:'/choir',
-  CHOIR_COMMITTEE:         '/choir',
-  PROTOCOL_LEADER:         '/protocol',
-  CHURCH_ADMIN:            '/admin',
-  SUPER_ADMIN:             '/system',
+  MEMBER:                   '/portal',
+  CHOIR_ADMIN:              '/portal',
+  CHOIR_LEADER:             '/portal',
+  CHOIR_PRESIDENT:          '/portal',
+  CHOIR_VICE_PRESIDENT:     '/portal',
+  CHOIR_SECRETARY:          '/portal',
+  CHOIR_TREASURER:          '/portal',
+  CHOIR_REHEARSAL_DIRECTOR: '/portal',
+  CHOIR_LOGISTICS:          '/portal',
+  CHOIR_FAMILY_COORDINATOR: '/portal',
+  CHOIR_COMMITTEE:          '/portal',
+  PROTOCOL_LEADER:          '/protocol',
+  PROTOCOL_VICE_PRESIDENT:   '/protocol',
+  PROTOCOL_COORDINATOR:     '/protocol',
+  PROTOCOL_TEAM_LEADER:     '/protocol/team-leader',
+  PROTOCOL_ADVISOR:         '/protocol',
+  CHURCH_ADMIN:             '/church',
+  SUPER_ADMIN:              '/system',
 }
 
 export default function DashboardRedirect() {

@@ -225,10 +225,13 @@ export interface ChoirMember {
 export interface ChoirJoinRequest {
   id:        string
   choirId:   string
-  choirName: string
+  choirName?: string
   memberId:  string
   status:    JoinRequestStatus
   message?:  string
+  reason?:   string | null
+  requestType?: string
+  reviewNotes?: string | null
   createdAt: string
 }
 

@@ -15,7 +15,7 @@ import { PermissionsResolver } from '../auth/permissions.resolver';
 import { PERMISSIONS } from '../common/constants/roles';
 import { hasEffectivePermission } from '../common/governance/governance-permissions.util';
 import { ChoirContextService } from '../choirs/choir-context.service';
-import { MEMBER_PORTAL_AUDIT } from './member-portal.constants';
+import { MEMBER_PORTAL_AUDIT, YERUSALEMU_CHOIR_CODE } from './member-portal.constants';
 import { ChoirMembershipRulesService } from './choir-membership-rules.service';
 import { MemberPortalNotificationsService } from './member-portal-notifications.service';
 
@@ -56,6 +56,13 @@ export class ChoirJoinRequestsService {
     });
     if (!choir) throw new NotFoundException('Choir not available');
 
+    const active = await this.prisma.choirMembership.findFirst({
+      where: { userId: member.userId, choirId: data.choirId, isActive: true },
+    });
+    if (active) {
+      throw new BadRequestException('You are already a member of this choir');
+    }
+
     const pending = await this.prisma.choirJoinRequest.findFirst({
       where: {
         memberId: member.id,
@@ -65,6 +72,24 @@ export class ChoirJoinRequestsService {
     });
     if (pending) {
       throw new BadRequestException('A pending request already exists');
+    }
+
+    const otherPending = await this.prisma.choirJoinRequest.findFirst({
+      where: {
+        memberId: member.id,
+        status: { in: ['PENDING', 'NEEDS_INFO'] },
+        choirId: { not: data.choirId },
+      },
+      include: { choir: { select: { name: true, code: true, choirKind: true } } },
+    });
+    if (otherPending) {
+      const targetIsYerusalemu =
+        choir.code === YERUSALEMU_CHOIR_CODE || choir.choirKind === 'SPECIAL';
+      if (!targetIsYerusalemu) {
+        throw new BadRequestException(
+          `You already have a pending request for ${otherPending.choir.name}. Cancel that request first before joining another choir. Yerusalemu (morning service) may be requested separately.`,
+        );
+      }
     }
 
     await this.rules.validateNewMembership(userId, data.choirId);
@@ -125,6 +150,7 @@ export class ChoirJoinRequestsService {
     data: {
       status: 'APPROVED' | 'REJECTED' | 'NEEDS_INFO';
       reviewNotes?: string;
+      assignedRoleId?: string;
     },
   ) {
     const resolved = await this.permissions.resolveForUser(actorUserId);
@@ -141,6 +167,12 @@ export class ChoirJoinRequestsService {
       throw new BadRequestException('Request is not reviewable');
     }
 
+    if (data.status === 'NEEDS_INFO' && !data.reviewNotes?.trim()) {
+      throw new BadRequestException(
+        'Add requirements or questions in the review notes when requesting more information',
+      );
+    }
+
     if (data.status === 'APPROVED') {
       await this.rules.validateNewMembership(
         request.member.userId,
@@ -151,6 +183,14 @@ export class ChoirJoinRequestsService {
         request.choirId,
         'MEMBER',
       );
+      if (data.assignedRoleId) {
+        await this.assignCommitteeRole(
+          actorUserId,
+          request.choirId,
+          request.memberId,
+          data.assignedRoleId,
+        );
+      }
     }
 
     const updated = await this.prisma.choirJoinRequest.update({
@@ -184,6 +224,79 @@ export class ChoirJoinRequestsService {
     }
 
     return updated;
+  }
+
+  async listPositionRoles(actorUserId: string, choirId: string) {
+    const resolved = await this.permissions.resolveForUser(actorUserId);
+    if (!this.canReview(resolved.permissions)) {
+      throw new ForbiddenException('Denied');
+    }
+    return this.prisma.choirCommitteeRole.findMany({
+      where: { choirId },
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async assignMemberPosition(
+    actorUserId: string,
+    data: { choirId: string; memberId: string; roleId: string },
+  ) {
+    const resolved = await this.permissions.resolveForUser(actorUserId);
+    if (!this.canReview(resolved.permissions)) {
+      throw new ForbiddenException('Denied');
+    }
+
+    const member = await this.prisma.member.findUnique({
+      where: { id: data.memberId },
+      select: { userId: true },
+    });
+    if (!member) throw new NotFoundException('Member not found');
+
+    const membership = await this.prisma.choirMembership.findFirst({
+      where: {
+        choirId: data.choirId,
+        userId: member.userId,
+        isActive: true,
+      },
+    });
+    if (!membership) {
+      throw new BadRequestException('Member is not active in this choir');
+    }
+
+    return this.assignCommitteeRole(
+      actorUserId,
+      data.choirId,
+      data.memberId,
+      data.roleId,
+    );
+  }
+
+  private async assignCommitteeRole(
+    actorUserId: string,
+    choirId: string,
+    memberId: string,
+    roleId: string,
+  ) {
+    const role = await this.prisma.choirCommitteeRole.findFirst({
+      where: { id: roleId, choirId },
+    });
+    if (!role) {
+      throw new BadRequestException('Invalid choir position role');
+    }
+
+    return this.prisma.choirCommitteeMember.upsert({
+      where: {
+        choirId_memberId_roleId: { choirId, memberId, roleId: role.id },
+      },
+      create: {
+        choirId,
+        memberId,
+        roleId: role.id,
+        assignedBy: actorUserId,
+      },
+      update: { assignedBy: actorUserId, assignedAt: new Date() },
+      include: { role: true, member: true },
+    });
   }
 
   async withdraw(userId: string, requestId: string) {

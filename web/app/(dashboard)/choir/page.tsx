@@ -11,9 +11,18 @@ import {
   AlertTriangle, PlusCircle,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { choirApi, choirActivityApi } from '@/lib/api'
+import { choirApi, choirActivityApi, choirSchedulingApi } from '@/lib/api'
 import { formatDate, formatTime } from '@/lib/utils/format'
 import Link from 'next/link'
+import { Heart, Shield } from 'lucide-react'
+
+function healthNum(data: Record<string, unknown> | undefined, ...keys: string[]) {
+  if (!data) return 0
+  for (const k of keys) {
+    if (data[k] != null) return Number(data[k])
+  }
+  return 0
+}
 
 export default function ChoirHubPage() {
   const { data: summary, isLoading: sumLoading } = useDashboard()
@@ -24,12 +33,20 @@ export default function ChoirHubPage() {
     queryFn:  choirApi.getAll,
   })
 
+  const choir = choirs?.[0]
+
+  const { data: health, isLoading: healthLoading } = useQuery({
+    queryKey: ['choir-leader-dashboard', choir?.id],
+    queryFn:  () => choirSchedulingApi.getLeaderDashboard(choir!.id),
+    enabled:  !!choir?.id,
+  })
+
+  const h = health as Record<string, unknown> | undefined
+
   const { data: activities, isLoading: actLoading } = useQuery({
     queryKey: ['choir-activities', { limit: 5 }],
     queryFn:  () => choirActivityApi.getAll({ limit: 5 }),
   })
-
-  const choir = choirs?.[0]
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -46,14 +63,22 @@ export default function ChoirHubPage() {
               ` · ${choir.attendanceRate}% attendance rate`}
           </p>
         </div>
-        <PermissionGate anyOf={['event:write', 'choir.events.manage']}>
+        <div className="flex items-center gap-2">
           <Link
-            href="/choir/activities/new"
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-gold-500 text-primary-900 rounded-lg hover:bg-gold-400 transition-colors shadow-card"
+            href="/choir/public-profile"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold border border-border rounded-lg hover:bg-surface-raised transition-colors"
           >
-            <PlusCircle size={15} /> New Activity
+            Public profile
           </Link>
-        </PermissionGate>
+          <PermissionGate anyOf={['event:write', 'choir.events.manage']}>
+            <Link
+              href="/choir/activities/new"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-gold-500 text-primary-900 rounded-lg hover:bg-gold-400 transition-colors shadow-card"
+            >
+              <PlusCircle size={15} /> New Activity
+            </Link>
+          </PermissionGate>
+        </div>
       </div>
 
       {/* Action items */}
@@ -70,6 +95,60 @@ export default function ChoirHubPage() {
           </div>
         </Card>
       ))}
+
+      {/* Health dashboard */}
+      <Card padding="md">
+        <CardHeader>
+          <CardTitle>Health Dashboard</CardTitle>
+          <CardDescription>Scheduling metrics and alert counts</CardDescription>
+        </CardHeader>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          {healthLoading ? (
+            Array.from({ length: 6 }).map((_, i) => <SkeletonStatTile key={i} />)
+          ) : (
+            <>
+              <StatTile
+                label="Attendance Rate"
+                value={healthNum(h, 'attendanceRate', 'avgAttendanceRate', 'serviceAttendanceRate')}
+                suffix="%"
+                icon={CheckCircle2}
+                animate
+              />
+              <StatTile
+                label="Reliability"
+                value={healthNum(h, 'reliability', 'reliabilityScore', 'overallReliability')}
+                suffix="%"
+                icon={CheckCircle2}
+                animate
+              />
+              <StatTile
+                label="Active Members"
+                value={healthNum(h, 'activeMembers', 'activeMemberCount')}
+                icon={Users}
+                animate
+              />
+              <StatTile
+                label="Inactive Members"
+                value={healthNum(h, 'inactiveMembers', 'inactiveMemberCount')}
+                icon={Users}
+                animate
+              />
+              <StatTile
+                label="Welfare Alerts"
+                value={healthNum(h, 'welfareAlerts', 'activeWelfare', 'activeWelfareCases')}
+                icon={Heart}
+                animate
+              />
+              <StatTile
+                label="Discipline Alerts"
+                value={healthNum(h, 'disciplineAlerts', 'activeDiscipline', 'activeDisciplineCases')}
+                icon={Shield}
+                animate
+              />
+            </>
+          )}
+        </div>
+      </Card>
 
       {/* KPI tiles */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

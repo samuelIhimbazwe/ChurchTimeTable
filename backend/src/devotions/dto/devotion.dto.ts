@@ -48,6 +48,10 @@ export class CreateDevotionDto {
   @IsOptional()
   @IsEnum(DevotionVisibilityScope)
   visibilityScope?: DevotionVisibilityScope;
+
+  @IsOptional()
+  @IsDateString()
+  prayerDate?: string;
 }
 
 export class UpdateDevotionDto {

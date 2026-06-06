@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
 import { ChoirDiscoveryService } from '../member-portal/choir-discovery.service';
+import { ChoirMembershipRulesService } from '../member-portal/choir-membership-rules.service';
 import {
   ChurchBrandingController,
   ChurchPublicController,
@@ -22,6 +23,7 @@ import { UxAnalyticsService } from './ux-analytics.service';
     ChurchWelcomeService,
     ChurchBrandingService,
     UxAnalyticsService,
+    ChoirMembershipRulesService,
     ChoirDiscoveryService,
   ],
   exports: [ChurchBrandingService, UxAnalyticsService],

@@ -28,4 +28,16 @@ export const membersApi = {
 
   updateStatus: (id: string, status: MemberStatus) =>
     apiClient.patch<never, Member>(`/members/${id}/status`, { status }),
+
+  getProfileCenter: (id: string) =>
+    apiClient.get<never, Record<string, unknown>>(`/members/${id}/profile`),
+
+  getAttendance: (id: string) =>
+    apiClient.get<never, Record<string, unknown>>(`/members/${id}/attendance`),
+
+  getTimeline: (id: string, limit = 50) =>
+    apiClient.get<never, unknown[]>(`/members/${id}/timeline`, { params: { limit } }),
+
+  getWelfareCases: (id: string) =>
+    apiClient.get<never, unknown[]>(`/members/${id}/welfare-cases`),
 }

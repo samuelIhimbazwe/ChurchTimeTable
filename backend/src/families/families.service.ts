@@ -26,6 +26,7 @@ import {
   UpdateFamilyDto,
 } from './dto/create-family.dto';
 import { UpdateFamilyMemberDto } from './dto/update-family-member.dto';
+import { UpdateFamilyPaymentDto } from './dto/update-family-payment.dto';
 
 const MEMBER_SELECT = {
   id: true,
@@ -204,6 +205,11 @@ export class FamiliesService {
       familyCode: family.familyCode,
       familyName: family.familyName,
       notes: family.notes,
+      paymentMomoNumber: family.paymentMomoNumber,
+      paymentMomoAccountName: family.paymentMomoAccountName,
+      paymentBankAccount: family.paymentBankAccount,
+      paymentBankName: family.paymentBankName,
+      paymentInstructions: family.paymentInstructions,
       headMember: this.serializeMember(family.headMember),
       members: family.members.map((row) => ({
         id: row.id,
@@ -620,6 +626,76 @@ export class FamiliesService {
         },
       });
     }
+
+    return this.serializeDetail(updated);
+  }
+
+  async updatePaymentInstructions(
+    actorUserId: string,
+    familyId: string,
+    dto: UpdateFamilyPaymentDto,
+  ) {
+    const ctx = await this.scopeForUser(actorUserId);
+    await this.assertFamilyInScope(ctx, familyId);
+
+    if (!ctx.memberId && !canManageFamilies(ctx.permissions)) {
+      throw new ForbiddenException('Member profile required');
+    }
+
+    const family = await this.prisma.family.findUnique({
+      where: { id: familyId },
+      select: {
+        id: true,
+        delegationEnabled: true,
+        headMemberId: true,
+      },
+    });
+    if (!family) {
+      throw new NotFoundException('Family not found');
+    }
+
+    const canManage = canManageFamilies(ctx.permissions);
+    let canEditAsHead = false;
+    if (ctx.memberId) {
+      const membership = await this.prisma.familyMember.findFirst({
+        where: { familyId, memberId: ctx.memberId },
+        select: { role: true },
+      });
+      canEditAsHead =
+        membership?.role === FamilyMemberRole.HEAD ||
+        (membership?.role === FamilyMemberRole.ASSISTANT_HEAD &&
+          family.delegationEnabled);
+    }
+
+    if (!canManage && !canEditAsHead) {
+      throw new ForbiddenException(
+        'Only the family head (or family coordinator) can update payment instructions',
+      );
+    }
+
+    const updated = await this.prisma.family.update({
+      where: { id: familyId },
+      data: {
+        paymentMomoNumber: dto.paymentMomoNumber ?? undefined,
+        paymentMomoAccountName: dto.paymentMomoAccountName ?? undefined,
+        paymentBankAccount: dto.paymentBankAccount ?? undefined,
+        paymentBankName: dto.paymentBankName ?? undefined,
+        paymentInstructions: dto.paymentInstructions ?? undefined,
+      },
+      include: this.detailInclude(),
+    });
+
+    await this.audit.log({
+      userId: actorUserId,
+      action: 'FAMILY_PAYMENT_INSTRUCTIONS_UPDATE',
+      entity: 'Family',
+      entityId: familyId,
+      newValue: {
+        ...dto,
+        actorId: actorUserId,
+        timestamp: new Date().toISOString(),
+      },
+    });
 
     return this.serializeDetail(updated);
   }

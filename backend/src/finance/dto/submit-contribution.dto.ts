@@ -42,4 +42,10 @@ export class SubmitContributionDto {
   @IsString()
   @MaxLength(500)
   notes?: string;
+
+  /** Required when contribution type catalog code is `other` */
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  customTypeLabel?: string;
 }

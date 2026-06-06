@@ -1,12 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useState, useEffect, useMemo } from 'react'
+import { useParams, useRouter, usePathname } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { choirActivityApi, choirApi } from '@/lib/api'
 import { useSubmitChoirAttendance } from '@/lib/hooks'
 import { toast } from '@/components/shared/Toast'
 import { Card, Avatar } from '@/components/shared'
+import { useOptionalChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
+import { useChoirAccess } from '@/lib/hooks/useChoirAccess'
+import { legacyOrScopedChoirPath, parseChoirIdFromPath } from '@/lib/choir/paths'
 import { CheckCircle2, XCircle, Clock, ChevronLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatDate } from '@/lib/utils/format'
@@ -42,6 +45,18 @@ interface MemberRecord {
 export default function AttendancePage() {
   const { activityId } = useParams<{ activityId: string }>()
   const router = useRouter()
+  const pathname = usePathname()
+  const choirCtx = useOptionalChoirDashboardCtx()
+  const { activeChoirMemberships } = useChoirAccess()
+
+  const choirId = useMemo(
+    () =>
+      choirCtx?.choirId ??
+      parseChoirIdFromPath(pathname) ??
+      activeChoirMemberships[0]?.id ??
+      '',
+    [choirCtx?.choirId, pathname, activeChoirMemberships],
+  )
 
   const { data: activity } = useQuery({
     queryKey: ['choir-activity', activityId],
@@ -54,8 +69,9 @@ export default function AttendancePage() {
   })
 
   const { data: members } = useQuery({
-    queryKey: ['choir-members-all'],
-    queryFn:  () => choirApi.getMembers('default', { limit: 100 }),
+    queryKey: ['choir-members-all', choirId],
+    queryFn:  () => choirApi.getMembers(choirId, { limit: 100 }),
+    enabled: !!choirId,
   })
 
   const [records, setRecords] = useState<Record<string, ChoirAttendanceOutcome | null>>({})
@@ -101,7 +117,7 @@ export default function AttendancePage() {
     submit.mutate(payload, {
       onSuccess: () => {
         toast.success('Attendance saved', `${payload.records.length} records submitted.`)
-        router.push('/choir')
+        router.push(legacyOrScopedChoirPath(choirId, 'activities'))
       },
       onError: () => toast.error('Failed to save', 'Please try again.'),
     })
@@ -164,50 +180,56 @@ export default function AttendancePage() {
       />
 
       <Card padding="none">
-        <ul className="divide-y divide-border">
-          {memberList.map((m) => (
-            <li key={m.memberId} className="px-5 py-3">
-              <div className="flex items-center gap-3 mb-2">
-                <Avatar name={m.memberName} size="sm" />
-                <span className="text-sm font-medium text-text-primary flex-1">
-                  {m.memberName}
-                </span>
-                {m.outcome && (
-                  <span className={cn(
-                    'text-xs px-2 py-0.5 rounded-full border font-medium',
-                    OUTCOME_STYLE[m.outcome],
-                  )}>
-                    {m.outcome.replace(/_/g, ' ').toLowerCase()}
+        {!choirId ? (
+          <p className="text-center text-text-muted py-12 text-sm">
+            Open attendance from your choir dashboard.
+          </p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {memberList.map((m) => (
+              <li key={m.memberId} className="px-5 py-3">
+                <div className="flex items-center gap-3 mb-2">
+                  <Avatar name={m.memberName} size="sm" />
+                  <span className="text-sm font-medium text-text-primary flex-1">
+                    {m.memberName}
                   </span>
-                )}
-              </div>
-              <div className="flex gap-2 ml-11">
-                {QUICK_OUTCOMES.map(({ label, outcome, icon: Icon, color }) => (
-                  <button
-                    key={outcome}
-                    onClick={() => mark(m.memberId, outcome)}
-                    className={cn(
-                      'flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium',
-                      'border transition-all duration-fast',
-                      m.outcome === outcome
-                        ? `${OUTCOME_STYLE[outcome]} border-current`
-                        : 'border-border text-text-muted hover:border-current hover:' + color,
-                    )}
-                  >
-                    <Icon size={12} className={m.outcome === outcome ? '' : color} />
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </li>
-          ))}
-        </ul>
+                  {m.outcome && (
+                    <span className={cn(
+                      'text-xs px-2 py-0.5 rounded-full border font-medium',
+                      OUTCOME_STYLE[m.outcome],
+                    )}>
+                      {m.outcome.replace(/_/g, ' ').toLowerCase()}
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-2 ml-11">
+                  {QUICK_OUTCOMES.map(({ label, outcome, icon: Icon, color }) => (
+                    <button
+                      key={outcome}
+                      onClick={() => mark(m.memberId, outcome)}
+                      className={cn(
+                        'flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium',
+                        'border transition-all duration-fast',
+                        m.outcome === outcome
+                          ? `${OUTCOME_STYLE[outcome]} border-current`
+                          : 'border-border text-text-muted hover:border-current hover:' + color,
+                      )}
+                    >
+                      <Icon size={12} className={m.outcome === outcome ? '' : color} />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
 
       <div className="sticky bottom-6">
         <button
           onClick={handleSubmit}
-          disabled={submit.isPending || markedCount === 0}
+          disabled={submit.isPending || markedCount === 0 || !choirId}
           className="w-full py-3 text-sm font-semibold bg-primary-700 text-white rounded-xl shadow-overlay hover:bg-primary-800 transition-colors disabled:opacity-60"
         >
           {submit.isPending

@@ -52,6 +52,40 @@ const ROLE_PERMISSION_MAP: Record<string, string[]> = {
     PERMISSIONS.CHOIR_FINANCE_APPROVE,
   ],
 
+  [ROLES.CHOIR_ADMIN]: [
+    ...CHOIR_OPERATIONS_PERMS,
+    PERMISSIONS.CHOIR_FINANCE_VIEW,
+    PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
+    PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
+    PERMISSIONS.MEMBER_MANAGE,
+    PERMISSIONS.CHOIR_WELFARE_VIEW,
+    PERMISSIONS.CHOIR_WELFARE_MANAGE,
+    PERMISSIONS.CHOIR_MUSIC_VIEW,
+    PERMISSIONS.CHOIR_MUSIC_MANAGE,
+    PERMISSIONS.CHOIR_REHEARSAL_VIEW,
+    PERMISSIONS.CHOIR_REHEARSAL_MANAGE,
+    PERMISSIONS.CHOIR_ANNOUNCEMENT_MANAGE,
+    PERMISSIONS.CHOIR_DOCUMENT_MANAGE,
+    PERMISSIONS.CHOIR_MEETING_MANAGE,
+    PERMISSIONS.CHOIR_UNIFORM_MANAGE,
+    PERMISSIONS.CHOIR_EQUIPMENT_MANAGE,
+    PERMISSIONS.ASSET_VIEW,
+    PERMISSIONS.ASSET_CREATE,
+    PERMISSIONS.ASSET_MANAGE,
+    PERMISSIONS.ASSET_ASSIGN,
+    PERMISSIONS.ASSET_MAINTAIN,
+    PERMISSIONS.ASSET_REPORT,
+    PERMISSIONS.ASSET_OWNERSHIP_MANAGE,
+    PERMISSIONS.ASSET_CUSTODIAN_MANAGE,
+    PERMISSIONS.CHOIR_REPORTS_VIEW,
+    PERMISSIONS.CHOIR_DEVOTION_CREATE,
+    PERMISSIONS.CHOIR_DEVOTION_PUBLISH,
+    PERMISSIONS.CHOIR_DEVOTION_MANAGE,
+    PERMISSIONS.CHOIR_CUSTOM_ROLE_MANAGE,
+    PERMISSIONS.COMMITTEE_ROLE_MANAGE_SCOPE,
+    PERMISSIONS.COMMITTEE_MEMBER_MANAGE_SCOPE,
+  ],
+
   [ROLES.CHOIR_PRESIDENT]: [
     ...CHOIR_OPERATIONS_PERMS,
     PERMISSIONS.CHOIR_FINANCE_VIEW,
@@ -82,16 +116,23 @@ const ROLE_PERMISSION_MAP: Record<string, string[]> = {
     PERMISSIONS.CHOIR_DEVOTION_PUBLISH,
     PERMISSIONS.CHOIR_DEVOTION_MANAGE,
     PERMISSIONS.CHOIR_CUSTOM_ROLE_MANAGE,
+    PERMISSIONS.COMMITTEE_ROLE_MANAGE_SCOPE,
+    PERMISSIONS.COMMITTEE_MEMBER_MANAGE_SCOPE,
   ],
 
   [ROLES.CHOIR_VICE_PRESIDENT]: [
     ...CHOIR_OPERATIONS_PERMS,
     PERMISSIONS.CHOIR_FINANCE_VIEW,
     PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
-    PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
+    PERMISSIONS.CHOIR_WELFARE_VIEW,
+    PERMISSIONS.CHOIR_WELFARE_MANAGE,
+    PERMISSIONS.CHOIR_JOIN_REVIEW,
+    PERMISSIONS.CHOIR_REPORTS_VIEW,
+    PERMISSIONS.CHOIR_ANNOUNCEMENT_MANAGE,
     PERMISSIONS.REPORT_EXPORT,
     PERMISSIONS.CHOIR_DEVOTION_VIEW,
     PERMISSIONS.CHOIR_DEVOTION_PUBLISH,
+    PERMISSIONS.MEMBER_MANAGE,
   ],
 
   [ROLES.CHOIR_SECRETARY]: [
@@ -130,6 +171,8 @@ const ROLE_PERMISSION_MAP: Record<string, string[]> = {
     PERMISSIONS.CHOIR_MUSIC_MANAGE,
     PERMISSIONS.CHOIR_REHEARSAL_VIEW,
     PERMISSIONS.CHOIR_REHEARSAL_MANAGE,
+    PERMISSIONS.CHOIR_ANNOUNCEMENT_MANAGE,
+    PERMISSIONS.CHOIR_MEMBER_NOTIFY,
     PERMISSIONS.REPORT_EXPORT,
   ],
 
@@ -189,6 +232,29 @@ const ROLE_PERMISSION_MAP: Record<string, string[]> = {
     PERMISSIONS.FAMILY_MANAGE,
     ...PROTOCOL_ADMIN_PERMISSIONS,
     PERMISSIONS.PROTOCOL_TEAM_LEADER_EXECUTE,
+    PERMISSIONS.COMMITTEE_ROLE_MANAGE_SCOPE,
+    PERMISSIONS.COMMITTEE_MEMBER_MANAGE_SCOPE,
+  ],
+
+  [ROLES.PROTOCOL_ADMIN]: [
+    PERMISSIONS.EVENT_READ,
+    PERMISSIONS.EVENT_WRITE,
+    PERMISSIONS.ASSIGNMENT_WRITE,
+    PERMISSIONS.MEMBER_READ,
+    PERMISSIONS.ATTENDANCE_WRITE,
+    PERMISSIONS.PROTOCOL_ATTENDANCE_MANAGE,
+    PERMISSIONS.SWAP_MANAGE,
+    PERMISSIONS.DISCIPLINE_READ_ALL,
+    PERMISSIONS.DISCIPLINE_MANAGE,
+    PERMISSIONS.PROTOCOL_OVERSIGHT_SCOPE,
+    PERMISSIONS.PROTOCOL_OPERATIONAL_MONITOR,
+    PERMISSIONS.PROTOCOL_FINANCE_VIEW,
+    PERMISSIONS.FAMILY_VIEW,
+    PERMISSIONS.FAMILY_MANAGE,
+    ...PROTOCOL_ADMIN_PERMISSIONS,
+    PERMISSIONS.PROTOCOL_TEAM_LEADER_EXECUTE,
+    PERMISSIONS.COMMITTEE_ROLE_MANAGE_SCOPE,
+    PERMISSIONS.COMMITTEE_MEMBER_MANAGE_SCOPE,
   ],
 
   [ROLES.CHURCH_ADMIN]: [...CHURCH_ADMIN_OPERATIONAL_PERMISSIONS],
@@ -196,14 +262,183 @@ const ROLE_PERMISSION_MAP: Record<string, string[]> = {
 };
 
 const DEFAULT_CHOIR_COMMITTEE_ROLES = [
-  { name: 'choir_leader', permissions: [PERMISSIONS.CHOIR_EVENTS_MANAGE_SCOPE, PERMISSIONS.ATTENDANCE_MARK_SCOPE] },
-  { name: 'vice_leader', permissions: [PERMISSIONS.CHOIR_EVENTS_MANAGE_SCOPE] },
-  { name: 'secretary', permissions: [PERMISSIONS.EVENT_WRITE, PERMISSIONS.ATTENDANCE_MARK_SCOPE] },
-  { name: 'treasurer', permissions: [PERMISSIONS.CHOIR_FINANCE_VIEW, PERMISSIONS.CHOIR_FINANCE_MANAGE] },
-  { name: 'discipline_leader', permissions: [PERMISSIONS.DISCIPLINE_REVIEW_SCOPE] },
-  { name: 'organizer', permissions: [PERMISSIONS.CHOIR_EVENTS_MANAGE_SCOPE] },
-  { name: 'social_outreach', permissions: [PERMISSIONS.REPORT_EXPORT] },
-  { name: 'operations_manager', permissions: [PERMISSIONS.CHOIR_EVENTS_MANAGE_SCOPE, PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE] },
+  {
+    name: 'president',
+    permissions: [
+      ...CHOIR_OPERATIONS_PERMS,
+      PERMISSIONS.CHOIR_FINANCE_VIEW,
+      PERMISSIONS.MEMBER_MANAGE,
+      PERMISSIONS.CHOIR_WELFARE_MANAGE,
+      PERMISSIONS.CHOIR_REPORTS_VIEW,
+    ],
+  },
+  {
+    name: 'vice_president',
+    permissions: [
+      ...CHOIR_OPERATIONS_PERMS,
+      PERMISSIONS.CHOIR_FINANCE_VIEW,
+      PERMISSIONS.CHOIR_WELFARE_VIEW,
+      PERMISSIONS.CHOIR_WELFARE_MANAGE,
+      PERMISSIONS.CHOIR_JOIN_REVIEW,
+      PERMISSIONS.CHOIR_REPORTS_VIEW,
+      PERMISSIONS.CHOIR_ANNOUNCEMENT_MANAGE,
+      PERMISSIONS.REPORT_EXPORT,
+      PERMISSIONS.CHOIR_DEVOTION_VIEW,
+      PERMISSIONS.CHOIR_DEVOTION_PUBLISH,
+      PERMISSIONS.MEMBER_MANAGE,
+    ],
+  },
+  {
+    name: 'music_director',
+    permissions: [
+      PERMISSIONS.EVENT_READ,
+      PERMISSIONS.ASSIGNMENT_WRITE,
+      PERMISSIONS.ATTENDANCE_WRITE,
+      PERMISSIONS.CHOIR_ATTENDANCE_MANAGE,
+      PERMISSIONS.CHOIR_MUSIC_VIEW,
+      PERMISSIONS.CHOIR_MUSIC_MANAGE,
+      PERMISSIONS.CHOIR_REHEARSAL_VIEW,
+      PERMISSIONS.CHOIR_REHEARSAL_MANAGE,
+      PERMISSIONS.CHOIR_ANNOUNCEMENT_MANAGE,
+      PERMISSIONS.CHOIR_MEMBER_NOTIFY,
+    ],
+  },
+  {
+    name: 'family_coordinator',
+    permissions: [
+      PERMISSIONS.EVENT_READ,
+      PERMISSIONS.MEMBER_READ,
+      PERMISSIONS.FAMILY_VIEW,
+      PERMISSIONS.FAMILY_MANAGE,
+      PERMISSIONS.CHOIR_FAMILY_VIEW,
+      PERMISSIONS.CHOIR_FAMILY_MANAGE,
+      PERMISSIONS.CHOIR_WELFARE_VIEW,
+      PERMISSIONS.CHOIR_WELFARE_MANAGE,
+      PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_FAMILY,
+      PERMISSIONS.CHOIR_OPS_VIEW,
+      PERMISSIONS.CHOIR_OPS_REPORT,
+      PERMISSIONS.CHOIR_OPS_ATTENDANCE,
+      PERMISSIONS.CHOIR_ATTENDANCE_MANAGE,
+    ],
+  },
+  {
+    name: 'family_head',
+    permissions: [
+      PERMISSIONS.EVENT_READ,
+      PERMISSIONS.FAMILY_VIEW,
+      PERMISSIONS.CHOIR_FAMILY_VIEW,
+      PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_FAMILY,
+      PERMISSIONS.ATTENDANCE_MARK_SCOPE,
+      PERMISSIONS.CHOIR_OPS_VIEW,
+    ],
+  },
+  {
+    name: 'advisor',
+    permissions: [
+      PERMISSIONS.EVENT_READ,
+      PERMISSIONS.CHOIR_FINANCE_VIEW,
+      PERMISSIONS.CHOIR_REPORTS_VIEW,
+      PERMISSIONS.DISCIPLINE_READ_ALL,
+    ],
+  },
+  {
+    name: 'secretary',
+    permissions: [
+      PERMISSIONS.CHOIR_RECORDS_VIEW,
+      PERMISSIONS.CHOIR_OPS_VIEW,
+      PERMISSIONS.CHOIR_OPS_REPORT,
+      PERMISSIONS.EVENT_READ,
+      PERMISSIONS.EVENT_WRITE,
+      PERMISSIONS.ASSIGNMENT_WRITE,
+      PERMISSIONS.MEMBER_READ,
+      PERMISSIONS.ATTENDANCE_WRITE,
+      PERMISSIONS.SWAP_MANAGE,
+      PERMISSIONS.CHOIR_EVENTS_MANAGE_SCOPE,
+      PERMISSIONS.CHOIR_OPS_SCHEDULE,
+      PERMISSIONS.REPORT_EXPORT,
+      PERMISSIONS.CHOIR_REPORTS_VIEW,
+      PERMISSIONS.AUDIT_READ,
+      PERMISSIONS.CHOIR_MUSIC_VIEW,
+      PERMISSIONS.CHOIR_MUSIC_MANAGE,
+      PERMISSIONS.CHOIR_REHEARSAL_VIEW,
+      PERMISSIONS.CHOIR_REHEARSAL_MANAGE,
+      PERMISSIONS.CHOIR_DOCUMENT_MANAGE,
+      PERMISSIONS.CHOIR_MEETING_MANAGE,
+      PERMISSIONS.CHOIR_ANNOUNCEMENT_MANAGE,
+      PERMISSIONS.ASSET_VIEW,
+      PERMISSIONS.ASSET_REPORT,
+      PERMISSIONS.CHOIR_UNIFORM_MANAGE,
+      PERMISSIONS.CHOIR_EQUIPMENT_MANAGE,
+      PERMISSIONS.CHOIR_DEVOTION_VIEW,
+    ],
+  },
+  {
+    name: 'treasurer',
+    permissions: [
+      PERMISSIONS.EVENT_READ,
+      PERMISSIONS.CHOIR_FINANCE_VIEW,
+      PERMISSIONS.CHOIR_FINANCE_MANAGE,
+      PERMISSIONS.CHOIR_FINANCE_APPROVE,
+      PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
+      PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
+      PERMISSIONS.CHOIR_CONTRIBUTION_TYPE_MANAGE,
+      PERMISSIONS.CHOIR_CONTRIBUTION_CAMPAIGN_MANAGE,
+      PERMISSIONS.CHOIR_WELFARE_VIEW,
+      PERMISSIONS.CHOIR_REPORTS_VIEW,
+      PERMISSIONS.REPORT_EXPORT,
+      PERMISSIONS.MINISTRY_FINANCE_VIEW,
+      PERMISSIONS.MINISTRY_FINANCE_REPORT,
+    ],
+  },
+  {
+    name: 'discipline_social_welfare',
+    permissions: [
+      PERMISSIONS.EVENT_READ,
+      PERMISSIONS.MEMBER_READ,
+      PERMISSIONS.ATTENDANCE_WRITE,
+      PERMISSIONS.CHOIR_ATTENDANCE_MANAGE,
+      PERMISSIONS.CHOIR_OPS_ATTENDANCE,
+      PERMISSIONS.ATTENDANCE_MARK_SCOPE,
+      PERMISSIONS.CHOIR_RULES_VIEW,
+      PERMISSIONS.CHOIR_RULES_MANAGE,
+      PERMISSIONS.DISCIPLINE_READ_ALL,
+      PERMISSIONS.DISCIPLINE_MANAGE,
+      PERMISSIONS.DISCIPLINE_REVIEW_SCOPE,
+      PERMISSIONS.CHOIR_MEMBER_NOTIFY,
+      PERMISSIONS.CHOIR_WELFARE_VIEW,
+      PERMISSIONS.CHOIR_WELFARE_MANAGE,
+      PERMISSIONS.CHOIR_FAMILY_VIEW,
+      PERMISSIONS.CHOIR_ANNOUNCEMENT_MANAGE,
+      PERMISSIONS.REPORT_EXPORT,
+    ],
+  },
+  {
+    name: 'spiritual_leader',
+    permissions: [
+      PERMISSIONS.EVENT_READ,
+      PERMISSIONS.MEMBER_PORTAL_VIEW,
+      PERMISSIONS.CHOIR_DEVOTION_VIEW,
+      PERMISSIONS.CHOIR_DEVOTION_CREATE,
+      PERMISSIONS.CHOIR_DEVOTION_PUBLISH,
+      PERMISSIONS.CHOIR_DEVOTION_MANAGE,
+      PERMISSIONS.CHOIR_SPIRITUAL_PROGRAM_MANAGE,
+      PERMISSIONS.CHOIR_INTERCESSION_MANAGE,
+      PERMISSIONS.CHOIR_ANNOUNCEMENT_MANAGE,
+      PERMISSIONS.CHOIR_MEMBER_NOTIFY,
+    ],
+  },
+  {
+    name: 'choir_member',
+    permissions: [
+      PERMISSIONS.EVENT_READ,
+      PERMISSIONS.MEMBER_PORTAL_VIEW,
+      PERMISSIONS.CHOIR_CONTRIBUTION_SUBMIT,
+      PERMISSIONS.CHOIR_WELFARE_VIEW,
+      PERMISSIONS.CHOIR_MUSIC_VIEW,
+      PERMISSIONS.CHOIR_REHEARSAL_VIEW,
+      PERMISSIONS.CHOIR_DEVOTION_VIEW,
+    ],
+  },
 ];
 
 const DEFAULT_PROTOCOL_COMMITTEE_ROLES = [
@@ -253,6 +488,7 @@ const DEFAULT_CONTRIBUTION_TYPE_CATALOG = [
   { id: 'ct-concert', code: 'concert', name: 'Concert', description: 'Concert-related contribution', sortOrder: 40 },
   { id: 'ct-live-recording', code: 'live_recording', name: 'Live Recording', description: 'Live recording contribution', sortOrder: 50 },
   { id: 'ct-special-project', code: 'special_project', name: 'Special Project', description: 'Other special project drives', sortOrder: 60 },
+  { id: 'ct-other', code: 'other', name: 'Other', description: 'Other contribution — specify type on submit', sortOrder: 70 },
 ] as const;
 
 async function main() {
@@ -621,6 +857,82 @@ async function main() {
     'Choir officer roles:',
     Object.keys(CHOIR_OFFICER_META).join(', '),
   );
+
+  const intercessors = await prisma.ministry.findUnique({
+    where: { code: 'INTERCESSORS' },
+  });
+  const musicMinistry = await prisma.ministry.findUnique({
+    where: { code: 'MUSIC' },
+  });
+  const now = new Date();
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
+  const tomorrowStart = new Date(todayStart);
+  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
+  await prisma.churchWeeklyActivity.deleteMany({});
+  await prisma.churchWeeklyActivity.createMany({
+    data: [
+      {
+        title: 'Mid-week Bible study',
+        description: 'Church-wide teaching and fellowship',
+        dayOfWeek: 3,
+        startTime: '18:30',
+        endTime: '20:00',
+        location: 'Main sanctuary',
+        ministryId: intercessors?.id,
+        sortOrder: 1,
+      },
+      {
+        title: 'Choir rehearsal',
+        description: 'Music ministry weekly rehearsal',
+        dayOfWeek: 4,
+        startTime: '17:00',
+        endTime: '19:30',
+        ministryId: musicMinistry?.id,
+        sortOrder: 2,
+      },
+      {
+        title: 'Intercessors prayer',
+        description: 'Corporate prayer for the church',
+        dayOfWeek: 5,
+        startTime: '06:00',
+        endTime: '07:30',
+        ministryId: intercessors?.id,
+        sortOrder: 3,
+      },
+    ],
+  });
+
+  const devotionTypes = [
+    { type: 'TWO_DAY_PRAYER' as const, title: 'Prayer focus — today', prayerDate: todayStart },
+    { type: 'TWO_DAY_PRAYER' as const, title: 'Prayer focus — tomorrow', prayerDate: tomorrowStart },
+    { type: 'ENCOURAGEMENT' as const, title: 'Word of encouragement', prayerDate: null },
+    { type: 'TESTIMONY' as const, title: 'Testimony of faith', prayerDate: null },
+    { type: 'GRATITUDE' as const, title: 'Gratitude', prayerDate: null },
+    { type: 'PRAISE' as const, title: 'Praise', prayerDate: null },
+  ];
+  for (const d of devotionTypes) {
+    const existing = await prisma.devotion.findFirst({
+      where: { choirId: MAIN_CHOIR_ID, type: d.type, title: d.title },
+    });
+    if (!existing) {
+      await prisma.devotion.create({
+        data: {
+          choirId: MAIN_CHOIR_ID,
+          title: d.title,
+          content:
+            d.type === 'TWO_DAY_PRAYER'
+              ? 'Join us in united prayer for our church, families, and nation.'
+              : 'May the Lord strengthen and comfort you today.',
+          type: d.type,
+          prayerDate: d.prayerDate,
+          publishedAt: now,
+          createdById: admin.id,
+        },
+      });
+    }
+  }
 
   await prisma.systemSetting.upsert({
     where: { key: PHONE_ENFORCEMENT_ENABLED_KEY },
