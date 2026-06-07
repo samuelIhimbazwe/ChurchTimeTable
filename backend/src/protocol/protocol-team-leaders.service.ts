@@ -309,11 +309,13 @@ export class ProtocolTeamLeadersService {
         },
       },
       include: {
-        occurrence: { select: { title: true, startAt: true, status: true } },
+        occurrence: {
+          select: { id: true, title: true, startAt: true, endAt: true, status: true },
+        },
         members: { select: { id: true } },
         report: true,
       },
-      orderBy: { generatedAt: 'desc' },
+      orderBy: { occurrence: { startAt: 'asc' } },
     });
   }
 }

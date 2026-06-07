@@ -20,6 +20,11 @@ export type ProtocolMemberRecommendation = {
   officialServicesMonth: number;
   score: number;
   singingChoirId?: string;
+  choirName?: string;
+  totalServicesMonth?: number;
+  attendanceRate?: number;
+  reliabilityScore?: number;
+  attendancePoints?: number;
 };
 
 @Injectable()
@@ -46,7 +51,11 @@ export class ProtocolAssignmentEngine {
       include: {
         memberships: {
           where: { status: 'ACTIVE' },
-          include: { member: true },
+          include: {
+            member: {
+              include: { protocolMemberProfile: true },
+            },
+          },
         },
       },
     });
@@ -63,6 +72,16 @@ export class ProtocolAssignmentEngine {
       this.prisma,
       params.occurrenceId,
     );
+    const choirNames = singingChoirIds.length
+      ? new Map(
+          (
+            await this.prisma.choir.findMany({
+              where: { id: { in: singingChoirIds } },
+              select: { id: true, name: true },
+            })
+          ).map((c) => [c.id, c.name] as const),
+        )
+      : new Map<string, string>();
     const memberChoirMap = await mapMembersToSingingChoirs(
       this.prisma,
       protocolMembers.map((m) => m.id),
@@ -72,6 +91,7 @@ export class ProtocolAssignmentEngine {
     const scored: ProtocolMemberRecommendation[] = [];
 
     for (const member of protocolMembers) {
+      const profile = member.protocolMemberProfile;
       const quota = await this.quota.quotaStatus(member.id, occurrence.startAt);
       const affiliated = memberChoirMap.get(member.id) ?? [];
       const primaryChoirId = affiliated[0];
@@ -105,6 +125,11 @@ export class ProtocolAssignmentEngine {
         officialServicesMonth: quota.officialCount,
         score,
         singingChoirId: primaryChoirId,
+        choirName: primaryChoirId ? choirNames.get(primaryChoirId) : undefined,
+        totalServicesMonth: profile?.totalServicesMonth ?? 0,
+        attendanceRate: profile?.attendanceRate ?? 0,
+        reliabilityScore: profile?.reliabilityScore ?? 100,
+        attendancePoints: profile?.attendedCount ?? 0,
       });
     }
 
@@ -220,6 +245,10 @@ export class ProtocolAssignmentEngine {
         quotaStatus: officialCount >= 3 ? 'LOW_PRIORITY' : 'AVAILABLE',
         officialServicesMonth: officialCount,
         score: 100 - totalRecent * 15 - officialCount * 10,
+        totalServicesMonth: totalRecent,
+        attendanceRate: profile?.attendanceRate ?? 0,
+        reliabilityScore: profile?.reliabilityScore ?? 100,
+        attendancePoints: profile?.attendedCount ?? 0,
       });
     }
 

@@ -58,9 +58,9 @@ export function CardHeader({
   action?: React.ReactNode
 }) {
   return (
-    <div className={cn('flex items-center justify-between mb-4', className)}>
-      <div>{children}</div>
-      {action && <div>{action}</div>}
+    <div className={cn('flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4', className)}>
+      <div className="min-w-0">{children}</div>
+      {action && <div className="shrink-0 self-start sm:self-auto">{action}</div>}
     </div>
   )
 }

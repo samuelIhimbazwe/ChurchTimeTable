@@ -7,7 +7,7 @@ describe('PermissionsResolver', () => {
   let resolver: PermissionsResolver;
   let prisma: {
     user: { findUnique: jest.Mock };
-    protocolServiceTeam: { findMany: jest.Mock };
+    protocolTeamLeader: { findFirst: jest.Mock };
     choirCommitteeMember: { findMany: jest.Mock };
     protocolCommitteeMember: { findMany: jest.Mock };
   };
@@ -15,7 +15,7 @@ describe('PermissionsResolver', () => {
   beforeEach(async () => {
     prisma = {
       user: { findUnique: jest.fn() },
-      protocolServiceTeam: { findMany: jest.fn().mockResolvedValue([]) },
+      protocolTeamLeader: { findFirst: jest.fn().mockResolvedValue(null) },
       choirCommitteeMember: { findMany: jest.fn().mockResolvedValue([]) },
       protocolCommitteeMember: { findMany: jest.fn().mockResolvedValue([]) },
     };

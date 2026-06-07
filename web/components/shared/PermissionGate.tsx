@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuthStore } from '@/stores/index'
+import { useOptionalProtocolDashboardCtx } from '@/components/protocol/ProtocolDashboardProvider'
 
 interface PermissionGateProps {
   permission?: string
@@ -9,19 +10,25 @@ interface PermissionGateProps {
   children: React.ReactNode
 }
 
+function useEffectiveProtocolPermissions(): string[] {
+  const authPerms = useAuthStore((s) => s.user?.permissions ?? [])
+  const protocolCtx = useOptionalProtocolDashboardCtx()
+  const ctxPerms = protocolCtx?.context?.permissions ?? []
+  return Array.from(new Set([...authPerms, ...ctxPerms]))
+}
+
 export default function PermissionGate({
   permission,
   anyOf,
   fallback = null,
   children,
 }: PermissionGateProps) {
-  const hasPermission    = useAuthStore((s) => s.hasPermission)
-  const hasAnyPermission = useAuthStore((s) => s.hasAnyPermission)
+  const effective = useEffectiveProtocolPermissions()
 
   const allowed = permission
-    ? hasPermission(permission)
+    ? effective.includes(permission)
     : anyOf
-    ? hasAnyPermission(anyOf)
+    ? anyOf.some((p) => effective.includes(p))
     : true
 
   return allowed ? <>{children}</> : <>{fallback}</>

@@ -32,7 +32,9 @@ const config: Config = {
           300: 'var(--color-gold-300)',
           400: 'var(--color-gold-400)',
           500: 'var(--color-gold-500)',
+          600: 'var(--color-gold-600)',
           700: 'var(--color-gold-700)',
+          800: 'var(--color-gold-800)',
           900: 'var(--color-gold-900)',
         },
         success: {

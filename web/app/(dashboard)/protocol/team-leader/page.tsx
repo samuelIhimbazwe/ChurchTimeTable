@@ -7,80 +7,153 @@ import {
   StatTile, Badge, SkeletonStatTile, SkeletonCard,
 } from '@/components/shared'
 import {
-  Shield, Calendar, CheckCircle2, AlertTriangle, ChevronRight,
+  Shield, Calendar, Users, ArrowLeftRight, ChevronRight, ClipboardCheck, FileText,
 } from 'lucide-react'
-import { formatDate } from '@/lib/utils/format'
+import {
+  ProtocolTeamReportForm,
+  teamReportOptionsFromDashboard,
+} from '@/components/protocol/ProtocolTeamReportForm'
+import { formatDate, formatTime } from '@/lib/utils/format'
 import Link from 'next/link'
 
-function num(data: Record<string, unknown> | undefined, ...keys: string[]) {
-  if (!data) return 0
-  for (const k of keys) {
-    if (data[k] != null) return Number(data[k])
-  }
-  return 0
+type TeamRow = {
+  id: string
+  occurrenceId?: string
+  status?: string
+  occurrence?: { id: string; title?: string; startAt?: string; endAt?: string; status?: string }
+  members?: { id: string }[]
+}
+
+type Dashboard = {
+  teamCount?: number
+  upcomingCount?: number
+  pendingReplacementCount?: number
+  upcomingTeams?: TeamRow[]
+  nextTeam?: TeamRow | null
 }
 
 export default function TeamLeaderHomePage() {
-  const { data: dashboard, isLoading } = useQuery({
+  const { data: dashboard, isLoading, isError } = useQuery({
     queryKey: ['protocol-team-leader-dashboard'],
     queryFn:  protocolApi.getTeamLeaderDashboard,
   })
 
-  const d = dashboard as Record<string, unknown> | undefined
-  const upcoming = (d?.upcomingTeams ?? d?.upcomingServices ?? d?.assignments ?? []) as Record<string, unknown>[]
+  const d = (dashboard ?? {}) as Dashboard
+  const upcoming = d.upcomingTeams ?? []
+  const nextTeam = d.nextTeam
+  const nextOccurrenceId = nextTeam?.occurrence?.id ?? nextTeam?.occurrenceId
+  const reportTeams = teamReportOptionsFromDashboard(upcoming)
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div>
         <h2 className="font-display text-3xl text-text-primary">Team Leader</h2>
-        <p className="text-text-secondary text-sm mt-1">Your protocol leadership dashboard</p>
+        <p className="text-text-secondary text-sm mt-1">
+          Services where you lead the protocol team — attendance, replacements, and roster only for your assignment
+        </p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {isError && (
+        <Card padding="md" accent="warning">
+          <p className="text-sm text-text-secondary">
+            Could not load your team assignments. Sign out and back in after re-seeding, or ask a coordinator to assign you as team head on a published team.
+          </p>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {isLoading ? (
-          Array.from({ length: 4 }).map((_, i) => <SkeletonStatTile key={i} />)
+          Array.from({ length: 3 }).map((_, i) => <SkeletonStatTile key={i} />)
         ) : (
           <>
-            <StatTile label="My Teams"         value={num(d, 'teamCount', 'assignedTeams', 'totalTeams')} icon={Shield} animate />
-            <StatTile label="Upcoming"         value={num(d, 'upcomingCount', 'upcomingServices')} icon={Calendar} animate />
-            <StatTile label="Reports Due"      value={num(d, 'reportsDue', 'pendingReports')} icon={AlertTriangle} animate />
-            <StatTile label="Attendance Rate"  value={num(d, 'attendanceRate', 'teamAttendanceRate')} suffix="%" icon={CheckCircle2} animate />
+            <StatTile label="Upcoming services" value={d.upcomingCount ?? upcoming.length} icon={Calendar} animate />
+            <StatTile label="Teams I lead" value={d.teamCount ?? upcoming.length} icon={Shield} animate />
+            <StatTile label="Pending replacements" value={d.pendingReplacementCount ?? 0} icon={ArrowLeftRight} animate />
           </>
         )}
       </div>
 
+      {nextTeam && nextOccurrenceId && (
+        <Card padding="md" accent="gold">
+          <CardHeader>
+            <CardTitle>Next service you lead</CardTitle>
+            <CardDescription>
+              {nextTeam.occurrence?.title ?? 'Upcoming service'}
+              {nextTeam.occurrence?.startAt
+                ? ` — ${formatDate(nextTeam.occurrence.startAt)} ${formatTime(nextTeam.occurrence.startAt)}`
+                : ''}
+            </CardDescription>
+          </CardHeader>
+          <div className="flex flex-wrap gap-3 mt-2">
+            <Link
+              href={`/protocol/teams/${nextOccurrenceId}`}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-primary-700 text-white rounded-lg hover:bg-primary-800"
+            >
+              <ClipboardCheck size={16} />
+              Attendance & roster
+            </Link>
+            <Link
+              href="/protocol/replacements"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold border border-border rounded-lg hover:bg-surface-raised"
+            >
+              <ArrowLeftRight size={16} />
+              Review replacements
+            </Link>
+          </div>
+          <p className="text-xs text-text-muted mt-3 flex items-center gap-1">
+            <FileText size={14} />
+            Submit a post-service report below when attendance is complete.
+          </p>
+          <p className="text-xs text-text-muted mt-3 flex items-center gap-1">
+            <Users size={14} />
+            {nextTeam.members?.length ?? 0} members on your team
+            {nextTeam.status ? (
+              <Badge variant="status-pending" className="ml-2">{nextTeam.status}</Badge>
+            ) : null}
+          </p>
+        </Card>
+      )}
+
+      {reportTeams.length > 0 && (
+        <ProtocolTeamReportForm
+          teams={reportTeams}
+          defaultTeamId={nextTeam?.id}
+          compact
+        />
+      )}
+
       <Card padding="none">
-        <CardHeader className="px-5 pt-5" action={
-          <Link href="/protocol/teams" className="text-xs font-semibold text-primary-500 hover:text-primary-700">
-            All teams →
-          </Link>
-        }>
-          <CardTitle>Upcoming Assignments</CardTitle>
-          <CardDescription>Teams you lead or are assigned to</CardDescription>
+        <CardHeader className="px-5 pt-5">
+          <CardTitle>Upcoming assignments</CardTitle>
+          <CardDescription>Only services where you are assigned as team head</CardDescription>
         </CardHeader>
         {isLoading ? (
           <SkeletonCard rows={3} />
         ) : upcoming.length === 0 ? (
-          <p className="text-center text-text-muted py-8 text-sm">No upcoming assignments.</p>
+          <p className="text-center text-text-muted py-8 text-sm px-5">
+            No upcoming team leadership assignments. A coordinator must assign you as team head on a published team.
+          </p>
         ) : (
           <ul className="divide-y divide-border">
-            {upcoming.map((item, i) => {
-              const occurrence = item.occurrence as Record<string, unknown> | undefined
-              const occId = String(occurrence?.id ?? item.occurrenceId ?? item.id ?? i)
-              const title = String(occurrence?.title ?? item.title ?? 'Service')
-              const startAt = occurrence?.startAt ?? item.startAt ?? item.date
+            {upcoming.map((item) => {
+              const occurrence = item.occurrence
+              const occId = item.occurrenceId ?? occurrence?.id ?? item.id
+              const title = occurrence?.title ?? 'Service'
+              const startAt = occurrence?.startAt
               return (
-                <li key={occId} className="hover:bg-surface-raised transition-colors">
+                <li key={item.id} className="hover:bg-surface-raised transition-colors">
                   <Link href={`/protocol/teams/${occId}`} className="flex items-center gap-4 px-5 py-3">
                     <Shield size={16} className="text-primary-500 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-text-primary truncate">{title}</p>
-                      {startAt != null && (
-                        <p className="text-xs text-text-muted">{formatDate(String(startAt))}</p>
+                      {startAt && (
+                        <p className="text-xs text-text-muted">
+                          {formatDate(startAt)} {formatTime(startAt)}
+                        </p>
                       )}
                     </div>
-                    {item.status != null && (
-                      <Badge variant="status-pending">{String(item.status)}</Badge>
+                    {item.status && (
+                      <Badge variant="status-pending">{item.status}</Badge>
                     )}
                     <ChevronRight size={16} className="text-text-muted shrink-0" />
                   </Link>
@@ -90,21 +163,6 @@ export default function TeamLeaderHomePage() {
           </ul>
         )}
       </Card>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Link href="/protocol/reports">
-          <Card padding="md" className="hover:shadow-raised transition-shadow cursor-pointer">
-            <p className="text-sm text-text-secondary">Submit a post-service report</p>
-            <p className="font-display text-xl font-bold text-text-primary mt-1">Team Reports →</p>
-          </Card>
-        </Link>
-        <Link href="/protocol/replacements">
-          <Card padding="md" className="hover:shadow-raised transition-shadow cursor-pointer">
-            <p className="text-sm text-text-secondary">Review replacement requests</p>
-            <p className="font-display text-xl font-bold text-text-primary mt-1">Replacements →</p>
-          </Card>
-        </Link>
-      </div>
     </div>
   )
 }

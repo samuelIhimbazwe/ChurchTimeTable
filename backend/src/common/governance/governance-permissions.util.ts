@@ -14,8 +14,8 @@ export const PROTOCOL_COORDINATOR_CLAIMS = [
 /** Claims that grant team-head scoped protocol operations */
 export const PROTOCOL_TEAM_HEAD_CLAIMS = [
   PERMISSIONS.PROTOCOL_TEAM_HEAD,
+  PERMISSIONS.PROTOCOL_TEAM_LEADER_EXECUTE,
   PERMISSIONS.ATTENDANCE_MARK_SCOPE,
-  PERMISSIONS.PROTOCOL_ATTENDANCE_MANAGE,
 ] as const;
 
 /** Claims that grant choir operational leadership */

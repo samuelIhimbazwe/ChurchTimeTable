@@ -96,22 +96,13 @@ export class ProtocolAttendanceService {
 
 
 
-    const canRecord =
-
-      (await this.leaderAccess.canManageTeamAttendance(actorUserId, member.teamId)) ||
-
-      (await this.actor(actorUserId).then(({ permissions }) =>
-
-        hasProtocolAttendanceManage(permissions),
-
-      ));
-
-
+    const canRecord = await this.leaderAccess.canManageTeamAttendance(
+      actorUserId,
+      member.teamId,
+    );
 
     if (!canRecord) {
-
       throw new ForbiddenException('Attendance management denied');
-
     }
 
 

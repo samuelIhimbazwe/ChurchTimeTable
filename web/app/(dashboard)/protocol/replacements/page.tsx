@@ -7,6 +7,7 @@ import { Card, Badge, Avatar, PermissionGate, SkeletonCard } from '@/components/
 import { CheckCircle2, XCircle } from 'lucide-react'
 import { formatDate } from '@/lib/utils/format'
 import type { ReplacementRequestStatus } from '@/types'
+import { ProtocolReplacementRequestForm } from '@/components/protocol/ProtocolReplacementRequestForm'
 
 const STATUS_BADGE: Record<ReplacementRequestStatus, 'status-pending' | 'status-present' | 'status-absent'> = {
   PENDING:  'status-pending',
@@ -41,6 +42,8 @@ export default function ReplacementsPage() {
         </p>
       </div>
 
+      <ProtocolReplacementRequestForm />
+
       {isLoading ? (
         <SkeletonCard rows={4} />
       ) : (data?.length ?? 0) === 0 ? (
@@ -63,7 +66,7 @@ export default function ReplacementsPage() {
                 </div>
                 <div className="flex flex-col items-end gap-2 shrink-0">
                   <Badge variant={STATUS_BADGE[r.status]}>{r.status}</Badge>
-                  <PermissionGate permission="protocol.replacement.manage">
+                  <PermissionGate anyOf={['protocol.replacement.manage', 'protocol.team.head', 'protocol.team.leader.execute']}>
                     {r.status === 'PENDING' && (
                       <div className="flex gap-2">
                         <button

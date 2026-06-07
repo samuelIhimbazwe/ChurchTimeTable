@@ -54,6 +54,7 @@ export class ProtocolController {
   @Get('dashboard/team-leader')
   @RequireAnyPermissions(
     PERMISSIONS.PROTOCOL_TEAM_LEADER_EXECUTE,
+    PERMISSIONS.PROTOCOL_TEAM_HEAD,
     PERMISSIONS.PROTOCOL_MANAGE,
   )
   teamLeaderDashboard(@CurrentUser('sub') userId: string) {
@@ -61,7 +62,13 @@ export class ProtocolController {
   }
 
   @Get('dashboard')
-  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.PROTOCOL_MANAGE)
+  @RequireAnyPermissions(
+    PERMISSIONS.PROTOCOL_VIEW,
+    PERMISSIONS.PROTOCOL_MANAGE,
+    PERMISSIONS.PROTOCOL_OVERSIGHT_SCOPE,
+    PERMISSIONS.PROTOCOL_OPERATIONAL_MONITOR,
+    PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE,
+  )
   leaderDashboard(@CurrentUser('sub') userId: string) {
     return this.dashboard.leaderSummary(userId);
   }
@@ -195,6 +202,8 @@ export class ProtocolController {
   @Post('reports')
   @RequireAnyPermissions(
     PERMISSIONS.PROTOCOL_TEAM_LEADER_EXECUTE,
+    PERMISSIONS.PROTOCOL_TEAM_HEAD,
+    PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE,
     PERMISSIONS.PROTOCOL_MANAGE,
   )
   submitReport(
@@ -225,7 +234,10 @@ export class ProtocolController {
   @Get('rankings/categories')
   @RequireAnyPermissions(
     PERMISSIONS.PROTOCOL_RANKING_VIEW,
+    PERMISSIONS.PROTOCOL_VIEW,
     PERMISSIONS.PROTOCOL_MANAGE,
+    PERMISSIONS.PROTOCOL_OPERATIONAL_MONITOR,
+    PERMISSIONS.PROTOCOL_OVERSIGHT_SCOPE,
   )
   categoryRankings(
     @Query('year') year: string,
@@ -259,8 +271,21 @@ export class ProtocolController {
     return this.teams.getTeam(userId, id);
   }
 
+  @Get('occurrences')
+  @RequireAnyPermissions(
+    PERMISSIONS.PROTOCOL_VIEW,
+    PERMISSIONS.PROTOCOL_MANAGE,
+    PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE,
+  )
+  listTeamOccurrences(@CurrentUser('sub') userId: string) {
+    return this.teams.listTeamOccurrences(userId);
+  }
+
   @Post('teams/generate')
-  @RequirePermissions(PERMISSIONS.PROTOCOL_MANAGE)
+  @RequireAnyPermissions(
+    PERMISSIONS.PROTOCOL_MANAGE,
+    PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE,
+  )
   generateTeam(
     @CurrentUser('sub') userId: string,
     @Body()
@@ -276,6 +301,8 @@ export class ProtocolController {
   @Patch('teams/:id/status')
   @RequireAnyPermissions(
     PERMISSIONS.PROTOCOL_TEAM_APPROVE,
+    PERMISSIONS.PROTOCOL_TEAM_PUBLISH,
+    PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE,
     PERMISSIONS.PROTOCOL_MANAGE,
   )
   transitionTeam(
@@ -286,8 +313,27 @@ export class ProtocolController {
     return this.teams.transitionStatus(userId, id, body.status);
   }
 
+  @Get('occurrences/:occurrenceId/team')
+  @RequireAnyPermissions(
+    PERMISSIONS.PROTOCOL_VIEW,
+    PERMISSIONS.PROTOCOL_MANAGE,
+    PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE,
+    PERMISSIONS.PROTOCOL_TEAM_HEAD,
+    PERMISSIONS.PROTOCOL_TEAM_LEADER_EXECUTE,
+  )
+  teamForOccurrence(
+    @CurrentUser('sub') userId: string,
+    @Param('occurrenceId') occurrenceId: string,
+  ) {
+    return this.teams.getTeamByOccurrence(userId, occurrenceId);
+  }
+
   @Get('occurrences/:occurrenceId/recommendations')
-  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.PROTOCOL_MANAGE)
+  @RequireAnyPermissions(
+    PERMISSIONS.PROTOCOL_VIEW,
+    PERMISSIONS.PROTOCOL_MANAGE,
+    PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE,
+  )
   recommendations(
     @CurrentUser('sub') userId: string,
     @Param('occurrenceId') occurrenceId: string,
@@ -311,7 +357,12 @@ export class ProtocolController {
   }
 
   @Post('attendance')
-  @RequirePermissions(PERMISSIONS.PROTOCOL_ATTENDANCE_MANAGE)
+  @RequireAnyPermissions(
+    PERMISSIONS.PROTOCOL_ATTENDANCE_MANAGE,
+    PERMISSIONS.PROTOCOL_TEAM_LEADER_EXECUTE,
+    PERMISSIONS.PROTOCOL_TEAM_HEAD,
+    PERMISSIONS.PROTOCOL_MANAGE,
+  )
   recordAttendance(
     @CurrentUser('sub') userId: string,
     @Body()
@@ -348,6 +399,9 @@ export class ProtocolController {
   @RequireAnyPermissions(
     PERMISSIONS.PROTOCOL_REPLACEMENT_MANAGE,
     PERMISSIONS.PROTOCOL_MANAGE,
+    PERMISSIONS.PROTOCOL_TEAM_HEAD,
+    PERMISSIONS.PROTOCOL_TEAM_LEADER_EXECUTE,
+    PERMISSIONS.PROTOCOL_VIEW,
   )
   pendingReplacements(@CurrentUser('sub') userId: string) {
     return this.replacements.listPending(userId);
@@ -371,7 +425,12 @@ export class ProtocolController {
   }
 
   @Patch('replacements/:id')
-  @RequirePermissions(PERMISSIONS.PROTOCOL_REPLACEMENT_MANAGE)
+  @RequireAnyPermissions(
+    PERMISSIONS.PROTOCOL_REPLACEMENT_MANAGE,
+    PERMISSIONS.PROTOCOL_MANAGE,
+    PERMISSIONS.PROTOCOL_TEAM_HEAD,
+    PERMISSIONS.PROTOCOL_TEAM_LEADER_EXECUTE,
+  )
   reviewReplacement(
     @CurrentUser('sub') userId: string,
     @Param('id') id: string,
@@ -396,7 +455,12 @@ export class ProtocolController {
   }
 
   @Post('rankings/generate')
-  @RequirePermissions(PERMISSIONS.PROTOCOL_MANAGE)
+  @RequireAnyPermissions(
+    PERMISSIONS.PROTOCOL_MANAGE,
+    PERMISSIONS.PROTOCOL_OPERATIONAL_MONITOR,
+    PERMISSIONS.PROTOCOL_OVERSIGHT_SCOPE,
+    PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE,
+  )
   generateRankings(
     @CurrentUser('sub') userId: string,
     @Body() body: { year: number; month: number },

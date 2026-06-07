@@ -1,73 +1,198 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { protocolApi, occurrencesApi } from '@/lib/api'
+import { protocolApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
-import { Card, CardHeader, CardTitle, PermissionGate, SkeletonCard } from '@/components/shared'
-import { formatDate } from '@/lib/utils/format'
+import { ApiError } from '@/lib/api/client'
+import { Card, CardHeader, CardTitle, Badge, PermissionGate, SkeletonCard } from '@/components/shared'
+import { formatDate, formatTime } from '@/lib/utils/format'
 
 export default function GenerateTeamPage() {
   const router = useRouter()
   const [occurrenceId, setOccurrenceId] = useState('')
+  const [selected, setSelected] = useState<Set<string>>(new Set())
 
   const { data: occurrences, isLoading } = useQuery({
-    queryKey: ['occurrences', { status: 'PUBLISHED', limit: 30 }],
-    queryFn:  () => occurrencesApi.getAll({ status: 'PUBLISHED', limit: 30 }),
+    queryKey: ['protocol-team-occurrences'],
+    queryFn: protocolApi.listTeamOccurrences,
   })
+
+  const { data: recommendations, isLoading: loadingRecs } = useQuery({
+    queryKey: ['protocol-recommendations', occurrenceId],
+    queryFn: () => protocolApi.getRecommendations(occurrenceId),
+    enabled: !!occurrenceId,
+  })
+
+  const selectedOccurrence = occurrences?.find((o) => o.id === occurrenceId)
+
+  useEffect(() => {
+    if (!recommendations?.length) {
+      setSelected(new Set())
+      return
+    }
+    const autoPick = recommendations
+      .filter((r) => r.quotaStatus === 'AVAILABLE')
+      .slice(0, 8)
+      .map((r) => r.memberId)
+    setSelected(new Set(autoPick))
+  }, [recommendations, occurrenceId])
+
+  const sortedRecs = useMemo(
+    () => [...(recommendations ?? [])].sort((a, b) => b.score - a.score),
+    [recommendations],
+  )
 
   const generate = useMutation({
-    mutationFn: () => protocolApi.generateTeam(occurrenceId),
+    mutationFn: () =>
+      protocolApi.generateTeam(occurrenceId, Array.from(selected)),
     onSuccess: () => {
-      toast.success('Team generated')
+      toast.success(`Team built with ${selected.size} members`)
       router.push(`/protocol/teams/${occurrenceId}`)
     },
-    onError: () => toast.error('Generation failed'),
+    onError: (err) => {
+      const msg =
+        err instanceof ApiError
+          ? err.message
+          : 'Team build failed — select at least one member and ensure the service has a protocol slot'
+      toast.error(msg)
+    },
   })
 
+  function toggleMember(memberId: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(memberId)) next.delete(memberId)
+      else next.add(memberId)
+      return next
+    })
+  }
+
   return (
-    <PermissionGate permission="protocol.manage" fallback={
-      <div className="flex items-center justify-center h-64">
-        <p className="text-text-muted">You do not have permission to generate teams.</p>
-      </div>
-    }>
-      <div className="space-y-6 max-w-xl mx-auto">
+    <PermissionGate
+      anyOf={['protocol.manage', 'protocol.team.manage']}
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <p className="text-text-muted">You do not have permission to build teams.</p>
+        </div>
+      }
+    >
+      <div className="space-y-6 max-w-5xl mx-auto pb-8">
         <div>
-          <h2 className="font-display text-3xl text-text-primary">Generate Team</h2>
-          <p className="text-text-secondary text-sm mt-1">Select an occurrence to auto-assign protocol members</p>
+          <h2 className="font-display text-3xl text-text-primary">Build Protocol Team</h2>
+          <p className="text-text-secondary text-sm mt-1">
+            Select a service, review member intelligence, then pick who serves
+          </p>
         </div>
 
         <Card padding="md">
           <CardHeader>
-            <CardTitle>Select Occurrence</CardTitle>
+            <CardTitle>1. Select service</CardTitle>
           </CardHeader>
           {isLoading ? (
-            <SkeletonCard rows={4} />
+            <SkeletonCard rows={2} />
+          ) : (occurrences?.length ?? 0) === 0 ? (
+            <p className="text-sm text-text-muted">
+              No upcoming protocol services found. Run pilot seed or publish a service with a protocol assignment slot.
+            </p>
           ) : (
-            <div className="space-y-4">
-              <select
-                value={occurrenceId}
-                onChange={(e) => setOccurrenceId(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold-500"
-              >
-                <option value="">Choose a service…</option>
-                {occurrences?.items?.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.title} — {formatDate(o.date)}
-                  </option>
-                ))}
-              </select>
-              <button
-                onClick={() => generate.mutate()}
-                disabled={!occurrenceId || generate.isPending}
-                className="w-full py-3 text-sm font-semibold bg-primary-700 text-white rounded-xl hover:bg-primary-800 disabled:opacity-60 transition-colors"
-              >
-                {generate.isPending ? 'Generating…' : 'Generate Team'}
-              </button>
-            </div>
+            <select
+              value={occurrenceId}
+              onChange={(e) => setOccurrenceId(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold-500"
+            >
+              <option value="">Choose a service…</option>
+              {occurrences?.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.title} — {formatDate(o.startAt)} {formatTime(o.startAt)}
+                  {o.hasTeam ? ` (team: ${o.teamStatus})` : ''}
+                </option>
+              ))}
+            </select>
           )}
         </Card>
+
+        {occurrenceId && (
+          <Card padding="md">
+            <CardHeader>
+              <CardTitle>2. Pick members</CardTitle>
+            </CardHeader>
+            {selectedOccurrence?.hasTeam ? (
+              <p className="text-sm text-text-muted mb-4">
+                A team already exists for this service ({selectedOccurrence.teamStatus ?? 'draft'}).
+                {selectedOccurrence.teamStatus === 'PUBLISHED'
+                  ? ' Open it to view the roster or mark attendance.'
+                  : ' Open it to review, approve, and publish the roster.'}
+              </p>
+            ) : null}
+            {loadingRecs ? (
+              <SkeletonCard rows={6} />
+            ) : sortedRecs.length === 0 ? (
+              <p className="text-sm text-text-muted">No protocol members available for recommendations.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-xs text-text-muted border-b border-border">
+                      <th className="py-2 pr-2 w-8" />
+                      <th className="py-2 pr-3">Member</th>
+                      <th className="py-2 pr-3">Choir</th>
+                      <th className="py-2 pr-3">Official/mo</th>
+                      <th className="py-2 pr-3">Attendance %</th>
+                      <th className="py-2 pr-3">Points</th>
+                      <th className="py-2 pr-3">Score</th>
+                      <th className="py-2">Quota</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {sortedRecs.map((row) => (
+                      <tr key={row.memberId} className="hover:bg-surface-raised">
+                        <td className="py-2 pr-2">
+                          <input
+                            type="checkbox"
+                            checked={selected.has(row.memberId)}
+                            onChange={() => toggleMember(row.memberId)}
+                            disabled={selectedOccurrence?.hasTeam}
+                          />
+                        </td>
+                        <td className="py-2 pr-3 font-medium">{row.displayName}</td>
+                        <td className="py-2 pr-3 text-text-secondary">{row.choirName ?? '—'}</td>
+                        <td className="py-2 pr-3">{row.officialServicesMonth}</td>
+                        <td className="py-2 pr-3">{Math.round(row.attendanceRate ?? 0)}%</td>
+                        <td className="py-2 pr-3">{row.attendancePoints ?? 0}</td>
+                        <td className="py-2 pr-3">{row.score}</td>
+                        <td className="py-2">
+                          <Badge variant={row.quotaStatus === 'AVAILABLE' ? 'status-present' : 'status-pending'}>
+                            {row.quotaStatus === 'AVAILABLE' ? 'Available' : 'Low priority'}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                if (selectedOccurrence?.hasTeam) {
+                  router.push(`/protocol/teams/${occurrenceId}`)
+                  return
+                }
+                generate.mutate()
+              }}
+              disabled={!occurrenceId || generate.isPending || (!selectedOccurrence?.hasTeam && selected.size === 0)}
+              className="mt-4 w-full py-3 text-sm font-semibold bg-primary-700 text-white rounded-xl hover:bg-primary-800 disabled:opacity-60 transition-colors"
+            >
+              {generate.isPending
+                ? 'Building…'
+                : selectedOccurrence?.hasTeam
+                  ? 'Open existing team'
+                  : `Build team (${selected.size} selected)`}
+            </button>
+          </Card>
+        )}
       </div>
     </PermissionGate>
   )

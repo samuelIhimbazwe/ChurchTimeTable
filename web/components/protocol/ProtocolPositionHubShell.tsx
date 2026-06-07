@@ -70,18 +70,18 @@ export function ProtocolHubQuickLink({ href, label, desc, icon: Icon, stat }: Qu
       <Card padding="md" className="h-full hover:shadow-raised transition-shadow group">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center shrink-0">
-              <Icon size={18} className="text-primary-700" />
+            <div className="w-10 h-10 rounded-lg bg-primary-50 dark:bg-primary-100/60 flex items-center justify-center shrink-0">
+              <Icon size={18} className="text-primary-600 dark:text-gold-400" />
             </div>
             <div>
-              <p className="font-semibold text-text-primary group-hover:text-primary-700">{label}</p>
+              <p className="font-semibold text-text-primary group-hover:text-primary-700 dark:group-hover:text-gold-400">{label}</p>
               <p className="text-xs text-text-muted mt-1">{desc}</p>
               {stat != null && (
                 <p className="text-xs font-semibold text-primary-600 mt-2">{stat}</p>
               )}
             </div>
           </div>
-          <ChevronRight size={16} className="text-text-muted group-hover:text-primary-600 shrink-0 mt-1" />
+          <ChevronRight size={16} className="text-text-muted group-hover:text-primary-600 dark:group-hover:text-gold-400 shrink-0 mt-1" />
         </div>
       </Card>
     </Link>

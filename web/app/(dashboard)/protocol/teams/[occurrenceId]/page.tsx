@@ -9,7 +9,14 @@ import { Card, CardHeader, CardTitle, Badge, Avatar, PermissionGate } from '@/co
 import { ChevronLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatDate, outcomeLabel } from '@/lib/utils/format'
-import type { ProtocolAttendanceOutcome } from '@/types'
+import type { ProtocolAttendanceOutcome, ProtocolTeamStatus } from '@/types'
+
+const NEXT_STATUS: Partial<Record<ProtocolTeamStatus, { status: ProtocolTeamStatus; label: string }>> = {
+  GENERATED: { status: 'REVIEWED',  label: 'Mark reviewed' },
+  REVIEWED:  { status: 'APPROVED',  label: 'Approve team' },
+  APPROVED:  { status: 'PUBLISHED', label: 'Publish team' },
+  PUBLISHED: { status: 'COMPLETED', label: 'Mark completed' },
+}
 
 const ALL_OUTCOMES: { label: string; outcome: ProtocolAttendanceOutcome; color: string }[] = [
   { label: 'Present (Full)',         outcome: 'PRESENT_FULL',             color: 'text-success' },
@@ -20,6 +27,53 @@ const ALL_OUTCOMES: { label: string; outcome: ProtocolAttendanceOutcome; color: 
   { label: 'Self Replaced',         outcome: 'ABSENT_SELF_REPLACED',     color: 'text-info'    },
   { label: 'Unexcused Absence',     outcome: 'ABSENT_UNEXCUSED',         color: 'text-danger'  },
 ]
+
+function AssignTeamLeaderPanel({ teamId }: { teamId: string }) {
+  const qc = useQueryClient()
+  const { data: recommendation } = useQuery({
+    queryKey: ['protocol-leader-recommendation', teamId],
+    queryFn: () => protocolApi.recommendTeamLeader(teamId),
+    enabled: !!teamId,
+  })
+
+  const assign = useMutation({
+    mutationFn: (leaderId: string) => protocolApi.assignTeamLeader(teamId, leaderId),
+    onSuccess: () => {
+      toast.success('Team leader assigned')
+      qc.invalidateQueries({ queryKey: ['protocol-team'] })
+    },
+    onError: () => toast.error('Failed to assign leader'),
+  })
+
+  const recommended = recommendation?.recommended as Record<string, unknown> | undefined
+  const leaderId = String(recommended?.id ?? '')
+  const member = recommended?.member as { firstName?: string; lastName?: string } | undefined
+  const name = member ? `${member.firstName ?? ''} ${member.lastName ?? ''}`.trim() : ''
+
+  if (!leaderId) {
+    return (
+      <p className="text-xs text-text-muted">
+        No leader recommendation for this service. Register leaders under Team leaders.
+      </p>
+    )
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-3 pt-2 border-t border-border">
+      <p className="text-sm text-text-secondary">
+        Recommended: <span className="font-medium text-text-primary">{name || 'Leader'}</span>
+      </p>
+      <button
+        type="button"
+        onClick={() => assign.mutate(leaderId)}
+        disabled={assign.isPending}
+        className="text-xs font-semibold text-primary-600 hover:text-primary-800 disabled:opacity-60"
+      >
+        {assign.isPending ? 'Assigning…' : 'Assign recommended'}
+      </button>
+    </div>
+  )
+}
 
 const OUTCOME_BG: Record<string, string> = {
   PRESENT_FULL:           'bg-success-light text-success border-success',
@@ -56,14 +110,26 @@ export default function ProtocolTeamPage() {
         .filter(([, o]) => o !== null)
         .map(([teamMemberId, outcome]) => ({ teamMemberId, outcome: outcome! })),
     }),
-    onSuccess: () => {
-      toast.success('Attendance submitted')
+    onSuccess: (result) => {
+      toast.success(`${result.saved} attendance record${result.saved !== 1 ? 's' : ''} saved`)
       qc.invalidateQueries({ queryKey: ['protocol-team', occurrenceId] })
     },
     onError: () => toast.error('Submission failed'),
   })
 
+  const advanceStatus = useMutation({
+    mutationFn: (status: ProtocolTeamStatus) =>
+      protocolApi.updateTeamStatus(team!.id, status),
+    onSuccess: () => {
+      toast.success('Team status updated')
+      qc.invalidateQueries({ queryKey: ['protocol-team', occurrenceId] })
+      qc.invalidateQueries({ queryKey: ['protocol-teams'] })
+    },
+    onError: () => toast.error('Status update failed'),
+  })
+
   const markedCount = Object.values(records).filter(Boolean).length
+  const nextStep = team ? NEXT_STATUS[team.status] : undefined
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
@@ -80,27 +146,44 @@ export default function ProtocolTeamPage() {
               {occurrence?.title ?? 'Protocol Team'}
             </h2>
             {occurrence?.date && (
-              <p className="text-text-secondary text-sm mt-1">{formatDate(occurrence.date)}</p>
+              <p className="text-text-secondary text-sm mt-1">
+                {formatDate(occurrence.date)}
+                {occurrence.startTime ? ` · ${occurrence.startTime}` : ''}
+              </p>
             )}
           </div>
-          {team && (
-            <Badge variant={
-              team.status === 'PUBLISHED'  ? 'status-present' :
-              team.status === 'APPROVED'   ? 'status-excused' :
-              team.status === 'GENERATED'  ? 'status-pending' : 'role-member'
-            }>
-              {team.status}
-            </Badge>
-          )}
+          <div className="flex flex-col items-end gap-2">
+            {team && (
+              <Badge variant={
+                team.status === 'PUBLISHED'  ? 'status-present' :
+                team.status === 'APPROVED'   ? 'status-excused' :
+                team.status === 'GENERATED'  ? 'status-pending' : 'role-member'
+              }>
+                {team.status}
+              </Badge>
+            )}
+            <PermissionGate anyOf={['protocol.team.approve', 'protocol.team.publish', 'protocol.team.manage', 'protocol.manage']}>
+              {nextStep && team && (
+                <button
+                  type="button"
+                  onClick={() => advanceStatus.mutate(nextStep.status)}
+                  disabled={advanceStatus.isPending}
+                  className="text-xs font-semibold text-primary-600 hover:text-primary-800 disabled:opacity-60"
+                >
+                  {advanceStatus.isPending ? 'Updating…' : nextStep.label}
+                </button>
+              )}
+            </PermissionGate>
+          </div>
         </div>
       </div>
 
-      {(team?.leaders?.length ?? 0) > 0 && (
-        <Card padding="md">
-          <CardHeader>
-            <CardTitle>Team Leaders</CardTitle>
-          </CardHeader>
-          <div className="flex flex-wrap gap-3">
+      <Card padding="md">
+        <CardHeader>
+          <CardTitle>Team Leaders</CardTitle>
+        </CardHeader>
+        {(team?.leaders?.length ?? 0) > 0 ? (
+          <div className="flex flex-wrap gap-3 mb-4">
             {team?.leaders?.map((l) => (
               <div key={l.id} className="flex items-center gap-2">
                 <Avatar name={l.memberName} size="sm" />
@@ -113,8 +196,13 @@ export default function ProtocolTeamPage() {
               </div>
             ))}
           </div>
-        </Card>
-      )}
+        ) : (
+          <p className="text-sm text-text-muted mb-4">No leader assigned yet.</p>
+        )}
+        <PermissionGate anyOf={['protocol.manage', 'protocol.team.manage', 'protocol.team.leader.manage']}>
+          {team && <AssignTeamLeaderPanel teamId={team.id} />}
+        </PermissionGate>
+      </Card>
 
       <Card padding="none">
         <CardHeader className="px-5 pt-5">
@@ -159,7 +247,7 @@ export default function ProtocolTeamPage() {
                     )}
                   </div>
 
-                  <PermissionGate permission="protocol.attendance.manage">
+                  <PermissionGate anyOf={['protocol.attendance.manage', 'protocol.team.leader.execute', 'protocol.team.head', 'attendance.mark']}>
                     {isExpanded && (
                       <div className="mt-3 ml-11 flex flex-wrap gap-1.5">
                         {ALL_OUTCOMES.map(({ label, outcome, color }) => (
@@ -189,7 +277,7 @@ export default function ProtocolTeamPage() {
         )}
       </Card>
 
-      <PermissionGate permission="protocol.attendance.manage">
+      <PermissionGate anyOf={['protocol.attendance.manage', 'protocol.team.leader.execute', 'protocol.team.head', 'attendance.mark']}>
         <div className="sticky bottom-6">
           <button
             onClick={() => submit.mutate()}

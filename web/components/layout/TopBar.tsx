@@ -16,8 +16,11 @@ interface TopBarProps {
   unreadCount?:  number
   onMenuClick?:  () => void
   onSearchClick?:() => void
+  onHelpClick?:  () => void
+  onPreferencesClick?: () => void
   onNotifClick?: () => void
   notifOpen?:    boolean
+  helpOpen?:     boolean
 }
 
 export default function TopBar({
@@ -27,8 +30,11 @@ export default function TopBar({
   unreadCount  = 0,
   onMenuClick,
   onSearchClick,
+  onHelpClick,
+  onPreferencesClick,
   onNotifClick,
   notifOpen    = false,
+  helpOpen     = false,
 }: TopBarProps) {
   const collapsed = useUIStore((s) => s.sidebarCollapsed)
   const theme     = useUIStore((s) => s.theme)
@@ -44,7 +50,7 @@ export default function TopBar({
     <header
       className={cn(
         'fixed top-0 right-0 z-30 h-16',
-        'flex items-center justify-between px-4 sm:px-6 gap-4',
+        'flex items-center justify-between px-3 sm:px-6 gap-2 sm:gap-4 min-w-0',
         'bg-surface border-b border-border',
         'left-0',
         'lg:transition-[left] lg:duration-normal lg:ease-out',
@@ -52,21 +58,21 @@ export default function TopBar({
         collapsed && 'lg:left-16',
       )}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 min-w-0 flex-1">
         <button
           onClick={onMenuClick}
           aria-label="Open menu"
-          className="lg:hidden p-2 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors"
+          className="lg:hidden p-2 -ml-1 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors shrink-0"
         >
           <Menu size={20} />
         </button>
 
-        <h1 className="font-body font-semibold text-xl text-text-primary truncate max-w-[160px] sm:max-w-none">
+        <h1 className="font-body font-semibold text-base sm:text-xl text-text-primary truncate min-w-0">
           {pageTitle}
         </h1>
       </div>
 
-      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+      <div className="flex items-center gap-0.5 sm:gap-2 shrink-0">
 
         <button
           onClick={onSearchClick}
@@ -96,14 +102,21 @@ export default function TopBar({
         <button
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           aria-label="Toggle theme"
-          className="p-2 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors duration-fast"
+          className="hidden min-[400px]:block p-2 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors duration-fast"
         >
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
         </button>
 
         <button
-          aria-label="Help"
-          className="hidden sm:block p-2 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors duration-fast"
+          onClick={onHelpClick}
+          aria-label="Help and support"
+          aria-expanded={helpOpen}
+          className={cn(
+            'p-2 rounded-md transition-colors duration-fast',
+            helpOpen
+              ? 'bg-surface-overlay text-text-primary'
+              : 'text-text-muted hover:text-text-primary hover:bg-surface-raised',
+          )}
         >
           <HelpCircle size={18} />
         </button>
@@ -165,7 +178,11 @@ export default function TopBar({
                   <a href="/portal/profile" className="flex items-center gap-3 px-4 py-2 text-sm text-text-secondary hover:bg-surface-raised hover:text-text-primary transition-colors">
                     <User size={15} /> My Profile
                   </a>
-                  <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-secondary hover:bg-surface-raised hover:text-text-primary transition-colors">
+                  <button
+                    type="button"
+                    onClick={() => { setMenuOpen(false); onPreferencesClick?.() }}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-secondary hover:bg-surface-raised hover:text-text-primary transition-colors"
+                  >
                     <Settings size={15} /> Preferences
                   </button>
                 </div>

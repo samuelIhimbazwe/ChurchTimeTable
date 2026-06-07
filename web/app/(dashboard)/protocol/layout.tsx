@@ -69,13 +69,13 @@ export default function ProtocolScopedLayout({ children }: { children: React.Rea
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             <Link
               href={protocolMemberHome()}
-              className="text-sm font-semibold text-primary-700 hover:text-primary-900"
+              className="text-sm font-semibold text-primary-700 hover:text-primary-900 dark:text-gold-400 dark:hover:text-gold-300"
             >
               My protocol home
             </Link>
             <Link
               href="/portal"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-700 hover:text-primary-900"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-700 hover:text-primary-900 dark:text-gold-400 dark:hover:text-gold-300"
             >
               <ArrowLeft size={14} /> Member portal
             </Link>

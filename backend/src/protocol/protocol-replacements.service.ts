@@ -10,11 +10,13 @@ import { AuditService } from '../audit/audit.service';
 import { PermissionsResolver } from '../auth/permissions.resolver';
 import { PROTOCOL_AUDIT } from './protocol.constants';
 import {
+  hasProtocolManage,
   hasProtocolReplacementManage,
   hasProtocolView,
 } from './protocol-access.util';
 import { ProtocolPerformanceService } from './protocol-performance.service';
 import { ProtocolNotificationsService } from './protocol-notifications.service';
+import { ProtocolTeamLeaderAccessService } from './protocol-team-leader-access.service';
 
 @Injectable()
 export class ProtocolReplacementsService {
@@ -24,6 +26,7 @@ export class ProtocolReplacementsService {
     private permissions: PermissionsResolver,
     private performance: ProtocolPerformanceService,
     private notifications: ProtocolNotificationsService,
+    private leaderAccess: ProtocolTeamLeaderAccessService,
   ) {}
 
   private async actor(userId: string) {
@@ -83,14 +86,22 @@ export class ProtocolReplacementsService {
     status: ProtocolReplacementStatus,
   ) {
     const { permissions } = await this.actor(actorUserId);
-    if (!hasProtocolReplacementManage(permissions)) {
-      throw new ForbiddenException('Replacement review denied');
-    }
 
     const request = await this.prisma.protocolReplacementRequest.findUniqueOrThrow({
       where: { id: requestId },
       include: { teamMember: true },
     });
+
+    const canReview =
+      hasProtocolReplacementManage(permissions) ||
+      hasProtocolManage(permissions) ||
+      (await this.leaderAccess.canReviewTeamReplacements(
+        actorUserId,
+        request.teamMember.teamId,
+      ));
+    if (!canReview) {
+      throw new ForbiddenException('Replacement review denied');
+    }
 
     if (request.status !== 'PENDING') {
       throw new BadRequestException('Request already reviewed');
@@ -155,9 +166,26 @@ export class ProtocolReplacementsService {
   }
 
   async listPending(actorUserId: string) {
-    await this.actor(actorUserId);
+    const { permissions } = await this.actor(actorUserId);
+    const globalView =
+      hasProtocolReplacementManage(permissions) ||
+      hasProtocolManage(permissions) ||
+      permissions.includes('protocol.team.manage');
+    const ledTeamIds = globalView
+      ? null
+      : await this.leaderAccess.ledTeamIds(actorUserId);
+
+    if (!globalView && !ledTeamIds?.length) {
+      return [];
+    }
+
     return this.prisma.protocolReplacementRequest.findMany({
-      where: { status: 'PENDING' },
+      where: {
+        status: 'PENDING',
+        ...(ledTeamIds?.length
+          ? { teamMember: { teamId: { in: ledTeamIds } } }
+          : {}),
+      },
       include: {
         originalMember: {
           select: { id: true, firstName: true, lastName: true },

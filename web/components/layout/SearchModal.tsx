@@ -20,7 +20,7 @@ interface SearchModalProps {
 
 export default function SearchModal({ open, onClose }: SearchModalProps) {
   const router = useRouter()
-  const { query, setQuery, clear, data: results, isLoading } = useSearch()
+  const { query, setQuery, clear, data: results, isLoading, isError } = useSearch()
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -45,7 +45,7 @@ export default function SearchModal({ open, onClose }: SearchModalProps) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-start justify-center pt-[10vh] px-4">
+    <div className="fixed inset-0 z-[200] flex items-start justify-center pt-[8vh] sm:pt-[10vh] px-3 sm:px-4">
       <div
         className="absolute inset-0 bg-primary-950/60 backdrop-blur-sm"
         onClick={onClose}
@@ -81,6 +81,10 @@ export default function SearchModal({ open, onClose }: SearchModalProps) {
           ) : isLoading ? (
             <div className="px-4 py-8 text-center">
               <p className="text-text-muted text-sm">Searching…</p>
+            </div>
+          ) : isError ? (
+            <div className="px-4 py-8 text-center">
+              <p className="text-text-muted text-sm">Search is unavailable right now. Check that you are signed in and the server is running.</p>
             </div>
           ) : (results?.length ?? 0) === 0 ? (
             <div className="px-4 py-8 text-center">

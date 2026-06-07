@@ -1,4 +1,8 @@
 import { apiClient } from '../client'
+import {
+  adaptSearchResponse,
+  type BackendSearchResponse,
+} from '@/lib/search/adaptSearchResponse'
 
 export interface SearchResult {
   id:       string
@@ -9,6 +13,10 @@ export interface SearchResult {
 }
 
 export const searchApi = {
-  query: (q: string) =>
-    apiClient.get<never, SearchResult[]>('/search', { params: { q } }),
+  query: async (q: string): Promise<SearchResult[]> => {
+    const raw = await apiClient.get<never, BackendSearchResponse>('/search', {
+      params: { q },
+    })
+    return adaptSearchResponse(raw ?? { query: q })
+  },
 }

@@ -68,7 +68,7 @@ export default function StatTile({
       onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
       onClick={onClick}
       className={cn(
-        'relative bg-surface rounded-lg p-5',
+        'relative bg-surface rounded-lg p-4 sm:p-5 min-w-0',
         'border border-border shadow-card',
         'flex flex-col gap-3',
         accent && 'border-l-4 border-l-gold-500',
@@ -79,21 +79,21 @@ export default function StatTile({
     >
       {/* Header row */}
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-text-secondary">{label}</span>
+        <span className="text-xs sm:text-sm font-medium text-text-secondary leading-snug">{label}</span>
         {Icon && (
           <div className={cn(
             'flex items-center justify-center w-9 h-9 rounded-md',
-            'bg-surface-raised',
+            'bg-primary-50 dark:bg-primary-100/60',
             iconClassName,
           )}>
-            <Icon size={18} className="text-primary-500" />
+            <Icon size={18} className="text-primary-600 dark:text-gold-400" />
           </div>
         )}
       </div>
 
       {/* Value */}
       <div className="animate-count-up">
-        <span className="font-display font-bold text-4xl text-text-primary leading-none">
+        <span className="font-display font-bold text-3xl sm:text-4xl text-text-primary leading-none">
           {prefix}
           {isNaN(numericValue) ? value : displayed.toLocaleString()}
           {suffix}

@@ -37,7 +37,7 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
 
-      <div className="fixed top-16 right-4 z-50 w-80 sm:w-96 bg-surface rounded-xl border border-border shadow-overlay animate-page-enter overflow-hidden">
+      <div className="fixed top-16 left-3 right-3 sm:left-auto sm:right-4 z-50 w-auto sm:w-96 max-w-[calc(100vw-1.5rem)] bg-surface rounded-xl border border-border shadow-overlay animate-page-enter overflow-hidden">
 
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <div className="flex items-center gap-2">

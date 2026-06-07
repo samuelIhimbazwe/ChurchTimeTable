@@ -19,14 +19,16 @@
     --color-primary-100: #E1EAF4;
     --color-primary-50:  #F0F5FA;
 
-    /* === GOLD ACCENT === */
-    --color-gold-900: #7A5A00;
-    --color-gold-700: #B8860B;
-    --color-gold-500: #D4A017;
-    --color-gold-400: #E0B840;
-    --color-gold-300: #EDD080;
-    --color-gold-100: #FBF3DC;
-    --color-gold-50:  #FDFAF0;
+    /* === GOLD ACCENT (trial: #B8860B — revert gold-500 to #D4A017 / #daa520 to go back) === */
+    --color-gold-900: #5C4500;
+    --color-gold-800: #7A5A00;
+    --color-gold-700: #966D09;
+    --color-gold-600: #A6780A;
+    --color-gold-500: #B8860B;
+    --color-gold-400: #C99A1A;
+    --color-gold-300: #D4B060;
+    --color-gold-100: #F5ECD4;
+    --color-gold-50:  #FBF7ED;
 
     /* === SEMANTIC === */
     --color-success:       #2D7A4F;
@@ -103,13 +105,13 @@
     --secondary-foreground: 215 28% 17%;
     --muted:        214 32% 96%;
     --muted-foreground: 215 16% 47%;
-    --accent:       43 76% 46%;
+    --accent:       43 89% 38%;
     --accent-foreground: 215 28% 10%;
     --destructive:  0 54% 46%;
     --destructive-foreground: 0 0% 98%;
     --border:       214 32% 91%;
     --input:        214 32% 91%;
-    --ring:         43 76% 46%;
+    --ring:         43 89% 38%;
     --radius:       0.625rem;
   }
 
@@ -122,8 +124,36 @@
     --color-text-primary:    #F1F5F9;
     --color-text-secondary:  #94A3B8;
     --color-text-muted:      #64748B;
-    --color-primary-50:      #1E2D4A;
-    --color-primary-100:     #2D4163;
+
+    /* Foreground scale — links/icons stay light; hovers shift to gold */
+    --color-primary-50:      #1A2744;
+    --color-primary-100:     #243556;
+    --color-primary-200:     #D4E2F0;
+    --color-primary-300:     #BDD0E6;
+    --color-primary-400:     #E1EAF4;
+    --color-primary-500:     #E8F0FA;
+    --color-primary-600:     #E1EAF4;
+    --color-primary-700:     #E8C868;
+    --color-primary-800:     #EDD080;
+    --color-primary-900:     #0F172A;
+    --color-primary-950:     #0A0F1E;
+
+    /* Brighter gold for icons and labels on dark backgrounds */
+    --color-gold-50:  #2A2416;
+    --color-gold-100: #3D3419;
+    --color-gold-300: #EDD080;
+    --color-gold-400: #E8C868;
+    --color-gold-500: #D4B060;
+    --color-gold-600: #E0C060;
+    --color-gold-700: #EDD080;
+    --color-gold-800: #F5E6B8;
+    --color-gold-900: #C99A1A;
+
+    /* Semantic tints for dark cards */
+    --color-success-light: #1A3D2A;
+    --color-warning-light: #3D2F1A;
+    --color-danger-light:  #3D1A1A;
+    --color-info-light:    #1A2D4A;
 
     --background:   215 28% 10%;
     --foreground:   213 31% 96%;
@@ -137,13 +167,13 @@
     --secondary-foreground: 213 31% 96%;
     --muted:        215 28% 17%;
     --muted-foreground: 215 16% 57%;
-    --accent:       43 76% 46%;
+    --accent:       43 89% 38%;
     --accent-foreground: 215 28% 10%;
     --destructive:  0 54% 46%;
     --destructive-foreground: 0 0% 98%;
     --border:       215 28% 20%;
     --input:        215 28% 20%;
-    --ring:         43 76% 46%;
+    --ring:         43 89% 38%;
   }
 
   * {
@@ -155,6 +185,7 @@
     font-size: 16px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
   }
 
   body {
@@ -162,6 +193,7 @@
     color: var(--color-text-primary);
     background-color: var(--color-surface);
     line-height: 1.5;
+    overflow-x: hidden;
   }
 
   h1, h2, h3 {
@@ -207,6 +239,39 @@
 
   .page-enter {
     animation: pageEnter var(--duration-normal) var(--ease-out) forwards;
+  }
+
+  /* Responsive page headings inside the dashboard shell */
+  .page-heading {
+    font-size: clamp(1.5rem, 4.5vw, 1.875rem);
+    line-height: 1.25;
+  }
+
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Dark mode: link hovers use gold so text stays visible on dark surfaces */
+  [data-theme="dark"] .hover\:text-primary-800:hover,
+  [data-theme="dark"] .hover\:text-primary-700:hover,
+  [data-theme="dark"] .hover\:text-primary-900:hover {
+    color: var(--color-gold-300);
+  }
+
+  [data-theme="dark"] .group:hover .group-hover\:text-primary-700,
+  [data-theme="dark"] .group:hover .group-hover\:text-primary-600 {
+    color: var(--color-gold-400);
+  }
+}
+
+/* Stack 2-column stat grids on very narrow phones */
+@media (max-width: 399px) {
+  main .grid.grid-cols-2:not(.keep-cols-2) {
+    grid-template-columns: 1fr;
   }
 }
 

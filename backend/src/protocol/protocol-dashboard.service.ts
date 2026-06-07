@@ -27,6 +27,7 @@ export class ProtocolDashboardService {
 
     const [
       upcomingTeams,
+      draftTeams,
       pendingReplacements,
       profiles,
       recentTeams,
@@ -38,6 +39,12 @@ export class ProtocolDashboardService {
         where: {
           status: { in: ['GENERATED', 'REVIEWED', 'APPROVED', 'PUBLISHED'] },
           occurrence: { startAt: { gte: now, lte: in30 } },
+        },
+      }),
+      this.prisma.protocolOccurrenceTeam.count({
+        where: {
+          status: { in: ['GENERATED', 'REVIEWED', 'APPROVED'] },
+          occurrence: { startAt: { gte: now } },
         },
       }),
       this.prisma.protocolReplacementRequest.count({
@@ -56,7 +63,7 @@ export class ProtocolDashboardService {
         take: 5,
         orderBy: { generatedAt: 'asc' },
         include: {
-          occurrence: { select: { title: true, startAt: true } },
+          occurrence: { select: { id: true, title: true, startAt: true } },
           members: { select: { id: true } },
           teamLeaders: { take: 1 },
         },
@@ -142,6 +149,7 @@ export class ProtocolDashboardService {
 
     return {
       upcomingTeams,
+      draftTeams,
       pendingReplacements,
       attendanceRate: Math.round(avgAttendance * 10) / 10,
       mostActive: profiles,
@@ -163,14 +171,56 @@ export class ProtocolDashboardService {
 
   async teamLeaderSummary(actorUserId: string) {
     const resolved = await this.permissions.resolveForUser(actorUserId);
-    if (!hasProtocolTeamLeaderExecute(resolved.permissions)) {
-      const teams = await this.teamLeaders.myTeams(actorUserId);
-      if (teams.length === 0 && !hasProtocolManage(resolved.permissions)) {
-        return { teams: [], pendingReplacements: [], reports: [] };
-      }
+    const teams = (await this.teamLeaders.myTeams(actorUserId)).filter((t) =>
+      ['PUBLISHED', 'COMPLETED'].includes(t.status),
+    );
+    if (
+      teams.length === 0 &&
+      !hasProtocolTeamLeaderExecute(resolved.permissions) &&
+      !hasProtocolManage(resolved.permissions)
+    ) {
+      return {
+        teams: [],
+        upcomingTeams: [],
+        nextTeam: null,
+        pendingReplacements: [],
+        reports: [],
+        teamCount: 0,
+        upcomingCount: 0,
+        pendingReplacementCount: 0,
+      };
     }
 
-    const teams = await this.teamLeaders.myTeams(actorUserId);
+    const now = new Date();
+    const isActiveOrUpcoming = (startAt: Date, endAt?: Date | null) => {
+      if (endAt && endAt >= now) return true;
+      const start = new Date(startAt);
+      const dayStart = new Date(now);
+      dayStart.setHours(0, 0, 0, 0);
+      return start >= dayStart;
+    };
+
+    const upcomingTeams = teams
+      .filter((t) =>
+        isActiveOrUpcoming(
+          t.occurrence.startAt,
+          (t.occurrence as { endAt?: Date | null }).endAt,
+        ),
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.occurrence.startAt).getTime() -
+          new Date(b.occurrence.startAt).getTime(),
+      );
+    const nextTeam =
+      upcomingTeams[0] ??
+      [...teams].sort(
+        (a, b) =>
+          new Date(b.occurrence.startAt).getTime() -
+          new Date(a.occurrence.startAt).getTime(),
+      )[0] ??
+      null;
+
     const teamIds = teams.map((t) => t.id);
     const pendingReplacements =
       teamIds.length > 0
@@ -178,6 +228,22 @@ export class ProtocolDashboardService {
             where: {
               status: 'PENDING',
               teamMember: { teamId: { in: teamIds } },
+            },
+            include: {
+              originalMember: {
+                select: { id: true, firstName: true, lastName: true },
+              },
+              teamMember: {
+                include: {
+                  team: {
+                    include: {
+                      occurrence: {
+                        select: { id: true, title: true, startAt: true, endAt: true },
+                      },
+                    },
+                  },
+                },
+              },
             },
             take: 20,
           })
@@ -191,7 +257,16 @@ export class ProtocolDashboardService {
           })
         : [];
 
-    return { teams, pendingReplacements, reports };
+    return {
+      teams,
+      upcomingTeams,
+      nextTeam,
+      pendingReplacements,
+      reports,
+      teamCount: teams.length,
+      upcomingCount: upcomingTeams.length,
+      pendingReplacementCount: pendingReplacements.length,
+    };
   }
 
   async memberSummary(actorUserId: string) {

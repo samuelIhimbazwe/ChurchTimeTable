@@ -13,6 +13,7 @@ export const PROTOCOL_DASHBOARD_SEGMENTS = new Set([
   'reports',
   'backups',
   'team-leaders',
+  'invitations',
 ])
 
 export function protocolPath(...segments: string[]): string {

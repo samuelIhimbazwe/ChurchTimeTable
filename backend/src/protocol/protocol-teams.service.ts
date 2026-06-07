@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import {
   ProtocolOccurrenceTeamStatus,
@@ -87,6 +88,12 @@ export class ProtocolTeamsService {
       options?.memberIds ??
       recommendations.map((r) => r.memberId);
 
+    if (!memberIds.length) {
+      throw new BadRequestException(
+        'Select at least one protocol member to build the team',
+      );
+    }
+
     await this.members.ensureProfilesForMembers(memberIds);
 
     const team = await this.prisma.protocolOccurrenceTeam.create({
@@ -136,7 +143,11 @@ export class ProtocolTeamsService {
   }
 
   private async finalizeTeam(teamId: string, actorUserId: string | null) {
-    await this.teamLeaders.assignRecommendedLeaders(actorUserId, teamId);
+    try {
+      await this.teamLeaders.assignRecommendedLeaders(actorUserId, teamId);
+    } catch {
+      await this.teamLeaders.assignRecommendedLeaders(null, teamId);
+    }
     await this.backups.persistForTeam(teamId);
     const notifyPromise = this.notifications.notifyTeamAssigned(teamId);
     if (process.env.CMMS_E2E === '1') {
@@ -283,8 +294,27 @@ export class ProtocolTeamsService {
     return updated;
   }
 
+  async assertTeamAccess(actorUserId: string, teamId: string) {
+    const { permissions } = await this.actor(actorUserId);
+    if (hasProtocolManage(permissions)) return;
+    const ledIds = await this.teamLeaders.myTeams(actorUserId).then((t) =>
+      t.map((row) => row.id),
+    );
+    if (ledIds.includes(teamId)) return;
+    throw new ForbiddenException('Team access denied');
+  }
+
   async listTeams(actorUserId: string, from?: Date, to?: Date) {
-    await this.actor(actorUserId);
+    const { permissions } = await this.actor(actorUserId);
+    const scopedOnly =
+      !hasProtocolManage(permissions) &&
+      !permissions.includes('protocol.team.manage') &&
+      (await this.teamLeaders.myTeams(actorUserId)).length > 0;
+
+    if (scopedOnly) {
+      return this.teamLeaders.myTeams(actorUserId);
+    }
+
     return this.prisma.protocolOccurrenceTeam.findMany({
       where: {
         occurrence: {
@@ -310,8 +340,57 @@ export class ProtocolTeamsService {
   }
 
   async getTeam(actorUserId: string, teamId: string) {
-    await this.actor(actorUserId);
+    await this.assertTeamAccess(actorUserId, teamId);
     return this.getTeamInternal(teamId);
+  }
+
+  async listTeamOccurrences(actorUserId: string) {
+    await this.actor(actorUserId);
+    const now = new Date();
+    const from = new Date(now);
+    from.setDate(from.getDate() - 7);
+    const to = new Date(now);
+    to.setDate(to.getDate() + 90);
+
+    const rows = await this.prisma.operationOccurrence.findMany({
+      where: {
+        startAt: { gte: from, lte: to },
+        status: { in: ['PUBLISHED', 'APPROVED', 'UNDER_REVIEW', 'DRAFT'] },
+        assignments: { some: { assignmentType: 'PROTOCOL_TEAM' } },
+      },
+      select: {
+        id: true,
+        title: true,
+        startAt: true,
+        endAt: true,
+        status: true,
+        protocolTeam: { select: { id: true, status: true } },
+      },
+      orderBy: { startAt: 'asc' },
+      take: 50,
+    });
+
+    return rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      startAt: row.startAt,
+      endAt: row.endAt,
+      status: row.status,
+      hasTeam: !!row.protocolTeam,
+      teamStatus: row.protocolTeam?.status ?? null,
+    }));
+  }
+
+  async getTeamByOccurrence(actorUserId: string, occurrenceId: string) {
+    const team = await this.prisma.protocolOccurrenceTeam.findUnique({
+      where: { occurrenceId },
+      select: { id: true },
+    });
+    if (!team) {
+      throw new NotFoundException('No protocol team for this occurrence');
+    }
+    await this.assertTeamAccess(actorUserId, team.id);
+    return this.getTeamInternal(team.id);
   }
 
   async recommendations(actorUserId: string, occurrenceId: string) {

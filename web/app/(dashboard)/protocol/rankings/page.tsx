@@ -1,9 +1,12 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { protocolApi } from '@/lib/api'
-import { Card, Avatar, SkeletonCard } from '@/components/shared'
-import { Trophy } from 'lucide-react'
+import { toast } from '@/components/shared/Toast'
+import { Card, Avatar, SkeletonCard, PermissionGate } from '@/components/shared'
+import { Trophy, RefreshCw } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 const BADGE_KIND_LABEL: Record<string, string> = {
   FAITHFUL_SERVANT:    '🙏 Faithful',
@@ -16,19 +19,77 @@ const BADGE_KIND_LABEL: Record<string, string> = {
   ATTENDANCE_CHAMPION: '🏆 Champion',
 }
 
+const CATEGORIES = [
+  { id: 'OVERALL', label: 'Overall' },
+  { id: 'ATTENDANCE', label: 'Attendance' },
+  { id: 'RELIABILITY', label: 'Reliability' },
+  { id: 'SERVICE_COUNT', label: 'Services' },
+  { id: 'REPLACEMENT_SUPPORT', label: 'Replacements' },
+  { id: 'TEAMWORK', label: 'Teamwork' },
+] as const
+
+type CategoryId = (typeof CATEGORIES)[number]['id']
+
 export default function ProtocolRankingsPage() {
+  const qc = useQueryClient()
+  const now = new Date()
+  const [category, setCategory] = useState<CategoryId>('OVERALL')
+  const year = now.getFullYear()
+  const month = now.getMonth() + 1
+
   const { data: rankings, isLoading } = useQuery({
-    queryKey: ['protocol-rankings'],
-    queryFn:  protocolApi.getRankings,
+    queryKey: ['protocol-rankings', year, month, category],
+    queryFn: () => protocolApi.getRankings({ year, month, category }),
+  })
+
+  const generate = useMutation({
+    mutationFn: () => protocolApi.generateRankings(year, month),
+    onSuccess: () => {
+      toast.success('Monthly rankings generated')
+      qc.invalidateQueries({ queryKey: ['protocol-rankings'] })
+      qc.invalidateQueries({ queryKey: ['protocol-leader-dashboard'] })
+    },
+    onError: () => toast.error('Ranking generation failed'),
   })
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      <div>
-        <h2 className="font-display text-3xl text-text-primary">Protocol Rankings</h2>
-        <p className="text-text-secondary text-sm mt-1">
-          Ranked by attendance, reliability, and service count
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 className="font-display text-3xl text-text-primary">Protocol Rankings</h2>
+          <p className="text-text-secondary text-sm mt-1">
+            {year} · month {month} — {CATEGORIES.find((c) => c.id === category)?.label}
+          </p>
+        </div>
+        <PermissionGate anyOf={['protocol.manage', 'protocol.operational.monitor', 'protocol.oversight', 'protocol.team.manage']}>
+          <button
+            type="button"
+            onClick={() => generate.mutate()}
+            disabled={generate.isPending}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-gold-500 text-primary-900 rounded-lg hover:bg-gold-400 disabled:opacity-60"
+          >
+            <RefreshCw size={14} className={generate.isPending ? 'animate-spin' : ''} />
+            {generate.isPending ? 'Generating…' : 'Generate this month'}
+          </button>
+        </PermissionGate>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {CATEGORIES.map((cat) => (
+          <button
+            key={cat.id}
+            type="button"
+            onClick={() => setCategory(cat.id)}
+            className={cn(
+              'px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors',
+              category === cat.id
+                ? 'bg-primary-700 text-white border-primary-700'
+                : 'border-border text-text-secondary hover:bg-surface-raised',
+            )}
+          >
+            {cat.label}
+          </button>
+        ))}
       </div>
 
       {isLoading ? (
@@ -37,7 +98,10 @@ export default function ProtocolRankingsPage() {
         <Card padding="md">
           <div className="text-center py-12">
             <Trophy size={32} className="text-text-muted mx-auto mb-3" />
-            <p className="text-text-muted">No ranking data yet.</p>
+            <p className="text-text-muted">No ranking data for this category yet.</p>
+            <p className="text-xs text-text-muted mt-2">
+              Officers can generate rankings after attendance has been recorded.
+            </p>
           </div>
         </Card>
       ) : (
@@ -45,7 +109,7 @@ export default function ProtocolRankingsPage() {
           <ul className="divide-y divide-border">
             {rankings?.map((r, i) => (
               <li
-                key={r.memberId}
+                key={`${r.memberId}-${i}`}
                 className={`flex items-center gap-4 px-5 py-4 hover:bg-surface-raised transition-colors ${
                   i < 3 ? 'bg-gold-50' : ''
                 }`}

@@ -16,9 +16,20 @@ import { useProtocolDashboardContext } from '@/lib/hooks/useProtocolDashboardCon
 
 const EMPTY_PERMISSIONS: string[] = []
 
-export default function Sidebar({ role = 'MEMBER' }: { role?: string }) {
+type SidebarVariant = 'desktop' | 'mobile'
+
+export default function Sidebar({
+  role = 'MEMBER',
+  variant = 'desktop',
+  onNavigate,
+}: {
+  role?: string
+  variant?: SidebarVariant
+  onNavigate?: () => void
+}) {
   const pathname  = usePathname()
-  const collapsed = useUIStore((s) => s.sidebarCollapsed)
+  const isMobile  = variant === 'mobile'
+  const collapsed = useUIStore((s) => s.sidebarCollapsed) && !isMobile
   const toggle    = useUIStore((s) => s.toggleSidebar)
   const authRole  = useAuthStore((s) => s.user?.role) ?? role
   const permissions = useAuthStore((s) => s.user?.permissions ?? EMPTY_PERMISSIONS)
@@ -47,12 +58,12 @@ export default function Sidebar({ role = 'MEMBER' }: { role?: string }) {
         'fixed inset-y-0 left-0 z-40 flex flex-col',
         'bg-primary-900 text-text-inverse',
         'transition-[width] duration-normal ease-out',
-        collapsed ? 'w-16' : 'w-[240px]',
+        isMobile ? 'w-[min(280px,85vw)]' : collapsed ? 'w-16' : 'w-[240px]',
       )}
     >
       {/* Logo */}
       <div className={cn(
-        'flex items-center gap-3 px-4 border-b border-primary-800',
+        'flex items-center gap-3 px-4 border-b border-primary-800 dark:border-[#1E2D4A]',
         'h-16 shrink-0',
         collapsed && 'justify-center px-0',
       )}>
@@ -89,13 +100,14 @@ export default function Sidebar({ role = 'MEMBER' }: { role?: string }) {
                     <Link
                       href={item.path}
                       title={collapsed ? item.label : undefined}
+                      onClick={onNavigate}
                       className={cn(
                         'group flex items-center gap-3 rounded-md px-3 py-2.5',
                         'text-sm font-medium transition-colors duration-fast',
                         'relative overflow-hidden',
                         active
-                          ? 'bg-primary-800 text-text-inverse'
-                          : 'text-primary-300 hover:bg-primary-800/60 hover:text-text-inverse',
+                          ? 'bg-primary-800 dark:bg-[#1E2D4A] text-text-inverse'
+                          : 'text-primary-300 hover:bg-primary-800/60 dark:hover:bg-[#1E2D4A]/60 hover:text-text-inverse',
                         collapsed && 'justify-center px-0 w-10 mx-auto',
                       )}
                     >
@@ -106,7 +118,7 @@ export default function Sidebar({ role = 'MEMBER' }: { role?: string }) {
                         size={18}
                         className={cn(
                           'shrink-0 transition-colors duration-fast',
-                          active ? 'text-gold-400' : 'text-primary-400 group-hover:text-primary-200',
+                          active ? 'text-gold-400' : 'text-primary-400 group-hover:text-gold-300',
                         )}
                       />
                       {!collapsed && (
@@ -121,14 +133,14 @@ export default function Sidebar({ role = 'MEMBER' }: { role?: string }) {
         ))}
       </nav>
 
-      {/* Collapse toggle */}
-      <div className="shrink-0 border-t border-primary-800 p-2">
+      {/* Collapse toggle — desktop only */}
+      {!isMobile && <div className="shrink-0 border-t border-primary-800 dark:border-[#1E2D4A] p-2">
         <button
           onClick={toggle}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className={cn(
             'flex items-center justify-center w-full rounded-md py-2',
-            'text-primary-400 hover:text-text-inverse hover:bg-primary-800',
+            'text-primary-400 hover:text-text-inverse hover:bg-primary-800 dark:hover:bg-[#1E2D4A]',
             'transition-colors duration-fast',
           )}
         >
@@ -141,7 +153,7 @@ export default function Sidebar({ role = 'MEMBER' }: { role?: string }) {
             )
           }
         </button>
-      </div>
+      </div>}
     </aside>
   )
 }

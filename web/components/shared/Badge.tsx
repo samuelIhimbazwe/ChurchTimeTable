@@ -23,8 +23,8 @@ type BadgeVariant =
 const VARIANT_CLASSES: Record<BadgeVariant, string> = {
   'role-super-admin':     'bg-primary-900 text-gold-400 border border-gold-700',
   'role-admin':           'bg-gold-500 text-primary-900',
-  'role-choir-president': 'bg-primary-800 text-gold-300',
-  'role-protocol-leader': 'bg-primary-700 text-primary-100',
+  'role-choir-president': 'bg-primary-800 dark:bg-primary-100 text-gold-300 dark:text-gold-400',
+  'role-protocol-leader': 'bg-primary-700 dark:bg-primary-100 text-primary-100 dark:text-gold-400',
   'role-member':          'bg-surface-overlay text-text-secondary border border-border',
   'status-present':       'bg-success-light text-success',
   'status-absent':        'bg-danger-light text-danger',

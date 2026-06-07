@@ -26,7 +26,7 @@ export default function ServicePreparationDetailPage() {
   const { choirId, choirLink } = useResolvedChoirScope()
   const choirCtx = useOptionalChoirDashboardCtx()
   const qc = useQueryClient()
-  const isActiveMember = choirCtx?.membership?.isActive === true
+  const isActiveMember = choirCtx?.context?.membership?.isActive === true
 
   const { data: plan, isLoading } = useQuery({
     queryKey: ['service-preparation', choirId, occurrenceId, isActiveMember],

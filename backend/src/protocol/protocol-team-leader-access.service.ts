@@ -6,6 +6,7 @@ import {
   hasProtocolManage,
   hasProtocolTeamLeaderExecute,
 } from './protocol-access.util';
+import { hasProtocolTeamHeadAuthority } from '../common/governance/governance-permissions.util';
 
 @Injectable()
 export class ProtocolTeamLeaderAccessService {
@@ -33,15 +34,50 @@ export class ProtocolTeamLeaderAccessService {
 
   async canManageTeamAttendance(userId: string, teamId: string): Promise<boolean> {
     const resolved = await this.permissions.resolveForUser(userId);
+    if (hasProtocolManage(resolved.permissions)) return true;
+    const isTeamHead =
+      hasProtocolTeamHeadAuthority(resolved.permissions) ||
+      hasProtocolTeamLeaderExecute(resolved.permissions);
+    if (isTeamHead) {
+      return this.isLeaderForTeam(userId, teamId);
+    }
     if (hasProtocolAttendanceManage(resolved.permissions)) return true;
-    if (!hasProtocolTeamLeaderExecute(resolved.permissions)) return false;
+    return false;
+  }
+
+  async canReviewTeamReplacements(userId: string, teamId: string): Promise<boolean> {
+    const resolved = await this.permissions.resolveForUser(userId);
+    if (
+      hasProtocolManage(resolved.permissions) ||
+      resolved.permissions.includes('protocol.replacement.manage')
+    ) {
+      return true;
+    }
+    const isTeamHead =
+      hasProtocolTeamHeadAuthority(resolved.permissions) ||
+      hasProtocolTeamLeaderExecute(resolved.permissions);
+    if (!isTeamHead) return false;
     return this.isLeaderForTeam(userId, teamId);
+  }
+
+  async ledTeamIds(userId: string): Promise<string[]> {
+    const leader = await this.getLeaderForUser(userId);
+    if (!leader?.active) return [];
+    const rows = await this.prisma.protocolOccurrenceTeamLeader.findMany({
+      where: { protocolTeamLeaderId: leader.id },
+      select: { teamId: true },
+    });
+    return rows.map((r) => r.teamId);
   }
 
   async canManageTeam(userId: string, teamId: string): Promise<boolean> {
     const resolved = await this.permissions.resolveForUser(userId);
     if (hasProtocolManage(resolved.permissions)) return true;
-    if (!hasProtocolTeamLeaderExecute(resolved.permissions)) return false;
+    if (resolved.permissions.includes('protocol.team.manage')) return true;
+    const isTeamHead =
+      hasProtocolTeamHeadAuthority(resolved.permissions) ||
+      hasProtocolTeamLeaderExecute(resolved.permissions);
+    if (!isTeamHead) return false;
     return this.isLeaderForTeam(userId, teamId);
   }
 }

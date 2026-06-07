@@ -34,6 +34,17 @@ async function nextMemberNumber(): Promise<string> {
   return `M${String(updated.nextValue - 1).padStart(6, '0')}`;
 }
 
+async function ensureProtocolProfile(memberId: string) {
+  const unit = await prisma.operationalUnit.findFirstOrThrow({
+    where: { code: 'PROTOCOL_TEAM' },
+  });
+  await prisma.protocolMemberProfile.upsert({
+    where: { memberId },
+    create: { memberId, protocolUnitId: unit.id },
+    update: { active: true },
+  });
+}
+
 async function ensureProtocolMembership(memberId: string) {
   const unit = await prisma.operationalUnit.findFirstOrThrow({
     where: { code: 'PROTOCOL_TEAM' },
@@ -432,9 +443,13 @@ async function main() {
   );
 
   const now = new Date();
+  const daysUntilNextSunday = (7 - now.getDay()) % 7 || 7;
   const nextSunday = new Date(now);
-  nextSunday.setDate(now.getDate() + ((7 - now.getDay()) % 7 || 7));
+  nextSunday.setDate(now.getDate() + daysUntilNextSunday);
   nextSunday.setHours(9, 0, 0, 0);
+  if (nextSunday.getTime() - now.getTime() < 36 * 60 * 60 * 1000) {
+    nextSunday.setDate(nextSunday.getDate() + 7);
+  }
   const choirEnd = new Date(nextSunday);
   choirEnd.setHours(11, 0, 0, 0);
   const protocolStart = new Date(nextSunday);
@@ -502,6 +517,34 @@ async function main() {
     'PROTOCOL_TEAM',
   );
 
+  const protocolStart2 = new Date(nextSunday);
+  protocolStart2.setDate(protocolStart2.getDate() + 7);
+  protocolStart2.setHours(8, 0, 0, 0);
+  const protocolEnd2 = new Date(protocolStart2);
+  protocolEnd2.setHours(10, 30, 0, 0);
+
+  const existingProtocolOccurrence2 = await prisma.operationOccurrence.findFirst({
+    where: { title: 'Serivisi Protocol — Ukwezi 2' },
+  });
+  const protocolOccurrence2 =
+    existingProtocolOccurrence2 ??
+    (await prisma.operationOccurrence.create({
+      data: {
+        type: 'SERVICE',
+        title: 'Serivisi Protocol — Ukwezi 2',
+        status: OperationOccurrenceStatus.PUBLISHED,
+        startAt: protocolStart2,
+        endAt: protocolEnd2,
+        createdById: adminUser.id,
+      },
+    }));
+
+  await upsertOperationAssignment(
+    protocolOccurrence2.id,
+    protocolUnit.id,
+    'PROTOCOL_TEAM',
+  );
+
   await prisma.churchConfiguration.upsert({
     where: { id: 'default' },
     create: { id: 'default', demoModeEnabled: true },
@@ -554,23 +597,6 @@ async function main() {
   await assignFamilyRole('choir.familysec@church.local', pilotFamilyB.id, FamilyMemberRole.SECRETARY);
   await assignFamilyRole('choir.singer@church.local', pilotFamilyB.id, FamilyMemberRole.MEMBER);
 
-  const teamHeadUser = await prisma.user.findUnique({
-    where: { email: 'protocol.teamhead@church.local' },
-    include: { member: true },
-  });
-  if (teamHeadUser?.member) {
-    const existingTeam = await prisma.protocolServiceTeam.findFirst({
-      where: { status: 'ACTIVE' },
-      orderBy: { createdAt: 'asc' },
-    });
-    if (existingTeam) {
-      await prisma.protocolServiceTeam.update({
-        where: { id: existingTeam.id },
-        data: { teamHeadId: teamHeadUser.member.id },
-      });
-    }
-  }
-
   for (const email of [
     'protocol.leader@church.local',
     'protocol.president@church.local',
@@ -586,6 +612,108 @@ async function main() {
     });
     if (user?.member) {
       await ensureProtocolMembership(user.member.id);
+      await ensureProtocolProfile(user.member.id);
+    }
+  }
+
+  const coordinatorUser = await prisma.user.findUnique({
+    where: { email: 'protocol.coordinator@church.local' },
+    select: { id: true },
+  });
+  const teamHeadUser = await prisma.user.findUnique({
+    where: { email: 'protocol.teamhead@church.local' },
+    include: { member: true },
+  });
+  const pilotProtocolMemberIds: string[] = [];
+  for (const email of [
+    'protocol.leader@church.local',
+    'protocol.president@church.local',
+    'protocol.coordinator@church.local',
+    'protocol.treasurer@church.local',
+    'member3@church.local',
+    'member4@church.local',
+  ]) {
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: { member: true },
+    });
+    if (user?.member) pilotProtocolMemberIds.push(user.member.id);
+  }
+
+  if (teamHeadUser?.member && coordinatorUser) {
+    const teamLeader = await prisma.protocolTeamLeader.upsert({
+      where: { memberId: teamHeadUser.member.id },
+      create: {
+        memberId: teamHeadUser.member.id,
+        label: 'Pilot team head',
+        isNonChoirLeader: true,
+        active: true,
+      },
+      update: { active: true, label: 'Pilot team head' },
+    });
+
+    const rosterMemberIds = [
+      ...new Set([teamHeadUser.member.id, ...pilotProtocolMemberIds]),
+    ];
+
+    let occurrenceTeam = await prisma.protocolOccurrenceTeam.findUnique({
+      where: { occurrenceId: protocolOccurrence.id },
+    });
+
+    if (!occurrenceTeam) {
+      occurrenceTeam = await prisma.protocolOccurrenceTeam.create({
+        data: {
+          occurrenceId: protocolOccurrence.id,
+          status: 'PUBLISHED',
+          assignmentMode: 'SUNDAY',
+          generatedByUserId: coordinatorUser.id,
+          publishedAt: new Date(),
+          members: {
+            create: rosterMemberIds.map((memberId) => ({
+              memberId,
+              assignmentType: 'OFFICIAL',
+            })),
+          },
+          teamLeaders: {
+            create: { protocolTeamLeaderId: teamLeader.id },
+          },
+        },
+      });
+    } else {
+      await prisma.protocolOccurrenceTeam.update({
+        where: { id: occurrenceTeam.id },
+        data: {
+          status: 'PUBLISHED',
+          publishedAt: occurrenceTeam.publishedAt ?? new Date(),
+        },
+      });
+      for (const memberId of rosterMemberIds) {
+        await prisma.protocolOccurrenceTeamMember.upsert({
+          where: {
+            teamId_memberId: { teamId: occurrenceTeam.id, memberId },
+          },
+          create: {
+            teamId: occurrenceTeam.id,
+            memberId,
+            assignmentType: 'OFFICIAL',
+          },
+          update: {},
+        });
+      }
+      await prisma.protocolOccurrenceTeamLeader.upsert({
+        where: {
+          teamId_protocolTeamLeaderId: {
+            teamId: occurrenceTeam.id,
+            protocolTeamLeaderId: teamLeader.id,
+          },
+        },
+        create: {
+          teamId: occurrenceTeam.id,
+          protocolTeamLeaderId: teamLeader.id,
+          assignedByUserId: coordinatorUser.id,
+        },
+        update: {},
+      });
     }
   }
 

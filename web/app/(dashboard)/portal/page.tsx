@@ -25,6 +25,7 @@ import {
 import { useChoirAccess } from '@/lib/hooks/useChoirAccess'
 import { ChoirDashboardEntryButton } from '@/components/choir/ChoirDashboardEntryButton'
 import { ProtocolDashboardEntryButton } from '@/components/protocol/ProtocolDashboardEntryButton'
+import { ProtocolMyInvitationsCard } from '@/components/protocol/ProtocolMyInvitationsCard'
 import { ChoirPortalJoinControls } from '@/components/portal/ChoirPortalJoinControls'
 import { ChoirJoinRequestForm } from '@/components/portal/ChoirJoinRequestForm'
 import type { MemberPortalServiceCard } from '@/lib/api/modules/memberPortal'
@@ -557,7 +558,7 @@ export default function MemberPortalPage() {
                   <li key={c.id} className="py-2 border-b border-border last:border-0">
                     <div className="flex items-center justify-between gap-3">
                       <Link href={`/portal/choirs/${c.id}`} className="flex-1 min-w-0 group">
-                        <p className="text-sm font-medium text-text-primary group-hover:text-primary-700">
+                        <p className="text-sm font-medium text-text-primary group-hover:text-primary-700 dark:group-hover:text-gold-400">
                           {c.name}
                         </p>
                         {c.description && (
@@ -652,6 +653,11 @@ export default function MemberPortalPage() {
               </p>
             )}
           </div>
+          {protocol.status === 'PENDING_INVITATION' && (
+            <div className="mt-4">
+              <ProtocolMyInvitationsCard />
+            </div>
+          )}
         </Card>
       </div>
 

@@ -12,6 +12,8 @@ import {
 } from 'lucide-react'
 import { formatDate } from '@/lib/utils/format'
 import Link from 'next/link'
+import { ProtocolMyInvitationsCard } from '@/components/protocol/ProtocolMyInvitationsCard'
+import { ProtocolReplacementRequestForm } from '@/components/protocol/ProtocolReplacementRequestForm'
 
 export default function ProtocolMemberHomePage() {
   const { data: myStats } = useQuery({
@@ -39,6 +41,8 @@ export default function ProtocolMemberHomePage() {
           Your service stats, upcoming assignments, and team activity
         </p>
       </div>
+
+      <ProtocolMyInvitationsCard />
 
       {pendingCount > 0 && (
         <Card accent="warning" padding="sm">
@@ -75,6 +79,8 @@ export default function ProtocolMemberHomePage() {
           </div>
         </Card>
       )}
+
+      <ProtocolReplacementRequestForm />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card padding="none">

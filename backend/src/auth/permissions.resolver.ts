@@ -45,8 +45,8 @@ export class PermissionsResolver {
     ];
 
     if (user.member) {
-      const headTeams = await this.prisma.protocolServiceTeam.findMany({
-        where: { teamHeadId: user.member.id, status: 'ACTIVE' },
+      const protocolTeamLeader = await this.prisma.protocolTeamLeader.findFirst({
+        where: { memberId: user.member.id, active: true },
         select: { id: true },
       });
       const [choirAssignments, protocolAssignments] = await Promise.all([
@@ -78,8 +78,9 @@ export class PermissionsResolver {
         ),
       ];
 
-      if (headTeams.length > 0) {
+      if (protocolTeamLeader) {
         permissions.push('protocol.team.head');
+        permissions.push('protocol.team.leader.execute');
       }
 
       permissions.push(
