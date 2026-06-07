@@ -8,13 +8,13 @@ import {
   Card, StatTile, Badge, SkeletonCard, PermissionGate,
 } from '@/components/shared'
 import { ChoirPositionHubShell, HubQuickLink } from '@/components/choir/ChoirPositionHubShell'
-import { useOptionalChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
+import { useResolvedChoirScope } from '@/lib/hooks'
 import { FamilyRankingsPanel } from '@/components/choir/FamilyRankingsPanel'
+import { ContributionAmountDisplay } from '@/components/choir/ContributionAmountDisplay'
 import { FamilyContributionInboxPanel } from '@/components/choir/FamilyContributionInboxPanel'
 import { FamilyPaymentSettingsForm } from '@/components/choir/FamilyPaymentSettingsForm'
-import { legacyOrScopedChoirPath } from '@/lib/choir/paths'
 import { formatCurrency, formatDate, formatTime } from '@/lib/utils/format'
-import { Users, CheckCircle2, Heart, DollarSign, Lock } from 'lucide-react'
+import { Users, CheckCircle2, Heart, Lock } from 'lucide-react'
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
@@ -26,9 +26,7 @@ const TABS = [
 
 export default function FamilyHeadHubPage() {
   const [tab, setTab] = useState('overview')
-  const choirCtx = useOptionalChoirDashboardCtx()
-  const scopedChoirId = choirCtx?.choirId
-  const choirLink = (...segments: string[]) => legacyOrScopedChoirPath(scopedChoirId, ...segments)
+  const { choirId, choirLink } = useResolvedChoirScope()
 
   const { data: context, isLoading: loadingContext } = useQuery({
     queryKey: ['family-leadership-context'],
@@ -52,9 +50,9 @@ export default function FamilyHeadHubPage() {
   })
 
   const { data: activities, isLoading: loadingAct } = useQuery({
-    queryKey: ['choir-activities-family-head'],
-    queryFn: () => choirActivityApi.getAll({ limit: 8 }),
-    enabled: tab === 'operations' || tab === 'overview',
+    queryKey: ['choir-activities-family-head', choirId],
+    queryFn: () => choirActivityApi.getAll({ choirId, limit: 8 }),
+    enabled: !!choirId && (tab === 'operations' || tab === 'overview'),
   })
 
   return (
@@ -104,16 +102,18 @@ export default function FamilyHeadHubPage() {
                   icon={CheckCircle2}
                   animate
                 />
-                <StatTile
-                  label="Confirmed umusanzu"
-                  value={
-                    myFamilyMetrics?.contributions
-                      ? formatCurrency(myFamilyMetrics.contributions.confirmedAmount)
-                      : '—'
-                  }
-                  icon={DollarSign}
-                  animate
-                />
+                <Card padding="md">
+                  <p className="text-xs text-text-muted mb-1">Family umusanzu</p>
+                  {myFamilyMetrics?.contributions ? (
+                    <ContributionAmountDisplay
+                      confirmed={myFamilyMetrics.contributions.confirmedAmount}
+                      effective={myFamilyMetrics.contributions.effectiveAmount}
+                      size="md"
+                    />
+                  ) : (
+                    <p className="font-display text-2xl font-bold text-primary-700">—</p>
+                  )}
+                </Card>
               </div>
             </>
           )}
@@ -177,21 +177,23 @@ export default function FamilyHeadHubPage() {
             <FamilyPaymentSettingsForm
               familyId={myFamilyId}
               initial={{
-                paymentMomoNumber: (familyDetail as Record<string, unknown>).paymentMomoNumber as string | null,
-                paymentMomoAccountName: (familyDetail as Record<string, unknown>).paymentMomoAccountName as string | null,
-                paymentBankAccount: (familyDetail as Record<string, unknown>).paymentBankAccount as string | null,
-                paymentBankName: (familyDetail as Record<string, unknown>).paymentBankName as string | null,
-                paymentInstructions: (familyDetail as Record<string, unknown>).paymentInstructions as string | null,
+                paymentMomoNumber: familyDetail.paymentMomoNumber ?? null,
+                paymentMomoAccountName: familyDetail.paymentMomoAccountName ?? null,
+                paymentBankAccount: familyDetail.paymentBankAccount ?? null,
+                paymentBankName: familyDetail.paymentBankName ?? null,
+                paymentInstructions: familyDetail.paymentInstructions ?? null,
               }}
             />
           )}
           {myFamilyMetrics?.contributions && (
             <Card padding="md">
               <p className="font-semibold mb-2">Your family contributions</p>
-              <p className="text-sm">
-                Confirmed: {formatCurrency(myFamilyMetrics.contributions.confirmedAmount)}
-              </p>
-              <p className="text-sm text-text-muted">
+              <ContributionAmountDisplay
+                confirmed={myFamilyMetrics.contributions.confirmedAmount}
+                effective={myFamilyMetrics.contributions.effectiveAmount}
+                size="md"
+              />
+              <p className="text-sm text-text-muted mt-2">
                 Pending: {formatCurrency(myFamilyMetrics.contributions.pendingAmount)}
               </p>
             </Card>

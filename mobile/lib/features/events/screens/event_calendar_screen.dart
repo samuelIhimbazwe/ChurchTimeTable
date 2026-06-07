@@ -363,7 +363,6 @@ class _EventCalendarScreenState extends ConsumerState<EventCalendarScreen> {
             ],
           );
         },
-      ),
     );
 
     if (embedded) {

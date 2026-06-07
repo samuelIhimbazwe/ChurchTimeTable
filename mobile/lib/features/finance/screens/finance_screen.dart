@@ -5,6 +5,7 @@ import '../../../core/design/components/cards/cmms_card.dart';
 import '../../../core/design/tokens/spacing.dart';
 import '../../../core/localization/l10n.dart';
 import '../../../core/routing/app_router.dart';
+import '../../auth/providers/auth_provider.dart';
 
 class FinanceScreen extends ConsumerStatefulWidget {
   const FinanceScreen({super.key});

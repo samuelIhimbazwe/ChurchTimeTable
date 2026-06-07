@@ -18,7 +18,7 @@ class MemberRequestsScreen extends ConsumerWidget {
           error: (_, __) => const Center(child: Text('Unable to load requests')),
           data: (items) {
             if (items.isEmpty) {
-              return const ListView(
+              return ListView(
                 children: [
                   SizedBox(height: 48),
                   Center(child: Text('No pending requests')),

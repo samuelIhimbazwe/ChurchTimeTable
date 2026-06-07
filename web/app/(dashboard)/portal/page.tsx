@@ -208,7 +208,7 @@ export default function MemberPortalPage() {
 
       {/* Welcome */}
       <section className="space-y-3">
-        <div>
+      <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-gold-700">
             {welcome.churchName}
           </p>
@@ -220,7 +220,7 @@ export default function MemberPortalPage() {
               {welcome.welcomeMessage}
             </p>
           )}
-        </div>
+      </div>
         {welcome.pendingApproval && (
           <Card accent="warning" padding="md">
             <p className="text-sm text-text-primary">
@@ -266,7 +266,7 @@ export default function MemberPortalPage() {
               aria-label="Dismiss"
             >
               <X size={16} />
-            </button>
+              </button>
           </div>
         </Card>
       )}
@@ -515,7 +515,7 @@ export default function MemberPortalPage() {
                   <Building2 size={18} className="text-primary-600" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
                     <p className="font-semibold text-text-primary">{m.name}</p>
                     {m.isMember && <Badge variant="status-present">Member</Badge>}
                   </div>
@@ -673,12 +673,12 @@ export default function MemberPortalPage() {
                   <p className="text-sm font-semibold text-text-primary">{a.title}</p>
                   {a.pinned && <Badge variant="status-excused">Pinned</Badge>}
                   <Badge variant="default">{a.source === 'church' ? 'Church' : 'Choir'}</Badge>
-                </div>
+                  </div>
                 <p className="text-sm text-text-secondary mt-1 line-clamp-3">{a.body}</p>
                 {a.publishedAt && (
                   <p className="text-xs text-text-muted mt-2">{formatDate(a.publishedAt)}</p>
                 )}
-              </li>
+                </li>
             ))}
           </ul>
         )}

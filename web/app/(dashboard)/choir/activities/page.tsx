@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { choirActivityApi } from '@/lib/api'
+import { useResolvedChoirScope } from '@/lib/hooks'
 import { Card, Badge, PermissionGate } from '@/components/shared'
 import { Calendar, Clock, MapPin, ChevronRight } from 'lucide-react'
 import { formatDate, formatTime } from '@/lib/utils/format'
@@ -20,13 +21,16 @@ const TYPE_BADGE: Partial<Record<ChoirActivityType, 'role-choir-president' | 'mi
 
 export default function ActivitiesPage() {
   const [type, setType] = useState<string>('')
+  const { choirId, choirLink } = useResolvedChoirScope()
 
   const { data, isLoading } = useQuery({
-    queryKey: ['choir-activities', { type: type || undefined }],
+    queryKey: ['choir-activities', choirId, { type: type || undefined }],
     queryFn:  () => choirActivityApi.getAll({
+      choirId,
       limit: 30,
       activityType: type || undefined,
     }),
+    enabled: !!choirId,
   })
 
   const TYPES = ['', 'SERVICE', 'REHEARSAL', 'PRAYER', 'MEETING', 'CONCERT']
@@ -37,7 +41,7 @@ export default function ActivitiesPage() {
         <h2 className="font-display text-3xl text-text-primary">Activities</h2>
         <PermissionGate anyOf={['choir.events.manage', 'event:write']}>
           <Link
-            href="/choir/activities/new"
+            href={choirLink('activities/new')}
             className="px-4 py-2 text-sm font-semibold bg-gold-500 text-primary-900 rounded-lg hover:bg-gold-400 transition-colors"
           >
             + New Activity
@@ -76,7 +80,7 @@ export default function ActivitiesPage() {
       ) : (
         <div className="space-y-3">
           {data?.items?.map((a) => (
-            <Link key={a.id} href={`/choir/attendance/${a.id}`}>
+            <Link key={a.id} href={choirLink('attendance', a.id)}>
               <Card padding="md" className="hover:shadow-raised transition-shadow cursor-pointer">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1.5">

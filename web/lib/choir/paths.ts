@@ -5,6 +5,7 @@ const CHOIR_ID_PATTERN =
 /** Known legacy segments under `/choir/*` before choir-scoped routing. */
 export const LEGACY_CHOIR_ROUTE_SEGMENTS = new Set([
   'activities',
+  'admin',
   'advisor',
   'analytics',
   'announcements',
@@ -31,6 +32,7 @@ export const LEGACY_CHOIR_ROUTE_SEGMENTS = new Set([
   'reports',
   'roles',
   'scheduling',
+  'settings',
   'spiritual',
   'stewardship',
   'vice-president',

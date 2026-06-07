@@ -91,7 +91,7 @@ export class FamiliesController {
       };
     }
 
-    const healthByFamily = await this.familyMetricsService.enrichSummaries(
+    const enrichmentByFamily = await this.familyMetricsService.enrichSummaries(
       user.sub,
       result.items.map((row) => ({
         id: row.id,
@@ -104,12 +104,23 @@ export class FamiliesController {
     );
 
     return {
-      items: result.items.map((row) =>
-        this.familiesService.serializeListItem(
-          row,
-          healthByFamily.get(row.id),
-        ),
-      ),
+      items: result.items.map((row) => {
+        const enrichment = enrichmentByFamily.get(row.id);
+        const contributions = enrichment?.contributions;
+        return {
+          ...this.familiesService.serializeListItem(
+            row,
+            enrichment?.health,
+          ),
+          ...(contributions
+            ? {
+                totalContributions: contributions.confirmedAmount,
+                effectiveContributions: contributions.effectiveAmount,
+                pendingContributions: contributions.pendingAmount,
+              }
+            : {}),
+        };
+      }),
       meta: result.meta,
     };
   }

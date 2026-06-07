@@ -271,6 +271,33 @@ export class ChoirJoinRequestsService {
     );
   }
 
+  async revokeMemberPosition(
+    actorUserId: string,
+    data: { choirId: string; memberId: string; roleId: string },
+  ) {
+    const resolved = await this.permissions.resolveForUser(actorUserId);
+    if (!this.canReview(resolved.permissions)) {
+      throw new ForbiddenException('Denied');
+    }
+
+    const assignment = await this.prisma.choirCommitteeMember.findFirst({
+      where: {
+        choirId: data.choirId,
+        memberId: data.memberId,
+        roleId: data.roleId,
+      },
+    });
+    if (!assignment) {
+      throw new NotFoundException('Position assignment not found');
+    }
+
+    await this.prisma.choirCommitteeMember.delete({
+      where: { id: assignment.id },
+    });
+
+    return { removed: true, memberId: data.memberId, roleId: data.roleId };
+  }
+
   private async assignCommitteeRole(
     actorUserId: string,
     choirId: string,

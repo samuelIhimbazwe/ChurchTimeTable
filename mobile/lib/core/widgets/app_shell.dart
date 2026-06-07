@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/governance_permissions.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../localization/l10n.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../routing/app_router.dart';
 import 'mobile_tab_shell.dart';
 

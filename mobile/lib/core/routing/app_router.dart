@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../localization/l10n.dart';
 import '../widgets/auth_gate.dart';
 import '../widgets/app_shell.dart';
@@ -297,8 +298,8 @@ class AppRouter {
     return value;
   }
 
-  static Route<dynamic> onGenerateRoute(RouteSettings settings) {
-    switch (settings.name) {
+  static Route<dynamic> onGenerateRoute(RouteSettings routeSettings) {
+    switch (routeSettings.name) {
       case login:
         return _page(const LoginScreen(), routeName: login);
       case signup:
@@ -340,7 +341,7 @@ class AppRouter {
       case members:
         return _page(const MembersScreen(), routeName: members);
       case memberProfile:
-        final memberId = settings.arguments as String?;
+        final memberId = routeSettings.arguments as String?;
         if (memberId == null || memberId.isEmpty) {
           return _page(const MembersScreen(), routeName: members);
         }
@@ -355,7 +356,7 @@ class AppRouter {
       case assets:
         return _page(const AssetsScreen(), routeName: assets);
       case assetDetail:
-        final assetId = settings.arguments as String?;
+        final assetId = routeSettings.arguments as String?;
         if (assetId == null || assetId.isEmpty) {
           return _page(const AssetsScreen(), routeName: assets);
         }
@@ -403,7 +404,7 @@ class AppRouter {
       case ministries:
         return _page(const MinistriesScreen(), routeName: ministries);
       case ministryDetail:
-        final ministryId = settings.arguments as String?;
+        final ministryId = routeSettings.arguments as String?;
         if (ministryId == null || ministryId.isEmpty) {
           return _page(const MinistriesScreen(), routeName: ministries);
         }
@@ -412,7 +413,7 @@ class AppRouter {
           routeName: ministryDetail,
         );
       case ministryServices:
-        final ministryId = settings.arguments as String?;
+        final ministryId = routeSettings.arguments as String?;
         if (ministryId == null || ministryId.isEmpty) {
           return _page(const MinistriesScreen(), routeName: ministries);
         }
@@ -421,7 +422,7 @@ class AppRouter {
           routeName: ministryServices,
         );
       case ministryFinance:
-        final ministryId = settings.arguments as String?;
+        final ministryId = routeSettings.arguments as String?;
         if (ministryId == null || ministryId.isEmpty) {
           return _page(const MinistriesScreen(), routeName: ministries);
         }
@@ -432,7 +433,7 @@ class AppRouter {
       case operationalUnits:
         return _page(const OperationalUnitsScreen(), routeName: operationalUnits);
       case operationalUnitDetail:
-        final unitId = settings.arguments as String?;
+        final unitId = routeSettings.arguments as String?;
         if (unitId == null || unitId.isEmpty) {
           return _page(const OperationalUnitsScreen(), routeName: operationalUnits);
         }
@@ -456,9 +457,9 @@ class AppRouter {
         return _page(const LanguageSettingsScreen(), routeName: language);
       default:
         return _page(
-          _NotFoundPage(requestedRoute: settings.name?.toString()),
+          _NotFoundPage(requestedRoute: routeSettings.name?.toString()),
           routeName: notFound,
-          requestedRoute: settings.name?.toString(),
+          requestedRoute: routeSettings.name?.toString(),
         );
     }
   }

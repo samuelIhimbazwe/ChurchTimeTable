@@ -4,7 +4,8 @@ import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { familiesApi } from '@/lib/api'
 import { Card, Badge, SkeletonCard } from '@/components/shared'
-import { formatCurrency } from '@/lib/utils/format'
+import { ContributionAmountDisplay } from '@/components/choir/ContributionAmountDisplay'
+import { useResolvedChoirScope } from '@/lib/hooks'
 import { Trophy, AlertTriangle } from 'lucide-react'
 
 type Props = {
@@ -14,6 +15,7 @@ type Props = {
 }
 
 export function FamilyRankingsPanel({ familyId, showOverview = true }: Props) {
+  const { choirLink } = useResolvedChoirScope()
   const { data: overview, isLoading: loadingOverview } = useQuery({
     queryKey: ['family-metrics-overview'],
     queryFn: familiesApi.getMetricsOverview,
@@ -96,7 +98,11 @@ export function FamilyRankingsPanel({ familyId, showOverview = true }: Props) {
                       {f.healthGrade} · {f.healthScore?.toFixed(0) ?? '—'}
                     </Badge>
                   )}
-                  <p className="text-xs text-text-muted mt-1">{formatCurrency(f.totalContributions)}</p>
+                  <ContributionAmountDisplay
+                    confirmed={f.totalContributions}
+                    effective={f.effectiveContributions}
+                    className="mt-1"
+                  />
                 </div>
               </li>
             ))}
@@ -105,7 +111,7 @@ export function FamilyRankingsPanel({ familyId, showOverview = true }: Props) {
       </Card>
 
       {!familyId && (
-        <Link href="/choir/families" className="text-sm font-semibold text-primary-600">
+        <Link href={choirLink('families')} className="text-sm font-semibold text-primary-600">
           Manage all families →
         </Link>
       )}

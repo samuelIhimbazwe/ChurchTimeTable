@@ -210,6 +210,11 @@ export interface Choir {
   nextActivityDate?: string
 }
 
+export interface ChoirMemberPosition {
+  roleId:   string
+  roleName: string
+}
+
 export interface ChoirMember {
   id:            string
   memberId:      string
@@ -220,6 +225,7 @@ export interface ChoirMember {
   scoreBand:     ScoreBand
   duesPaid:      boolean
   status:        'ACTIVE' | 'INACTIVE'
+  positions?:    ChoirMemberPosition[]
 }
 
 export interface ChoirJoinRequest {

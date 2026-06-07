@@ -57,7 +57,8 @@ class _MemberAttendanceScreenState extends ConsumerState<MemberAttendanceScreen>
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      _summary = await _dashboardRepo.memberSummary();
+      final summary = await _dashboardRepo.memberSummary();
+      _summary = summary.raw;
     } finally {
       if (mounted) setState(() => _loading = false);
     }

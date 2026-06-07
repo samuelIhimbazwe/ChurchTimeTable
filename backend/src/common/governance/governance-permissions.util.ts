@@ -189,6 +189,30 @@ export function canViewFinanceIntelligence(permissions: string[]): boolean {
   return hasAnyEffectivePermission(permissions, FINANCE_INTELLIGENCE_CLAIMS);
 }
 
+/** Per-family contribution metrics — not global finance intelligence. */
+export function canViewFamilyContributionMetrics(
+  permissions: string[],
+  actorMemberId: string | undefined,
+  familyMemberIds: string[],
+): boolean {
+  if (actorMemberId && familyMemberIds.includes(actorMemberId)) {
+    return true;
+  }
+  if (hasEffectivePermission(permissions, PERMISSIONS.CHOIR_FAMILY_MANAGE)) {
+    return true;
+  }
+  if (hasEffectivePermission(permissions, PERMISSIONS.CHOIR_FINANCE_MANAGE)) {
+    return true;
+  }
+  if (
+    hasEffectivePermission(permissions, PERMISSIONS.FAMILY_MANAGE) &&
+    hasEffectivePermission(permissions, PERMISSIONS.CHOIR_OVERSIGHT)
+  ) {
+    return true;
+  }
+  return false;
+}
+
 const DISCIPLINE_INTELLIGENCE_CLAIMS = [
   PERMISSIONS.DISCIPLINE_READ_ALL,
   PERMISSIONS.DISCIPLINE_MANAGE,

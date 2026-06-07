@@ -9,6 +9,7 @@ import {
   choirActivityApi,
   choirApi,
   systemApi,
+  assetsApi,
 } from '@/lib/api'
 import {
   Card, HubTabs, SkeletonCard, Badge,
@@ -16,8 +17,9 @@ import {
 import { formatDate } from '@/lib/utils/format'
 import {
   FileText, Music, Calendar, Package, Users, ScrollText,
-  BarChart3, Megaphone, ChevronRight, Clock,
+  BarChart3, Megaphone, ChevronRight, Clock, Activity,
 } from 'lucide-react'
+import { useResolvedChoirScope } from '@/lib/hooks'
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
@@ -36,6 +38,7 @@ const LINKS = [
 
 export default function RecordsHubPage() {
   const [tab, setTab] = useState('overview')
+  const { choirId, choirLink } = useResolvedChoirScope()
 
   const { data: documents } = useQuery({
     queryKey: ['choir-documents'],
@@ -48,8 +51,9 @@ export default function RecordsHubPage() {
   })
 
   const { data: activities } = useQuery({
-    queryKey: ['choir-activities-count'],
-    queryFn: () => choirActivityApi.getAll({ limit: 1 }),
+    queryKey: ['choir-activities-count', choirId],
+    queryFn: () => choirActivityApi.getAll({ choirId, limit: 1 }),
+    enabled: !!choirId,
   })
 
   const { data: meetings } = useQuery({
@@ -57,11 +61,29 @@ export default function RecordsHubPage() {
     queryFn: choirApi.getMeetings,
   })
 
+  const { data: equipment } = useQuery({
+    queryKey: ['choir-equipment-records'],
+    queryFn: assetsApi.getChoirEquipment,
+    enabled: !!choirId && tab === 'overview',
+  })
+
+  const { data: uniforms } = useQuery({
+    queryKey: ['choir-uniforms-records'],
+    queryFn: assetsApi.getChoirUniforms,
+    enabled: !!choirId && tab === 'overview',
+  })
+
   const { data: audit, isLoading: loadingAudit } = useQuery({
     queryKey: ['choir-audit-log'],
     queryFn: () => systemApi.getAuditLog({ limit: 20, page: 1 }),
-    enabled: tab === 'audit',
+    enabled: tab === 'audit' || tab === 'overview',
   })
+
+  const choirAudit = audit?.items?.filter((e) =>
+    /choir|family|contribution|uniform|equipment|announcement/i.test(
+      `${e.action} ${e.detail ?? ''}`,
+    ),
+  ) ?? []
 
   const counts: Record<string, number | string> = {
     '/choir/documents': documents?.length ?? 0,
@@ -82,9 +104,38 @@ export default function RecordsHubPage() {
       <HubTabs tabs={TABS} active={tab} onChange={setTab} />
 
       {tab === 'overview' && (
+        <>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <Card padding="md">
+            <p className="text-xs text-text-muted">Equipment</p>
+            <p className="font-display text-2xl text-primary-700">
+              {Number((equipment as Record<string, unknown>)?.totalAssets ?? (equipment as Record<string, unknown>)?.total ?? 0)}
+            </p>
+          </Card>
+          <Card padding="md">
+            <p className="text-xs text-text-muted">Uniform assignments</p>
+            <p className="font-display text-2xl text-primary-700">
+              {Number((uniforms as Record<string, unknown>)?.activeAssignments ?? 0)}
+            </p>
+          </Card>
+          <Card padding="md">
+            <p className="text-xs text-text-muted">Recent choir actions</p>
+            <p className="font-display text-2xl text-primary-700">{choirAudit.length}</p>
+          </Card>
+          <Card padding="md">
+            <p className="text-xs text-text-muted flex items-center gap-1"><Activity size={12} /> Activities</p>
+            <p className="font-display text-2xl text-primary-700">
+              {activities?.total ?? activities?.items?.length ?? '—'}
+            </p>
+          </Card>
+        </div>
         <div className="grid sm:grid-cols-2 gap-4">
-          {LINKS.map(({ href, label, icon: Icon, desc }) => (
-            <Link key={href} href={href}>
+          {LINKS.map(({ href, label, icon: Icon, desc }) => {
+            const scopedHref = href.startsWith('/choir/')
+              ? choirLink(...href.slice('/choir/'.length).split('/').filter(Boolean))
+              : href
+            return (
+            <Link key={href} href={scopedHref}>
               <Card padding="md" className="h-full hover:shadow-raised transition-shadow group">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
@@ -107,8 +158,22 @@ export default function RecordsHubPage() {
                 </div>
               </Card>
             </Link>
-          ))}
+          )})}
         </div>
+        {choirAudit.length > 0 && (
+          <Card padding="md">
+            <p className="text-sm font-semibold mb-3">Recent choir operations</p>
+            <ul className="divide-y divide-border text-sm">
+              {choirAudit.slice(0, 5).map((entry) => (
+                <li key={entry.id} className="py-2 flex justify-between gap-2">
+                  <span className="text-text-primary">{entry.action}</span>
+                  <span className="text-xs text-text-muted shrink-0">{formatDate(entry.createdAt)}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
+        </>
       )}
 
       {tab === 'audit' && (

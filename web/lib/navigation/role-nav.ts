@@ -37,9 +37,12 @@ const CHOIR_PUBLIC_PROFILE: NavItem = {
 const CHOIR_ADMIN_TOOLS: NavSection = {
   section: 'Administration',
   items: [
-    { label: 'Join requests',  icon: UserPlus,   path: '/choir/join-requests' },
-    { label: 'Position roles', icon: KeyRound,   path: '/choir/roles' },
+    { label: 'Administration hub', icon: Shield,     path: '/choir/admin' },
+    { label: 'Join requests',      icon: UserPlus,   path: '/choir/join-requests' },
+    { label: 'Position roles',     icon: KeyRound,   path: '/choir/roles' },
+    { label: 'Families structure', icon: Users,      path: '/choir/admin/families' },
     CHOIR_PUBLIC_PROFILE,
+    { label: 'Choir settings',     icon: Settings2,  path: '/choir/settings' },
   ],
 }
 
@@ -142,11 +145,13 @@ const CHURCH_OVERVIEW: NavSection = {
 const CHURCH_INTEL: NavSection = {
   section: 'Church Leadership',
   items: [
-    { label: 'Activity Feed',  icon: Activity,    path: '/church/activity' },
-    { label: 'Calendar',       icon: Calendar,    path: '/church/calendar' },
-    { label: 'Finance',        icon: DollarSign,  path: '/church/finance' },
-    { label: 'Governance',     icon: Scale,       path: '/church/governance' },
-    { label: 'Announcements',  icon: Megaphone,   path: '/church/announcements' },
+    { label: 'Activity Feed',     icon: Activity,         path: '/church/activity' },
+    { label: 'Calendar',          icon: Calendar,         path: '/church/calendar' },
+    { label: 'Service Requests',  icon: ClipboardCheck,   path: '/church/service-requests' },
+    { label: 'Choir Transfers',   icon: ArrowLeftRight,   path: '/church/choir-transfers' },
+    { label: 'Finance',           icon: DollarSign,       path: '/church/finance' },
+    { label: 'Governance',        icon: Scale,            path: '/church/governance' },
+    { label: 'Announcements',     icon: Megaphone,        path: '/church/announcements' },
   ],
 }
 
@@ -431,9 +436,10 @@ function usesChoirRoleNav(role: string | undefined) {
 export function getPortalNavForUser(
   role: string | undefined,
   choirAccess: Pick<ChoirAccessState, 'canAccessChoirArea' | 'isChoirMember'>,
-  _permissions: string[] = [],
+  permissions: string[] = [],
   activeChoirMemberships: ActiveChoirMembership[] = [],
 ): NavSection[] {
+  void permissions
   const sections: NavSection[] = [...MEMBER_PORTAL]
 
   if (choirAccess.canAccessChoirArea && choirAccess.isChoirMember) {

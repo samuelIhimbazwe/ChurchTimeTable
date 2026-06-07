@@ -21,15 +21,16 @@ export default function ChurchFinancePage() {
 
   const { data: report, isLoading: rLoading } = useQuery({
     queryKey: ['reports-finance'],
-    queryFn:  reportsApi.getFinance,
+    queryFn: () => reportsApi.getFinance(),
   })
 
   const { data: budgets } = useQuery({
     queryKey: ['finance-budgets'],
-    queryFn:  financeApi.getBudgets,
+    queryFn: () => financeApi.getBudgets(),
   })
 
   const loading = aLoading || rLoading
+  const budgetList = Array.isArray(budgets) ? budgets : []
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -119,13 +120,13 @@ export default function ChurchFinancePage() {
         </Card>
       </div>
 
-      {(budgets?.length ?? 0) > 0 && (
+      {budgetList.length > 0 && (
         <Card padding="md">
           <CardHeader>
             <CardTitle>Budgets</CardTitle>
           </CardHeader>
           <ul className="divide-y divide-border">
-            {budgets?.map((raw, i) => {
+            {budgetList.map((raw, i) => {
               const b = raw as Record<string, unknown>
               return (
                 <li key={String(b.id ?? i)} className="flex justify-between py-2 text-sm">

@@ -9,6 +9,7 @@ import {
   hasProtocolCoordination,
   hasProtocolOversight,
   hasProtocolTeamHeadAuthority,
+  canViewFamilyContributionMetrics,
 } from './governance-permissions.util';
 import { PERMISSIONS, PLATFORM_ADMIN_PERMISSIONS } from '../constants/roles';
 
@@ -67,5 +68,32 @@ describe('governance-permissions.util', () => {
     expect(canManageAdminSync([PERMISSIONS.SYNC_ADMIN])).toBe(false);
     expect(hasPlatformAdminAccess([PERMISSIONS.ADMIN_SETTINGS_VIEW])).toBe(true);
     expect(PLATFORM_ADMIN_PERMISSIONS).toContain(PERMISSIONS.ADMIN_USERS_MANAGE);
+  });
+
+  it('scopes family contribution metrics to own family or coordinator/treasurer', () => {
+    const presidentPerms = [
+      PERMISSIONS.CHOIR_FINANCE_VIEW,
+      PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
+    ];
+    expect(
+      canViewFamilyContributionMetrics(presidentPerms, 'member-a', ['member-b']),
+    ).toBe(false);
+    expect(
+      canViewFamilyContributionMetrics(presidentPerms, 'member-a', ['member-a']),
+    ).toBe(true);
+    expect(
+      canViewFamilyContributionMetrics(
+        [PERMISSIONS.CHOIR_FAMILY_MANAGE],
+        undefined,
+        ['member-b'],
+      ),
+    ).toBe(true);
+    expect(
+      canViewFamilyContributionMetrics(
+        [PERMISSIONS.CHOIR_FINANCE_MANAGE],
+        undefined,
+        ['member-b'],
+      ),
+    ).toBe(true);
   });
 });

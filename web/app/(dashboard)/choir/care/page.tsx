@@ -17,6 +17,8 @@ import {
 } from '@/components/shared'
 import { formatDate } from '@/lib/utils/format'
 import { Heart, Shield, FileText, Megaphone, Calendar, ExternalLink } from 'lucide-react'
+import { useResolvedChoirScope } from '@/lib/hooks'
+import { ChoirMemberPicker } from '@/components/choir/ChoirMemberPicker'
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
@@ -31,6 +33,7 @@ const WELFARE_VISIT_TYPES = ['Sick visit', 'Hospital visit', 'Bereavement', 'Gen
 export default function CareHubPage() {
   const qc = useQueryClient()
   const [tab, setTab] = useState('overview')
+  const { choirId, choirLink } = useResolvedChoirScope()
 
   const [ruleTitle, setRuleTitle] = useState('')
   const [ruleBody, setRuleBody] = useState('')
@@ -72,8 +75,9 @@ export default function CareHubPage() {
   })
 
   const { data: activities } = useQuery({
-    queryKey: ['choir-activities', { limit: 5 }],
-    queryFn: () => choirActivityApi.getAll({ limit: 5 }),
+    queryKey: ['choir-activities', choirId, { limit: 5 }],
+    queryFn: () => choirActivityApi.getAll({ choirId, limit: 5 }),
+    enabled: !!choirId,
   })
 
   const createRule = useMutation({
@@ -204,7 +208,7 @@ export default function CareHubPage() {
               <p className="font-semibold text-text-primary flex items-center gap-2">
                 <Calendar size={16} /> Upcoming activities (attendance)
               </p>
-              <Link href="/choir/activities" className="text-xs font-semibold text-primary-600">
+              <Link href={choirLink('activities')} className="text-xs font-semibold text-primary-600">
                 Full schedule →
               </Link>
             </div>
@@ -305,12 +309,7 @@ export default function CareHubPage() {
             <Card padding="md">
               <p className="font-semibold mb-3">Open discipline case</p>
               <div className="space-y-3">
-                <input
-                  value={discMemberId}
-                  onChange={(e) => setDiscMemberId(e.target.value)}
-                  placeholder="Member ID"
-                  className={inputClass}
-                />
+                <ChoirMemberPicker value={discMemberId} onChange={(id) => setDiscMemberId(id)} />
                 <textarea
                   value={discDesc}
                   onChange={(e) => setDiscDesc(e.target.value)}
@@ -349,7 +348,7 @@ export default function CareHubPage() {
               ))}
             </ul>
           )}
-          <Link href="/choir/discipline" className="text-sm font-semibold text-primary-600">
+          <Link href={choirLink('discipline')} className="text-sm font-semibold text-primary-600">
             Full discipline module →
           </Link>
         </div>
@@ -361,12 +360,7 @@ export default function CareHubPage() {
             <Card padding="md" accent="gold">
               <p className="font-semibold mb-3">New welfare case (e.g. visit sick member)</p>
               <div className="space-y-3">
-                <input
-                  value={welfareMemberId}
-                  onChange={(e) => setWelfareMemberId(e.target.value)}
-                  placeholder="Member ID"
-                  className={inputClass}
-                />
+                <ChoirMemberPicker value={welfareMemberId} onChange={(id) => setWelfareMemberId(id)} />
                 <select
                   value={welfareType}
                   onChange={(e) => setWelfareType(e.target.value)}
@@ -416,7 +410,7 @@ export default function CareHubPage() {
               ))}
             </ul>
           )}
-          <Link href="/choir/welfare" className="text-sm font-semibold text-primary-600">
+          <Link href={choirLink('welfare')} className="text-sm font-semibold text-primary-600">
             Full welfare module →
           </Link>
         </div>

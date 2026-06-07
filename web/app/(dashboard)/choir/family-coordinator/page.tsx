@@ -8,11 +8,11 @@ import {
   Card, StatTile, Badge, SkeletonCard, PermissionGate,
 } from '@/components/shared'
 import { ChoirPositionHubShell, HubQuickLink } from '@/components/choir/ChoirPositionHubShell'
-import { useOptionalChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
+import { useResolvedChoirScope } from '@/lib/hooks'
 import { ContributionTreasuryPanel } from '@/components/choir/ContributionTreasuryPanel'
-import { legacyOrScopedChoirPath } from '@/lib/choir/paths'
 import { FamilyRankingsPanel } from '@/components/choir/FamilyRankingsPanel'
-import { formatCurrency, formatDate } from '@/lib/utils/format'
+import { formatDate } from '@/lib/utils/format'
+import { ContributionAmountDisplay } from '@/components/choir/ContributionAmountDisplay'
 import { Users, Heart, DollarSign, Calendar, BarChart3, Trophy } from 'lucide-react'
 
 const TABS = [
@@ -25,8 +25,7 @@ const TABS = [
 
 export default function FamilyCoordinatorHubPage() {
   const [tab, setTab] = useState('overview')
-  const choirCtx = useOptionalChoirDashboardCtx()
-  const choirLink = (...segments: string[]) => legacyOrScopedChoirPath(choirCtx?.choirId, ...segments)
+  const { choirId, choirLink } = useResolvedChoirScope()
 
   const { data: families, isLoading: loadingFamilies } = useQuery({
     queryKey: ['families-with-metrics'],
@@ -39,9 +38,9 @@ export default function FamilyCoordinatorHubPage() {
   })
 
   const { data: activities } = useQuery({
-    queryKey: ['choir-activities-coord'],
-    queryFn: () => choirActivityApi.getAll({ limit: 10 }),
-    enabled: tab === 'operations' || tab === 'overview',
+    queryKey: ['choir-activities-coord', choirId],
+    queryFn: () => choirActivityApi.getAll({ choirId, limit: 10 }),
+    enabled: !!choirId && (tab === 'operations' || tab === 'overview'),
   })
 
   const openWelfare = welfare?.filter((c) => c.status !== 'RESOLVED').length ?? 0
@@ -75,7 +74,7 @@ export default function FamilyCoordinatorHubPage() {
       {tab === 'families' && (
         <div className="space-y-4">
           <PermissionGate anyOf={['choir.family.manage', 'family:manage']}>
-            <Link href="/choir/families" className="text-sm font-semibold text-primary-600">
+            <Link href={choirLink('families')} className="text-sm font-semibold text-primary-600">
               Open full families module →
             </Link>
           </PermissionGate>
@@ -98,7 +97,11 @@ export default function FamilyCoordinatorHubPage() {
                     {f.healthGrade && (
                       <Badge variant="default">Grade {f.healthGrade}</Badge>
                     )}
-                    <p className="text-xs text-text-muted mt-1">{formatCurrency(f.totalContributions)}</p>
+                    <ContributionAmountDisplay
+                      confirmed={f.totalContributions}
+                      effective={f.effectiveContributions}
+                      className="mt-1"
+                    />
                   </div>
                 </li>
               ))}
@@ -121,7 +124,10 @@ export default function FamilyCoordinatorHubPage() {
               {families?.map((f) => (
                 <li key={f.id} className="flex justify-between gap-3 text-sm border-b border-border pb-3">
                   <span className="font-medium">{f.name}</span>
-                  <span className="font-semibold">{formatCurrency(f.totalContributions)}</span>
+                  <ContributionAmountDisplay
+                    confirmed={f.totalContributions}
+                    effective={f.effectiveContributions}
+                  />
                 </li>
               ))}
             </ul>

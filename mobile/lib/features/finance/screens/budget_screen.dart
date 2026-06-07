@@ -5,6 +5,7 @@ import '../../../core/design/components/cards/cmms_card.dart';
 import '../../../core/design/tokens/spacing.dart';
 import '../../../core/localization/l10n.dart';
 import '../../../core/widgets/overflow_safe_button.dart';
+import '../../auth/providers/auth_provider.dart';
 
 class BudgetScreen extends ConsumerStatefulWidget {
   const BudgetScreen({super.key});

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/design/tokens/spacing.dart';
 import '../../../core/localization/l10n.dart';
+import '../../../core/routing/app_router.dart';
 import '../../../core/widgets/mobile_tab_shell.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../choir/providers/choir_providers.dart';
@@ -62,7 +63,7 @@ class _MusicScreenState extends ConsumerState<MusicScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return MobileTabShell(
-      title: l10n.music_title,
+      currentRoute: AppRouter.music,
       child: RefreshIndicator(
         onRefresh: _load,
         child: _loading

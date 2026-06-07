@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { choirApi, choirSchedulingApi } from '@/lib/api'
+import { choirSchedulingApi, documentsApi, assetsApi } from '@/lib/api'
+import { useResolvedChoirId } from '@/lib/hooks'
 import { useAuthStore } from '@/stores/index'
 import {
   Card, StatTile, SkeletonStatTile,
@@ -26,8 +27,7 @@ export default function AdvisorHubPage() {
   const permissions = useAuthStore((s) => s.user?.permissions ?? [])
   const hasAnyPermission = useAuthStore((s) => s.hasAnyPermission)
 
-  const { data: choirs } = useQuery({ queryKey: ['choirs'], queryFn: choirApi.getAll })
-  const choirId = choirs?.[0]?.id
+  const choirId = useResolvedChoirId()
 
   const canSeeSnapshot = hasAnyPermission([
     'event:read', 'choir.reports.view', 'choir.finance.view', 'discipline:read_all', 'choir.ops.view',
@@ -38,7 +38,21 @@ export default function AdvisorHubPage() {
     queryFn: () => choirSchedulingApi.getLeaderDashboard(choirId!),
     enabled: !!choirId && tab === 'snapshot' && canSeeSnapshot,
   })
+
+  const { data: documents } = useQuery({
+    queryKey: ['advisor-documents'],
+    queryFn: documentsApi.getChoirDocuments,
+    enabled: tab === 'snapshot' && canSeeSnapshot,
+  })
+
+  const { data: equipment } = useQuery({
+    queryKey: ['advisor-equipment'],
+    queryFn: assetsApi.getChoirEquipment,
+    enabled: tab === 'snapshot' && canSeeSnapshot,
+  })
+
   const h = health as Record<string, unknown> | undefined
+  const eq = equipment as Record<string, unknown> | undefined
 
   return (
     <ChoirPositionHubShell
@@ -87,9 +101,25 @@ export default function AdvisorHubPage() {
                   <StatTile label="Reliability" value={num(h?.reliability ?? h?.reliabilityScore)} suffix="%" icon={DollarSign} animate />
                 )}
               </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {hasAnyPermission(['choir.records.view', 'choir.document.manage']) && (
+                  <Card padding="md">
+                    <p className="text-xs text-text-muted">Documents on file</p>
+                    <p className="font-display text-2xl text-primary-700">{documents?.length ?? 0}</p>
+                  </Card>
+                )}
+                {hasAnyPermission(['choir.equipment.manage', 'choir.ops.view', 'asset:view']) && (
+                  <Card padding="md">
+                    <p className="text-xs text-text-muted">Equipment items</p>
+                    <p className="font-display text-2xl text-primary-700">
+                      {num(eq?.totalAssets ?? eq?.total)}
+                    </p>
+                  </Card>
+                )}
+              </div>
               <Card padding="md">
                 <p className="text-xs text-text-muted">
-                  {permissions.length} permission(s) active on your account
+                  {permissions.length} permission(s) active on your account — use My assigned access for your tools.
                 </p>
               </Card>
             </>

@@ -38,9 +38,11 @@ class _OperationsScreenState extends State<OperationsScreen> {
         _loading = false;
       });
     } catch (_) {
+      final dash = await _cache.loadDashboard();
+      final assignments = await _cache.loadAssignments() ?? [];
       setState(() {
-        _dashboard = await _cache.loadDashboard();
-        _assignments = await _cache.loadAssignments() ?? [];
+        _dashboard = dash;
+        _assignments = assignments;
         _loading = false;
       });
     }

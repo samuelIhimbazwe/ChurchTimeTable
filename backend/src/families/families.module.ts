@@ -6,9 +6,16 @@ import { GovernanceModule } from '../governance/governance.module';
 import { AuditModule } from '../audit/audit.module';
 import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
 import { FamilyMetricsService } from './family-metrics.service';
+import { FinanceModule } from '../finance/finance.module';
 
 @Module({
-  imports: [GovernanceModule, AuditModule, ParticipationModule, MemberPhoneEnforcementModule],
+  imports: [
+    GovernanceModule,
+    AuditModule,
+    ParticipationModule,
+    MemberPhoneEnforcementModule,
+    FinanceModule,
+  ],
   controllers: [FamiliesController],
   providers: [FamiliesService, FamilyMetricsService],
   exports: [FamiliesService, FamilyMetricsService],

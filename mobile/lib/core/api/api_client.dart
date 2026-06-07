@@ -16,7 +16,7 @@ class ApiClient {
 
   final Dio _dio;
   final FlutterSecureStorage _storage;
-  Future<void>? _refreshFuture;
+  Future<String?>? _refreshFuture;
 
   Dio get dio => _dio;
 
@@ -98,6 +98,21 @@ class ApiClient {
     } catch (_) {
       return null;
     }
+  }
+
+  Future<Response<dynamic>> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) {
+    return _dio.get(path, queryParameters: queryParameters);
+  }
+
+  Future<Response<dynamic>> post(
+    String path, {
+    Object? data,
+    Map<String, dynamic>? queryParameters,
+  }) {
+    return _dio.post(path, data: data, queryParameters: queryParameters);
   }
 
   Future<void> logoutRemote() async {

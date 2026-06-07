@@ -2,7 +2,8 @@
 
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { choirApi, choirSchedulingApi } from '@/lib/api'
+import { choirSchedulingApi } from '@/lib/api'
+import { useResolvedChoirScope } from '@/lib/hooks'
 import {
   Card, CardHeader, CardTitle, CardDescription, Badge, SkeletonCard,
 } from '@/components/shared'
@@ -20,11 +21,7 @@ function monthRange() {
 export default function SchedulingPage() {
   const range = useMemo(() => monthRange(), [])
 
-  const { data: choirs } = useQuery({
-    queryKey: ['choirs'],
-    queryFn:  choirApi.getAll,
-  })
-  const choirId = choirs?.[0]?.id
+  const { choirId, choirLink } = useResolvedChoirScope()
 
   const { data: calendar, isLoading: calLoading } = useQuery({
     queryKey: ['choir-calendar', range, choirId],
@@ -47,12 +44,20 @@ export default function SchedulingPage() {
           <h2 className="font-display text-3xl text-text-primary">Scheduling</h2>
           <p className="text-text-secondary text-sm mt-1">{monthLabel} calendar & assignments</p>
         </div>
-        <Link
-          href="/choir/activities"
-          className="text-xs font-semibold text-primary-600 hover:text-primary-800"
-        >
-          View activities →
-        </Link>
+        <div className="flex flex-col items-end gap-1">
+          <Link
+            href={choirLink('service-preparation')}
+            className="text-xs font-semibold text-primary-600 hover:text-primary-800"
+          >
+            Service preparation →
+          </Link>
+          <Link
+            href={choirLink('activities')}
+            className="text-xs font-semibold text-text-muted hover:text-primary-800"
+          >
+            View activities →
+          </Link>
+        </div>
       </div>
 
       <Card padding="none">
@@ -75,7 +80,7 @@ export default function SchedulingPage() {
               return (
                 <li key={id} className="hover:bg-surface-raised transition-colors">
                   <Link
-                    href={activityId ? `/choir/attendance/${activityId}` : '/choir/activities'}
+                    href={activityId ? choirLink('attendance', String(activityId)) : choirLink('activities')}
                     className="flex items-center gap-4 px-5 py-3"
                   >
                     <Calendar size={16} className="text-primary-500 shrink-0" />

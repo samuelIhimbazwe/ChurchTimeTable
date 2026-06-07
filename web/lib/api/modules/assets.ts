@@ -43,4 +43,32 @@ export const assetsApi = {
 
   getChoirEquipment: () =>
     apiClient.get<never, Record<string, unknown>>('/choir/equipment/dashboard'),
+
+  create: (data: {
+    code: string
+    name: string
+    categoryId: string
+    description?: string
+    status?: string
+    condition?: string
+    serialNumber?: string
+    notes?: string
+  }) => apiClient.post<never, Asset>('/assets', data),
+
+  update: (id: string, data: Partial<{
+    name: string
+    description: string
+    status: string
+    condition: string
+    location: string
+    notes: string
+  }>) => apiClient.patch<never, Asset>(`/assets/${id}`, data),
+
+  assign: (id: string, data: {
+    assignedToType: string
+    assignedToId: string
+    purpose?: string
+    expectedReturnAt?: string
+    notes?: string
+  }) => apiClient.post<never, unknown>(`/assets/${id}/assignments`, data),
 }

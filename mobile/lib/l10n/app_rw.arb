@@ -51,6 +51,13 @@
   "onboarding_pending_help": "Vugana n'umuyobozi wa korali cyangwa wa protocol niba ukeneye ubufasha.",
   "dashboard_member_title": "Ikibaho cyanjye",
   "dashboard_welcome": "Murakaza neza, {name}",
+  "@dashboard_welcome": {
+    "placeholders": {
+      "name": {
+        "type": "Object"
+      }
+    }
+  },
   "dashboard_leader_title": "Ikibaho cy'umuyobozi",
   "nav_calendar": "Kalendari y'ibikorwa",
   "nav_attendance": "Uko witabiriye",

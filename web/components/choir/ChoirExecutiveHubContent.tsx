@@ -4,8 +4,12 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import {
-  choirApi, choirActivityApi, choirSchedulingApi, financeApi, welfareApi, disciplineApi,
+  choirActivityApi, choirSchedulingApi, financeApi, welfareApi, disciplineApi, choirApi, familiesApi,
 } from '@/lib/api'
+import { choirServiceOpsApi } from '@/lib/api/modules/choirServiceOps'
+import { ContributionAmountDisplay } from '@/components/choir/ContributionAmountDisplay'
+import { useResolvedChoirId } from '@/lib/hooks'
+import { legacyOrScopedChoirPath } from '@/lib/choir/paths'
 import {
   Card, StatTile, SkeletonStatTile, PermissionGate, HubTabs,
 } from '@/components/shared'
@@ -13,7 +17,7 @@ import { HubQuickLink } from '@/components/choir/ChoirPositionHubShell'
 import { formatDate } from '@/lib/utils/format'
 import {
   UserPlus, Settings2, Heart, BookOpen, DollarSign, FileText, Shield,
-  Calendar, Users, BarChart3, KeyRound,
+  Calendar, Users, BarChart3, KeyRound, ClipboardList,
 } from 'lucide-react'
 
 const TABS = [
@@ -32,31 +36,46 @@ type Props = { deputyMode?: boolean }
 export function ChoirExecutiveHubContent({ deputyMode = false }: Props) {
   const [tab, setTab] = useState('overview')
 
-  const { data: choirs } = useQuery({ queryKey: ['choirs'], queryFn: choirApi.getAll })
-  const choir = choirs?.[0]
+  const choirId = useResolvedChoirId()
 
   const { data: health, isLoading: loadingHealth } = useQuery({
-    queryKey: ['choir-leader-dashboard', choir?.id],
-    queryFn: () => choirSchedulingApi.getLeaderDashboard(choir!.id),
-    enabled: !!choir?.id,
+    queryKey: ['choir-leader-dashboard', choirId],
+    queryFn: () => choirSchedulingApi.getLeaderDashboard(choirId),
+    enabled: !!choirId,
   })
   const h = health as Record<string, unknown> | undefined
 
   const { data: joinRequests } = useQuery({
-    queryKey: ['choir-join-requests', choir?.id],
-    queryFn: () => choirApi.getJoinRequests({ choirId: choir?.id, status: 'PENDING' }),
-    enabled: !!choir?.id,
+    queryKey: ['choir-join-requests', choirId],
+    queryFn: () => choirApi.getJoinRequests({ choirId, status: 'PENDING' }),
+    enabled: !!choirId,
   })
 
   const { data: activities } = useQuery({
-    queryKey: ['choir-activities', { limit: 5 }],
-    queryFn: () => choirActivityApi.getAll({ limit: 5 }),
+    queryKey: ['choir-activities', choirId, { limit: 5 }],
+    queryFn: () => choirActivityApi.getAll({ choirId, limit: 5 }),
+    enabled: !!choirId,
   })
 
   const { data: analytics } = useQuery({
     queryKey: ['finance-stewardship', 'CHOIR'],
     queryFn: () => financeApi.getStewardshipAnalytics('CHOIR'),
   })
+
+  const { data: familyTotals } = useQuery({
+    queryKey: ['families-effective-totals', choirId],
+    queryFn: () => familiesApi.getAll({ includeMetrics: true, limit: 100 }),
+    enabled: !!choirId,
+  })
+
+  const familyConfirmedTotal = (familyTotals ?? []).reduce(
+    (sum, f) => sum + (f.totalContributions ?? 0),
+    0,
+  )
+  const familyEffectiveTotal = (familyTotals ?? []).reduce(
+    (sum, f) => sum + (f.effectiveContributions ?? f.totalContributions ?? 0),
+    0,
+  )
 
   const { data: discipline } = useQuery({
     queryKey: ['discipline-active'],
@@ -71,6 +90,13 @@ export function ChoirExecutiveHubContent({ deputyMode = false }: Props) {
   const openWelfare = welfare?.filter((c) => c.status !== 'RESOLVED').length ?? 0
 
   const pendingJoins = joinRequests?.length ?? 0
+
+  const { data: serviceRequests } = useQuery({
+    queryKey: ['church-service-requests', 'PENDING', choirId],
+    queryFn: () =>
+      choirServiceOpsApi.listChurchRequests({ status: 'PENDING', choirId }),
+    enabled: !!choirId,
+  })
 
   return (
     <div className="space-y-4">
@@ -100,18 +126,23 @@ export function ChoirExecutiveHubContent({ deputyMode = false }: Props) {
             )}
           </div>
           <Card padding="md">
-            <p className="font-semibold mb-3">Contributions (MTD)</p>
-            <p className="font-display text-2xl font-bold text-primary-700">
-              {num(analytics?.contributionsMtd ?? analytics?.totalContributions).toLocaleString()} RWF
+            <p className="font-semibold mb-3">Family contributions (effective)</p>
+            <ContributionAmountDisplay
+              confirmed={familyConfirmedTotal}
+              effective={familyEffectiveTotal}
+              size="md"
+            />
+            <p className="text-xs text-text-muted mt-2">
+              Stewardship MTD: {num(analytics?.contributionsMtd ?? analytics?.totalContributions).toLocaleString()} RWF
             </p>
-            <Link href="/choir/stewardship" className="text-xs font-semibold text-primary-600 mt-2 inline-block">
+            <Link href={legacyOrScopedChoirPath(choirId, 'stewardship')} className="text-xs font-semibold text-primary-600 mt-2 inline-block">
               Stewardship dashboard →
             </Link>
           </Card>
           <Card padding="md">
             <div className="flex justify-between mb-3">
               <p className="font-semibold">Upcoming activities</p>
-              <Link href="/choir/activities" className="text-xs font-semibold text-primary-600">All →</Link>
+              <Link href={legacyOrScopedChoirPath(choirId, 'activities')} className="text-xs font-semibold text-primary-600">All →</Link>
             </div>
             <ul className="space-y-2">
               {(activities?.items ?? []).slice(0, 4).map((a) => (
@@ -138,31 +169,36 @@ export function ChoirExecutiveHubContent({ deputyMode = false }: Props) {
                     {pendingJoins} pending — review applicants and assign positions.
                   </p>
                 </div>
-                <Link href="/choir/join-requests" className="px-4 py-2 text-sm font-semibold bg-primary-700 text-white rounded-lg shrink-0">
+                <Link href={legacyOrScopedChoirPath(choirId, 'join-requests')} className="px-4 py-2 text-sm font-semibold bg-primary-700 text-white rounded-lg shrink-0">
                   Review
                 </Link>
               </div>
             </Card>
           </PermissionGate>
           <div className="grid sm:grid-cols-2 gap-4">
-            <HubQuickLink href="/choir/public-profile" label="Public choir profile" desc="What members and visitors see" icon={Settings2} />
+            <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'admin')} label="Administration hub" desc="Joins, roster, families, settings" icon={Shield} />
+            <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'public-profile')} label="Public choir profile" desc="What members and visitors see" icon={Settings2} />
             <PermissionGate anyOf={['choir.custom_role.manage', 'committee.role.manage']}>
-              <HubQuickLink href="/choir/roles" label="Position roles" desc="Customize officer permissions" icon={KeyRound} />
+              <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'roles')} label="Position roles" desc="Customize officer permissions" icon={KeyRound} />
             </PermissionGate>
-            <HubQuickLink href="/choir/members" label="Roster" desc="Manage members and positions" icon={Users} />
-            <HubQuickLink href="/choir/reports" label="Reports" desc="Export leadership summaries" icon={BarChart3} />
+            <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'members')} label="Roster" desc="Manage members and positions" icon={Users} />
+            <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'admin/families')} label="Families structure" desc="Move members — privacy-safe view" icon={Users} />
+            <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'settings')} label="Choir settings" desc="Membership rules and configuration" icon={Settings2} />
+            <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'reports')} label="Reports" desc="Export leadership summaries" icon={BarChart3} />
           </div>
         </div>
       )}
 
       {tab === 'officers' && (
         <div className="grid sm:grid-cols-2 gap-4">
-          <HubQuickLink href="/choir/care" label="Care & discipline" desc="Rules, welfare, discipline" icon={Heart} />
-          <HubQuickLink href="/choir/spiritual" label="Spiritual life" desc="Intercession, prayer, devotions" icon={BookOpen} />
-          <HubQuickLink href="/choir/budget" label="Treasurer & budget" desc="Umusanzu and project planning" icon={DollarSign} />
-          <HubQuickLink href="/choir/records" label="Secretary records" desc="Activities, music, documents" icon={FileText} />
-          <HubQuickLink href="/choir/scheduling" label="Scheduling" desc="Calendar and assignments" icon={Calendar} />
-          <HubQuickLink href="/choir/discipline" label="Discipline module" desc="Full case management" icon={Shield} />
+          <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'care')} label="Care & discipline" desc="Rules, welfare, discipline" icon={Heart} />
+          <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'spiritual')} label="Spiritual life" desc="Intercession, prayer, devotions" icon={BookOpen} />
+          <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'budget')} label="Treasurer & budget" desc="Umusanzu and project planning" icon={DollarSign} />
+          <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'records')} label="Secretary records" desc="Activities, music, documents" icon={FileText} />
+          <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'scheduling')} label="Scheduling" desc="Calendar and assignments" icon={Calendar} />
+          <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'service-preparation')} label="Service preparation" desc="Per-service plans and songs" icon={Calendar} />
+          <HubQuickLink href="/church/service-requests" label="Church service requests" desc="Approve choir assignments for services" icon={ClipboardList} stat={(serviceRequests?.length ?? 0) > 0 ? `${serviceRequests!.length} pending` : undefined} />
+          <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'discipline')} label="Discipline module" desc="Full case management" icon={Shield} />
         </div>
       )}
     </div>

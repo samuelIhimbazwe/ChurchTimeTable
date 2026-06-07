@@ -11,7 +11,7 @@ const routes = [
   'join-requests', 'roles', 'music', 'members', 'activities', 'announcements',
   'analytics', 'assets', 'discipline', 'documents', 'families', 'finance',
   'meetings', 'public-profile', 'reports', 'scheduling', 'stewardship',
-  'voice-sections', 'welfare',
+  'voice-sections', 'welfare', 'admin', 'settings', 'service-preparation',
 ]
 
 for (const r of routes) {
@@ -27,6 +27,8 @@ const nested = [
   ['music/[id]', '../../../music/[id]/page'],
   ['activities/new', '../../../activities/new/page'],
   ['attendance/[activityId]', '../../../attendance/[activityId]/page'],
+  ['admin/families', '../../../admin/families/page'],
+  ['service-preparation/[occurrenceId]', '../../../service-preparation/[occurrenceId]/page'],
 ]
 
 for (const [d, exp] of nested) {

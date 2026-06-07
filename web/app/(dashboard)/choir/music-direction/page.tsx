@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
-import { musicApi, rehearsalsApi, choirActivityApi, choirSchedulingApi, choirApi } from '@/lib/api'
+import { musicApi, rehearsalsApi, choirActivityApi, choirSchedulingApi } from '@/lib/api'
+import { useResolvedChoirScope } from '@/lib/hooks'
 import {
   Card, StatTile, Badge, SkeletonCard, PermissionGate,
 } from '@/components/shared'
@@ -42,13 +43,13 @@ export default function MusicDirectorHubPage() {
     queryFn: rehearsalsApi.getDashboard,
   })
 
-  const { data: activities, isLoading: loadingAct } = useQuery({
-    queryKey: ['choir-rehearsals'],
-    queryFn: () => choirActivityApi.getAll({ limit: 10, activityType: 'REHEARSAL' }),
-  })
+  const { choirId, choirLink } = useResolvedChoirScope()
 
-  const { data: choirs } = useQuery({ queryKey: ['choirs'], queryFn: choirApi.getAll })
-  const choirId = choirs?.[0]?.id
+  const { data: activities, isLoading: loadingAct } = useQuery({
+    queryKey: ['choir-rehearsals', choirId],
+    queryFn: () => choirActivityApi.getAll({ choirId, limit: 10, activityType: 'REHEARSAL' }),
+    enabled: !!choirId,
+  })
 
   const { data: health } = useQuery({
     queryKey: ['choir-leader-dashboard', choirId],
@@ -83,9 +84,9 @@ export default function MusicDirectorHubPage() {
                 <p className="text-xs text-text-muted mt-1">Tell all members what to practice or perform</p>
               </Card>
             </button>
-            <HubQuickLink href="/choir/music" label="Full music library" desc="Scores, audio, metadata" icon={Music} />
-            <HubQuickLink href="/choir/voice-sections" label="Voice sections" desc="Soprano, alto, tenor, bass" icon={Mic2} />
-            <HubQuickLink href="/choir/scheduling" label="Scheduling" desc="Service assignments" icon={Calendar} />
+            <HubQuickLink href={choirLink('music')} label="Full music library" desc="Scores, audio, metadata" icon={Music} />
+            <HubQuickLink href={choirLink('voice-sections')} label="Voice sections" desc="Soprano, alto, tenor, bass" icon={Mic2} />
+            <HubQuickLink href={choirLink('scheduling')} label="Scheduling" desc="Service assignments" icon={Calendar} />
           </div>
         </div>
       )}
@@ -93,7 +94,7 @@ export default function MusicDirectorHubPage() {
       {tab === 'notify' && (
         <div className="space-y-4">
           <MusicSongNotifyForm />
-          <Link href="/choir/announcements" className="text-sm font-semibold text-primary-600">
+          <Link href={choirLink('announcements')} className="text-sm font-semibold text-primary-600">
             View all choir announcements →
           </Link>
         </div>
@@ -104,7 +105,7 @@ export default function MusicDirectorHubPage() {
           <PermissionGate anyOf={['choir.music.manage']}>
             <Card padding="md" accent="gold">
               <p className="font-semibold mb-2">Manage the catalog</p>
-              <Link href="/choir/music" className="inline-flex px-4 py-2 text-sm font-semibold bg-primary-700 text-white rounded-lg">
+              <Link href={choirLink('music')} className="inline-flex px-4 py-2 text-sm font-semibold bg-primary-700 text-white rounded-lg">
                 Open music library →
               </Link>
             </Card>
@@ -114,7 +115,7 @@ export default function MusicDirectorHubPage() {
           ) : (
             <ul className="space-y-3">
               {recentSongs?.items?.map((song) => (
-                <Link key={song.id} href={`/choir/music/${song.id}`}>
+                <Link key={song.id} href={choirLink('music', song.id)}>
                   <Card padding="md" className="hover:shadow-raised transition-shadow">
                     <div className="flex justify-between gap-3">
                       <div>
@@ -149,7 +150,7 @@ export default function MusicDirectorHubPage() {
                         {a.startTime ? ` · ${formatTime(a.startTime)}` : ''}
                       </p>
                     </div>
-                    <Link href={`/choir/attendance/${a.id}`} className="text-xs font-semibold text-primary-600 shrink-0">
+                    <Link href={choirLink('attendance', a.id)} className="text-xs font-semibold text-primary-600 shrink-0">
                       Attendance →
                     </Link>
                   </div>

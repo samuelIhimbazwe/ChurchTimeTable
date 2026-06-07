@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/auth/governance_permissions.dart';
 import '../../../core/design/tokens/spacing.dart';
 import '../../../core/localization/l10n.dart';
+import '../../../core/routing/app_router.dart';
 import '../../../core/widgets/mobile_tab_shell.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../choir/providers/choir_providers.dart';
@@ -69,7 +70,7 @@ class _WelfareScreenState extends ConsumerState<WelfareScreen> {
     final canManage = canManageWelfare(perms);
 
     return MobileTabShell(
-      title: l10n.welfare_title,
+      currentRoute: AppRouter.welfare,
       child: RefreshIndicator(
         onRefresh: _load,
         child: _loading

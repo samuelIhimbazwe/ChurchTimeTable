@@ -9,6 +9,7 @@ import {
   PermissionGate, SkeletonCard, SkeletonStatTile,
 } from '@/components/shared'
 import { Heart } from 'lucide-react'
+import { ChoirMemberPicker } from '@/components/choir/ChoirMemberPicker'
 import { formatDate } from '@/lib/utils/format'
 import type { WelfareCase } from '@/types'
 
@@ -120,13 +121,7 @@ export default function WelfarePage() {
             <CardTitle>Open New Case</CardTitle>
           </CardHeader>
           <div className="space-y-3">
-            <input
-              type="text"
-              placeholder="Member ID"
-              value={memberId}
-              onChange={(e) => setMemberId(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold-500"
-            />
+            <ChoirMemberPicker value={memberId} onChange={(id) => setMemberId(id)} />
             <input
               type="text"
               placeholder="Case type"

@@ -61,7 +61,7 @@
   "@dashboard_welcome": {
     "placeholders": {
       "name": {
-        "type": "String"
+        "type": "Object"
       }
     }
   },

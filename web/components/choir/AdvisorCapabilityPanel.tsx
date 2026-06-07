@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useAuthStore } from '@/stores/index'
 import { Card } from '@/components/shared'
 import { HubQuickLink } from '@/components/choir/ChoirPositionHubShell'
+import { useResolvedChoirScope } from '@/lib/hooks'
 import {
   Calendar, Shield, DollarSign, FileText, Heart, BookOpen, Users, Music,
   BarChart3, Settings2, UserPlus, Megaphone, Scale, KeyRound,
@@ -117,9 +118,16 @@ const ADVISOR_CAPABILITY_LINKS: Array<{
   },
 ]
 
+function scopeChoirHref(choirLink: (...segments: string[]) => string, href: string) {
+  if (!href.startsWith('/choir/')) return href
+  const segments = href.slice('/choir/'.length).split('/').filter(Boolean)
+  return choirLink(...segments)
+}
+
 export function AdvisorCapabilityPanel() {
   const hasAnyPermission = useAuthStore((s) => s.hasAnyPermission)
   const permissions = useAuthStore((s) => s.user?.permissions ?? [])
+  const { choirLink } = useResolvedChoirScope()
 
   const visible = ADVISOR_CAPABILITY_LINKS.filter((link) => hasAnyPermission(link.anyOf))
 
@@ -143,7 +151,7 @@ export function AdvisorCapabilityPanel() {
         <Card padding="md">
           <p className="text-sm text-text-muted text-center py-6">
             No advisor tools assigned yet. Ask the President to set your permissions on{' '}
-            <Link href="/choir/roles" className="text-primary-600 font-semibold">Position roles</Link>.
+            <Link href={choirLink('roles')} className="text-primary-600 font-semibold">Position roles</Link>.
           </p>
         </Card>
       ) : (
@@ -151,7 +159,7 @@ export function AdvisorCapabilityPanel() {
           {visible.map((link) => (
             <HubQuickLink
               key={link.href + link.label}
-              href={link.href}
+              href={scopeChoirHref(choirLink, link.href)}
               label={link.label}
               desc={link.desc}
               icon={link.icon}

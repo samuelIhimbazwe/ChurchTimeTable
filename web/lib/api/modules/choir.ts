@@ -17,6 +17,12 @@ export const choirApi = {
   getAll: () =>
     apiClient.get<never, Choir[]>('/choirs'),
 
+  getCatalog: () =>
+    apiClient.get<never, Choir[]>('/choirs/catalog'),
+
+  getMembershipRules: () =>
+    apiClient.get<never, Record<string, unknown>>('/choirs/membership-rules'),
+
   getById: (id: string) =>
     apiClient.get<never, Choir>(`/choirs/${id}`),
 
@@ -74,6 +80,13 @@ export const choirApi = {
     roleId: string
   }) =>
     apiClient.post<never, unknown>('/choirs/members/assign-position', data),
+
+  revokeMemberPosition: (data: {
+    choirId: string
+    memberId: string
+    roleId: string
+  }) =>
+    apiClient.post<never, unknown>('/choirs/members/revoke-position', data),
 
   getMeetings: () =>
     apiClient.get<never, unknown[]>('/choir/meetings'),

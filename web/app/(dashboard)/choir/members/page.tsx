@@ -1,15 +1,14 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { usePathname } from 'next/navigation'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { choirApi } from '@/lib/api'
 import {
   Card, Badge, Avatar, SkeletonMemberRow, PermissionGate,
 } from '@/components/shared'
-import { useOptionalChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
-import { useChoirAccess } from '@/lib/hooks/useChoirAccess'
-import { parseChoirIdFromPath } from '@/lib/choir/paths'
+import { ChoirRosterActions } from '@/components/choir/ChoirRosterActions'
+import { choirPositionLabel } from '@/lib/constants/choir-positions'
+import { useResolvedChoirId } from '@/lib/hooks'
 import { Search, Download } from 'lucide-react'
 import type { ChoirMember, ScoreBand } from '@/types'
 
@@ -17,41 +16,63 @@ const SCORE_BADGE = (band: ScoreBand) =>
   band === 'excellent' ? 'status-present' :
   band === 'good'      ? 'status-excused' : 'status-absent'
 
+function exportRosterCsv(members: ChoirMember[], choirLabel: string) {
+  const header = ['Name', 'Voice', 'Attendance %', 'Score', 'Positions', 'Status']
+  const rows = members.map((m) => [
+    m.name,
+    m.voicePart ?? '',
+    String(m.attendanceRate),
+    String(m.score),
+    (m.positions ?? []).map((p) => choirPositionLabel(p.roleName)).join('; '),
+    m.status,
+  ])
+  const csv = [header, ...rows]
+    .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    .join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `choir-roster-${choirLabel.replace(/\s+/g, '-').toLowerCase()}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 export default function ChoirMembersPage() {
   const [search, setSearch] = useState('')
-  const pathname = usePathname()
-  const choirCtx = useOptionalChoirDashboardCtx()
-  const { activeChoirMemberships } = useChoirAccess()
-
-  const choirId = useMemo(
-    () =>
-      choirCtx?.choirId ??
-      parseChoirIdFromPath(pathname) ??
-      activeChoirMemberships[0]?.id ??
-      '',
-    [choirCtx?.choirId, pathname, activeChoirMemberships],
-  )
+  const choirId = useResolvedChoirId()
 
   const { data, isLoading } = useQuery({
     queryKey: ['choir-members', choirId, search],
-    queryFn: () => choirApi.getMembers(choirId, { search, limit: 50 }),
+    queryFn: () => choirApi.getMembers(choirId, { search, limit: 100 }),
     enabled: !!choirId,
   })
 
   const filtered = data?.items ?? []
 
+  const handleExport = async () => {
+    if (!choirId) return
+    const full = await choirApi.getMembers(choirId, { search, limit: 100 })
+    exportRosterCsv(full.items, choirId.slice(0, 8))
+  }
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h2 className="font-display text-3xl text-text-primary">Choir Roster</h2>
           <p className="text-text-secondary text-sm mt-1">
             {data?.total ?? '—'} members total
           </p>
         </div>
-        <PermissionGate permission="report:export">
-          <button className="flex items-center gap-2 px-3 py-2 text-sm border border-border rounded-lg hover:bg-surface-raised transition-colors text-text-secondary">
-            <Download size={15} /> Export
+        <PermissionGate anyOf={['report:export', 'member:manage', 'choir.oversight']}>
+          <button
+            type="button"
+            onClick={() => void handleExport()}
+            disabled={!choirId || filtered.length === 0}
+            className="flex items-center gap-2 px-3 py-2 text-sm border border-border rounded-lg hover:bg-surface-raised transition-colors text-text-secondary disabled:opacity-50"
+          >
+            <Download size={15} /> Export CSV
           </button>
         </PermissionGate>
       </div>
@@ -98,6 +119,11 @@ export default function ChoirMembersPage() {
                     {m.voicePart ?? 'Unassigned'}
                     {` · ${m.attendanceRate}% attendance`}
                   </p>
+                  {(m.positions?.length ?? 0) > 0 && (
+                    <p className="text-xs text-primary-600 mt-0.5 truncate">
+                      {(m.positions ?? []).map((p) => choirPositionLabel(p.roleName)).join(' · ')}
+                    </p>
+                  )}
                 </div>
                 <Badge variant={SCORE_BADGE(m.scoreBand)} dot>
                   {m.score} pts
@@ -105,10 +131,10 @@ export default function ChoirMembersPage() {
                 <Badge variant={m.duesPaid ? 'status-present' : 'status-absent'}>
                   {m.duesPaid ? 'Paid' : 'Dues due'}
                 </Badge>
-                <PermissionGate permission="member:manage">
-                  <button className="text-xs text-text-muted hover:text-danger transition-colors">
-                    ···
-                  </button>
+                <PermissionGate anyOf={['member:manage', 'choir.join.review', 'choir.ops.manage']}>
+                  <div className="relative">
+                    <ChoirRosterActions member={m} choirId={choirId} />
+                  </div>
                 </PermissionGate>
               </li>
             ))}

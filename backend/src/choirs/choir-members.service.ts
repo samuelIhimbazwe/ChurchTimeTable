@@ -5,7 +5,7 @@ import { PermissionsResolver } from '../auth/permissions.resolver';
 import { PERMISSIONS, ROLES } from '../common/constants/roles';
 import { hasEffectivePermission } from '../common/governance/governance-permissions.util';
 
-const ADMIN_ROLES = new Set([
+const ADMIN_ROLES: ReadonlySet<string> = new Set([
   ROLES.CHOIR_ADMIN,
   ROLES.CHURCH_ADMIN,
 ]);
@@ -133,6 +133,23 @@ export class ChoirMembersService {
 
     const profileByMember = new Map(profiles.map((p) => [p.memberId, p]));
 
+    const committeeRows = memberIds.length
+      ? await this.prisma.choirCommitteeMember.findMany({
+          where: { choirId, memberId: { in: memberIds } },
+          include: { role: { select: { id: true, name: true } } },
+        })
+      : [];
+
+    const positionsByMember = new Map<
+      string,
+      Array<{ roleId: string; roleName: string }>
+    >();
+    for (const row of committeeRows) {
+      const list = positionsByMember.get(row.memberId) ?? [];
+      list.push({ roleId: row.roleId, roleName: row.role.name });
+      positionsByMember.set(row.memberId, list);
+    }
+
     const items = rows
       .filter((row) => row.user.member)
       .map((row) => {
@@ -155,6 +172,7 @@ export class ChoirMembersService {
           scoreBand: scoreBand(score),
           duesPaid: true,
           status: member.status === 'ACTIVE' ? ('ACTIVE' as const) : ('INACTIVE' as const),
+          positions: positionsByMember.get(member.id) ?? [],
         };
       });
 

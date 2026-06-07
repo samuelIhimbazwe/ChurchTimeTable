@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { choirApi } from '@/lib/api'
+import { useResolvedChoirScope } from '@/lib/hooks'
 import { memberPortalApi } from '@/lib/api/modules/memberPortal'
 import { toast } from '@/components/shared/Toast'
 import {
@@ -32,16 +32,12 @@ export default function ChoirPublicProfilePage() {
   const [releasePlatform, setReleasePlatform] = useState('youtube')
   const [releaseDescription, setReleaseDescription] = useState('')
 
-  const { data: choirs, isLoading: loadingChoirs } = useQuery({
-    queryKey: ['choirs'],
-    queryFn: choirApi.getAll,
-  })
-  const choir = choirs?.[0]
+  const { choirId, choirName } = useResolvedChoirScope()
 
   const { data: profile, isLoading: loadingProfile, error } = useQuery({
-    queryKey: ['member-portal', 'choir', choir?.id, 'edit'],
-    queryFn: () => memberPortalApi.getChoirPublic(choir!.id),
-    enabled: !!choir?.id,
+    queryKey: ['member-portal', 'choir', choirId, 'edit'],
+    queryFn: () => memberPortalApi.getChoirPublic(choirId),
+    enabled: !!choirId,
   })
 
   useEffect(() => {
@@ -65,7 +61,7 @@ export default function ChoirPublicProfilePage() {
 
   const save = useMutation({
     mutationFn: () => {
-      if (!choir?.id) throw new Error('No choir selected')
+      if (!choirId) throw new Error('No choir selected')
       const trimmedSummary = summary.trim()
       const payload: Parameters<typeof memberPortalApi.updateChoirPublic>[1] = {
         showMemberCountPublic: showMemberCount,
@@ -81,7 +77,7 @@ export default function ChoirPublicProfilePage() {
             : null,
         },
       }
-      return memberPortalApi.updateChoirPublic(choir.id, payload)
+      return memberPortalApi.updateChoirPublic(choirId, payload)
     },
     onSuccess: () => {
       toast.success('Public choir profile updated')
@@ -94,7 +90,7 @@ export default function ChoirPublicProfilePage() {
     releaseTitle.trim().length > 0 && releaseUrl.trim().length > 0
   )
 
-  if (loadingChoirs || loadingProfile) {
+  if (loadingProfile && !!choirId) {
     return (
       <div className="max-w-3xl mx-auto space-y-6">
         <SkeletonCard rows={2} />
@@ -103,12 +99,12 @@ export default function ChoirPublicProfilePage() {
     )
   }
 
-  if (!choir) {
+  if (!choirId) {
     return (
       <EmptyState
         icon={Music}
         title="No choir assigned"
-        description="Switch to a choir you lead to manage its public profile."
+        description="Open this page from your choir dashboard to manage its public profile."
       />
     )
   }
@@ -129,7 +125,7 @@ export default function ChoirPublicProfilePage() {
         <div>
           <h2 className="font-display text-3xl text-text-primary">Public profile</h2>
           <p className="text-text-secondary text-sm mt-1">
-            What members see when they browse <strong>{choir.name}</strong> in the portal
+            What members see when they browse <strong>{choirName ?? 'your choir'}</strong> in the portal
           </p>
         </div>
         {profile && (

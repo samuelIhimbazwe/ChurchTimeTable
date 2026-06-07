@@ -2,7 +2,7 @@
 
 This document captures what we **agreed the Choir System should be**, what **exists in the codebase today**, and **what still gaps**. It reflects the portal-first, role-composed model (Elim, Integuza, Beulah, Yerusalemu as separate instances of the same pattern).
 
-Last updated: June 2026
+Last updated: June 2026 (choir closure sprint complete)
 
 ---
 
@@ -52,141 +52,156 @@ Choir System (per choir instance)
 
 ---
 
-## Module-by-Module: Want vs Current
+## Completed Phases (1–5)
 
-| # | Module | What we want | Current status | Gap |
-|---|--------|--------------|----------------|-----|
-| **1** | **Membership** | Join requests, roster, committee roles, transfers, multi-choir rules (Yerusalemu), scoped to active choir | **Partial–Real** — join workflow, role assignment, dashboard context, portal rules all work | Roster page calls `GET /choirs/:id/members` but **no backend route**; many pages still use **first choir** instead of URL `choirId`; **membership transfers** not built |
-| **2** | **Worship & Music** | Song library, voice sections, rehearsals, music director notifications, service readiness | **Real** — music, voice sections, music-direction hub, `MusicSongNotifyForm`, scheduling/rehearsals | **Service Readiness Center** (pre-service checklist, assignments) **not built**; church **service request** flow **not built** |
-| **3** | **Spiritual Life** | Devotions, intercession inbox, prayer programs separate from music ops | **Real** — spiritual hub, intercessor inbox, devotion publish, portal devotion center | **Member development / spiritual growth tracking** not built; some devotions still portal-level |
-| **4** | **Attendance** | Family-head marks team; coordinator/president sees health; tied to activities | **Partial–Real** — backend scheduling + attendance APIs exist; family-head links to mark team | Attendance UI uses **`'default'` choir id** and broken member list API; not fully choir-scoped |
-| **5** | **Finance** | Family MoMo/bank → pay outside → claim → family head confirm/partial → treasurer adjust → rankings | **Real (strongest slice)** — full backend workflow + UI components | Portal `/portal/contributions` not choir-scoped URL; **campaign UX** thin |
-| **6** | **Family Teams** | Every member sees **My family**; head sets payment details; coordinator manages all families | **Real for core flow** — `my-family` page, payment settings, inbox, coordinator hub | **`/families` admin** is read-only (no assign UI) |
-| **7** | **Welfare** | Cases, assistance, escalation from family head | **Real** — welfare API + pages + care hub tab | UX uses raw member IDs, not member picker |
-| **8** | **Discipline** | Case lifecycle, rules, care integration | **Real** — discipline API + care hub | Same manual ID entry; no member-facing discipline view |
-| **9** | **Communications** | Announcements, targeted broadcasts, public profile, documents | **Partial–Real** — announcements, public profile edit, care notices | **Targeted broadcasts** (by family, voice section, role) **not built** |
-| **10** | **Reports** | Participation, finance, family health, exports | **Partial–Real** — summary PDF/CSV, analytics, leader dashboard | Records hub is mostly **link shell** |
-| **11** | **Assets** | Uniforms, equipment, inventory lifecycle | **Partial** — read dashboards for uniforms/equipment | **View-only**; no create/edit/issue workflow in UI |
-| — | **Role Hub** | One desk per persona: member home + officer tabs filtered by permissions | **Real structure** — 10 officer hubs + member home + composed sidebar | Hubs vary in depth; many internal links still **legacy `/choir/…`** |
+| Phase | Focus | Status |
+|-------|--------|--------|
+| **1 — Stabilize** | Prisma, builds, roster API, attendance choir scoping | **Done** |
+| **2 — Scope** | `choirId` through legacy pages; remove `choirs[0]` | **Done** |
+| **3 — Family ops** | Family assign UI, effective amounts, member pickers | **Done** |
+| **4 — Depth** | Records/advisor depth, assets CRUD, targeted comms | **Done** |
+| **5 — New domains** | Service prep, church service requests, dissolution transfers | **Done** |
+
+### Choir admin closure (June 2026)
+
+| Item | Status |
+|------|--------|
+| **Administration hub** | `/choir/{id}/admin` — joins, roster, families structure, roles, settings |
+| **Roster lifecycle** | Assign/revoke committee positions, CSV export, position labels |
+| **Family financial privacy** | UI `structure` variant + **backend** per-family contribution metrics |
+| **Choir settings** | `/choir/{id}/settings` including family payment instructions |
+| **Member service prep** | Read-only card on member hub + member API endpoints |
+| **Church nav** | Service requests + choir transfers in church leadership sidebar |
 
 ---
 
-## Persona Journeys: Want vs Current
+## Phase 5 — New Domains
 
-### Shared entry (every persona)
+### 1. Service Preparation Center
 
-| Step | Target | Current |
-|------|--------|---------|
-| Login → Portal | Church-life home first | **Done** |
-| Browse/join choirs | Rules on primary + Yerusalemu | **Done** |
-| Open choir dashboard | Only when approved | **Done** |
-| Land on role hub | `landingPath` from dashboard context | **Done** |
-| Sidebar | Participate + My roles + Admin + Operations | **Done** |
-| Banner | Choir name + committee titles | **Done** |
+Per-service preparation desk (not a generic “readiness score”). Leaders build a plan for each assigned church service:
 
-### Regular singer
+| Item | Description |
+|------|-------------|
+| **Service date & time** | From `OperationOccurrence` / choir assignment |
+| **Service song(s)** | Song(s) the choir will sing (music library link) |
+| **Uniform** | What to wear / uniform notes |
+| **Pep talk / short meeting** | Optional briefing with scheduled time **before or after** service |
+| **Short announcements** | Service-specific comms |
+| **Custom items** | Leaders add other prep tasks (arrival time, positions, guests, etc.) |
 
-| Want | Current |
-|------|---------|
-| Land on `/choir/{id}/member` | **Done** |
-| My family → payment details → pay contribution | **Done** |
-| Music, activities, announcements from Participate nav | **Done** |
-| Never see officer/admin tools | **Done** |
+**Routes:** `/choir/{choirId}/service-preparation` → detail per `occurrenceId`
 
-### Family head
+**API (leaders):** `GET/POST /choir/service-preparation`
 
-| Want | Current |
-|------|---------|
-| Family-scoped desk | **Done** |
-| Set MoMo/bank for family | **Done** |
-| Review claims: confirm / partial / reject | **Done** |
-| Mark team attendance | **Partial** — attendance page has API/id issues |
+**API (members):** `GET /choir/member-service-preparation` — active choir membership required
 
-### Family coordinator / Treasurer / President
+### 2. Membership transfers (narrow rules)
 
-See module table above. Coordinator and treasurer have treasury/discrepancy panels; president hub is rich but often scoped to first choir.
+| Scenario | Allowed? | How |
+|----------|----------|-----|
+| Member moves primary choir → primary choir on their own | **No** | Blocked by membership rules |
+| Family coordinator moves member between **families in same choir** | **Yes** | `/choir/{id}/families` or `/choir/{id}/admin/families` |
+| Choir **no longer exists** — all members to one (or distributed) choir | **Yes** | Admin dissolution transfer at `/church/choir-transfers` |
+
+**API:** `POST /choirs/dissolution-transfer`, `GET /choirs/dissolution-transfers`
+
+### 3. Church service requests
+
+Church/governance requests choir presence for a published service occurrence. On approval → `ChoirServiceAssignment` + linked `ChoirActivity`.
+
+**Routes:** `/church/service-requests` (linked from church leadership nav)
+
+**API:** `GET/POST /church/service-requests`, `POST …/review` (approve/reject)
+
+**Flow:** Request → review (president/scheduler) → assign choir → visible in scheduling + Service Preparation Center
+
+---
+
+## Family financial privacy
+
+Presidents and other officers with `choir.finance.view` can see **family structure** (roster, transfers, health grades without contribution weight) but **not** other families’ contribution totals unless:
+
+- They belong to that family, **or**
+- They hold `choir.family.manage` (family coordinator) or `choir.finance.manage` (treasurer)
+
+Enforced in `FamilyAdminPanel` (`structure` variant) and `FamilyMetricsService` via `canViewFamilyContributionMetrics`.
+
+---
+
+## Module-by-Module: Want vs Current
+
+| # | Module | Current status | Remaining gap |
+|---|--------|----------------|---------------|
+| **1** | **Membership** | Join, roster API, position assign/revoke, dissolution transfer | Member-initiated choir transfer N/A by design; roster deactivate deferred |
+| **2** | **Worship & Music** | Music, rehearsals, scheduling, service prep (leader + member read-only) | Minor UI polish only |
+| **6** | **Family Teams** | My family, payment, coordinator, families admin, privacy-safe structure view | — |
+| **9** | **Communications** | Targeted choir announcements (Phase 4) | Read receipts |
+| **11** | **Assets** | Uniform/equipment CRUD (Phase 4) | Maintenance logs UI |
 
 ---
 
 ## Key Flows
 
+### Church service → preparation (5-step QA)
+
+Run with API `http://localhost:3000/api/v1`, web `http://localhost:3001`, SQLite pilot data (`use-local-dev.ps1 -WithPilotAccounts`).
+
+| Step | Actor | Action | Expected |
+|------|-------|--------|----------|
+| **1** | Church admin (`admin@church.local` / `Admin@123`) | Church nav → **Service Requests** → create request for a published service occurrence | Request status `PENDING` |
+| **2** | President (`choir.president@church.local` / `Pilot@123`) | Approve request (or scheduling hub) → choir assigned | `ChoirServiceAssignment` created; appears in scheduling |
+| **3** | Music director (`choir.rehearsal@church.local`) | `/choir/{id}/service-preparation` → open service → add songs, uniform, pep talk → save | Plan status “ready” |
+| **4** | Any choir member (`choir.member@church.local` or similar pilot) | Member hub → **Upcoming service prep** card → open detail | Read-only uniform, songs, pep talk (no edit controls) |
+| **5** | Church admin | **Choir Transfers** → preview dissolution (do not execute on pilot unless testing) | Preview shows member/family counts |
+
+**Admin hub QA (president):**
+
+1. `/choir/{id}/admin` — all cards visible per permissions
+2. Roster → assign/revoke position → CSV export
+3. `/choir/{id}/admin/families` — structure only (no other families’ contribution totals)
+4. `/choir/{id}/settings` — family payment instructions save
+
+### Choir dissolution
+
+1. Admin selects closing choir + receiving choir — **Done**
+2. All active memberships + families move — **Done**
+3. Source choir `isActive = false` — **Done**
+
 ### Family contribution (umusanzu)
 
-1. Member sees family MoMo/bank (family head controlled) — **Done**
-2. Select type including Other with free text — **Done**
-3. Pay outside system — **Done**
-4. Submit claim — **Done**
-5. Family head confirm / partial / reject — **Done**
-6. Mismatch → notify coordinator + treasurer — **Done** (backend)
-7. Treasurer manual adjust + audit — **Done**
-8. Effective amounts in all officer views — **Partial**
-
-### Routing
-
-- Legacy `/choir/*` → `/choir/{primaryId}/*` — **Done**
-- `/choir/{id}` → role `landingPath` — **Done**
-- Page logic uses URL `choirId` everywhere — **Gap**
-
----
-
-## Cross-Cutting Gaps
-
-### P0 — Breaks real use
-
-1. Missing roster API — `choirApi.getMembers` has no controller route
-2. First-choir bias — executive pages use `choirApi.getAll()[0]`
-3. Attendance hardcoded `'default'` choir id
-4. Prisma client / migration for family payment columns
-
-### P1 — Vision completeness
-
-5. Full choir scoping in all legacy pages
-6. Families admin UI (assign heads, move members)
-7. Effective contribution amounts everywhere
-8. Member picker in welfare/discipline forms
-9. Richer records / advisor hubs
-
-### P2 — Future modules
-
-| Feature | Status |
-|---------|--------|
-| Service Readiness Center | Not started |
-| Church service requests | Not started |
-| Membership transfers | Not started |
-| Targeted broadcasts | Not started |
-| Member development tracking | Not started |
-| Asset issue/return workflow | Not started |
-
----
-
-## Recommended Phases
-
-| Phase | Focus |
-|-------|--------|
-| **Phase 1 — Stabilize** | Prisma migrate/generate, builds green, roster API, fix attendance choir id |
-| **Phase 2 — Scope** | Pass `choirId` through all legacy pages; remove `choirs[0]` pattern |
-| **Phase 3 — Family ops** | Family assign UI, effective amounts, member pickers |
-| **Phase 4 — Depth** | Records, advisor, assets CRUD, targeted comms |
-| **Phase 5 — New domains** | Service Readiness, transfers, service requests |
+Full workflow **Done**; effective amounts in officer views **Done** (Phase 3–4). Privacy rules **Done** (closure sprint).
 
 ---
 
 ## Pilot Accounts (QA)
 
-Password: `Pilot@123` (pilot seed)
+Password: `Pilot@123` (church admin: `Admin@123`)
 
-| Persona | Email |
-|---------|-------|
-| Regular singer | `member1@church.local`, `choir.singer@church.local` |
-| Family head | `choir.familyhead@church.local` |
-| Family coordinator | `choir.family@church.local` |
-| Treasurer | `choir.treasurer@church.local` |
-| President | `choir.president@church.local` |
+| Persona | Email | QA focus |
+|---------|-------|----------|
+| Church admin | `admin@church.local` | Service requests, dissolution, church nav |
+| President | `choir.president@church.local` | Approve requests, prep center, admin hub |
+| Music director | `choir.rehearsal@church.local` | Service songs in prep plan |
+| Family coordinator | `choir.family@church.local` | Intra-choir family moves; sees all family contributions |
+| Choir member | any approved pilot member | Member hub service prep card |
 
 ---
 
 ## Key File Index
 
-**Backend:** `member-portal/choir-dashboard-context.service.ts`, `choir-my-family.service.ts`, `finance/contribution-*.service.ts`, `families/families.service.ts`, `choirs/choirs.controller.ts`
+**Phase 5 backend:** `choir-service-ops/*`, `choir-scheduling/choir-service-assignments.service.ts`
 
-**Frontend:** `web/lib/navigation/choir-nav.ts`, `web/lib/choir/paths.ts`, `web/app/(dashboard)/choir/[choirId]/`, `web/components/choir/*`
+**Phase 5 frontend:** `web/app/(dashboard)/church/service-requests/`, `web/app/(dashboard)/choir/service-preparation/`, `web/app/(dashboard)/church/choir-transfers/`, `web/lib/api/modules/choirServiceOps.ts`
+
+**Admin closure:** `web/components/choir/ChoirAdminHub.tsx`, `ChoirRosterActions.tsx`, `ChoirSettingsPanel.tsx`, `MemberServicePrepCard.tsx`, `backend/src/families/family-metrics.service.ts`
+
+**Schema:** `ChurchServiceRequest`, `ServicePreparationPlan`, `ServicePreparationItem`, `ChoirDissolutionTransfer`
+
+---
+
+## Next: Protocol system
+
+Choir closure sprint is complete. Next major work per `docs/PROTOCOL_DISCOVERY.md`.
+
+**Deferred (not blocking protocol):** mobile rebuild, announcement read receipts, asset maintenance logs, roster deactivate API, `/system/users` placeholder.

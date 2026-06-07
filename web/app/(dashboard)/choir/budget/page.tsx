@@ -9,8 +9,7 @@ import {
   Card, StatTile, HubTabs, PermissionGate, SkeletonCard, SkeletonStatTile,
 } from '@/components/shared'
 import { ContributionTreasuryPanel } from '@/components/choir/ContributionTreasuryPanel'
-import { useOptionalChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
-import { legacyOrScopedChoirPath } from '@/lib/choir/paths'
+import { useResolvedChoirScope } from '@/lib/hooks'
 import { DollarSign, Wallet, TrendingUp, ClipboardList } from 'lucide-react'
 import { formatDate } from '@/lib/utils/format'
 
@@ -36,8 +35,7 @@ function normalizeBudgets(raw: unknown): Array<Record<string, unknown>> {
 export default function BudgetHubPage() {
   const qc = useQueryClient()
   const [tab, setTab] = useState('overview')
-  const choirCtx = useOptionalChoirDashboardCtx()
-  const choirLink = (...segments: string[]) => legacyOrScopedChoirPath(choirCtx?.choirId, ...segments)
+  const { choirLink } = useResolvedChoirScope()
 
   const [name, setName] = useState('')
   const [amount, setAmount] = useState('')

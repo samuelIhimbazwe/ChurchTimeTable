@@ -48,7 +48,13 @@ class LeaderDashboardScreen extends ConsumerWidget {
                       summaryAsync.when(
                         loading: () => Text(l10n.common_loading),
                         error: (_, __) => Text(l10n.error_network),
-                        data: (s) => _KpiGrid(summary: s, l10n: l10n),
+                        data: (s) => s == null
+                            ? Text(
+                                auth.roleNames.join(' · '),
+                                style: Theme.of(context).textTheme.bodyMedium,
+                                softWrap: true,
+                              )
+                            : _KpiGrid(summary: s, l10n: l10n),
                       )
                     else
                       Text(
@@ -76,7 +82,6 @@ class LeaderDashboardScreen extends ConsumerWidget {
             ),
           ],
         ),
-      ),
     );
 
     if (embedded) {

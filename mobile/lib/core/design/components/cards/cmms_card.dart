@@ -7,7 +7,7 @@ import '../../tokens/spacing.dart';
 class CmmsCard extends StatelessWidget {
   const CmmsCard({
     super.key,
-    required this.title,
+    this.title,
     this.subtitle,
     this.leading,
     this.trailing,

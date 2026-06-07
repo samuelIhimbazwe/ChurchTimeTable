@@ -39,6 +39,7 @@ import { ChurchIntelligenceModule } from './church-intelligence/church-intellige
 import { OperationsModule } from './operations/operations.module';
 import { ProtocolModule } from './protocol/protocol.module';
 import { ChoirSchedulingModule } from './choir-scheduling/choir-scheduling.module';
+import { ChoirServiceOpsModule } from './choir-service-ops/choir-service-ops.module';
 import { MemberPortalModule } from './member-portal/member-portal.module';
 import { PilotReadyModule } from './pilot-ready/pilot-ready.module';
 import { AuthUxModule } from './auth-ux/auth-ux.module';
@@ -74,6 +75,7 @@ import { ChoirContextMiddleware } from './common/middleware/choir-context.middle
     OperationsModule,
     ProtocolModule,
     ChoirSchedulingModule,
+    ChoirServiceOpsModule,
     MemberPortalModule,
     PilotReadyModule,
     AuthUxModule,

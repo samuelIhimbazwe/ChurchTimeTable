@@ -285,7 +285,7 @@ export function StewardshipDashboard() {
 
   const { data: families, isLoading: loadingFamilies } = useQuery({
     queryKey: ['families'],
-    queryFn: familiesApi.getAll,
+    queryFn: () => familiesApi.getAll(),
   })
 
   const rankingList = Array.isArray(rankings) ? rankings : []

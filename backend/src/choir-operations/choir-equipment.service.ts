@@ -1,14 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { EquipmentAssignmentStatus, EquipmentCondition } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PermissionsResolver } from '../auth/permissions.resolver';
+import { AuditService } from '../audit/audit.service';
 import { PERMISSIONS } from '../common/constants/roles';
-import { assertChoirOpsView } from './choir-operations.util';
+import { assertChoirOpsManage, assertChoirOpsView } from './choir-operations.util';
 
 @Injectable()
 export class ChoirEquipmentService {
   constructor(
     private prisma: PrismaService,
     private permissions: PermissionsResolver,
+    private audit: AuditService,
   ) {}
 
   async dashboard(userId: string) {
@@ -32,11 +39,112 @@ export class ChoirEquipmentService {
     const poor = byCondition.find((r) => r.condition === 'POOR')?._count ?? 0;
 
     return {
+      total: assets.length,
       totalAssets: assets.length,
       activeAssignments: assignments,
       needsRepair,
       replacementNeeds: needsRepair + poor,
+      items: assets,
       assets,
     };
+  }
+
+  async create(
+    userId: string,
+    dto: {
+      choirId?: string;
+      name: string;
+      category?: string;
+      serialNumber?: string;
+      condition?: EquipmentCondition;
+      notes?: string;
+    },
+  ) {
+    const resolved = await this.permissions.resolveForUser(userId);
+    assertChoirOpsManage(resolved.permissions, PERMISSIONS.CHOIR_EQUIPMENT_MANAGE);
+
+    const row = await this.prisma.equipmentAsset.create({
+      data: {
+        choirId: dto.choirId ?? null,
+        name: dto.name.trim(),
+        category: dto.category?.trim(),
+        serialNumber: dto.serialNumber?.trim(),
+        condition: dto.condition ?? EquipmentCondition.GOOD,
+        notes: dto.notes?.trim(),
+      },
+    });
+    await this.audit.log({
+      userId,
+      action: 'CHOIR_EQUIPMENT_CREATED',
+      entity: 'EquipmentAsset',
+      entityId: row.id,
+      newValue: row,
+    });
+    return row;
+  }
+
+  async assign(
+    userId: string,
+    equipmentId: string,
+    dto: { memberId: string; notes?: string },
+  ) {
+    const resolved = await this.permissions.resolveForUser(userId);
+    assertChoirOpsManage(resolved.permissions, PERMISSIONS.CHOIR_EQUIPMENT_MANAGE);
+
+    const asset = await this.prisma.equipmentAsset.findUnique({
+      where: { id: equipmentId },
+      include: { assignments: { where: { returnedAt: null } } },
+    });
+    if (!asset) throw new NotFoundException('Equipment not found');
+    if (asset.assignments.length > 0) {
+      throw new BadRequestException('Equipment already assigned');
+    }
+
+    const row = await this.prisma.equipmentAssignment.create({
+      data: {
+        equipmentId,
+        memberId: dto.memberId,
+        notes: dto.notes?.trim(),
+        status: EquipmentAssignmentStatus.ASSIGNED,
+      },
+      include: { equipment: true, member: true },
+    });
+    await this.audit.log({
+      userId,
+      action: 'CHOIR_EQUIPMENT_ASSIGNED',
+      entity: 'EquipmentAssignment',
+      entityId: row.id,
+      newValue: { equipmentId, memberId: dto.memberId },
+    });
+    return row;
+  }
+
+  async returnAssignment(userId: string, assignmentId: string, notes?: string) {
+    const resolved = await this.permissions.resolveForUser(userId);
+    assertChoirOpsManage(resolved.permissions, PERMISSIONS.CHOIR_EQUIPMENT_MANAGE);
+
+    const assignment = await this.prisma.equipmentAssignment.findUnique({
+      where: { id: assignmentId },
+    });
+    if (!assignment) throw new NotFoundException('Assignment not found');
+    if (assignment.returnedAt) throw new BadRequestException('Already returned');
+
+    const row = await this.prisma.equipmentAssignment.update({
+      where: { id: assignmentId },
+      data: {
+        returnedAt: new Date(),
+        status: EquipmentAssignmentStatus.RETURNED,
+        notes: notes ?? assignment.notes,
+      },
+      include: { equipment: true, member: true },
+    });
+    await this.audit.log({
+      userId,
+      action: 'CHOIR_EQUIPMENT_RETURNED',
+      entity: 'EquipmentAssignment',
+      entityId: assignmentId,
+      newValue: { equipmentId: assignment.equipmentId },
+    });
+    return row;
   }
 }

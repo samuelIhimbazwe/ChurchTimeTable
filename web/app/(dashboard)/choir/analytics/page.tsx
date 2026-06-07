@@ -1,7 +1,8 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { choirApi, choirSchedulingApi } from '@/lib/api'
+import { choirSchedulingApi } from '@/lib/api'
+import { useResolvedChoirScope } from '@/lib/hooks'
 import {
   Card, CardHeader, CardTitle, CardDescription,
   StatTile, SkeletonStatTile, SkeletonCard, Avatar,
@@ -28,11 +29,7 @@ function arrLen(data: Record<string, unknown> | undefined, ...keys: string[]) {
 }
 
 export default function AnalyticsPage() {
-  const { data: choirs } = useQuery({
-    queryKey: ['choirs'],
-    queryFn:  choirApi.getAll,
-  })
-  const choirId = choirs?.[0]?.id
+  const { choirId } = useResolvedChoirScope()
 
   const { data: dashboard, isLoading } = useQuery({
     queryKey: ['choir-leader-dashboard', choirId],

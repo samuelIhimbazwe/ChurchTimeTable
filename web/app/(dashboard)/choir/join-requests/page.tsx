@@ -12,6 +12,8 @@ import {
   choirPositionLabel,
 } from '@/lib/constants/choir-positions'
 import { ChoirPositionGuide } from '@/components/choir/ChoirPositionGuide'
+import { useResolvedChoirId } from '@/lib/hooks'
+import { useOptionalChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
 import { UserPlus, CheckCircle2, XCircle, MessageSquare } from 'lucide-react'
 import { formatDate } from '@/lib/utils/format'
 import type { ChoirJoinRequest, JoinRequestStatus } from '@/types'
@@ -50,22 +52,20 @@ export default function JoinRequestsPage() {
   const [reviewNotes, setReviewNotes] = useState('')
   const [assignedRoleId, setAssignedRoleId] = useState('')
 
-  const { data: choirs } = useQuery({
-    queryKey: ['choirs'],
-    queryFn: choirApi.getAll,
-  })
-  const choir = choirs?.[0]
+  const choirId = useResolvedChoirId()
+  const choirCtx = useOptionalChoirDashboardCtx()
+  const choirName = choirCtx?.context?.choir.name
 
   const { data, isLoading } = useQuery({
-    queryKey: ['choir-join-requests', choir?.id],
-    queryFn: () => choirApi.getJoinRequests({ choirId: choir?.id }),
-    enabled: !!choir?.id,
+    queryKey: ['choir-join-requests', choirId],
+    queryFn: () => choirApi.getJoinRequests({ choirId }),
+    enabled: !!choirId,
   })
 
   const { data: positionRoles } = useQuery({
-    queryKey: ['choir-position-roles', choir?.id],
-    queryFn: () => choirApi.getPositionRoles(choir!.id),
-    enabled: !!choir?.id,
+    queryKey: ['choir-position-roles', choirId],
+    queryFn: () => choirApi.getPositionRoles(choirId),
+    enabled: !!choirId,
   })
 
   const review = useMutation({
@@ -100,7 +100,7 @@ export default function JoinRequestsPage() {
       <div>
         <h2 className="font-display text-3xl text-text-primary">Join Requests</h2>
         <p className="text-text-secondary text-sm mt-1">
-          Review requests to join {choir?.name ?? 'your choir'}. Approve returning members,
+          Review requests to join {choirName ?? 'your choir'}. Approve returning members,
           send requirements to new applicants, and assign a choir position when approving.
         </p>
         <p className="text-xs text-text-muted mt-2">
@@ -108,7 +108,13 @@ export default function JoinRequestsPage() {
         </p>
       </div>
 
-      {isLoading ? (
+      {!choirId ? (
+        <Card padding="md">
+          <p className="text-center text-text-muted py-12 text-sm">
+            Open this page from your choir dashboard.
+          </p>
+        </Card>
+      ) : isLoading ? (
         <SkeletonCard rows={4} />
       ) : (data?.length ?? 0) === 0 ? (
         <Card padding="md">

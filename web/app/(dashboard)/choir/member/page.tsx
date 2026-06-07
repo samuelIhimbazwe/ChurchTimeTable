@@ -9,6 +9,7 @@ import {
   Card, Badge, SkeletonCard,
 } from '@/components/shared'
 import { ChoirPositionHubShell, HubQuickLink } from '@/components/choir/ChoirPositionHubShell'
+import { MemberServicePrepCard } from '@/components/choir/MemberServicePrepCard'
 import { useChoirAccess } from '@/lib/hooks/useChoirAccess'
 import { useOptionalChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
 import { choirPath } from '@/lib/choir/paths'
@@ -162,6 +163,7 @@ export default function ChoirMemberHubPage() {
             />
             <HubQuickLink href="/portal/welfare" label="Welfare" desc="Care information shared with you" icon={Heart} />
           </div>
+          {scopedChoirId && <MemberServicePrepCard choirId={scopedChoirId} />}
           {announcements.length > 0 && (
             <Card padding="md">
               <p className="font-semibold mb-3 flex items-center gap-2">

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { choirApi, governanceApi } from '@/lib/api'
+import { useResolvedChoirScope } from '@/lib/hooks'
 import { toast } from '@/components/shared/Toast'
 import {
   Card, CardHeader, CardTitle, CardDescription,
@@ -29,24 +30,20 @@ export default function ChoirRolesPage() {
   const [name, setName] = useState('')
   const [permissions, setPermissions] = useState<string[]>([])
 
-  const { data: choirs } = useQuery({
-    queryKey: ['choirs'],
-    queryFn: choirApi.getAll,
-  })
-  const choir = choirs?.[0]
+  const { choirId, choirName } = useResolvedChoirScope()
 
   const { data: roles, isLoading } = useQuery({
-    queryKey: ['choir-position-roles', choir?.id],
-    queryFn: () => choirApi.getPositionRoles(choir!.id),
-    enabled: !!choir?.id,
+    queryKey: ['choir-position-roles', choirId],
+    queryFn: () => choirApi.getPositionRoles(choirId),
+    enabled: !!choirId,
   })
 
   const save = useMutation({
     mutationFn: () => {
-      if (!choir?.id || !name.trim()) throw new Error('Missing choir or role name')
+      if (!choirId || !name.trim()) throw new Error('Missing choir or role name')
       const key = name.trim().toLowerCase().replace(/\s+/g, '_')
       return governanceApi.upsertChoirRole({
-        scopeId: choir.id,
+        scopeId: choirId,
         name: key,
         permissions,
       })
@@ -90,8 +87,9 @@ export default function ChoirRolesPage() {
         <div>
           <h2 className="font-display text-3xl text-text-primary">Position roles</h2>
           <p className="text-text-secondary text-sm mt-1">
-            Define choir leadership positions and their access. Assign these when approving
-            join requests or updating members later.
+            {choirName
+              ? `Positions for ${choirName} — assign when approving joins or updating members.`
+              : 'Define choir leadership positions and their access.'}
           </p>
         </div>
         <button

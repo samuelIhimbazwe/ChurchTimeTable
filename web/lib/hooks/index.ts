@@ -7,3 +7,4 @@ export { useChoirActivities, useSubmitChoirAttendance } from './useChoirActiviti
 export { useNotifications }             from './useNotifications'
 export { useSearch }                    from './useSearch'
 export { useChoirAccess }               from './useChoirAccess'
+export { useResolvedChoirId, useResolvedChoirScope } from './useResolvedChoirId'

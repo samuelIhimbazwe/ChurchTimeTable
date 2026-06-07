@@ -22,6 +22,8 @@ export { reportsApi }           from './modules/reports'
 export { churchIntelApi }       from './modules/churchIntel'
 export { ministriesApi }        from './modules/ministries'
 export { assetsApi }            from './modules/assets'
+export { choirOperationsApi }   from './modules/choir-operations'
+export { choirServiceOpsApi }   from './modules/choirServiceOps'
 export { rehearsalsApi }        from './modules/rehearsals'
 export { setupApi }             from './modules/setup'
 export { financeApi }           from './modules/finance'
@@ -32,3 +34,4 @@ export { devotionsApi }         from './modules/devotions'
 export type {
   LoginPayload, LoginResponse, AuthUser,
 } from './modules/auth'
+export type { ContributionClaim } from './modules/contributions'

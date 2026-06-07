@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Calendar, Users, Music, Home,
   Heart, BookOpen, DollarSign, FileText, Settings2,
-  UserPlus, KeyRound, Crown, UserCog, Mic2, Scale,
+  UserPlus, KeyRound, Crown, UserCog, Mic2, Scale, Shield,
 } from 'lucide-react'
 import type { NavItem, NavSection } from '@/lib/navigation/role-nav'
 import { choirMemberHome, choirPath } from '@/lib/choir/paths'
@@ -53,12 +53,23 @@ function officerHubsForPermissions(
 
 function adminToolsForPermissions(choirId: string, permissions: string[]): NavItem[] {
   const items: NavItem[] = []
+  const canAdmin =
+    permissions.some((p) =>
+      ['choir.join.review', 'member:manage', 'choir.ops.manage', 'choir.oversight'].includes(p),
+    )
+  if (canAdmin) {
+    items.push({ label: 'Administration', icon: Shield, path: choirPath(choirId, 'admin') })
+  }
   if (permissions.some((p) => ['choir.join.review', 'member:manage', 'choir.ops.manage'].includes(p))) {
     items.push({ label: 'Join requests', icon: UserPlus, path: choirPath(choirId, 'join-requests') })
     items.push({ label: 'Position roles', icon: KeyRound, path: choirPath(choirId, 'roles') })
   }
+  if (permissions.some((p) => ['family:manage', 'choir.family.manage'].includes(p))) {
+    items.push({ label: 'Families structure', icon: Users, path: choirPath(choirId, 'admin/families') })
+  }
   if (permissions.some((p) => ['choir.ops.manage', 'choir.oversight'].includes(p))) {
     items.push({ label: 'Public profile', icon: Settings2, path: choirPath(choirId, 'public-profile') })
+    items.push({ label: 'Choir settings', icon: Settings2, path: choirPath(choirId, 'settings') })
   }
   return items
 }

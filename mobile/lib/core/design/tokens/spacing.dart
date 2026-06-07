@@ -13,3 +13,14 @@ abstract final class CmmsSpacing {
   static const double listItemGap = sm;
   static const double sectionGap = lg;
 }
+
+/// Legacy alias used by some feature screens.
+abstract final class Spacing {
+  static const double xxs = CmmsSpacing.xxs;
+  static const double xs = CmmsSpacing.xs;
+  static const double sm = CmmsSpacing.sm;
+  static const double md = CmmsSpacing.md;
+  static const double lg = CmmsSpacing.lg;
+  static const double xl = CmmsSpacing.xl;
+  static const double xxl = CmmsSpacing.xxl;
+}

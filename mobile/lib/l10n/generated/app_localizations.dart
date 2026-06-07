@@ -239,6 +239,7 @@ class AppLocalizations {
       'event_attendance_title': 'Uko witabiriye',
       'dashboard_section_overview': 'Incamake',
       'dashboard_kpi_upcoming_events': 'Ibikorwa biri imbere',
+      'dashboard_kpi_upcoming_assignments': 'Imirimo iri imbere',
       'dashboard_kpi_pending_swaps': 'Gusimburana bitegereje',
       'dashboard_kpi_pending_replacements': 'Gusimbura bitegereje',
       'dashboard_kpi_attendance_rate': "Igipimo cy'uko witabiriye",
@@ -431,6 +432,12 @@ class AppLocalizations {
       'operational_stat_readiness': 'Iburira rya readiness',
       'operational_stat_teams': 'Amatsinda yawe',
       'operational_stat_pending_absences': 'Absences zitegereje',
+      'devotion_center_title': 'Ikigo cy\'Imyizerere',
+      'devotion_pinned': 'Ubutumwa buhambaye',
+      'devotion_verse_of_day': 'Icyanditswe cy\'umunsi',
+      'devotion_encouragement': 'Inkuru y\'ibyishimo',
+      'devotion_share': 'Sangiza',
+      'devotion_open_center': 'Fungura ikigo cy\'imyizerere',
     },
     'en': {
       'app_title': 'CMMS',
@@ -655,6 +662,7 @@ class AppLocalizations {
       'event_attendance_title': 'Attendance',
       'dashboard_section_overview': 'Overview',
       'dashboard_kpi_upcoming_events': 'Upcoming events',
+      'dashboard_kpi_upcoming_assignments': 'Upcoming assignments',
       'dashboard_kpi_pending_swaps': 'Pending swaps',
       'dashboard_kpi_pending_replacements': 'Pending replacements',
       'dashboard_kpi_attendance_rate': 'Attendance rate',
@@ -838,6 +846,12 @@ class AppLocalizations {
       'operational_stat_readiness': 'Readiness warnings',
       'operational_stat_teams': 'Your teams',
       'operational_stat_pending_absences': 'Pending absences',
+      'devotion_center_title': 'Devotion Center',
+      'devotion_pinned': 'Pinned message',
+      'devotion_verse_of_day': 'Verse of the day',
+      'devotion_encouragement': 'Encouragement',
+      'devotion_share': 'Share',
+      'devotion_open_center': 'Open devotion center',
     },
     'fr': {
       'app_title': 'CMMS',
@@ -1061,6 +1075,7 @@ class AppLocalizations {
       'event_attendance_title': 'Présence',
       'dashboard_section_overview': "Vue d'ensemble",
       'dashboard_kpi_upcoming_events': 'Événements à venir',
+      'dashboard_kpi_upcoming_assignments': 'Affectations à venir',
       'dashboard_kpi_pending_swaps': 'Échanges en attente',
       'dashboard_kpi_pending_replacements': 'Remplacements en attente',
       'dashboard_kpi_attendance_rate': 'Taux de présence',
@@ -1252,6 +1267,12 @@ class AppLocalizations {
       'operational_stat_readiness': 'Alertes préparation',
       'operational_stat_teams': 'Vos équipes',
       'operational_stat_pending_absences': 'Absences en attente',
+      'devotion_center_title': 'Centre de dévotion',
+      'devotion_pinned': 'Message épinglé',
+      'devotion_verse_of_day': 'Verset du jour',
+      'devotion_encouragement': 'Encouragement',
+      'devotion_share': 'Partager',
+      'devotion_open_center': 'Ouvrir le centre de dévotion',
     },
   };
 
@@ -1546,6 +1567,8 @@ class AppLocalizations {
   String get event_attendance_title => _t('event_attendance_title');
   String get dashboard_section_overview => _t('dashboard_section_overview');
   String get dashboard_kpi_upcoming_events => _t('dashboard_kpi_upcoming_events');
+  String get dashboard_kpi_upcoming_assignments =>
+      _t('dashboard_kpi_upcoming_assignments');
   String get dashboard_kpi_pending_swaps => _t('dashboard_kpi_pending_swaps');
   String get dashboard_kpi_pending_replacements =>
       _t('dashboard_kpi_pending_replacements');
@@ -1568,6 +1591,8 @@ class AppLocalizations {
   String get member_unavailable_dates_label =>
       _t('member_unavailable_dates_label');
   String get common_create => _t('common_create');
+  String get common_back => _t('common_back');
+  String get common_next => _t('common_next');
   String get common_retry => _t('common_retry');
   String get nav_coverage => _t('nav_coverage');
   String get attendance_governance_title => _t('attendance_governance_title');
@@ -1747,13 +1772,16 @@ class AppLocalizations {
   String get music_recent => _t('music_recent');
   String get music_lyrics => _t('music_lyrics');
   String get music_assets => _t('music_assets');
-  String get common_back => _t('common_back');
-  String get common_next => _t('common_next');
-  String get common_retry => _t('common_retry');
   String get search_group_welfare_categories => _t('search_group_welfare_categories');
   String get search_group_choir_documents => _t('search_group_choir_documents');
   String get search_group_choir_meetings => _t('search_group_choir_meetings');
   String get search_group_welfare_assistance => _t('search_group_welfare_assistance');
+  String get devotion_center_title => _t('devotion_center_title');
+  String get devotion_pinned => _t('devotion_pinned');
+  String get devotion_verse_of_day => _t('devotion_verse_of_day');
+  String get devotion_encouragement => _t('devotion_encouragement');
+  String get devotion_share => _t('devotion_share');
+  String get devotion_open_center => _t('devotion_open_center');
 }
 
 class _AppLocalizationsDelegate

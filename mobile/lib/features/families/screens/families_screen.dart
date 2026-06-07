@@ -73,7 +73,7 @@ class _FamiliesScreenState extends ConsumerState<FamiliesScreen> {
     try {
       final api = ref.read(apiClientProvider);
       await api.loadToken();
-      final results = await Future.wait([
+      final results = await Future.wait<dynamic>([
         api.dio.get('/families/$id'),
         api.dio.get('/families/$id/metrics'),
       ]);
@@ -142,25 +142,25 @@ class _FamiliesScreenState extends ConsumerState<FamiliesScreen> {
                               ),
                               Text(_selected!['familyCode']?.toString() ?? ''),
                               const SizedBox(height: CmmsSpacing.sm),
-                              Text('${l10n.families_head}: ${_headLabel(_selected!['headMember'] as Map?)}'),
+                              Text('${l10n.families_head}: ${_headLabel(_selected!['headMember'] != null ? Map<String, dynamic>.from(_selected!['headMember'] as Map) : null)}'),
                               Text(
                                 '${l10n.families_member_count}: ${((_selected!['members'] as List?) ?? const []).length}',
                               ),
                               if (_metrics != null) ...[
                                 const Divider(height: CmmsSpacing.lg),
                                 Text(
-                                  '${l10n.families_health_score}: ${_metricValue(_metrics!['health'] as Map?, 'score')} (${_metricValue(_metrics!['health'] as Map?, 'grade')})',
+                                  '${l10n.families_health_score}: ${_metricValue(_metrics!['health'] != null ? Map<String, dynamic>.from(_metrics!['health'] as Map) : null, 'score')} (${_metricValue(_metrics!['health'] != null ? Map<String, dynamic>.from(_metrics!['health'] as Map) : null, 'grade')})',
                                   style: Theme.of(context).textTheme.titleSmall,
                                 ),
                                 Text(
-                                  '${l10n.families_attendance}: ${_metricValue(_metrics!['attendance'] as Map?, 'attendanceRate')}% · ${_metricValue(_metrics!['attendance'] as Map?, 'attendanceCount')} present',
+                                  '${l10n.families_attendance}: ${_metricValue(_metrics!['attendance'] != null ? Map<String, dynamic>.from(_metrics!['attendance'] as Map) : null, 'attendanceRate')}% · ${_metricValue(_metrics!['attendance'] != null ? Map<String, dynamic>.from(_metrics!['attendance'] as Map) : null, 'attendanceCount')} present',
                                 ),
                                 if (_metrics!['contributions'] != null)
                                   Text(
-                                    '${l10n.families_contributions}: ${_metricValue(_metrics!['contributions'] as Map?, 'confirmedAmount')}',
+                                    '${l10n.families_contributions}: ${_metricValue(_metrics!['contributions'] != null ? Map<String, dynamic>.from(_metrics!['contributions'] as Map) : null, 'confirmedAmount')}',
                                   ),
                                 Text(
-                                  '${l10n.families_participation}: ${_metricValue(_metrics!['participation'] as Map?, 'activeAssignments')} assignments · ${_metricValue(_metrics!['participation'] as Map?, 'activeLeaders')} leaders',
+                                  '${l10n.families_participation}: ${_metricValue(_metrics!['participation'] != null ? Map<String, dynamic>.from(_metrics!['participation'] as Map) : null, 'activeAssignments')} assignments · ${_metricValue(_metrics!['participation'] != null ? Map<String, dynamic>.from(_metrics!['participation'] as Map) : null, 'activeLeaders')} leaders',
                                 ),
                               ],
                             ],

@@ -7,6 +7,7 @@ import {
   StatTile, Badge, SkeletonStatTile, SkeletonCard,
 } from '@/components/shared'
 import { Package, Shirt, Wrench } from 'lucide-react'
+import { ChoirAssetsManagePanel } from '@/components/choir/ChoirAssetsManagePanel'
 
 function num(data: Record<string, unknown> | undefined, ...keys: string[]) {
   if (!data) return 0
@@ -92,6 +93,8 @@ export default function AssetsPage() {
           )}
         </Card>
       </div>
+
+      <ChoirAssetsManagePanel />
 
       <Card padding="none">
         <CardHeader className="px-5 pt-5">

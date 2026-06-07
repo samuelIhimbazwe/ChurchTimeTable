@@ -22,7 +22,7 @@ class CmmsDialog {
           message,
           style: Theme.of(ctx).textTheme.bodyMedium,
         ),
-        actionsAlignment: MainAxisAlignment.stretch,
+        actionsAlignment: MainAxisAlignment.end,
         actions: [
           CmmsButton(
             label: cancelLabel,

@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useQuery, useMutation } from '@tanstack/react-query'
-import { choirApi, choirSchedulingApi } from '@/lib/api'
+import { useMutation } from '@tanstack/react-query'
+import { choirSchedulingApi } from '@/lib/api'
+import { useResolvedChoirScope } from '@/lib/hooks'
 import { toast } from '@/components/shared/Toast'
 import { Card, CardHeader, CardTitle, PermissionGate } from '@/components/shared'
 
@@ -18,11 +19,7 @@ export default function NewActivityPage() {
   const [location, setLocation] = useState('')
   const [description, setDescription] = useState('')
 
-  const { data: choirs } = useQuery({
-    queryKey: ['choirs'],
-    queryFn:  choirApi.getAll,
-  })
-  const choirId = choirs?.[0]?.id
+  const { choirId, choirName, choirLink } = useResolvedChoirScope()
 
   const create = useMutation({
     mutationFn: () => {
@@ -39,7 +36,7 @@ export default function NewActivityPage() {
     },
     onSuccess: () => {
       toast.success('Activity created')
-      router.push('/choir/activities')
+      router.push(choirLink('activities'))
     },
     onError: () => toast.error('Failed to create activity'),
   })
@@ -54,7 +51,7 @@ export default function NewActivityPage() {
         <div>
           <h2 className="font-display text-3xl text-text-primary">New Activity</h2>
           <p className="text-text-secondary text-sm mt-1">
-            {choirs?.[0]?.name ?? 'Schedule a choir activity'}
+            {choirName ?? 'Schedule a choir activity'}
           </p>
         </div>
 

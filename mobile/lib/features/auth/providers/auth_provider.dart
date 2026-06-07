@@ -3,6 +3,8 @@ import '../../../core/api/api_client.dart';
 import '../../../core/api/api_response.dart';
 import '../../../core/localization/api_error_localizer.dart';
 import '../../../core/localization/locale_provider.dart';
+
+export '../../../core/localization/locale_provider.dart' show apiClientProvider;
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/auth/governance_permissions.dart' as gov;
 

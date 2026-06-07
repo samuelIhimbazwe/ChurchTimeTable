@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/api/api_client.dart';
-import 'protocol_cache.dart';
+import '../protocol_cache.dart';
 
 class ProtocolScreen extends StatefulWidget {
   const ProtocolScreen({super.key});

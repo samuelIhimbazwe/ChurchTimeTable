@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../core/api/api_client.dart';
-import 'ministry_finance_cache.dart';
+import '../../../core/api/api_client.dart';
+import '../ministry_finance_cache.dart';
 
 class MinistryFinanceScreen extends StatefulWidget {
   const MinistryFinanceScreen({super.key, required this.ministryId});

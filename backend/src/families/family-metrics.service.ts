@@ -17,9 +17,10 @@ import {
   ParticipationOperationalStatus,
 } from '../common/participation/participation.constants';
 import { ResponseVisibilityService } from '../common/visibility/response-visibility.service';
-import { canViewFinanceIntelligence } from '../common/governance/governance-permissions.util';
+import { canViewFamilyContributionMetrics } from '../common/governance/governance-permissions.util';
 import type { OperationalScopeContext } from '../governance/operational-scope.types';
 import { FamiliesService } from './families.service';
+import { ContributionEffectiveAmountService } from '../finance/contribution-effective-amount.service';
 
 const METRICS_WINDOW_DAYS = 90;
 const ATTENDANCE_WEIGHT = 0.4;
@@ -48,9 +49,15 @@ export interface FamilyAttendanceMetrics {
 
 export interface FamilyContributionMetrics {
   confirmedAmount: number;
+  effectiveAmount: number;
   pendingAmount: number;
   contributionCount: number;
 }
+
+export type FamilyListEnrichment = {
+  health: FamilyHealthScore;
+  contributions?: FamilyContributionMetrics;
+};
 
 export interface FamilyParticipationMetrics {
   activeAssignments: number;
@@ -99,7 +106,9 @@ interface MemberAggregateInput {
   contributions: Array<{
     memberId: string;
     amount: Prisma.Decimal;
+    confirmedAmount: Prisma.Decimal | null;
     status: ContributionStatus;
+    adjustments: Array<{ adjustmentAmount: Prisma.Decimal }>;
   }>;
   dues: Array<{
     memberId: string;
@@ -178,6 +187,7 @@ export class FamilyMetricsService {
     private participationScoring: ParticipationScoringService,
     private participationRecords: ParticipationRecordsService,
     private visibility: ResponseVisibilityService,
+    private effectiveAmount: ContributionEffectiveAmountService,
   ) {}
 
   private metricsSince(): Date {
@@ -230,12 +240,19 @@ export class FamilyMetricsService {
     );
 
     let confirmedAmount = 0;
+    let effectiveAmount = 0;
     let pendingAmount = 0;
 
     for (const row of contributions) {
       const amount = this.decimal(row.amount);
       if (row.status === ContributionStatus.CONFIRMED) {
-        confirmedAmount += amount;
+        const confirmed = this.decimal(row.confirmedAmount ?? row.amount);
+        const effective = this.effectiveAmount.compute(
+          row.confirmedAmount ?? row.amount,
+          row.adjustments,
+        );
+        confirmedAmount += confirmed;
+        effectiveAmount += effective;
       } else if (
         row.status === ContributionStatus.PENDING ||
         row.status === ContributionStatus.SUBMITTED
@@ -265,6 +282,7 @@ export class FamilyMetricsService {
 
     return {
       confirmedAmount: Math.round(confirmedAmount * 100) / 100,
+      effectiveAmount: Math.round(effectiveAmount * 100) / 100,
       pendingAmount: Math.round(pendingAmount * 100) / 100,
       contributionCount: contributions.length,
     };
@@ -447,7 +465,13 @@ export class FamilyMetricsService {
       }),
       this.prisma.contributionRecord.findMany({
         where: { memberId: { in: memberIds } },
-        select: { memberId: true, amount: true, status: true },
+        select: {
+          memberId: true,
+          amount: true,
+          confirmedAmount: true,
+          status: true,
+          adjustments: { select: { adjustmentAmount: true } },
+        },
       }),
       this.prisma.memberDues.findMany({
         where: {
@@ -552,23 +576,31 @@ export class FamilyMetricsService {
 
   private applyVisibility(
     payload: FamilyMetricsPayload,
-    permissions: string[],
     participationScore: number,
-    contributionScore: number | null,
   ): FamilyMetricsPayload {
-    const filtered = this.visibility.filterFamilyMetrics(payload, permissions);
-    if (filtered.contributions != null) {
-      return filtered;
+    if (payload.contributions != null) {
+      return payload;
     }
 
     return {
-      ...filtered,
+      ...payload,
       health: computeHealthScore(
-        filtered.attendance.attendanceRate,
+        payload.attendance.attendanceRate,
         null,
         participationScore,
       ),
     };
+  }
+
+  private canIncludeContributions(
+    ctx: OperationalScopeContext,
+    familyMemberIds: string[],
+  ): boolean {
+    return canViewFamilyContributionMetrics(
+      ctx.permissions,
+      ctx.memberId,
+      familyMemberIds,
+    );
   }
 
   async getFamilyMetrics(
@@ -594,14 +626,14 @@ export class FamilyMetricsService {
 
     const memberIds = family.members.map((row) => row.memberId);
     const input = await this.loadAggregateInput(memberIds);
-    const includeContributions = canViewFinanceIntelligence(ctx.permissions);
+    const includeContributions = this.canIncludeContributions(ctx, memberIds);
     const { payload, participationScore } = this.computePayloadWithScores(
       family,
       memberIds,
       input,
       includeContributions,
     );
-    return this.applyVisibility(payload, ctx.permissions, participationScore, null);
+    return this.applyVisibility(payload, participationScore);
   }
 
   async getOverview(actorUserId: string): Promise<FamilyMetricsOverview> {
@@ -611,21 +643,19 @@ export class FamilyMetricsService {
     const families = await this.loadScopedFamilies(ctx);
     const allMemberIds = [...new Set(families.flatMap((family) => family.memberIds))];
     const input = await this.loadAggregateInput(allMemberIds);
-    const includeContributions = canViewFinanceIntelligence(ctx.permissions);
 
     const scored = families.map((family) => {
+      const includeContributions = this.canIncludeContributions(
+        ctx,
+        family.memberIds,
+      );
       const { payload, participationScore } = this.computePayloadWithScores(
         family,
         family.memberIds,
         input,
         includeContributions,
       );
-      const filtered = this.applyVisibility(
-        payload,
-        ctx.permissions,
-        participationScore,
-        null,
-      );
+      const filtered = this.applyVisibility(payload, participationScore);
       return {
         id: family.id,
         familyCode: family.familyCode,
@@ -664,30 +694,30 @@ export class FamilyMetricsService {
       familyName: string;
       memberIds?: string[];
     }>,
-  ): Promise<Map<string, FamilyHealthScore>> {
+  ): Promise<Map<string, FamilyListEnrichment>> {
     const ctx = await this.familiesService.resolveScope(actorUserId);
-    const includeContributions = canViewFinanceIntelligence(ctx.permissions);
     const allMemberIds = [
       ...new Set(families.flatMap((family) => family.memberIds ?? [])),
     ];
     const input = await this.loadAggregateInput(allMemberIds);
-    const result = new Map<string, FamilyHealthScore>();
+    const result = new Map<string, FamilyListEnrichment>();
 
     for (const family of families) {
       const memberIds = family.memberIds ?? [];
+      const includeContributions = this.canIncludeContributions(ctx, memberIds);
       const { payload, participationScore } = this.computePayloadWithScores(
         family,
         memberIds,
         input,
         includeContributions,
       );
-      const filtered = this.applyVisibility(
-        payload,
-        ctx.permissions,
-        participationScore,
-        null,
-      );
-      result.set(family.id, filtered.health);
+      const filtered = this.applyVisibility(payload, participationScore);
+      result.set(family.id, {
+        health: filtered.health,
+        ...(filtered.contributions
+          ? { contributions: filtered.contributions }
+          : {}),
+      });
     }
 
     return result;

@@ -1,15 +1,14 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
-import { useParams, useRouter, usePathname } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useParams, useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { choirActivityApi, choirApi } from '@/lib/api'
 import { useSubmitChoirAttendance } from '@/lib/hooks'
 import { toast } from '@/components/shared/Toast'
 import { Card, Avatar } from '@/components/shared'
-import { useOptionalChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
-import { useChoirAccess } from '@/lib/hooks/useChoirAccess'
-import { legacyOrScopedChoirPath, parseChoirIdFromPath } from '@/lib/choir/paths'
+import { useResolvedChoirId } from '@/lib/hooks'
+import { legacyOrScopedChoirPath } from '@/lib/choir/paths'
 import { CheckCircle2, XCircle, Clock, ChevronLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatDate } from '@/lib/utils/format'
@@ -45,18 +44,7 @@ interface MemberRecord {
 export default function AttendancePage() {
   const { activityId } = useParams<{ activityId: string }>()
   const router = useRouter()
-  const pathname = usePathname()
-  const choirCtx = useOptionalChoirDashboardCtx()
-  const { activeChoirMemberships } = useChoirAccess()
-
-  const choirId = useMemo(
-    () =>
-      choirCtx?.choirId ??
-      parseChoirIdFromPath(pathname) ??
-      activeChoirMemberships[0]?.id ??
-      '',
-    [choirCtx?.choirId, pathname, activeChoirMemberships],
-  )
+  const choirId = useResolvedChoirId()
 
   const { data: activity } = useQuery({
     queryKey: ['choir-activity', activityId],

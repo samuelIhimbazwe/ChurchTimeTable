@@ -208,6 +208,32 @@ enum ServiceReadinessStatus {
   OPERATIONAL_DANGER
 }
 
+enum ChurchServiceRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum ServicePreparationItemType {
+  SERVICE_SONG
+  UNIFORM
+  PEP_TALK
+  SHORT_ANNOUNCEMENT
+  CUSTOM
+}
+
+enum PepTalkTiming {
+  BEFORE_SERVICE
+  AFTER_SERVICE
+}
+
+enum ChoirDissolutionTransferStatus {
+  DRAFT
+  COMPLETED
+  CANCELLED
+}
+
 enum ProtocolTeamStatus {
   DRAFT
   ACTIVE
@@ -1106,6 +1132,11 @@ model Choir {
   serviceAssignments    ChoirServiceAssignment[]
   serviceEligibility    ChoirServiceEligibility?
   participationProfiles ChoirMemberParticipationProfile[]
+  servicePreparationPlans ServicePreparationPlan[]
+  churchServiceRequestsPreferred ChurchServiceRequest[] @relation("ChurchServiceRequestPreferred")
+  churchServiceRequestsAssigned  ChurchServiceRequest[] @relation("ChurchServiceRequestAssigned")
+  dissolutionTransfersSource ChoirDissolutionTransfer[] @relation("DissolutionSource")
+  dissolutionTransfersTarget ChoirDissolutionTransfer[] @relation("DissolutionTarget")
 
   @@index([isActive])
 }
@@ -1451,6 +1482,7 @@ model Song {
   usageRecords       SongUsageRecord[]
   rehearsalPlanSongs RehearsalPlanSong[]
   favorites          SongFavorite[]
+  servicePreparationItems ServicePreparationItem[]
 
   @@index([title])
   @@index([categoryId])
@@ -2583,6 +2615,8 @@ model OperationOccurrence {
   protocolTeam  ProtocolOccurrenceTeam?
   choirServiceAssignments ChoirServiceAssignment[]
   choirActivities ChoirActivity[]
+  churchServiceRequests ChurchServiceRequest[]
+  servicePreparationPlans ServicePreparationPlan[]
 
   @@index([status])
   @@index([startAt, endAt])
@@ -3116,6 +3150,88 @@ model ChoirServiceAssignment {
   @@unique([choirId, occurrenceId, role])
   @@index([occurrenceId])
   @@index([choirId])
+}
+
+model ChurchServiceRequest {
+  id                String                     @id @default(uuid())
+  occurrenceId      String
+  preferredChoirId  String?
+  assignedChoirId   String?
+  role              ChoirServiceAssignmentRole @default(PRIMARY)
+  title             String?
+  notes             String?
+  status            ChurchServiceRequestStatus @default(PENDING)
+  requestedByUserId String
+  reviewedByUserId  String?
+  reviewedAt        DateTime?
+  reviewNotes       String?
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+
+  occurrence     OperationOccurrence @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
+  preferredChoir Choir?              @relation("ChurchServiceRequestPreferred", fields: [preferredChoirId], references: [id], onDelete: SetNull)
+  assignedChoir  Choir?              @relation("ChurchServiceRequestAssigned", fields: [assignedChoirId], references: [id], onDelete: SetNull)
+
+  @@index([occurrenceId])
+  @@index([status])
+  @@index([assignedChoirId])
+}
+
+model ServicePreparationPlan {
+  id              String         @id @default(uuid())
+  choirId         String
+  occurrenceId    String
+  uniformNotes    String?
+  pepTalkTitle    String?
+  pepTalkAt       DateTime?
+  pepTalkTiming   PepTalkTiming?
+  createdByUserId String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  choir      Choir                    @relation(fields: [choirId], references: [id], onDelete: Cascade)
+  occurrence OperationOccurrence      @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
+  items      ServicePreparationItem[]
+
+  @@unique([choirId, occurrenceId])
+  @@index([occurrenceId])
+}
+
+model ServicePreparationItem {
+  id          String                     @id @default(uuid())
+  planId      String
+  itemType    ServicePreparationItemType
+  sortOrder   Int                        @default(0)
+  title       String
+  body        String?
+  songId      String?
+  scheduledAt DateTime?
+
+  plan ServicePreparationPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  song Song?                  @relation(fields: [songId], references: [id], onDelete: SetNull)
+
+  @@index([planId])
+  @@index([itemType])
+}
+
+model ChoirDissolutionTransfer {
+  id               String                       @id @default(uuid())
+  sourceChoirId    String
+  targetChoirId    String
+  status           ChoirDissolutionTransferStatus @default(DRAFT)
+  reason           String?
+  memberCount      Int?
+  executedByUserId String?
+  executedAt       DateTime?
+  createdAt        DateTime                     @default(now())
+  updatedAt        DateTime                     @updatedAt
+
+  sourceChoir Choir @relation("DissolutionSource", fields: [sourceChoirId], references: [id])
+  targetChoir Choir @relation("DissolutionTarget", fields: [targetChoirId], references: [id])
+
+  @@index([sourceChoirId])
+  @@index([targetChoirId])
+  @@index([status])
 }
 
 model ChoirAttendance {

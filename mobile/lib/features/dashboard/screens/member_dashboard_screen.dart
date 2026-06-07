@@ -179,7 +179,6 @@ class MemberDashboardScreen extends ConsumerWidget {
             );
           },
         ),
-      ),
     );
 
     if (embedded) {

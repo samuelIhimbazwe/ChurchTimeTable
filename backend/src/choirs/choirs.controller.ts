@@ -79,21 +79,6 @@ export class ChoirsController {
     return this.rules.describeMembershipRules(user.sub);
   }
 
-  @Get(':choirId/members')
-  listMembers(
-    @CurrentUser() user: JwtPayload,
-    @Param('choirId') choirId: string,
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-    @Query('search') search?: string,
-  ) {
-    return this.choirMembers.listMembers(user.sub, choirId, {
-      page: page ? Number(page) : undefined,
-      limit: limit ? Number(limit) : undefined,
-      search,
-    });
-  }
-
   @Get('position-roles')
   listPositionRoles(
     @CurrentUser() user: JwtPayload,
@@ -108,6 +93,14 @@ export class ChoirsController {
     @Body() body: { choirId: string; memberId: string; roleId: string },
   ) {
     return this.joinRequests.assignMemberPosition(user.sub, body);
+  }
+
+  @Post('members/revoke-position')
+  revokeMemberPosition(
+    @CurrentUser() user: JwtPayload,
+    @Body() body: { choirId: string; memberId: string; roleId: string },
+  ) {
+    return this.joinRequests.revokeMemberPosition(user.sub, body);
   }
 
   @Post('join-requests')
@@ -151,6 +144,21 @@ export class ChoirsController {
       status: body.status!,
       reviewNotes: body.reviewNotes,
       assignedRoleId: body.assignedRoleId,
+    });
+  }
+
+  @Get(':choirId/members')
+  listMembers(
+    @CurrentUser() user: JwtPayload,
+    @Param('choirId') choirId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.choirMembers.listMembers(user.sub, choirId, {
+      page: page ? Number(page) : undefined,
+      limit: limit ? Number(limit) : undefined,
+      search,
     });
   }
 }

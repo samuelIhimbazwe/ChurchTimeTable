@@ -1,10 +1,35 @@
 import { apiClient } from '../client'
 import type { Contribution, Family, Paginated } from '@/types'
 
+export interface FamilyMemberRow {
+  id: string
+  memberId: string
+  role: string
+  joinedAt?: string
+  member?: {
+    id: string
+    firstName: string
+    lastName: string
+    memberNumber?: string
+  }
+}
+
 export interface FamilyListItem extends Family {
   familyCode?: string
   healthScore?: number
   healthGrade?: string
+  effectiveContributions?: number
+  pendingContributions?: number
+}
+
+export interface FamilyDetail extends FamilyListItem {
+  members?: FamilyMemberRow[]
+  notes?: string
+  paymentMomoNumber?: string | null
+  paymentMomoAccountName?: string | null
+  paymentBankAccount?: string | null
+  paymentBankName?: string | null
+  paymentInstructions?: string | null
 }
 
 export interface FamilyMetricsOverview {
@@ -31,7 +56,12 @@ export interface FamilyMetricsDetail {
   familyCode: string
   familyName: string
   attendance: { attendanceRate: number; attendanceCount: number; missedCount: number }
-  contributions: { confirmedAmount: number; pendingAmount: number; contributionCount: number } | null
+  contributions: {
+    confirmedAmount: number
+    effectiveAmount?: number
+    pendingAmount: number
+    contributionCount: number
+  } | null
   participation: { activeAssignments: number; activeLeaders: number; activeMembers: number }
   health: { score: number; grade: string }
 }
@@ -54,7 +84,17 @@ function toFamily(row: Record<string, unknown>): FamilyListItem {
           : 0)
         ?? 0,
     ),
-    totalContributions: Number(row.totalContributions ?? row.confirmedAmount ?? 0),
+    totalContributions: Number(
+      row.totalContributions ?? row.confirmedAmount ?? row.effectiveContributions ?? 0,
+    ),
+    effectiveContributions:
+      row.effectiveContributions != null
+        ? Number(row.effectiveContributions)
+        : undefined,
+    pendingContributions:
+      row.pendingContributions != null
+        ? Number(row.pendingContributions)
+        : undefined,
     rank: row.rank != null ? Number(row.rank) : undefined,
     familyCode: row.familyCode != null ? String(row.familyCode) : undefined,
     healthScore: row.healthScore != null ? Number(row.healthScore) : undefined,
@@ -93,13 +133,38 @@ export const familiesApi = {
   getMetrics: (id: string) =>
     apiClient.get<never, FamilyMetricsDetail>(`/families/${id}/metrics`),
 
-  getById: async (id: string) => {
+  getById: async (id: string): Promise<FamilyDetail> => {
     const raw = await apiClient.get<never, Record<string, unknown>>(`/families/${id}`)
     return {
       ...toFamily(raw),
-      members: raw.members as unknown[] | undefined,
+      members: raw.members as FamilyMemberRow[] | undefined,
       notes: raw.notes as string | undefined,
     }
+  },
+
+  update: (
+    id: string,
+    data: {
+      familyName?: string
+      headMemberId?: string | null
+      notes?: string | null
+    },
+  ) => apiClient.patch<never, FamilyDetail>(`/families/${id}`, data),
+
+  addMember: (
+    familyId: string,
+    data: { memberId: string; role?: 'MEMBER' | 'HEAD' | 'SECRETARY' | 'ASSISTANT_HEAD' },
+  ) => apiClient.post<never, FamilyDetail>(`/families/${familyId}/members`, data),
+
+  removeMember: (familyId: string, memberId: string) =>
+    apiClient.delete<never, FamilyDetail>(`/families/${familyId}/members/${memberId}`),
+
+  moveMember: async (fromFamilyId: string, toFamilyId: string, memberId: string) => {
+    await apiClient.delete<never, unknown>(`/families/${fromFamilyId}/members/${memberId}`)
+    return apiClient.post<never, FamilyDetail>(`/families/${toFamilyId}/members`, {
+      memberId,
+      role: 'MEMBER',
+    })
   },
 
   updatePaymentInstructions: (

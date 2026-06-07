@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { protocolApi, choirApi } from '@/lib/api'
+import { useResolvedChoirScope } from '@/lib/hooks'
 import { Card, Avatar, SkeletonCard, EmptyState } from '@/components/shared'
 import { Trophy, Music, Shield } from 'lucide-react'
 
@@ -82,11 +83,7 @@ function RankingsList({
 export default function RankingsPage() {
   const [tab, setTab] = useState<'protocol' | 'choir'>('protocol')
 
-  const { data: choirs } = useQuery({
-    queryKey: ['choirs'],
-    queryFn:  choirApi.getAll,
-  })
-  const firstChoirId = choirs?.[0]?.id
+  const { choirId, choirName } = useResolvedChoirScope()
 
   const { data: protocolRankings, isLoading: loadingProtocol } = useQuery({
     queryKey: ['protocol-rankings'],
@@ -95,9 +92,9 @@ export default function RankingsPage() {
   })
 
   const { data: choirRankings, isLoading: loadingChoir } = useQuery({
-    queryKey: ['choir-rankings', firstChoirId],
-    queryFn:  () => choirApi.getRankings(firstChoirId!),
-    enabled:  tab === 'choir' && !!firstChoirId,
+    queryKey: ['choir-rankings', choirId],
+    queryFn:  () => choirApi.getRankings(choirId),
+    enabled:  tab === 'choir' && !!choirId,
   })
 
   return (
@@ -134,17 +131,17 @@ export default function RankingsPage() {
           isLoading={loadingProtocol}
           emptyLabel="Protocol rankings will appear once members have service records."
         />
-      ) : !firstChoirId ? (
+      ) : !choirId ? (
         <EmptyState
           icon={Music}
           title="No choir configured"
-          description="Rankings require at least one choir in the system."
+          description="Open rankings from a choir dashboard or join a choir first."
         />
       ) : (
         <RankingsList
           rankings={choirRankings}
           isLoading={loadingChoir}
-          emptyLabel={`No rankings for ${choirs?.[0]?.name ?? 'this choir'} yet.`}
+          emptyLabel={`No rankings for ${choirName ?? 'this choir'} yet.`}
         />
       )}
     </div>

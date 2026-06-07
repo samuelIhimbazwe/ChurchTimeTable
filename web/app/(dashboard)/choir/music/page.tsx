@@ -3,12 +3,14 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { musicApi } from '@/lib/api'
+import { useResolvedChoirScope } from '@/lib/hooks'
 import { Card, Badge, SkeletonCard } from '@/components/shared'
 import { Music, Search, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 
 export default function MusicPage() {
   const [q, setQ] = useState('')
+  const { choirLink } = useResolvedChoirScope()
 
   const { data, isLoading } = useQuery({
     queryKey: ['choir-songs', q],
@@ -47,7 +49,7 @@ export default function MusicPage() {
       ) : (
         <div className="space-y-3">
           {data?.items?.map((song) => (
-            <Link key={song.id} href={`/choir/music/${song.id}`}>
+            <Link key={song.id} href={choirLink('music', song.id)}>
               <Card padding="md" className="hover:shadow-raised transition-shadow cursor-pointer">
                 <div className="flex items-center justify-between gap-4">
                   <div className="min-w-0">

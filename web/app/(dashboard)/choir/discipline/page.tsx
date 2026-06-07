@@ -10,6 +10,7 @@ import {
   Card, CardHeader, CardTitle, Badge, Avatar, PermissionGate, SkeletonCard,
 } from '@/components/shared'
 import { AlertTriangle } from 'lucide-react'
+import { ChoirMemberPicker } from '@/components/choir/ChoirMemberPicker'
 import { formatDate } from '@/lib/utils/format'
 import type { DisciplineStage } from '@/types'
 
@@ -84,13 +85,7 @@ export default function DisciplinePage() {
             <CardTitle>Open Discipline Case</CardTitle>
           </CardHeader>
           <div className="space-y-3">
-            <input
-              type="text"
-              placeholder="Member ID"
-              value={memberId}
-              onChange={(e) => setMemberId(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold-500"
-            />
+            <ChoirMemberPicker value={memberId} onChange={(id) => setMemberId(id)} />
             <textarea
               placeholder="Description"
               value={description}

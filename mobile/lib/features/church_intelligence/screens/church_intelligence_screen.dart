@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../core/api/api_client.dart';
-import 'church_intelligence_cache.dart';
+import '../../../core/api/api_client.dart';
+import '../church_intelligence_cache.dart';
 
 class ChurchIntelligenceScreen extends StatefulWidget {
   const ChurchIntelligenceScreen({super.key});

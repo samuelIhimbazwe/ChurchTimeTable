@@ -49,7 +49,7 @@ class _MinistryDetailScreenState extends ConsumerState<MinistryDetailScreen>
     try {
       final api = ref.read(apiClientProvider);
       await api.loadToken();
-      final results = await Future.wait([
+      final results = await Future.wait<dynamic>([
         api.dio.get('/ministries/${widget.ministryId}'),
         api.dio.get('/ministries/${widget.ministryId}/summary'),
       ]);

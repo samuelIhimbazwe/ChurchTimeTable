@@ -11,7 +11,8 @@ import {
   AlertTriangle, PlusCircle,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { choirApi, choirActivityApi, choirSchedulingApi } from '@/lib/api'
+import { choirActivityApi, choirSchedulingApi } from '@/lib/api'
+import { useResolvedChoirScope } from '@/lib/hooks'
 import { formatDate, formatTime } from '@/lib/utils/format'
 import Link from 'next/link'
 import { Heart, Shield } from 'lucide-react'
@@ -28,24 +29,20 @@ export default function ChoirHubPage() {
   const { data: summary, isLoading: sumLoading } = useDashboard()
   const leaderSummary = summary as import('@/types').LeaderDashboardSummary | undefined
 
-  const { data: choirs } = useQuery({
-    queryKey: ['choirs'],
-    queryFn:  choirApi.getAll,
-  })
-
-  const choir = choirs?.[0]
+  const { choirId, choirName, choirLink } = useResolvedChoirScope()
 
   const { data: health, isLoading: healthLoading } = useQuery({
-    queryKey: ['choir-leader-dashboard', choir?.id],
-    queryFn:  () => choirSchedulingApi.getLeaderDashboard(choir!.id),
-    enabled:  !!choir?.id,
+    queryKey: ['choir-leader-dashboard', choirId],
+    queryFn:  () => choirSchedulingApi.getLeaderDashboard(choirId),
+    enabled:  !!choirId,
   })
 
   const h = health as Record<string, unknown> | undefined
 
   const { data: activities, isLoading: actLoading } = useQuery({
-    queryKey: ['choir-activities', { limit: 5 }],
-    queryFn:  () => choirActivityApi.getAll({ limit: 5 }),
+    queryKey: ['choir-activities', choirId, { limit: 5 }],
+    queryFn:  () => choirActivityApi.getAll({ choirId, limit: 5 }),
+    enabled: !!choirId,
   })
 
   return (
@@ -55,24 +52,24 @@ export default function ChoirHubPage() {
       <div className="flex items-start justify-between">
         <div>
           <h2 className="font-display text-3xl text-text-primary">
-            {choir?.name ?? 'Choir Hub'}
+            {choirName ?? 'Choir Hub'}
           </h2>
           <p className="text-text-secondary text-sm mt-1">
-            {choir?.memberCount ?? '—'} members
-            {choir?.attendanceRate != null &&
-              ` · ${choir.attendanceRate}% attendance rate`}
+            {healthNum(h, 'activeMembers', 'activeMemberCount') || '—'} active members
+            {healthNum(h, 'attendanceRate', 'avgAttendanceRate') > 0 &&
+              ` · ${healthNum(h, 'attendanceRate', 'avgAttendanceRate')}% attendance rate`}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Link
-            href="/choir/public-profile"
+            href={choirLink('public-profile')}
             className="flex items-center gap-2 px-4 py-2 text-sm font-semibold border border-border rounded-lg hover:bg-surface-raised transition-colors"
           >
             Public profile
           </Link>
           <PermissionGate anyOf={['event:write', 'choir.events.manage']}>
             <Link
-              href="/choir/activities/new"
+              href={choirLink('activities/new')}
               className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-gold-500 text-primary-900 rounded-lg hover:bg-gold-400 transition-colors shadow-card"
             >
               <PlusCircle size={15} /> New Activity
@@ -169,7 +166,7 @@ export default function ChoirHubPage() {
         {/* Upcoming activities */}
         <Card padding="none">
           <CardHeader className="px-5 pt-5" action={
-            <Link href="/choir/activities" className="text-xs font-semibold text-primary-500 hover:text-primary-700">
+            <Link href={choirLink('activities')} className="text-xs font-semibold text-primary-500 hover:text-primary-700">
               View all →
             </Link>
           }>
@@ -194,7 +191,7 @@ export default function ChoirHubPage() {
                   <Badge variant="default">{a.activityType}</Badge>
                   <PermissionGate anyOf={['attendance:write']}>
                     <Link
-                      href={`/choir/attendance/${a.id}`}
+                      href={choirLink('attendance', a.id)}
                       className="text-xs font-semibold text-primary-600 hover:text-primary-800 shrink-0"
                     >
                       Attend
@@ -238,9 +235,9 @@ export default function ChoirHubPage() {
       <PermissionGate anyOf={['choir.contribution.view.all', 'member:manage']}>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { label: 'Pending Approvals', value: leaderSummary?.pendingApprovals ?? 0, href: '/choir/members/pending', color: 'text-warning' },
-            { label: 'Active Welfare',    value: leaderSummary?.activeWelfare ?? 0,     href: '/choir/welfare',          color: 'text-danger' },
-            { label: 'Pending Swaps',     value: leaderSummary?.pendingSwaps ?? 0,      href: '/choir/swaps',            color: 'text-info' },
+            { label: 'Pending Approvals', value: leaderSummary?.pendingApprovals ?? 0, href: choirLink('join-requests'), color: 'text-warning' },
+            { label: 'Active Welfare',    value: leaderSummary?.activeWelfare ?? 0,     href: choirLink('welfare'),       color: 'text-danger' },
+            { label: 'Pending Swaps',     value: leaderSummary?.pendingSwaps ?? 0,      href: choirLink('scheduling'),    color: 'text-info' },
           ].map((item) => (
             <Link key={item.label} href={item.href}>
               <Card padding="md" className="hover:shadow-raised transition-shadow cursor-pointer">
