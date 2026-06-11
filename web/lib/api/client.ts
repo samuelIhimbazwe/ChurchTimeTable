@@ -61,10 +61,21 @@ function resolveServerApiOrigin(): string {
   return raw.replace(/\/api\/v1\/?$/, '')
 }
 
-/** Browser: same-origin /api/v1 (Next rewrite + tunnel). SSR: direct backend. */
+function resolvePublicApiOrigin(): string | null {
+  const raw =
+    process.env.NEXT_PUBLIC_API_URL ??
+    process.env.NEXT_PUBLIC_API_BASE_URL
+  if (!raw) return null
+  return raw.replace(/\/api\/v1\/?$/, '')
+}
+
+/** Browser: same-origin /api/v1 unless NEXT_PUBLIC_API_* is set (Vercel → Render). */
 function getApiOrigin(): string {
-  if (typeof window !== 'undefined') return ''
-  return resolveServerApiOrigin()
+  const publicOrigin = resolvePublicApiOrigin()
+  if (typeof window !== 'undefined') {
+    return publicOrigin ?? ''
+  }
+  return publicOrigin ?? resolveServerApiOrigin()
 }
 
 function apiBaseUrl(): string {

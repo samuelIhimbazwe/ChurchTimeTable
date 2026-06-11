@@ -16,16 +16,25 @@ async function bootstrap() {
     .filter(Boolean);
 
   app.setGlobalPrefix('api/v1');
+
+  const allowOrigin = (origin: string | undefined): boolean => {
+    if (!origin) return true;
+    if (configuredOrigins.includes(origin)) return true;
+    /* Vercel production + preview URLs (demo hosting) */
+    if (/^https:\/\/[\w.-]+\.vercel\.app$/i.test(origin)) return true;
+    return false;
+  };
+
   app.enableCors({
     origin: (
       origin: string | undefined,
       callback: (error: Error | null, allow?: boolean) => void,
     ) => {
-      if (!origin || configuredOrigins.includes(origin)) {
+      if (allowOrigin(origin)) {
         callback(null, true);
         return;
       }
-      callback(new Error('Origin not allowed by CORS'));
+      callback(new Error(`Origin not allowed by CORS: ${origin}`));
     },
     credentials: true,
   } satisfies CorsOptions);
