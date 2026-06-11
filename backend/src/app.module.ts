@@ -45,6 +45,8 @@ import { MemberPortalModule } from './member-portal/member-portal.module';
 import { PilotReadyModule } from './pilot-ready/pilot-ready.module';
 import { AuthUxModule } from './auth-ux/auth-ux.module';
 import { ChoirContextMiddleware } from './common/middleware/choir-context.middleware';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 @Module({
   imports: [
@@ -87,7 +89,9 @@ import { ChoirContextMiddleware } from './common/middleware/choir-context.middle
     ReportsModule,
     DashboardModule,
   ],
+  controllers: [AppController],
   providers: [
+    AppService,
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
