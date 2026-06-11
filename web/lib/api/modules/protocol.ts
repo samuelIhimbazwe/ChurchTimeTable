@@ -114,6 +114,19 @@ export const protocolApi = {
   getLeaderDashboard: () =>
     apiClient.get<never, Record<string, unknown>>('/protocol/dashboard'),
 
+  getAdminDashboard: () =>
+    apiClient.get<never, Record<string, unknown>>('/protocol/dashboard/admin'),
+
+  getSettings: () =>
+    apiClient.get<never, Record<string, unknown>>('/protocol/settings'),
+
+  updateSettings: (data: {
+    maxOfficialServicesPerMonth?: number
+    maxNonChoirMembers?: number
+    backupPoolSize?: number
+    membersCanViewFullRanking?: boolean
+  }) => apiClient.patch<never, Record<string, unknown>>('/protocol/settings', data),
+
   getTeamLeaderDashboard: () =>
     apiClient.get<never, Record<string, unknown>>('/protocol/dashboard/team-leader'),
 

@@ -1,9 +1,31 @@
 import {
-  LayoutDashboard, Calendar, Users, Music, Shield,
-  DollarSign, FileText, Settings2, Home, Clock,
-  Heart, ArrowLeftRight, Trophy, Upload, Server,
-  Activity, Building2, Megaphone, Scale, ClipboardCheck,
-  UserCog, KeyRound, BookOpen, UserPlus, Crown, Mic2,
+  LayoutDashboard,
+  Calendar,
+  Users,
+  Music,
+  Shield,
+  DollarSign,
+  FileText,
+  Settings2,
+  Home,
+  Clock,
+  Heart,
+  ArrowLeftRight,
+  Trophy,
+  Upload,
+  Server,
+  Activity,
+  Building2,
+  Megaphone,
+  Scale,
+  ClipboardCheck,
+  UserCog,
+  KeyRound,
+  BookOpen,
+  UserPlus,
+  Crown,
+  Mic2,
+  AlertTriangle,
 } from 'lucide-react'
 import type { ChoirAccessState } from '@/lib/choir/access'
 import type { ActiveChoirMembership } from '@/lib/choir/membership-display'
@@ -142,12 +164,24 @@ const CHURCH_OVERVIEW: NavSection = {
   ],
 }
 
+const CHURCH_SCHEDULE_SUBMIT_NAV: NavSection = {
+  section: 'Church schedule',
+  items: [
+    { label: 'Submit activity', icon: Calendar, path: '/church/schedule/submit' },
+    { label: 'My submissions',  icon: ClipboardCheck, path: '/church/schedule/mine' },
+  ],
+}
+
 const CHURCH_INTEL: NavSection = {
   section: 'Church Leadership',
   items: [
+    { label: 'Master Timetable',  icon: Clock,            path: '/church/timetable' },
+    { label: 'Schedule conflicts', icon: AlertTriangle,   path: '/church/schedule/conflicts' },
+    { label: 'Facilities',        icon: Building2,        path: '/church/facilities' },
     { label: 'Activity Feed',     icon: Activity,         path: '/church/activity' },
     { label: 'Calendar',          icon: Calendar,         path: '/church/calendar' },
     { label: 'Service Requests',  icon: ClipboardCheck,   path: '/church/service-requests' },
+    { label: 'Service Assignments', icon: Music,            path: '/church/service-assignments' },
     { label: 'Choir Transfers',   icon: ArrowLeftRight,   path: '/church/choir-transfers' },
     { label: 'Finance',           icon: DollarSign,       path: '/church/finance' },
     { label: 'Governance',        icon: Scale,            path: '/church/governance' },
@@ -178,6 +212,7 @@ const MEMBER_PORTAL: NavSection[] = [
     items: [
       { label: 'My Portal',   icon: Home,          path: '/portal' },
       { label: 'Devotion',    icon: BookOpen,      path: '/portal/devotion' },
+      { label: 'Church giving', icon: DollarSign,  path: '/portal/church-giving' },
       { label: 'Events',      icon: Calendar,      path: '/events' },
       { label: 'Ministries',  icon: Building2,   path: '/portal/ministries' },
       { label: 'Choirs',      icon: Music,       path: '/portal/choirs' },
@@ -243,6 +278,7 @@ export const NAV_BY_ROLE: Record<string, NavSection[]> = {
     CHOIR_FAMILY_COORD_HUB,
     CHOIR_ADVISOR_HUB,
     CHOIR_LEADERSHIP_NAV,
+    CHURCH_SCHEDULE_SUBMIT_NAV,
   ],
 
   CHOIR_PRESIDENT: [
@@ -252,6 +288,7 @@ export const NAV_BY_ROLE: Record<string, NavSection[]> = {
     CHOIR_ADMIN_TOOLS,
     CHOIR_OFFICER_HUBS,
     CHOIR_LEADERSHIP_NAV,
+    CHURCH_SCHEDULE_SUBMIT_NAV,
   ],
 
   CHOIR_VICE_PRESIDENT: [
@@ -342,12 +379,14 @@ export const NAV_BY_ROLE: Record<string, NavSection[]> = {
     PROTOCOL_DASHBOARD,
     PROTOCOL_OPS,
     { section: 'Administration', items: [{ label: 'Claims', icon: ClipboardCheck, path: '/protocol/claims' }] },
+    CHURCH_SCHEDULE_SUBMIT_NAV,
     { section: 'Church', items: [{ label: 'Members', icon: Users, path: '/members' }] },
   ],
 
   PROTOCOL_LEADER: [
     PROTOCOL_DASHBOARD,
     PROTOCOL_OPS,
+    CHURCH_SCHEDULE_SUBMIT_NAV,
     { section: 'Church', items: [{ label: 'Members', icon: Users, path: '/members' }] },
   ],
 

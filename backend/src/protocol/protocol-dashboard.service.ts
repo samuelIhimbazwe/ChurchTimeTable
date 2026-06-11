@@ -5,7 +5,11 @@ import { PermissionsResolver } from '../auth/permissions.resolver';
 import { ProtocolMembersService } from './protocol-members.service';
 import { ProtocolRankingService } from './protocol-ranking.service';
 import { ProtocolTeamLeadersService } from './protocol-team-leaders.service';
-import { hasProtocolManage, hasProtocolTeamLeaderExecute } from './protocol-access.util';
+import {
+  hasProtocolManage,
+  hasProtocolTeamLeaderExecute,
+} from './protocol-access.util';
+import { ServiceQuotaEngine } from './service-quota.engine';
 
 @Injectable()
 export class ProtocolDashboardService {
@@ -15,7 +19,42 @@ export class ProtocolDashboardService {
     private members: ProtocolMembersService,
     private ranking: ProtocolRankingService,
     private teamLeaders: ProtocolTeamLeadersService,
+    private quota: ServiceQuotaEngine,
   ) {}
+
+  async adminSummary(actorUserId: string) {
+    const [
+      leader,
+      activeMembers,
+      pendingClaims,
+      pendingInvitations,
+      activeTeamLeaders,
+      settings,
+    ] = await Promise.all([
+      this.leaderSummary(actorUserId),
+      this.prisma.protocolMemberProfile.count({ where: { active: true } }),
+      this.prisma.protocolMembershipClaim.count({ where: { status: 'PENDING' } }),
+      this.prisma.protocolInvitation.count({
+        where: { status: 'PENDING' },
+      }),
+      this.prisma.protocolTeamLeader.count({ where: { active: true } }),
+      this.quota.getSettings(),
+    ]);
+
+    return {
+      ...leader,
+      activeMembers,
+      pendingClaims,
+      pendingInvitations,
+      activeTeamLeaders,
+      settings: {
+        maxOfficialServicesPerMonth: settings.maxOfficialServicesPerMonth,
+        maxNonChoirMembers: settings.maxNonChoirMembers,
+        backupPoolSize: settings.backupPoolSize,
+        membersCanViewFullRanking: settings.membersCanViewFullRanking,
+      },
+    };
+  }
 
   async leaderSummary(actorUserId: string) {
     const resolved = await this.permissions.resolveForUser(actorUserId);

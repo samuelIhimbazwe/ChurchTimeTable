@@ -19,7 +19,7 @@ import {
 import { PERMISSIONS } from '../common/constants/roles';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/decorators/current-user.decorator';
-import { PaginationDto } from '../common/dto/pagination.dto';
+import { ListSongsQueryDto } from './dto/list-songs-query.dto';
 import { SkipPhoneEnforcement } from '../common/decorators/skip-phone-enforcement.decorator';
 import { CreateSongDto } from './dto/create-song.dto';
 import { UpdateSongDto } from './dto/update-song.dto';
@@ -60,18 +60,16 @@ export class MusicController {
   @RequireAnyPermissions(...MUSIC_VIEW_ANY)
   listSongs(
     @CurrentUser() user: JwtPayload,
-    @Query() pagination: PaginationDto,
-    @Query('q') search?: string,
-    @Query('categoryId') categoryId?: string,
-    @Query('language') language?: string,
+    @Query() query: ListSongsQueryDto,
   ) {
     return this.music.listSongs(
       user.sub,
-      pagination.page,
-      pagination.limit,
-      search,
-      categoryId,
-      language,
+      query.page,
+      query.limit,
+      query.q,
+      query.categoryId,
+      query.language,
+      query.choirId,
     );
   }
 

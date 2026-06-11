@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PermissionsResolver } from '../auth/permissions.resolver';
 import { hasChoirOpsView } from './choir-scheduling-access.util';
+import { CONFIRMED_ASSIGNMENT_FILTER } from './choir-assignment-filters.util';
 
 export type ChoirCalendarItem = {
   id: string;
@@ -58,7 +59,7 @@ export class ChoirCalendarService {
     const assignments = await this.prisma.choirServiceAssignment.findMany({
       where: {
         ...(choirId ? { choirId } : {}),
-        cancelledAt: null,
+        ...CONFIRMED_ASSIGNMENT_FILTER,
         occurrence: { startAt: { gte: from, lte: to } },
       },
       include: {

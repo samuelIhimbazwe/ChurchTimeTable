@@ -5,8 +5,9 @@ import '../../../core/auth/governance_permissions.dart';
 import '../../../core/localization/l10n.dart';
 import '../../../core/models/dashboard_models.dart';
 import '../../../core/routing/app_router.dart';
+import '../../../core/design/components/cards/cmms_stat_tile.dart';
 import '../../../core/widgets/localized_card.dart';
-import '../../../core/widgets/mobile_tab_shell.dart';
+import '../../../core/widgets/shell_aware_scaffold.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../choir/providers/choir_providers.dart';
 import '../providers/dashboard_providers.dart';
@@ -24,9 +25,19 @@ class MemberDashboardScreen extends ConsumerWidget {
         ? '${member['firstName']} ${member['lastName']}'
         : l10n.member_name_fallback;
 
-    final embedded = MobileTabShellScope.embeddedInShell(context);
-
-    final body = RefreshIndicator(
+    return ShellAwareScaffold(
+      title: l10n.dashboard_member_title,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.settings_outlined),
+          onPressed: () => Navigator.pushNamed(context, AppRouter.settings),
+        ),
+        IconButton(
+          icon: const Icon(Icons.sync_outlined),
+          onPressed: () => Navigator.pushNamed(context, AppRouter.sync),
+        ),
+      ],
+      body: RefreshIndicator(
       onRefresh: () async => ref.invalidate(memberDashboardProvider),
       child: summaryAsync.when(
         loading: () => Center(child: Text(l10n.common_loading)),
@@ -103,16 +114,19 @@ class MemberDashboardScreen extends ConsumerWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: LocalizedCard(
-                          title: l10n.dashboard_kpi_upcoming_assignments,
-                          subtitle: '${summary.upcomingAssignments}',
+                        child: CmmsStatTile(
+                          label: l10n.dashboard_kpi_upcoming_assignments,
+                          value: '${summary.upcomingAssignments}',
+                          icon: Icons.event_outlined,
+                          accent: true,
                         ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: LocalizedCard(
-                          title: l10n.dashboard_kpi_pending_swaps,
-                          subtitle: '${summary.pendingSwaps}',
+                        child: CmmsStatTile(
+                          label: l10n.dashboard_kpi_pending_swaps,
+                          value: '${summary.pendingSwaps}',
+                          icon: Icons.swap_horiz_outlined,
                         ),
                       ),
                     ],
@@ -179,38 +193,7 @@ class MemberDashboardScreen extends ConsumerWidget {
             );
           },
         ),
-    );
-
-    if (embedded) {
-      return body;
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.dashboard_member_title),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () =>
-                Navigator.pushNamed(context, AppRouter.settings),
-          ),
-          IconButton(
-            icon: const Icon(Icons.sync),
-            onPressed: () => Navigator.pushNamed(context, AppRouter.sync),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: l10n.common_logout,
-            onPressed: () async {
-              await ref.read(authProvider.notifier).logout();
-              if (context.mounted) {
-                Navigator.pushReplacementNamed(context, AppRouter.login);
-              }
-            },
-          ),
-        ],
       ),
-      body: body,
     );
   }
 }

@@ -21,14 +21,20 @@ const GRADIENTS = [
   'from-success to-primary-500',
   'from-info to-primary-600',
 ]
+function displayName(name?: string | null) {
+  const trimmed = name?.trim()
+  return trimmed && trimmed.length > 0 ? trimmed : 'User'
+}
+
 function gradientFor(name: string) {
   const idx = name.charCodeAt(0) % GRADIENTS.length
   return GRADIENTS[idx]
 }
 
 function initials(name: string) {
-  return name
-    .split(' ')
+  const parts = name.split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return 'U'
+  return parts
     .map((n) => n[0])
     .join('')
     .toUpperCase()
@@ -36,7 +42,7 @@ function initials(name: string) {
 }
 
 interface AvatarProps {
-  name: string
+  name?: string | null
   src?: string | null
   size?: AvatarSize
   className?: string
@@ -50,6 +56,8 @@ export default function Avatar({
   className,
   active,
 }: AvatarProps) {
+  const label = displayName(name)
+
   return (
     <div
       className={cn(
@@ -63,7 +71,7 @@ export default function Avatar({
       {src ? (
         <Image
           src={src}
-          alt={name}
+          alt={label}
           fill
           className="rounded-full object-cover"
           sizes="80px"
@@ -73,10 +81,10 @@ export default function Avatar({
           className={cn(
             'w-full h-full rounded-full flex items-center justify-center',
             'bg-gradient-to-br text-white font-semibold',
-            gradientFor(name),
+            gradientFor(label),
           )}
         >
-          {initials(name)}
+          {initials(label)}
         </div>
       )}
     </div>

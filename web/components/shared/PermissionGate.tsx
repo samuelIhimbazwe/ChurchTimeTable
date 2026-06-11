@@ -2,6 +2,7 @@
 
 import { useAuthStore } from '@/stores/index'
 import { useOptionalProtocolDashboardCtx } from '@/components/protocol/ProtocolDashboardProvider'
+import { useOptionalChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
 
 interface PermissionGateProps {
   permission?: string
@@ -10,10 +11,14 @@ interface PermissionGateProps {
   children: React.ReactNode
 }
 
-function useEffectiveProtocolPermissions(): string[] {
+function useEffectivePermissions(): string[] {
   const authPerms = useAuthStore((s) => s.user?.permissions ?? [])
   const protocolCtx = useOptionalProtocolDashboardCtx()
-  const ctxPerms = protocolCtx?.context?.permissions ?? []
+  const choirCtx = useOptionalChoirDashboardCtx()
+  const ctxPerms = [
+    ...(protocolCtx?.context?.permissions ?? []),
+    ...(choirCtx?.context?.permissions ?? []),
+  ]
   return Array.from(new Set([...authPerms, ...ctxPerms]))
 }
 
@@ -23,7 +28,7 @@ export default function PermissionGate({
   fallback = null,
   children,
 }: PermissionGateProps) {
-  const effective = useEffectiveProtocolPermissions()
+  const effective = useEffectivePermissions()
 
   const allowed = permission
     ? effective.includes(permission)

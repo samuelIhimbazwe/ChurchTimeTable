@@ -2,76 +2,99 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'colors.dart';
 
-/// Multilingual-safe typography (Kinyarwanda, French accents, English).
+/// Typography aligned with web: Cormorant Garamond (display) + DM Sans (body).
 abstract final class CmmsTypography {
-  static const String fontFamily = 'Inter';
+  static const String displayFamily = 'Cormorant Garamond';
+  static const String bodyFamily = 'DM Sans';
+
+  static TextStyle _display(TextStyle? base, {FontWeight? weight, Color? color, double? height}) {
+    return GoogleFonts.cormorantGaramond(
+      fontSize: base?.fontSize,
+      fontWeight: weight ?? FontWeight.w600,
+      color: color,
+      height: height ?? 1.25,
+      letterSpacing: base?.letterSpacing,
+    );
+  }
+
+  static TextStyle _body(TextStyle? base, {FontWeight? weight, Color? color, double? height}) {
+    return GoogleFonts.dmSans(
+      fontSize: base?.fontSize,
+      fontWeight: weight ?? FontWeight.w400,
+      color: color,
+      height: height ?? 1.5,
+      letterSpacing: base?.letterSpacing,
+    );
+  }
 
   static TextTheme textTheme(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
-    final base = GoogleFonts.notoSansTextTheme();
     final primary = CmmsColors.textPrimary(isDark);
     final secondary = CmmsColors.textSecondary(isDark);
+    final muted = CmmsColors.textMuted(isDark);
+    final base = GoogleFonts.dmSansTextTheme();
 
     return base.copyWith(
-      displayLarge: base.displayLarge?.copyWith(
-        fontFamily: fontFamily,
-        fontWeight: FontWeight.w700,
+      displayLarge: _display(
+        base.displayLarge,
+        weight: FontWeight.w700,
         color: primary,
         height: 1.2,
-        letterSpacing: -0.5,
       ),
-      headlineMedium: base.headlineMedium?.copyWith(
-        fontFamily: fontFamily,
-        fontWeight: FontWeight.w600,
+      displayMedium: _display(base.displayMedium, color: primary),
+      displaySmall: _display(base.displaySmall, color: primary),
+      headlineLarge: _display(
+        base.headlineLarge,
+        weight: FontWeight.w600,
         color: primary,
-        height: 1.25,
       ),
-      titleLarge: base.titleLarge?.copyWith(
-        fontFamily: fontFamily,
-        fontWeight: FontWeight.w600,
+      headlineMedium: _display(
+        base.headlineMedium,
+        weight: FontWeight.w600,
+        color: primary,
+      ),
+      headlineSmall: _display(
+        base.headlineSmall,
+        weight: FontWeight.w600,
+        color: primary,
+      ),
+      titleLarge: _body(
+        base.titleLarge,
+        weight: FontWeight.w600,
         color: primary,
         height: 1.3,
       ),
-      titleMedium: base.titleMedium?.copyWith(
-        fontFamily: fontFamily,
-        fontWeight: FontWeight.w600,
+      titleMedium: _body(
+        base.titleMedium,
+        weight: FontWeight.w600,
         color: primary,
         height: 1.35,
       ),
-      titleSmall: base.titleSmall?.copyWith(
-        fontFamily: fontFamily,
-        fontWeight: FontWeight.w500,
+      titleSmall: _body(
+        base.titleSmall,
+        weight: FontWeight.w500,
         color: primary,
         height: 1.35,
       ),
-      bodyLarge: base.bodyLarge?.copyWith(
-        fontFamily: fontFamily,
-        fontWeight: FontWeight.w400,
+      bodyLarge: _body(base.bodyLarge, color: primary, height: 1.5),
+      bodyMedium: _body(base.bodyMedium, color: primary, height: 1.5),
+      bodySmall: _body(base.bodySmall, color: secondary, height: 1.45),
+      labelLarge: _body(
+        base.labelLarge,
+        weight: FontWeight.w600,
         color: primary,
-        height: 1.45,
+        height: 1.35,
       ),
-      bodyMedium: base.bodyMedium?.copyWith(
-        fontFamily: fontFamily,
-        fontWeight: FontWeight.w400,
-        color: primary,
-        height: 1.5,
-      ),
-      bodySmall: base.bodySmall?.copyWith(
-        fontFamily: fontFamily,
-        fontWeight: FontWeight.w400,
+      labelMedium: _body(
+        base.labelMedium,
+        weight: FontWeight.w500,
         color: secondary,
-        height: 1.45,
-      ),
-      labelLarge: base.labelLarge?.copyWith(
-        fontFamily: fontFamily,
-        fontWeight: FontWeight.w600,
-        color: primary,
         height: 1.35,
       ),
-      labelMedium: base.labelMedium?.copyWith(
-        fontFamily: fontFamily,
-        fontWeight: FontWeight.w500,
-        color: secondary,
+      labelSmall: _body(
+        base.labelSmall,
+        weight: FontWeight.w500,
+        color: muted,
         height: 1.35,
       ),
     );

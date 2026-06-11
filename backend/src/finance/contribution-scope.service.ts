@@ -33,9 +33,15 @@ const MINISTRY_CONTRIBUTION_PERMISSIONS = [
   PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
   PERMISSIONS.CHOIR_CONTRIBUTION_TYPE_MANAGE,
   PERMISSIONS.CHOIR_CONTRIBUTION_CAMPAIGN_MANAGE,
+  PERMISSIONS.PROTOCOL_CONTRIBUTION_SUBMIT,
+  PERMISSIONS.PROTOCOL_CONTRIBUTION_VIEW_ALL,
+  PERMISSIONS.PROTOCOL_CONTRIBUTION_ADJUST,
   PERMISSIONS.CHOIR_FINANCE_VIEW,
   PERMISSIONS.CHOIR_FINANCE_MANAGE,
   PERMISSIONS.CHOIR_FINANCE_APPROVE,
+  PERMISSIONS.PROTOCOL_FINANCE_VIEW,
+  PERMISSIONS.PROTOCOL_FINANCE_MANAGE,
+  PERMISSIONS.PROTOCOL_FINANCE_APPROVE,
   PERMISSIONS.CHOIR_FAMILY_VIEW,
   PERMISSIONS.CHOIR_FAMILY_MANAGE,
   PERMISSIONS.FAMILY_VIEW,
@@ -140,6 +146,50 @@ export class ContributionScopeService {
       ctx.permissions,
       PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
     );
+  }
+
+  canViewAllProtocol(ctx: ContributionActorContext): boolean {
+    if (this.isChurchAdminAccountOnly(ctx)) return false;
+    return (
+      hasEffectivePermission(ctx.permissions, PERMISSIONS.PROTOCOL_CONTRIBUTION_VIEW_ALL) ||
+      hasEffectivePermission(ctx.permissions, PERMISSIONS.PROTOCOL_FINANCE_VIEW) ||
+      hasEffectivePermission(ctx.permissions, PERMISSIONS.PROTOCOL_FINANCE_MANAGE) ||
+      hasEffectivePermission(ctx.permissions, PERMISSIONS.PROTOCOL_FINANCE_APPROVE)
+    );
+  }
+
+  canSubmitProtocol(ctx: ContributionActorContext): boolean {
+    if (this.isChurchAdminAccountOnly(ctx)) return false;
+    return (
+      Boolean(ctx.memberId) &&
+      hasEffectivePermission(ctx.permissions, PERMISSIONS.PROTOCOL_CONTRIBUTION_SUBMIT)
+    );
+  }
+
+  canApproveProtocol(ctx: ContributionActorContext): boolean {
+    if (this.isChurchAdminAccountOnly(ctx)) return false;
+    return hasEffectivePermission(
+      ctx.permissions,
+      PERMISSIONS.PROTOCOL_FINANCE_APPROVE,
+    );
+  }
+
+  assertCanSubmitProtocol(ctx: ContributionActorContext): void {
+    if (!this.canSubmitProtocol(ctx)) {
+      throw new ForbiddenException('Cannot submit protocol contributions');
+    }
+  }
+
+  assertCanViewAllProtocol(ctx: ContributionActorContext): void {
+    if (!this.canViewAllProtocol(ctx)) {
+      this.denyHiddenFeature();
+    }
+  }
+
+  assertCanApproveProtocol(ctx: ContributionActorContext): void {
+    if (!this.canApproveProtocol(ctx)) {
+      throw new ForbiddenException('Protocol treasurer approval required');
+    }
   }
 
   getFamilyMembership(
@@ -283,7 +333,9 @@ export class ContributionScopeService {
     if (this.isChurchAdminAccountOnly(ctx)) return false;
 
     if (
-      hasEffectivePermission(ctx.permissions, PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST)
+      hasEffectivePermission(ctx.permissions, PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST) ||
+      hasEffectivePermission(ctx.permissions, PERMISSIONS.PROTOCOL_CONTRIBUTION_ADJUST) ||
+      hasEffectivePermission(ctx.permissions, PERMISSIONS.PROTOCOL_FINANCE_MANAGE)
     ) {
       return true;
     }
@@ -348,10 +400,10 @@ export class ContributionScopeService {
       throw new ForbiddenException('Cannot adjust this contribution');
     }
 
-    const hasGlobalAdjust = hasEffectivePermission(
-      ctx.permissions,
-      PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
-    );
+    const hasGlobalAdjust =
+      hasEffectivePermission(ctx.permissions, PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST) ||
+      hasEffectivePermission(ctx.permissions, PERMISSIONS.PROTOCOL_CONTRIBUTION_ADJUST) ||
+      hasEffectivePermission(ctx.permissions, PERMISSIONS.PROTOCOL_FINANCE_MANAGE);
     if (hasGlobalAdjust) return;
 
     const membership = record.familyId

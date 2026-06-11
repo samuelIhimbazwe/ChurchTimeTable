@@ -64,6 +64,7 @@ export class ChoirDashboardService {
       this.prisma.choirServiceAssignment.findMany({
         where: {
           choirId: cid,
+          status: 'CONFIRMED',
           cancelledAt: null,
           occurrence: { startAt: { gte: now, lte: in30 } },
         },

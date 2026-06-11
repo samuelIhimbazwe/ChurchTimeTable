@@ -73,6 +73,17 @@ export class ProtocolController {
     return this.dashboard.leaderSummary(userId);
   }
 
+  @Get('dashboard/admin')
+  @RequireAnyPermissions(
+    PERMISSIONS.PROTOCOL_MANAGE,
+    PERMISSIONS.PROTOCOL_CLAIM_REVIEW,
+    PERMISSIONS.PROTOCOL_INVITE,
+    PERMISSIONS.COMMITTEE_MEMBER_MANAGE_SCOPE,
+  )
+  adminDashboard(@CurrentUser('sub') userId: string) {
+    return this.dashboard.adminSummary(userId);
+  }
+
   @Get('dashboard/me')
   @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.MEMBER_READ)
   memberDashboard(@CurrentUser('sub') userId: string) {
@@ -472,6 +483,20 @@ export class ProtocolController {
   @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.PROTOCOL_MANAGE)
   settings() {
     return this.quota.getSettings();
+  }
+
+  @Patch('settings')
+  @RequirePermissions(PERMISSIONS.PROTOCOL_MANAGE)
+  updateSettings(
+    @Body()
+    body: {
+      maxOfficialServicesPerMonth?: number;
+      maxNonChoirMembers?: number;
+      backupPoolSize?: number;
+      membersCanViewFullRanking?: boolean;
+    },
+  ) {
+    return this.quota.updateSettings(body);
   }
 
   @Get('reports/:type/export')

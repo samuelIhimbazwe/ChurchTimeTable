@@ -14,7 +14,15 @@ export type FamilyPaymentInstructions = {
   instructions: string | null
 }
 
+export type SponsorChoirGivingContext = {
+  id: string
+  name: string
+  code: string
+  payment: FamilyPaymentInstructions
+}
+
 export type SubmitContributionContext = {
+  mode?: 'family' | 'sponsor' | 'none'
   types: ContributionTypeOption[]
   family: {
     id: string
@@ -23,6 +31,8 @@ export type SubmitContributionContext = {
     headName: string | null
     payment: FamilyPaymentInstructions
   } | null
+  sponsorChoir?: SponsorChoirGivingContext | null
+  sponsorChoirs?: SponsorChoirGivingContext[]
   campaigns: Array<{
     id: string
     name: string
@@ -65,6 +75,7 @@ export type SubmitContributionPayload = {
   notes?: string
   customTypeLabel?: string
   receiptUrl?: string | null
+  choirId?: string
 }
 
 export type ApproveContributionPayload = {
@@ -127,9 +138,10 @@ function normalizeClaims(raw: unknown): ContributionClaim[] {
 }
 
 export const contributionsApi = {
-  getSubmitContext: () =>
+  getSubmitContext: (choirId?: string) =>
     apiClient.get<never, SubmitContributionContext>(
       '/finance/contributions/submit-options',
+      { params: choirId ? { choirId } : undefined },
     ),
 
   submitClaim: (payload: SubmitContributionPayload) =>
@@ -155,6 +167,40 @@ export const contributionsApi = {
     }
   },
 
+  getProtocolSubmitContext: () =>
+    apiClient.get<never, SubmitContributionContext & { mode: 'protocol'; payment: FamilyPaymentInstructions }>(
+      '/finance/contributions/protocol/submit-options',
+    ),
+
+  submitProtocolClaim: (payload: Omit<SubmitContributionPayload, 'choirId'>) =>
+    apiClient.post<never, ContributionClaim>(
+      '/finance/contributions/protocol/submit',
+      payload,
+    ),
+
+  getProtocolInbox: async (params?: { status?: string; limit?: number }) => {
+    const raw = await apiClient.get<never, { items?: unknown[]; pendingCount?: number }>(
+      '/finance/contributions/protocol/inbox',
+      { params },
+    )
+    return {
+      pendingCount: raw.pendingCount ?? 0,
+      items: normalizeClaims(raw.items ?? []),
+    }
+  },
+
+  getSponsorInbox: async (params: { choirId: string; status?: string; limit?: number }) => {
+    const raw = await apiClient.get<never, { items?: unknown[]; choirId?: string; pendingCount?: number }>(
+      '/finance/contributions/sponsor/inbox',
+      { params },
+    )
+    return {
+      choirId: raw.choirId,
+      pendingCount: raw.pendingCount ?? 0,
+      items: normalizeClaims(raw.items ?? []),
+    }
+  },
+
   approveFamily: (contributionId: string, payload: ApproveContributionPayload) =>
     apiClient.post<never, ContributionClaim>(
       `/finance/contributions/${contributionId}/family/approve`,
@@ -175,6 +221,103 @@ export const contributionsApi = {
 
   exportPdf: () =>
     apiClient.get('/finance/contributions/export/pdf', { responseType: 'blob' }),
+
+  listAdminCatalog: (choirId: string) =>
+    apiClient.get<never, { items: ContributionCatalogAdminItem[] }>(
+      '/finance/contributions/admin/catalog',
+      { params: { choirId } },
+    ),
+
+  createAdminCatalog: (choirId: string, payload: CreateCatalogPayload) =>
+    apiClient.post<never, ContributionCatalogAdminItem>(
+      '/finance/contributions/admin/catalog',
+      payload,
+      { params: { choirId } },
+    ),
+
+  updateAdminCatalog: (id: string, payload: UpdateCatalogPayload) =>
+    apiClient.patch<never, ContributionCatalogAdminItem>(
+      `/finance/contributions/admin/catalog/${id}`,
+      payload,
+    ),
+
+  listAdminCampaigns: (choirId: string) =>
+    apiClient.get<never, { items: ContributionCampaignAdminItem[] }>(
+      '/finance/contributions/admin/campaigns',
+      { params: { choirId } },
+    ),
+
+  createAdminCampaign: (choirId: string, payload: CreateCampaignPayload) =>
+    apiClient.post<never, ContributionCampaignAdminItem>(
+      '/finance/contributions/admin/campaigns',
+      payload,
+      { params: { choirId } },
+    ),
+
+  updateAdminCampaign: (id: string, payload: UpdateCampaignPayload) =>
+    apiClient.patch<never, ContributionCampaignAdminItem>(
+      `/finance/contributions/admin/campaigns/${id}`,
+      payload,
+    ),
+}
+
+export type ContributionCatalogAdminItem = {
+  id: string
+  choirId: string | null
+  code: string
+  name: string
+  description: string | null
+  active: boolean
+  sortOrder: number
+}
+
+export type ContributionCampaignAdminItem = {
+  id: string
+  choirId: string | null
+  contributionTypeCatalogId: string
+  name: string
+  description: string | null
+  goalAmount: number
+  currency: string
+  status: string
+  periodStart: string | null
+  periodEnd: string | null
+}
+
+export type CreateCatalogPayload = {
+  code: string
+  name: string
+  description?: string
+  sortOrder?: number
+  active?: boolean
+}
+
+export type UpdateCatalogPayload = {
+  name?: string
+  description?: string
+  sortOrder?: number
+  active?: boolean
+}
+
+export type CreateCampaignPayload = {
+  contributionTypeCatalogId: string
+  name: string
+  description?: string
+  goalAmount: number
+  currency?: string
+  status?: 'DRAFT' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED'
+  periodStart?: string
+  periodEnd?: string
+}
+
+export type UpdateCampaignPayload = {
+  name?: string
+  description?: string
+  goalAmount?: number
+  currency?: string
+  status?: 'DRAFT' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED'
+  periodStart?: string | null
+  periodEnd?: string | null
 }
 
 /** @deprecated use getMine */

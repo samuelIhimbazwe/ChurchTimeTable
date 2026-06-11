@@ -2,6 +2,8 @@ import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@ne
 import {
   ChoirJoinRequestStatus,
   ChoirJoinRequestType,
+  ChoirSponsorRequestKind,
+  ChoirSponsorRequestStatus,
 } from '@prisma/client';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
@@ -12,6 +14,7 @@ import { ChoirContextService } from './choir-context.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ChoirDiscoveryService } from '../member-portal/choir-discovery.service';
 import { ChoirJoinRequestsService } from '../member-portal/choir-join-requests.service';
+import { ChoirSponsorRequestsService } from '../member-portal/choir-sponsor-requests.service';
 import { ChoirMembershipRulesService } from '../member-portal/choir-membership-rules.service';
 import { ChoirMembersService } from './choir-members.service';
 
@@ -30,6 +33,7 @@ export class ChoirsController {
     private prisma: PrismaService,
     private discovery: ChoirDiscoveryService,
     private joinRequests: ChoirJoinRequestsService,
+    private sponsorRequests: ChoirSponsorRequestsService,
     private rules: ChoirMembershipRulesService,
     private choirMembers: ChoirMembersService,
   ) {}
@@ -144,6 +148,48 @@ export class ChoirsController {
       status: body.status!,
       reviewNotes: body.reviewNotes,
       assignedRoleId: body.assignedRoleId,
+    });
+  }
+
+  @Post('sponsor-requests')
+  submitSponsor(
+    @CurrentUser() user: JwtPayload,
+    @Body()
+    body: {
+      choirId: string;
+      kind?: ChoirSponsorRequestKind;
+      message?: string;
+    },
+  ) {
+    return this.sponsorRequests.submit(user.sub, body);
+  }
+
+  @Get('sponsor-requests')
+  listSponsor(
+    @CurrentUser() user: JwtPayload,
+    @Query('choirId') choirId?: string,
+    @Query('status') status?: ChoirSponsorRequestStatus,
+  ) {
+    return this.sponsorRequests.list(user.sub, { choirId, status });
+  }
+
+  @Patch('sponsor-requests/:id')
+  reviewSponsor(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+    @Body()
+    body: {
+      status?: 'APPROVED' | 'REJECTED';
+      reviewNotes?: string;
+      withdraw?: boolean;
+    },
+  ) {
+    if (body.withdraw) {
+      return this.sponsorRequests.withdraw(user.sub, id);
+    }
+    return this.sponsorRequests.review(user.sub, id, {
+      status: body.status!,
+      reviewNotes: body.reviewNotes,
     });
   }
 

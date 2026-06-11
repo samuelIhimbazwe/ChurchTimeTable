@@ -1,6 +1,6 @@
 import { apiClient } from '../client'
 import type {
-  Choir, ChoirMember, ChoirJoinRequest, Paginated,
+  Choir, ChoirMember, ChoirJoinRequest, ChoirSponsorRequest, Paginated,
   ProtocolRankingEntry,
 } from '@/types'
 
@@ -67,6 +67,39 @@ export const choirApi = {
 
   getJoinRequests: (params?: { choirId?: string; status?: string }) =>
     apiClient.get<never, ChoirJoinRequest[]>('/choirs/join-requests', { params }),
+
+  requestSponsor: (
+    choirId: string,
+    message?: string,
+    kind?: string,
+  ) =>
+    apiClient.post<never, ChoirSponsorRequest>('/choirs/sponsor-requests', {
+      choirId,
+      message,
+      kind,
+    }),
+
+  getMySponsorRequests: () =>
+    apiClient.get<never, ChoirSponsorRequest[]>('/choirs/sponsor-requests'),
+
+  getSponsorRequests: (params?: { choirId?: string; status?: string }) =>
+    apiClient.get<never, ChoirSponsorRequest[]>('/choirs/sponsor-requests', { params }),
+
+  reviewSponsorRequest: (
+    requestId: string,
+    status: 'APPROVED' | 'REJECTED',
+    reviewNotes?: string,
+  ) =>
+    apiClient.patch<never, ChoirSponsorRequest>(
+      `/choirs/sponsor-requests/${requestId}`,
+      { status, reviewNotes },
+    ),
+
+  withdrawSponsorRequest: (requestId: string) =>
+    apiClient.patch<never, ChoirSponsorRequest>(
+      `/choirs/sponsor-requests/${requestId}`,
+      { withdraw: true },
+    ),
 
   getPositionRoles: (choirId: string) =>
     apiClient.get<never, ChoirPositionRole[]>(

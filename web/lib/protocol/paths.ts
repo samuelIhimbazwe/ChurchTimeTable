@@ -1,6 +1,7 @@
 /** Known segments under `/protocol/*` for composed dashboard routing. */
 export const PROTOCOL_DASHBOARD_SEGMENTS = new Set([
   'member',
+  'admin',
   'president',
   'coordinator',
   'treasury',

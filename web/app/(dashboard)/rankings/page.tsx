@@ -87,7 +87,7 @@ export default function RankingsPage() {
 
   const { data: protocolRankings, isLoading: loadingProtocol } = useQuery({
     queryKey: ['protocol-rankings'],
-    queryFn:  protocolApi.getRankings,
+    queryFn: () => protocolApi.getRankings(),
     enabled:  tab === 'protocol',
   })
 

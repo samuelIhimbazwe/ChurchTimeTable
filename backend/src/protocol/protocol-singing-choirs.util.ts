@@ -14,6 +14,7 @@ export async function resolveSingingChoirIds(
     where: {
       occurrenceId,
       cancelledAt: null,
+      status: 'CONFIRMED',
       role: { in: SINGING_ASSIGNMENT_ROLES },
     },
     select: { choirId: true },

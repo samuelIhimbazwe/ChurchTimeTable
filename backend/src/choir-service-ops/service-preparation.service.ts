@@ -88,11 +88,13 @@ export class ServicePreparationService {
     choirId: string,
     from?: Date,
     to?: Date,
+    confirmedOnly = false,
   ) {
     const assignments = await this.prisma.choirServiceAssignment.findMany({
       where: {
         choirId,
         cancelledAt: null,
+        ...(confirmedOnly ? { status: 'CONFIRMED' as const } : {}),
         occurrence: {
           startAt: {
             ...(from ? { gte: from } : {}),
@@ -129,7 +131,7 @@ export class ServicePreparationService {
 
   async listForMember(actorUserId: string, choirId: string, from?: Date, to?: Date) {
     await this.assertActiveMember(actorUserId, choirId);
-    return this.listAssignments(choirId, from, to);
+    return this.listAssignments(choirId, from, to, true);
   }
 
   async getPlanForMember(actorUserId: string, choirId: string, occurrenceId: string) {

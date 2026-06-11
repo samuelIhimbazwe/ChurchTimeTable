@@ -139,6 +139,27 @@ export class GovernanceService {
     return { roles, members };
   }
 
+  async revokeProtocolCommitteeMember(
+    assignmentId: string,
+    actorUserId: string,
+  ) {
+    const assignment = await this.prisma.protocolCommitteeMember.findUniqueOrThrow({
+      where: { id: assignmentId },
+      include: { role: true, member: true },
+    });
+    await this.prisma.protocolCommitteeMember.delete({
+      where: { id: assignmentId },
+    });
+    await this.audit.log({
+      userId: actorUserId,
+      action: 'PROTOCOL_COMMITTEE_MEMBER_REVOKE',
+      entity: 'ProtocolCommitteeMember',
+      entityId: assignmentId,
+      oldValue: assignment,
+    });
+    return { revoked: true, id: assignmentId };
+  }
+
   async listProtocolCommittee(scopeId: string) {
     const [roles, members] = await Promise.all([
       this.prisma.protocolCommitteeRole.findMany({

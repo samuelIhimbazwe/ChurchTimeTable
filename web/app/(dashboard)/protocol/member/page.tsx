@@ -138,7 +138,7 @@ export default function ProtocolMemberHomePage() {
 function ProtocolRankingsPreview() {
   const { data: rankings, isLoading } = useQuery({
     queryKey: ['protocol-rankings'],
-    queryFn:  protocolApi.getRankings,
+    queryFn: () => protocolApi.getRankings(),
   })
 
   if (isLoading) return <SkeletonCard rows={4} />

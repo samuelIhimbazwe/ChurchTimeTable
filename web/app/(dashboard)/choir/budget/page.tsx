@@ -54,9 +54,15 @@ export default function BudgetHubPage() {
   })
   const budgets = normalizeBudgets(budgetsRaw)
 
-  const { data: queue } = useQuery({
-    queryKey: ['contribution-queue'],
-    queryFn: () => financeApi.getContributionQueue({ status: 'PENDING' }),
+  const { data: pendingFamily } = useQuery({
+    queryKey: ['finance-contributions-choir-pending-family'],
+    queryFn: () =>
+      financeApi.listContributions({
+        ministryScope: 'CHOIR',
+        status: 'SUBMITTED',
+        familyOnly: true,
+        limit: 30,
+      }),
   })
 
   const { data: submitOptions } = useQuery({
@@ -82,10 +88,9 @@ export default function BudgetHubPage() {
     onError: () => toast.error('Could not create budget'),
   })
 
-  const queueItems = Array.isArray(queue)
-    ? queue
-    : queue && typeof queue === 'object' && 'items' in queue
-      ? (queue as { items: unknown[] }).items
+  const queueItems =
+    pendingFamily && typeof pendingFamily === 'object' && 'items' in pendingFamily
+      ? (pendingFamily as { items: unknown[] }).items
       : []
 
   const campaigns = (submitOptions as { campaigns?: unknown[] })?.campaigns ?? []
@@ -145,6 +150,11 @@ export default function BudgetHubPage() {
             <Link href={choirLink('finance')} className="text-sm font-semibold text-primary-600">
               Finance analytics →
             </Link>
+            <PermissionGate anyOf={['choir.contribution.type.manage', 'choir.contribution.campaign.manage']}>
+              <Link href={choirLink('stewardship/admin')} className="text-sm font-semibold text-primary-600">
+                Catalog & campaigns →
+              </Link>
+            </PermissionGate>
           </div>
         </div>
       )}

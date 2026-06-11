@@ -23,6 +23,9 @@ import '../../features/assignments/screens/leader_assignment_screen.dart';
 import '../../features/choir/screens/choir_rotation_screen.dart';
 import '../../features/finance/screens/budget_screen.dart';
 import '../../features/finance/screens/my_contributions_screen.dart';
+import '../../features/finance/screens/submit_contribution_screen.dart';
+import '../../features/protocol/screens/protocol_contribute_screen.dart';
+import '../../features/protocol/screens/protocol_treasury_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
 import '../../features/settings/screens/language_settings_screen.dart';
 import '../../features/coverage/screens/coverage_screen.dart';
@@ -73,6 +76,9 @@ class AppRouter {
   static const choirRotation = '/choir-rotation';
   static const budgets = '/budgets';
   static const myContributions = '/my-contributions';
+  static const submitContribution = '/contributions/submit';
+  static const protocolContribute = '/protocol/contribute';
+  static const protocolTreasury = '/protocol/treasury';
   static const members = '/members';
   static const memberProfile = '/members/profile';
   static const myProfile = '/my-profile';
@@ -123,6 +129,9 @@ class AppRouter {
     choirRotation,
     budgets,
     myContributions,
+    submitContribution,
+    protocolContribute,
+    protocolTreasury,
     members,
     memberProfile,
     myProfile,
@@ -238,6 +247,12 @@ class AppRouter {
         return l10n.budgets_title;
       case myContributions:
         return l10n.my_contributions_title;
+      case submitContribution:
+        return 'Submit contribution';
+      case protocolContribute:
+        return 'Protocol contribution';
+      case protocolTreasury:
+        return 'Protocol treasury';
       case members:
         return l10n.members_title;
       case memberProfile:
@@ -338,6 +353,21 @@ class AppRouter {
         return _page(const BudgetScreen(), routeName: budgets);
       case myContributions:
         return _page(const MyContributionsScreen(), routeName: myContributions);
+      case submitContribution:
+        return _page(
+          const SubmitContributionScreen(),
+          routeName: submitContribution,
+        );
+      case protocolContribute:
+        return _page(
+          const ProtocolContributeScreen(),
+          routeName: protocolContribute,
+        );
+      case protocolTreasury:
+        return _page(
+          const ProtocolTreasuryScreen(),
+          routeName: protocolTreasury,
+        );
       case members:
         return _page(const MembersScreen(), routeName: members);
       case memberProfile:

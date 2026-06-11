@@ -1,14 +1,17 @@
 'use client'
 
+import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { financeApi } from '@/lib/api'
 import {
   StatTile, PermissionGate, SkeletonStatTile,
 } from '@/components/shared'
 import { StewardshipDashboard } from '@/components/choir/ContributionTreasuryPanel'
+import { useResolvedChoirScope } from '@/lib/hooks'
 import { DollarSign, Users, TrendingUp } from 'lucide-react'
 
 export default function StewardshipPage() {
+  const { choirLink } = useResolvedChoirScope()
   const { data: analytics, isLoading } = useQuery({
     queryKey: ['finance-stewardship', 'CHOIR'],
     queryFn: () => financeApi.getStewardshipAnalytics('CHOIR'),
@@ -25,11 +28,21 @@ export default function StewardshipPage() {
       </div>
     }>
       <div className="space-y-6 max-w-5xl mx-auto">
-        <div>
-          <h2 className="font-display text-3xl text-text-primary">Stewardship</h2>
-          <p className="text-text-secondary text-sm mt-1">
-            Contribution workflow, discrepancy follow-up, and family rankings
-          </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="font-display text-3xl text-text-primary">Stewardship</h2>
+            <p className="text-text-secondary text-sm mt-1">
+              Contribution workflow, discrepancy follow-up, and family rankings
+            </p>
+          </div>
+          <PermissionGate anyOf={['choir.contribution.type.manage', 'choir.contribution.campaign.manage']}>
+            <Link
+              href={choirLink('stewardship/admin')}
+              className="text-sm font-semibold text-primary-600 hover:underline"
+            >
+              Catalog & campaigns →
+            </Link>
+          </PermissionGate>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

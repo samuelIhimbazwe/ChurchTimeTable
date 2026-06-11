@@ -49,6 +49,10 @@ export const PERMISSIONS = {
   CHOIR_CONTRIBUTION_ADJUST: 'choir.contribution.adjust',
   CHOIR_CONTRIBUTION_TYPE_MANAGE: 'choir.contribution.type.manage',
   CHOIR_CONTRIBUTION_CAMPAIGN_MANAGE: 'choir.contribution.campaign.manage',
+  /** Protocol unity — member → treasurer (no family step) */
+  PROTOCOL_CONTRIBUTION_SUBMIT: 'protocol.contribution.submit',
+  PROTOCOL_CONTRIBUTION_VIEW_ALL: 'protocol.contribution.view.all',
+  PROTOCOL_CONTRIBUTION_ADJUST: 'protocol.contribution.adjust',
   REPORT_EXPORT: 'report:export',
   /** @deprecated Legacy catalog entry — use scoped finance claims in runtime checks */
   AUDIT_READ: 'audit:read',
@@ -216,8 +220,19 @@ export const PERMISSIONS = {
   /** Member Portal (MEMBER-PORTAL-1) */
   MEMBER_PORTAL_VIEW: 'member.portal.view',
   CHOIR_JOIN_REVIEW: 'choir.join.review',
+  CHOIR_SPONSOR_REVIEW: 'choir.sponsor.review',
+  CHOIR_MUSIC_SPONSOR_VIEW: 'choir.music.sponsor.view',
   PROTOCOL_INVITE: 'protocol.invite',
   PROTOCOL_CLAIM_REVIEW: 'protocol.claim.review',
+
+  /** Church Master Schedule — facility catalog & timetable (MF-7 extension) */
+  CHURCH_FACILITY_VIEW: 'church.facility.view',
+  CHURCH_FACILITY_MANAGE: 'church.facility.manage',
+  CHURCH_SCHEDULE_SUBMIT: 'church.schedule.submit',
+  CHURCH_SCHEDULE_VIEW: 'church.schedule.view',
+  CHURCH_SCHEDULE_VIEW_QUEUE: 'church.schedule.view.queue',
+  CHURCH_SCHEDULE_MANAGE: 'church.schedule.manage',
+  CHURCH_SCHEDULE_RESOLVE: 'church.schedule.resolve',
 } as const;
 
 /** Per-unit permission codes on OperationalUnitPermissionAssignment */
@@ -286,6 +301,7 @@ export const CHOIR_OPS_ADMIN_PERMISSIONS = [
 export const MEMBER_PORTAL_PERMISSIONS = [
   PERMISSIONS.MEMBER_PORTAL_VIEW,
   PERMISSIONS.CHOIR_JOIN_REVIEW,
+  PERMISSIONS.CHOIR_SPONSOR_REVIEW,
   PERMISSIONS.PROTOCOL_INVITE,
   PERMISSIONS.PROTOCOL_CLAIM_REVIEW,
 ] as const;
@@ -466,10 +482,37 @@ export const CHURCH_ADMIN_ACCOUNT_PERMISSIONS = [
   PERMISSIONS.MEMBER_MANAGE,
 ] as const;
 
+/** Platform oversight for parish coordination office (not full SUPER_ADMIN). */
+export const CHURCH_ADMIN_PLATFORM_OVERSIGHT_PERMISSIONS = [
+  PERMISSIONS.ADMIN_AUDIT_VIEW,
+  PERMISSIONS.ADMIN_SETTINGS_VIEW,
+  PERMISSIONS.ADMIN_SETTINGS_MANAGE,
+  PERMISSIONS.ADMIN_SYNC_MANAGE,
+  PERMISSIONS.ADMIN_ROLES_MANAGE,
+] as const;
+
+/** Submit church-facing activities for master timetable (ministry / choir / protocol admins). */
+export const CHURCH_SCHEDULE_SUBMIT_PERMISSIONS = [
+  PERMISSIONS.CHURCH_SCHEDULE_SUBMIT,
+  PERMISSIONS.CHURCH_SCHEDULE_VIEW,
+  PERMISSIONS.CHURCH_FACILITY_VIEW,
+] as const;
+
+/** Full master schedule authority — church admin only. */
+export const CHURCH_SCHEDULE_ADMIN_PERMISSIONS = [
+  ...CHURCH_SCHEDULE_SUBMIT_PERMISSIONS,
+  PERMISSIONS.CHURCH_SCHEDULE_VIEW_QUEUE,
+  PERMISSIONS.CHURCH_SCHEDULE_MANAGE,
+  PERMISSIONS.CHURCH_SCHEDULE_RESOLVE,
+  PERMISSIONS.CHURCH_FACILITY_MANAGE,
+] as const;
+
 /** Church-wide operational admin (pilot, ministries, finance inbox, assets, etc.) */
 export const CHURCH_ADMIN_OPERATIONAL_PERMISSIONS = [
   ...new Set([
     ...CHURCH_ADMIN_ACCOUNT_PERMISSIONS,
+    ...CHURCH_ADMIN_PLATFORM_OVERSIGHT_PERMISSIONS,
+    ...CHURCH_SCHEDULE_ADMIN_PERMISSIONS,
     ...MINISTRY_ADMIN_PERMISSIONS,
     ...OPERATIONAL_UNIT_ADMIN_PERMISSIONS,
     ...ASSET_ADMIN_PERMISSIONS,

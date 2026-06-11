@@ -11,6 +11,7 @@ import '../../../core/repositories/attendance_repository.dart';
 import '../../../core/repositories/dashboard_repository.dart';
 import '../../../core/widgets/event_picker.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../../core/widgets/shell_aware_scaffold.dart';
 
 const _excuseReasons = [
   'illness',
@@ -131,17 +132,15 @@ class _MemberAttendanceScreenState extends ConsumerState<MemberAttendanceScreen>
         (_summary?['attendanceRecent'] as List?)?.cast<Map<String, dynamic>>() ??
             [];
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.member_attendance_label),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _load,
-            tooltip: l10n.common_refresh,
-          ),
-        ],
-      ),
+    return ShellAwareScaffold(
+      title: l10n.member_attendance_label,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          onPressed: _load,
+          tooltip: l10n.common_refresh,
+        ),
+      ],
       body: _loading
           ? Center(child: Text(l10n.common_loading))
           : RefreshIndicator(

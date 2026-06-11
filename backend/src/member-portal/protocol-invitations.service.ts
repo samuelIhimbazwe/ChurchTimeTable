@@ -13,6 +13,7 @@ import { hasEffectivePermission } from '../common/governance/governance-permissi
 import { MEMBER_PORTAL_AUDIT } from './member-portal.constants';
 import { MemberPortalNotificationsService } from './member-portal-notifications.service';
 import { ProtocolMembershipService } from './protocol-membership.service';
+import { MemberMinistryScopeService } from './member-ministry-scope.service';
 
 @Injectable()
 export class ProtocolInvitationsService {
@@ -22,6 +23,7 @@ export class ProtocolInvitationsService {
     private permissions: PermissionsResolver,
     private notify: MemberPortalNotificationsService,
     private protocolMembership: ProtocolMembershipService,
+    private ministryScope: MemberMinistryScopeService,
   ) {}
 
   private canInvite(perms: string[]) {
@@ -146,6 +148,7 @@ export class ProtocolInvitationsService {
 
     if (status === 'ACCEPTED') {
       await this.protocolMembership.ensureProtocolMembership(member.id);
+      await this.ministryScope.syncMinistryScope(member.id);
     }
 
     await this.audit.log({

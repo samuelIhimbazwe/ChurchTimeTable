@@ -241,6 +241,22 @@ export interface ChoirJoinRequest {
   createdAt: string
 }
 
+export type SponsorRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN'
+
+export interface ChoirSponsorRequest {
+  id: string
+  choirId: string
+  choirName?: string
+  memberId: string
+  status: SponsorRequestStatus
+  kind?: string
+  message?: string | null
+  reviewNotes?: string | null
+  createdAt: string
+  member?: { id?: string; firstName?: string; lastName?: string }
+  choir?: { id?: string; name?: string; code?: string }
+}
+
 // ── Contributions ──────────────────────────────────────
 
 export interface Contribution {

@@ -15,8 +15,10 @@ export 'layout/responsive.dart';
 export 'layout/adaptive_spacing.dart';
 export 'layout/localized_text.dart';
 
+export 'components/brand/cmms_brand_logo.dart';
 export 'components/buttons/cmms_button.dart';
 export 'components/cards/cmms_card.dart';
+export 'components/cards/cmms_stat_tile.dart';
 export 'components/cards/ministry_card.dart';
 export 'components/cards/choir_member_card.dart';
 export 'components/chips/cmms_chip.dart';

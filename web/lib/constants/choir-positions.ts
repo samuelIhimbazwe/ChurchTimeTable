@@ -286,8 +286,28 @@ export function choirPositionMeta(name: string): ChoirPositionMeta | undefined {
 
 export const CHOIR_JOIN_REQUEST_TYPES = [
   { value: 'PERMANENT_MEMBER', label: 'Join as a new member' },
-  { value: 'RETURNING_MEMBER', label: 'Already serve in this choir' },
+  { value: 'RETURNING_MEMBER', label: 'Already sing in this choir' },
 ] as const
+
+export const CHOIR_SPONSOR_REQUEST_TYPES = [
+  { value: 'NEW_SPONSOR', label: 'Join as a new sponsor' },
+  { value: 'EXISTING_SPONSOR', label: 'Already a sponsor of this choir' },
+] as const
+
+export type ChoirJoinIntent =
+  | 'PERMANENT_MEMBER'
+  | 'RETURNING_MEMBER'
+  | 'NEW_SPONSOR'
+  | 'EXISTING_SPONSOR'
+
+export const CHOIR_JOIN_INTENTS = [
+  ...CHOIR_JOIN_REQUEST_TYPES,
+  ...CHOIR_SPONSOR_REQUEST_TYPES,
+] as const
+
+export function isSponsorJoinIntent(intent: string) {
+  return intent === 'NEW_SPONSOR' || intent === 'EXISTING_SPONSOR'
+}
 
 /** Permissions choir admins can attach to position roles */
 export const CHOIR_POSITION_PERMISSION_OPTIONS = [
@@ -300,6 +320,7 @@ export const CHOIR_POSITION_PERMISSION_OPTIONS = [
   { code: 'member:read', label: 'View members' },
   { code: 'member:manage', label: 'Manage members' },
   { code: 'choir.join.review', label: 'Review join requests' },
+  { code: 'choir.sponsor.review', label: 'Review sponsor requests' },
   { code: 'choir.ops.view', label: 'View choir operations' },
   { code: 'choir.ops.report', label: 'Operations reports' },
   { code: 'choir.ops.schedule', label: 'Operations schedule' },

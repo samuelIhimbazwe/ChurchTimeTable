@@ -49,10 +49,14 @@ export class MusicService {
     search?: string,
     categoryId?: string,
     language?: string,
+    choirId?: string,
   ) {
     await this.assertAccess(userId);
     const { skip, take } = paginate(page, limit);
     const filters: Prisma.SongWhereInput[] = [{ active: true }];
+    if (choirId) {
+      filters.push({ OR: [{ choirId }, { choirId: null }] });
+    }
     if (search?.trim()) {
       const q = search.trim();
       filters.push({
@@ -60,6 +64,7 @@ export class MusicService {
           { title: { contains: q } },
           { alternateTitle: { contains: q } },
           { composer: { contains: q } },
+          { lyricist: { contains: q } },
           { lyricsText: { contains: q } },
         ],
       });
@@ -76,22 +81,52 @@ export class MusicService {
         orderBy: { title: 'asc' },
         include: {
           category: true,
+          assets: { select: { assetType: true } },
           _count: { select: { usageRecords: true, assets: true, favorites: true } },
         },
       }),
       this.prisma.song.count({ where }),
     ]);
     return paginatedResult(
-      items.map((s) => ({
-        ...s,
-        usageCount: s._count.usageRecords,
-        assetCount: s._count.assets,
-        favoriteCount: s._count.favorites,
-      })),
+      items.map((s) => this.serializeListSong(s)),
       total,
       page,
       limit,
     );
+  }
+
+  private serializeListSong(
+    s: Prisma.SongGetPayload<{
+      include: {
+        category: true;
+        assets: { select: { assetType: true } };
+        _count: { select: { usageRecords: true; assets: true; favorites: true } };
+      };
+    }>,
+  ) {
+    const scoreTypes = new Set(['PDF', 'SHEET_MUSIC']);
+    const hasScore = s.assets.some((a) => scoreTypes.has(a.assetType));
+    const hasAudio = s.assets.some((a) => a.assetType === 'AUDIO');
+    const hasVideo = s.assets.some((a) => a.assetType === 'VIDEO');
+    return {
+      id: s.id,
+      title: s.title,
+      alternateTitle: s.alternateTitle,
+      language: s.language,
+      lyricist: s.lyricist,
+      composer: s.composer,
+      voiceParts: s.voiceParts,
+      category: s.category?.name ?? null,
+      categoryId: s.categoryId,
+      hasLyrics: Boolean(s.lyricsText?.trim()),
+      hasScore,
+      hasAudio,
+      hasVideo,
+      usageCount: s._count.usageRecords,
+      assetCount: s._count.assets,
+      favoriteCount: s._count.favorites,
+      createdAt: s.createdAt,
+    };
   }
 
   async getSong(userId: string, id: string) {
@@ -126,10 +161,34 @@ export class MusicService {
     if (!song) throw new NotFoundException('Not found');
     const lastUsed = song.usageRecords[0]?.usedAt ?? null;
     return {
-      ...song,
+      id: song.id,
+      title: song.title,
+      alternateTitle: song.alternateTitle,
+      language: song.language,
+      lyricist: song.lyricist,
+      composer: song.composer,
+      arranger: song.arranger,
+      voiceParts: song.voiceParts,
+      scriptureReference: song.scriptureReference,
+      notes: song.notes,
+      category: song.category?.name ?? null,
+      categoryId: song.categoryId,
+      lyrics: song.lyricsText,
+      lyricsText: song.lyricsText,
+      assets: song.assets.map((a) => ({
+        id: a.id,
+        assetType: a.assetType,
+        fileName: a.fileName,
+        fileUrl: a.fileUrl,
+        mimeType: a.mimeType,
+        fileSize: a.fileSize,
+        createdAt: a.createdAt,
+      })),
       lastUsed,
       usageCount: song.usageRecords.length,
       isFavorite,
+      createdAt: song.createdAt,
+      updatedAt: song.updatedAt,
     };
   }
 
@@ -141,8 +200,23 @@ export class MusicService {
         alternateTitle: dto.alternateTitle?.trim(),
         categoryId: dto.categoryId,
         language: dto.language,
+        lyricist: dto.lyricist,
         composer: dto.composer,
         arranger: dto.arranger,
+        conductedBy: dto.conductedBy,
+        producedBy: dto.producedBy,
+        performedBy: dto.performedBy,
+        genre: dto.genre,
+        voiceParts: dto.voiceParts,
+        durationSeconds: dto.durationSeconds,
+        releaseDate: dto.releaseDate ? new Date(dto.releaseDate) : undefined,
+        shortSummary: dto.shortSummary,
+        fullDescription: dto.fullDescription,
+        recordingStudio: dto.recordingStudio,
+        mixingEngineer: dto.mixingEngineer,
+        masteringBy: dto.masteringBy,
+        recordingType: dto.recordingType,
+        listenLinksJson: (dto.listenLinks ?? undefined) as Prisma.InputJsonValue | undefined,
         year: dto.year,
         copyrightInfo: dto.copyrightInfo,
         source: dto.source,
@@ -173,8 +247,23 @@ export class MusicService {
         alternateTitle: dto.alternateTitle?.trim(),
         categoryId: dto.categoryId,
         language: dto.language,
+        lyricist: dto.lyricist,
         composer: dto.composer,
         arranger: dto.arranger,
+        conductedBy: dto.conductedBy,
+        producedBy: dto.producedBy,
+        performedBy: dto.performedBy,
+        genre: dto.genre,
+        voiceParts: dto.voiceParts,
+        durationSeconds: dto.durationSeconds,
+        releaseDate: dto.releaseDate ? new Date(dto.releaseDate) : undefined,
+        shortSummary: dto.shortSummary,
+        fullDescription: dto.fullDescription,
+        recordingStudio: dto.recordingStudio,
+        mixingEngineer: dto.mixingEngineer,
+        masteringBy: dto.masteringBy,
+        recordingType: dto.recordingType,
+        listenLinksJson: dto.listenLinks as Prisma.InputJsonValue | undefined,
         year: dto.year,
         copyrightInfo: dto.copyrightInfo,
         source: dto.source,

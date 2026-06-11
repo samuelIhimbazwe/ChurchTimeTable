@@ -28,6 +28,7 @@ import { ProtocolDashboardEntryButton } from '@/components/protocol/ProtocolDash
 import { ProtocolMyInvitationsCard } from '@/components/protocol/ProtocolMyInvitationsCard'
 import { ChoirPortalJoinControls } from '@/components/portal/ChoirPortalJoinControls'
 import { ChoirJoinRequestForm } from '@/components/portal/ChoirJoinRequestForm'
+import { PortalMyWeekCard } from '@/components/portal/PortalMyWeekCard'
 import type { MemberPortalServiceCard } from '@/lib/api/modules/memberPortal'
 
 function mapPreviewUrl(location: {
@@ -197,7 +198,7 @@ export default function MemberPortalPage() {
 
   const { welcome, location, spiritual, prayWithUs, services, events,
     weeklyActivitiesPreview, ministries, choirs, protocol, announcements,
-    liveBroadcast, onboarding } = data
+    liveBroadcast, onboarding, participation } = data
   const visibleChoirs = filterVisiblePortalChoirs(activeChoirMemberships, choirs)
   const previewChoirs = visibleChoirs.slice(0, 5)
   const mapInfo = mapPreviewUrl(location)
@@ -345,6 +346,14 @@ export default function MemberPortalPage() {
           )}
         </Card>
       </div>
+
+      {participation && (
+        <PortalMyWeekCard
+          isDualMember={participation.isDualMember}
+          thisWeek={participation.thisWeek}
+          conflicts={participation.conflicts}
+        />
+      )}
 
       {(liveBroadcast?.isLive || spiritual.livestream?.isLive) && (
         <Card accent="danger" padding="md">
@@ -632,7 +641,9 @@ export default function MemberPortalPage() {
           <div className="mt-4 flex flex-wrap items-center gap-3">
             {protocol.isMember ? (
               <>
-                <Badge variant="status-present">You are a protocol member</Badge>
+                <Badge variant="status-present">
+                  {participation?.isDualMember ? 'Choir & protocol member' : 'You are a protocol member'}
+                </Badge>
                 <ProtocolDashboardEntryButton label="Open protocol dashboard" />
               </>
             ) : protocol.status === 'PENDING_CLAIM' ? (

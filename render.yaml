@@ -1,0 +1,55 @@
+# Free hosting: boss gets a stable URL (e.g. https://cmms-web.onrender.com).
+# 1) Create a free Postgres DB at https://neon.tech and copy DATABASE_URL
+# 2) Render Dashboard -> New -> Blueprint -> connect this repo
+# 3) Paste DATABASE_URL when prompted, wait ~10 min for first deploy
+# Note: free tier sleeps after ~15 min idle; first visit may take ~1 min to wake up.
+
+services:
+  - type: web
+    name: cmms-api
+    runtime: node
+    region: frankfurt
+    plan: free
+    rootDir: backend
+    buildCommand: npm ci && npx prisma generate && npm run build && npx prisma db push --accept-data-loss --skip-generate && bash scripts/cloud-seed.sh
+    startCommand: bash scripts/cloud-start.sh
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_VERSION
+        value: '20'
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 30d
+      - key: WEB_ORIGIN
+        fromService:
+          type: web
+          name: cmms-web
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: SEED_DEMO
+        value: 'true'
+
+  - type: web
+    name: cmms-web
+    runtime: node
+    region: frankfurt
+    plan: free
+    rootDir: web
+    buildCommand: npm ci && DEMO_BUILD=1 npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_VERSION
+        value: '20'
+      - key: DEMO_BUILD
+        value: '1'
+      - key: API_PROXY_TARGET
+        fromService:
+          type: web
+          name: cmms-api
+          envVarKey: RENDER_EXTERNAL_URL

@@ -83,7 +83,7 @@ export default function ClaimsPage() {
                     }>
                       {status}
                     </Badge>
-                    <PermissionGate permission="protocol.manage">
+                    <PermissionGate anyOf={['protocol.claim.review', 'protocol.manage']}>
                       {status === 'PENDING' && (
                         <div className="flex gap-2">
                           <button

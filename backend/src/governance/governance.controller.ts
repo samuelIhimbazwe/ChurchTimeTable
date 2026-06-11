@@ -1,8 +1,11 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
-import { RequirePermissions } from '../common/decorators/roles.decorator';
+import {
+  RequireAnyPermissions,
+  RequirePermissions,
+} from '../common/decorators/roles.decorator';
 import { PERMISSIONS } from '../common/constants/roles';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/decorators/current-user.decorator';
@@ -60,9 +63,22 @@ export class GovernanceController {
   }
 
   @Get('protocol/:scopeId')
-  @RequirePermissions(PERMISSIONS.EVENT_READ)
+  @RequireAnyPermissions(
+    PERMISSIONS.EVENT_READ,
+    PERMISSIONS.PROTOCOL_VIEW,
+    PERMISSIONS.COMMITTEE_MEMBER_MANAGE_SCOPE,
+  )
   listProtocolCommittee(@Param('scopeId') scopeId: string) {
     return this.governance.listProtocolCommittee(scopeId);
+  }
+
+  @Delete('protocol/members/:assignmentId')
+  @RequirePermissions(PERMISSIONS.COMMITTEE_MEMBER_MANAGE_SCOPE)
+  revokeProtocolMember(
+    @Param('assignmentId') assignmentId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.governance.revokeProtocolCommitteeMember(assignmentId, user.sub);
   }
 
   @Post('protocol/teams/generate')

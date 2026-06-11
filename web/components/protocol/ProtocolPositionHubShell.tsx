@@ -5,9 +5,17 @@ import { ChevronRight } from 'lucide-react'
 import { Card } from '@/components/shared'
 
 const ROLE_LABELS: Record<string, { title: string; summary: string }> = {
+  protocol_admin: {
+    title: 'Protocol ministry admin',
+    summary: 'Assigned by the leader — manage roles, invitations, claims, and membership access.',
+  },
   protocol_president: {
-    title: 'Protocol President',
-    summary: 'Oversight, coordination with church leadership, and operational monitoring.',
+    title: 'Protocol President / Leader',
+    summary: 'Full ministry leadership — teams, rankings, oversight, and appointing admins.',
+  },
+  protocol_vice_president: {
+    title: 'Protocol Vice President',
+    summary: 'Executive oversight — view contributions, rankings, and teams. Treasurer confirms payments.',
   },
   protocol_coordinator: {
     title: 'Protocol Coordinator',

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -8,7 +8,10 @@ import { MemberPortalDashboardService } from './member-portal-dashboard.service'
 import { MemberPortalDevotionService } from './member-portal-devotion.service';
 import { MemberPortalPrayerService } from './member-portal-prayer.service';
 import { MemberPortalWeeklyActivitiesService } from './member-portal-weekly-activities.service';
+import { MemberPortalParticipationScheduleService } from './member-portal-participation-schedule.service';
 import { ChoirDashboardContextService } from './choir-dashboard-context.service';
+import { ChoirSponsorDashboardContextService } from './choir-sponsor-dashboard-context.service';
+import { ChoirSponsorCatalogService } from './choir-sponsor-catalog.service';
 import { ChoirMyFamilyService } from './choir-my-family.service';
 import { ProtocolDashboardContextService } from './protocol-dashboard-context.service';
 import {
@@ -24,8 +27,11 @@ export class MemberPortalController {
     private devotion: MemberPortalDevotionService,
     private prayer: MemberPortalPrayerService,
     private weeklyActivities: MemberPortalWeeklyActivitiesService,
+    private participationScheduleService: MemberPortalParticipationScheduleService,
     private choirProfile: MemberPortalChoirProfileService,
     private choirDashboardCtx: ChoirDashboardContextService,
+    private choirSponsorDashboardCtx: ChoirSponsorDashboardContextService,
+    private choirSponsorCatalog: ChoirSponsorCatalogService,
     private choirMyFamilyService: ChoirMyFamilyService,
     private protocolDashboardCtx: ProtocolDashboardContextService,
   ) {}
@@ -89,6 +95,12 @@ export class MemberPortalController {
     return this.weeklyActivities.listAll();
   }
 
+  @Get('participation-schedule')
+  @SkipPhoneEnforcement()
+  participationSchedule(@CurrentUser('sub') userId: string) {
+    return this.participationScheduleService.buildForUser(userId);
+  }
+
   @Get('weekly-activities/preview')
   @SkipPhoneEnforcement()
   weeklyActivitiesPreview() {
@@ -117,6 +129,43 @@ export class MemberPortalController {
     @Param('id') id: string,
   ) {
     return this.choirDashboardCtx.getContext(userId, id);
+  }
+
+  @Get('choirs/:id/sponsor/dashboard-context')
+  @SkipPhoneEnforcement()
+  choirSponsorDashboardContext(
+    @CurrentUser('sub') userId: string,
+    @Param('id') id: string,
+  ) {
+    return this.choirSponsorDashboardCtx.getContext(userId, id);
+  }
+
+  @Get('choirs/:id/sponsor/songs')
+  @SkipPhoneEnforcement()
+  choirSponsorSongs(
+    @CurrentUser('sub') userId: string,
+    @Param('id') id: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('q') search?: string,
+  ) {
+    return this.choirSponsorCatalog.listSongs(
+      userId,
+      id,
+      page ? Number(page) : 1,
+      limit ? Number(limit) : 50,
+      search,
+    );
+  }
+
+  @Get('choirs/:id/sponsor/songs/:songId')
+  @SkipPhoneEnforcement()
+  choirSponsorSong(
+    @CurrentUser('sub') userId: string,
+    @Param('id') id: string,
+    @Param('songId') songId: string,
+  ) {
+    return this.choirSponsorCatalog.getSong(userId, id, songId);
   }
 
   @Get('choirs/:id/public')

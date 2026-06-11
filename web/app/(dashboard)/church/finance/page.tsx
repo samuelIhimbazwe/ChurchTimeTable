@@ -15,8 +15,8 @@ function num(v: unknown, fallback = 0): number {
 
 export default function ChurchFinancePage() {
   const { data: analytics, isLoading: aLoading } = useQuery({
-    queryKey: ['finance-stewardship'],
-    queryFn:  () => financeApi.getStewardshipAnalytics(),
+    queryKey: ['finance-stewardship', 'BOTH'],
+    queryFn:  () => financeApi.getStewardshipAnalytics('BOTH'),
   })
 
   const { data: report, isLoading: rLoading } = useQuery({
@@ -25,8 +25,8 @@ export default function ChurchFinancePage() {
   })
 
   const { data: budgets } = useQuery({
-    queryKey: ['finance-budgets'],
-    queryFn: () => financeApi.getBudgets(),
+    queryKey: ['finance-budgets', 'BOTH'],
+    queryFn: () => financeApi.getBudgets({ ministryScope: 'BOTH' }),
   })
 
   const loading = aLoading || rLoading
@@ -37,9 +37,21 @@ export default function ChurchFinancePage() {
       <div>
         <h2 className="font-display text-3xl text-text-primary">Church Finance</h2>
         <p className="text-text-secondary text-sm mt-1">
-          Stewardship analytics and financial reports
+          Church-wide stewardship analytics and financial reports. Choir and protocol unit treasurers
+          manage their own ministry ledgers separately.
         </p>
       </div>
+
+      <Card padding="md" accent="info">
+        <p className="text-sm text-text-secondary">
+          <strong className="text-text-primary">Scope:</strong> this view is for church-wide finance
+          (tithes, offerings, Inyubako, church budgets). Members pay via{' '}
+          <a href="/portal/church-giving" className="text-primary-600 font-semibold">
+            Church giving
+          </a>
+          . Choir family umusanzu and protocol flows stay in each unit&apos;s treasurer hub.
+        </p>
+      </Card>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {loading ? (

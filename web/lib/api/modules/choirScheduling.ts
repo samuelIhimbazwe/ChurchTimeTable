@@ -29,4 +29,19 @@ export const choirSchedulingApi = {
 
   getAssignments: (params?: { choirId?: string }) =>
     apiClient.get<never, unknown[]>('/choir/scheduling/assignments', { params }),
+
+  getPendingAcceptance: (choirId: string) =>
+    apiClient.get<never, Array<{
+      id: string
+      role: string
+      status: string
+      conflictReason: string | null
+      occurrence?: { id: string; title: string; startAt: string; endAt: string }
+    }>>('/choir/scheduling/assignments/pending-acceptance', { params: { choirId } }),
+
+  acceptAssignment: (id: string, notes?: string) =>
+    apiClient.post<never, Record<string, unknown>>(`/choir/scheduling/assignments/${id}/accept`, { notes }),
+
+  declineAssignment: (id: string, reason?: string) =>
+    apiClient.post<never, Record<string, unknown>>(`/choir/scheduling/assignments/${id}/decline`, { reason }),
 }

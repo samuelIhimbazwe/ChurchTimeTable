@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/design/components/cards/cmms_card.dart';
 import '../../../core/design/tokens/spacing.dart';
 import '../../../core/localization/l10n.dart';
 import '../../../core/routing/app_router.dart';
-import '../../../core/widgets/mobile_tab_shell.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../choir/providers/choir_providers.dart';
 import 'music_favorites_screen.dart';
@@ -62,9 +62,7 @@ class _MusicScreenState extends ConsumerState<MusicScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return MobileTabShell(
-      currentRoute: AppRouter.music,
-      child: RefreshIndicator(
+    return RefreshIndicator(
         onRefresh: _load,
         child: _loading
             ? const Center(child: CircularProgressIndicator())
@@ -88,24 +86,28 @@ class _MusicScreenState extends ConsumerState<MusicScreen> {
                   if (_recent.isNotEmpty) ...[
                     Text(l10n.music_recent, style: Theme.of(context).textTheme.titleSmall),
                     ..._recent.take(5).map(
-                          (r) => ListTile(
-                            title: Text(r['id']?.toString() ?? ''),
+                          (r) => CmmsCard(
+                            title: r['id']?.toString() ?? '',
+                            leading: const Icon(Icons.history),
                             onTap: () => _openSong(r['id']?.toString() ?? ''),
                           ),
                         ),
                     const Divider(),
                   ],
                   ..._songs.map(
-                    (song) => ListTile(
-                      title: Text(song['title']?.toString() ?? ''),
-                      subtitle: Text(song['composer']?.toString() ?? ''),
-                      trailing: Text('${song['usageCount'] ?? 0}'),
-                      onTap: () => _openSong(song['id'].toString()),
+                    (song) => Padding(
+                      padding: const EdgeInsets.only(bottom: Spacing.xs),
+                      child: CmmsCard(
+                        title: song['title']?.toString() ?? '',
+                        subtitle: song['composer']?.toString(),
+                        leading: const Icon(Icons.library_music_outlined),
+                        trailing: Text('${song['usageCount'] ?? 0}'),
+                        onTap: () => _openSong(song['id'].toString()),
+                      ),
                     ),
                   ),
                 ],
               ),
-      ),
     );
   }
 

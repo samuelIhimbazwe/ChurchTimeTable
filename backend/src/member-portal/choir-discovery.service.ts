@@ -31,6 +31,16 @@ export class ChoirDiscoveryService {
               take: 1,
             }
           : false,
+        sponsorRequests: memberId
+          ? {
+              where: { memberId },
+              orderBy: { createdAt: 'desc' },
+              take: 1,
+            }
+          : false,
+        sponsorships: memberId
+          ? { where: { memberId, active: true } }
+          : false,
       },
     });
 
@@ -46,6 +56,21 @@ export class ChoirDiscoveryService {
       showMemberCount: c.showMemberCountPublic,
       joinStatus: memberId ? (c.joinRequests[0]?.status ?? null) : null,
       pendingRequestId: memberId ? (c.joinRequests[0]?.id ?? null) : null,
+      sponsorStatus: memberId
+        ? (Array.isArray(c.sponsorRequests)
+            ? (c.sponsorRequests[0]?.status ?? null)
+            : null)
+        : null,
+      pendingSponsorRequestId: memberId
+        ? (Array.isArray(c.sponsorRequests)
+            ? (c.sponsorRequests[0]?.id ?? null)
+            : null)
+        : null,
+      isSponsor: memberId
+        ? (Array.isArray(c.sponsorships)
+            ? c.sponsorships.some((s) => s.choirId === c.id)
+            : false)
+        : false,
     }));
 
     if (!actorUserId) return mapped;

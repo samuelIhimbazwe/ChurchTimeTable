@@ -48,6 +48,10 @@ export default function LoginPage() {
             setFormError(
               'Unable to reach the server. Make sure the backend is running on http://localhost:3000.',
             )
+          } else if (err instanceof ApiError && (err.status >= 500 || err.status === 502 || err.status === 503)) {
+            setFormError(
+              'The server is temporarily unavailable. If you are on a shared demo link, ask the presenter to screen-share http://localhost:3001 instead.',
+            )
           } else if (err instanceof ApiError) {
             setFormError(err.message)
           } else {

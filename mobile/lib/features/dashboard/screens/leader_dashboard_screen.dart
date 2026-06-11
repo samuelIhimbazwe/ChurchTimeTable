@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/design/components/cards/cmms_card.dart';
+import '../../../core/design/components/cards/cmms_stat_tile.dart';
 import '../../../core/design/components/cards/ministry_card.dart';
 import '../../../core/design/layout/adaptive_spacing.dart';
 import '../../../core/design/tokens/ministry_accents.dart';
@@ -9,7 +10,7 @@ import '../../../core/design/tokens/spacing.dart';
 import '../../../core/localization/l10n.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/routing/app_router.dart';
-import '../../../core/widgets/mobile_tab_shell.dart';
+import '../../../core/widgets/shell_aware_scaffold.dart';
 import '../../../core/auth/governance_permissions.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../core/models/dashboard_models.dart';
@@ -27,9 +28,19 @@ class LeaderDashboardScreen extends ConsumerWidget {
         ? ref.watch(leaderDashboardProvider)
         : const AsyncValue<LeaderDashboardSummary?>.data(null);
 
-    final embedded = MobileTabShellScope.embeddedInShell(context);
-
-    final body = RefreshIndicator(
+    return ShellAwareScaffold(
+      title: l10n.dashboard_leader_title,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.settings_outlined),
+          onPressed: () => Navigator.pushNamed(context, AppRouter.settings),
+        ),
+        IconButton(
+          icon: const Icon(Icons.sync_outlined),
+          onPressed: () => Navigator.pushNamed(context, AppRouter.sync),
+        ),
+      ],
+      body: RefreshIndicator(
       onRefresh: () async => ref.invalidate(leaderDashboardProvider),
         child: CustomScrollView(
           slivers: [
@@ -82,38 +93,7 @@ class LeaderDashboardScreen extends ConsumerWidget {
             ),
           ],
         ),
-    );
-
-    if (embedded) {
-      return body;
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.dashboard_leader_title),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () =>
-                Navigator.pushNamed(context, AppRouter.settings),
-          ),
-          IconButton(
-            icon: const Icon(Icons.sync),
-            onPressed: () => Navigator.pushNamed(context, AppRouter.sync),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: l10n.common_logout,
-            onPressed: () async {
-              await ref.read(authProvider.notifier).logout();
-              if (context.mounted) {
-                Navigator.pushReplacementNamed(context, AppRouter.login);
-              }
-            },
-          ),
-        ],
       ),
-      body: body,
     );
   }
 
@@ -187,56 +167,44 @@ class _KpiGrid extends StatelessWidget {
       crossAxisSpacing: CmmsSpacing.xs,
       childAspectRatio: 1.4,
       children: [
-        CmmsCard(
-          title: l10n.dashboard_kpi_upcoming_events,
-          child: Text(
-            '${summary.upcomingEvents}',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
+        CmmsStatTile(
+          label: l10n.dashboard_kpi_upcoming_events,
+          value: '${summary.upcomingEvents}',
+          icon: Icons.event_outlined,
+          accent: true,
         ),
-        CmmsCard(
-          title: l10n.dashboard_kpi_attendance_rate,
-          child: Text(
-            summary.attendanceRate != null ? '${summary.attendanceRate}%' : '—',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
+        CmmsStatTile(
+          label: l10n.dashboard_kpi_attendance_rate,
+          value: summary.attendanceRate != null ? '${summary.attendanceRate}' : '—',
+          suffix: summary.attendanceRate != null ? '%' : '',
+          icon: Icons.verified_outlined,
         ),
-        CmmsCard(
-          title: l10n.dashboard_kpi_pending_swaps,
-          child: Text(
-            '${summary.pendingSwaps}',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
+        CmmsStatTile(
+          label: l10n.dashboard_kpi_pending_swaps,
+          value: '${summary.pendingSwaps}',
+          icon: Icons.swap_horiz_outlined,
         ),
-        CmmsCard(
-          title: l10n.dashboard_kpi_pending_replacements,
-          child: Text(
-            '${summary.pendingReplacements}',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
+        CmmsStatTile(
+          label: l10n.dashboard_kpi_pending_replacements,
+          value: '${summary.pendingReplacements}',
+          icon: Icons.person_add_alt_outlined,
         ),
-        CmmsCard(
-          title: l10n.dashboard_kpi_active_discipline,
-          child: Text(
-            '${summary.raw['activeDiscipline'] ?? 0}',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
+        CmmsStatTile(
+          label: l10n.dashboard_kpi_active_discipline,
+          value: '${summary.raw['activeDiscipline'] ?? 0}',
+          icon: Icons.gavel_outlined,
         ),
-        CmmsCard(
-          title: l10n.dashboard_kpi_sync_conflicts,
-          child: Text(
-            '${summary.raw['syncConflicts'] ?? 0}',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
+        CmmsStatTile(
+          label: l10n.dashboard_kpi_sync_conflicts,
+          value: '${summary.raw['syncConflicts'] ?? 0}',
+          icon: Icons.sync_problem_outlined,
         ),
         if (balance != null)
-          CmmsCard(
-            title: l10n.dashboard_kpi_finance_balance,
-            child: Text(
-              '$balance',
-              style: Theme.of(context).textTheme.titleLarge,
-              softWrap: true,
-            ),
+          CmmsStatTile(
+            label: l10n.dashboard_kpi_finance_balance,
+            value: '$balance',
+            icon: Icons.account_balance_wallet_outlined,
+            accent: true,
           ),
       ],
     );

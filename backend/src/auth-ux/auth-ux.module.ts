@@ -5,11 +5,13 @@ import { ChoirDiscoveryService } from '../member-portal/choir-discovery.service'
 import { ChoirMembershipRulesService } from '../member-portal/choir-membership-rules.service';
 import {
   ChurchBrandingController,
+  ChurchGivingController,
   ChurchPublicController,
   UxAnalyticsController,
 } from './auth-ux.controller';
 import { ChurchWelcomeService } from './church-welcome.service';
 import { ChurchBrandingService } from './church-branding.service';
+import { ChurchGivingService } from './church-giving.service';
 import { UxAnalyticsService } from './ux-analytics.service';
 
 @Module({
@@ -18,14 +20,16 @@ import { UxAnalyticsService } from './ux-analytics.service';
     ChurchPublicController,
     UxAnalyticsController,
     ChurchBrandingController,
+    ChurchGivingController,
   ],
   providers: [
     ChurchWelcomeService,
     ChurchBrandingService,
+    ChurchGivingService,
     UxAnalyticsService,
     ChoirMembershipRulesService,
     ChoirDiscoveryService,
   ],
-  exports: [ChurchBrandingService, UxAnalyticsService],
+  exports: [ChurchBrandingService, ChurchGivingService, UxAnalyticsService],
 })
 export class AuthUxModule {}

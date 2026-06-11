@@ -94,6 +94,11 @@ export function ContributeClaimForm({ onSuccess }: { onSuccess?: () => void }) {
           onSubmit={(e) => {
             e.preventDefault()
             if (!typeId || !amount) return
+            const parsedAmount = parseFloat(amount)
+            if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+              toast.error('Amount must be greater than zero')
+              return
+            }
             if (isOther && customType.trim().length < 2) {
               toast.error('Describe the contribution type')
               return
@@ -135,7 +140,7 @@ export function ContributeClaimForm({ onSuccess }: { onSuccess?: () => void }) {
               <input
                 type="number"
                 min="1"
-                step="100"
+                step="1"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 required

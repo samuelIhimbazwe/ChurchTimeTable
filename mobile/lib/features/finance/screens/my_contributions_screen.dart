@@ -5,6 +5,7 @@ import '../../../core/api/api_response.dart';
 import '../../../core/design/components/cards/cmms_card.dart';
 import '../../../core/design/tokens/spacing.dart';
 import '../../../core/localization/l10n.dart';
+import '../../../core/routing/app_router.dart';
 import '../../auth/providers/auth_provider.dart';
 
 class MyContributionsScreen extends ConsumerStatefulWidget {
@@ -75,6 +76,17 @@ class _MyContributionsScreenState extends ConsumerState<MyContributionsScreen> {
       appBar: AppBar(
         title: Text(l10n.my_contributions_title),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline),
+            tooltip: 'Submit contribution',
+            onPressed: () async {
+              final submitted = await Navigator.pushNamed(
+                context,
+                AppRouter.submitContribution,
+              );
+              if (submitted == true) _load();
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _load,

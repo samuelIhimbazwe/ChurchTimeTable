@@ -591,6 +591,7 @@ model User {
   operationNotifications            OperationNotification[]
   churchBroadcastsCreated           ChurchBroadcast[] @relation("BroadcastCreator")
   choirJoinRequestsReviewed         ChoirJoinRequest[] @relation("ChoirJoinReviewerUser")
+  choirSponsorRequestsReviewed      ChoirSponsorRequest[] @relation("ChoirSponsorReviewerUser")
   importJobsUploaded                ImportJob[]
   uxAnalyticsEvents                 UxAnalyticsEvent[]
   notificationDeliveryLogs        NotificationDeliveryLog[] @relation("NotificationDeliveryRecipient")
@@ -705,6 +706,8 @@ model Member {
   choirParticipationProfiles           ChoirMemberParticipationProfile[]
   choirCategoryRankingEntries          ChoirCategoryRankingEntry[]
   choirJoinRequests                    ChoirJoinRequest[]
+  choirSponsorRequests                 ChoirSponsorRequest[]
+  choirSponsorships                    ChoirSponsorship[]
   protocolInvitations                  ProtocolInvitation[]
   protocolMembershipClaims             ProtocolMembershipClaim[]
   protocolInvitationsSent              ProtocolInvitation[] @relation("ProtocolInviter")
@@ -955,6 +958,8 @@ model ContributionRecord {
   id                       String                   @id @default(uuid())
   memberId                 String
   familyId                 String?
+  /// Set for sponsor gifts (no family) — routes treasurer inbox to the correct choir
+  choirId                  String?
   financeTransactionId     String?
   memberDueId              String?
   /// @deprecated Sprint 10 — use contributionTypeCatalogId; kept for migration compat
@@ -996,9 +1001,11 @@ model ContributionRecord {
   thankYouSentBy           User?                    @relation("ContributionThankYouSender", fields: [thankYouSentById], references: [id])
   familyApprovedBy         Member?                  @relation("ContributionFamilyApprover", fields: [familyApprovedByMemberId], references: [id])
   familyRejectedBy         Member?                  @relation("ContributionFamilyRejecter", fields: [familyRejectedByMemberId], references: [id])
+  choir                    Choir?                   @relation(fields: [choirId], references: [id])
   adjustments              ContributionAdjustment[]
 
   @@index([memberId])
+  @@index([choirId])
   @@index([status])
   @@index([contributionType])
   @@index([contributionTypeCatalogId])
@@ -1112,6 +1119,8 @@ model Choir {
 
   memberships           ChoirMembership[]
   joinRequests          ChoirJoinRequest[]
+  sponsorRequests       ChoirSponsorRequest[]
+  sponsorships          ChoirSponsorship[]
   devotions             Devotion[]
   customRoles           ChoirCustomRole[]
   families              Family[]
@@ -1125,6 +1134,7 @@ model Choir {
   equipmentAssets       EquipmentAsset[]
   contributionTypes     ContributionTypeCatalog[]
   contributionCampaigns ContributionCampaign[]
+  sponsorContributions  ContributionRecord[]
   committeeRoles        ChoirCommitteeRole[]
   notifications         Notification[]
   protocolTeamLeaders   ProtocolTeamLeader[]
@@ -1464,9 +1474,24 @@ model Song {
   title              String
   alternateTitle     String?
   language           String?
+  lyricist           String?
   composer           String?
   arranger           String?
+  conductedBy        String?
+  producedBy         String?
+  performedBy        String?
+  genre              String?
+  voiceParts         String?
+  durationSeconds    Int?
+  releaseDate        DateTime?
   year               Int?
+  shortSummary       String?
+  fullDescription    String?
+  recordingStudio    String?
+  mixingEngineer     String?
+  masteringBy        String?
+  recordingType      String?
+  listenLinksJson    Json?
   copyrightInfo      String?
   source             String?
   scriptureReference String?
@@ -3019,6 +3044,19 @@ enum ChoirServiceAssignmentRole {
   SPECIAL_GUEST
 }
 
+enum ChoirServiceAssignmentStatus {
+  PENDING_CHURCH_CONFIRMATION
+  PENDING_CHOIR_ACCEPTANCE
+  CONFIRMED
+  REJECTED
+}
+
+enum ChoirServiceAssignmentSource {
+  CHOIR_PROPOSED
+  CHURCH_REQUEST
+  CHURCH_DIRECT
+}
+
 enum ChoirAttendanceOutcome {
   PRESENT_FULL
   PRESENT_LATE
@@ -3136,9 +3174,22 @@ model ChoirServiceAssignment {
   choirId        String
   occurrenceId   String
   role           ChoirServiceAssignmentRole @default(PRIMARY)
+  status         ChoirServiceAssignmentStatus @default(PENDING_CHURCH_CONFIRMATION)
+  source         ChoirServiceAssignmentSource @default(CHOIR_PROPOSED)
   assignedById   String?
+  proposedById   String?
+  confirmedById  String?
+  confirmedAt    DateTime?
+  rejectedById   String?
+  rejectedAt     DateTime?
+  rejectionReason String?
   assignedAt     DateTime                   @default(now())
   overrideReason String?
+  bypassRules    Boolean                    @default(false)
+  conflictReason String?
+  choirAcceptedById String?
+  choirAcceptedAt   DateTime?
+  announcedAt    DateTime?
   cancelledAt    DateTime?
   planEntryId    String?
 
@@ -3150,6 +3201,126 @@ model ChoirServiceAssignment {
   @@unique([choirId, occurrenceId, role])
   @@index([occurrenceId])
   @@index([choirId])
+  @@index([status])
+}
+
+enum ChurchScheduleScopeType {
+  MINISTRY
+  CHOIR
+  PROTOCOL
+  OPERATIONAL_UNIT
+}
+
+enum ChurchScheduleActivityType {
+  PRAYER
+  REHEARSAL
+  MEETING
+  TRAINING
+  CONCERT
+  FELLOWSHIP
+  OTHER_CHURCH_FACING
+}
+
+enum ChurchScheduleSubmissionStatus {
+  DRAFT
+  SUBMITTED
+  AUTO_PUBLISHED
+  CONFLICT_HELD
+  ADMIN_PUBLISHED
+  REJECTED
+  CANCELLED
+  COUNTER_PROPOSED
+}
+
+enum ChurchScheduleEntrySource {
+  CHURCH_DIRECT
+  AUTO_PUBLISHED
+  ADMIN_PUBLISHED
+  OVERRIDE
+}
+
+/// Church room / space catalog for master schedule conflict detection (Phase A).
+model ChurchFacility {
+  id                  String   @id @default(uuid())
+  code                String   @unique
+  name                String
+  building            String?
+  floor               String?
+  capacity            Int?
+  requiresAdminNotify Boolean  @default(false)
+  isActive            Boolean  @default(true)
+  sortOrder           Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  scheduleSubmissions ChurchScheduleSubmission[]
+  scheduleEntries     ChurchScheduleEntry[]
+
+  @@index([isActive, sortOrder])
+}
+
+/// Submitted activity request (draft → submit → auto-publish or conflict hold).
+model ChurchScheduleSubmission {
+  id                    String                       @id @default(uuid())
+  scopeType             ChurchScheduleScopeType
+  scopeId               String
+  title                 String
+  activityType          ChurchScheduleActivityType
+  calendarDate          DateTime
+  startAt               DateTime
+  endAt                 DateTime
+  facilityId            String
+  purpose               String?
+  weekOf                DateTime?
+  notes                 String?
+  status                ChurchScheduleSubmissionStatus @default(DRAFT)
+  submittedByUserId     String?
+  submittedAt           DateTime?
+  conflictEntryId       String?
+  conflictReason        String?
+  suggestedAlternatives Json?
+  rejectionReason       String?
+  counterProposal       Json?
+  createdByUserId       String
+  createdAt             DateTime                     @default(now())
+  updatedAt             DateTime                     @updatedAt
+
+  facility ChurchFacility       @relation(fields: [facilityId], references: [id])
+  entry    ChurchScheduleEntry?
+
+  @@index([scopeType, scopeId])
+  @@index([status])
+  @@index([facilityId])
+  @@index([startAt, endAt])
+  @@index([createdByUserId])
+}
+
+/// Published row on the church master timetable.
+model ChurchScheduleEntry {
+  id              String                    @id @default(uuid())
+  source          ChurchScheduleEntrySource
+  scopeType       ChurchScheduleScopeType?
+  scopeId         String?
+  title           String
+  activityType    ChurchScheduleActivityType
+  startAt         DateTime
+  endAt           DateTime
+  facilityId      String
+  purpose         String?
+  isChurchBlock   Boolean                   @default(false)
+  overrideReason  String?
+  submissionId    String?                   @unique
+  createdByUserId String
+  cancelledAt     DateTime?
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+
+  facility   ChurchFacility            @relation(fields: [facilityId], references: [id])
+  submission ChurchScheduleSubmission? @relation(fields: [submissionId], references: [id], onDelete: SetNull)
+
+  @@index([facilityId, startAt, endAt])
+  @@index([startAt, endAt])
+  @@index([cancelledAt])
 }
 
 model ChurchServiceRequest {
@@ -3442,6 +3613,58 @@ model ChoirJoinRequest {
 
   @@index([choirId, status])
   @@index([memberId, status])
+}
+
+enum ChoirSponsorRequestKind {
+  NEW_SPONSOR
+  EXISTING_SPONSOR
+}
+
+enum ChoirSponsorRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+model ChoirSponsorRequest {
+  id               String                    @id @default(uuid())
+  memberId         String
+  choirId          String
+  kind             ChoirSponsorRequestKind
+  message          String?
+  status           ChoirSponsorRequestStatus @default(PENDING)
+  reviewNotes      String?
+  reviewedByUserId String?
+  reviewedAt       DateTime?
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+
+  member         Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  choir          Choir  @relation(fields: [choirId], references: [id], onDelete: Cascade)
+  reviewedByUser User?  @relation("ChoirSponsorReviewerUser", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([choirId, status])
+  @@index([memberId, status])
+}
+
+model ChoirSponsorship {
+  id               String    @id @default(uuid())
+  memberId         String
+  choirId          String
+  active           Boolean   @default(true)
+  startedAt        DateTime  @default(now())
+  endedAt          DateTime?
+  approvedByUserId String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  choir  Choir  @relation(fields: [choirId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, choirId])
+  @@index([choirId, active])
+  @@index([memberId, active])
 }
 
 enum ProtocolInvitationStatus {

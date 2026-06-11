@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../core/design/components/brand/cmms_brand_logo.dart';
 import '../../../core/design/components/buttons/cmms_button.dart';
+import '../../../core/design/tokens/colors.dart';
 import '../../../core/localization/l10n.dart';
 import '../../../core/routing/app_router.dart';
 import '../providers/auth_provider.dart';
@@ -22,6 +25,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   bool _redirectScheduled = false;
+  bool _showPassword = false;
 
   @override
   void dispose() {
@@ -56,6 +60,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final auth = ref.watch(authProvider);
+    final isWide = MediaQuery.sizeOf(context).width >= 900;
 
     if (auth.initialized && auth.isAuthenticated && !_redirectScheduled) {
       _redirectScheduled = true;
@@ -71,89 +76,247 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       });
     }
 
-    final form = Form(
-      key: _formKey,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+    final form = _LoginForm(
+      formKey: _formKey,
+      email: _email,
+      password: _password,
+      showPassword: _showPassword,
+      onTogglePassword: () => setState(() => _showPassword = !_showPassword),
+      loading: auth.loading,
+      onSubmit: _submit,
+      onSignup: auth.loading
+          ? null
+          : () => Navigator.pushNamed(context, AppRouter.signup),
+      l10n: l10n,
+    );
+
+    if (isWide) {
+      return Scaffold(
+        body: Row(
+          children: [
+            Expanded(
+              child: _LoginBrandPanel(l10n: l10n),
+            ),
+            Expanded(
+              child: ColoredBox(
+                color: CmmsColors.background(
+                  Theme.of(context).brightness == Brightness.dark,
+                ),
+                child: Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(32),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 420),
+                      child: form,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: CmmsColors.background(
+        Theme.of(context).brightness == Brightness.dark,
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: Column(
+            children: [
+              const SizedBox(height: 16),
+              const CmmsBrandLogo(size: 44, showWordmark: true, subtitle: 'Church System'),
+              const SizedBox(height: 32),
+              form,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LoginBrandPanel extends StatelessWidget {
+  const _LoginBrandPanel({required this.l10n});
+
+  final dynamic l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: CmmsColors.primary900,
+      child: Stack(
         children: [
-          Icon(
-            Icons.church,
-            size: 72,
-            color: Theme.of(context).colorScheme.primary,
+          Positioned(
+            top: -80,
+            right: -80,
+            child: Container(
+              width: 280,
+              height: 280,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: CmmsColors.primary700.withValues(alpha: 0.4),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -60,
+            left: -60,
+            child: Container(
+              width: 220,
+              height: 220,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: CmmsColors.gold700.withValues(alpha: 0.2),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(48),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const CmmsBrandLogo(
+                  size: 48,
+                  showWordmark: true,
+                  subtitle: 'Church System',
+                  lightContext: true,
+                ),
+                const Spacer(),
+                Text(
+                  '"Let everything be done decently and in order."',
+                  style: GoogleFonts.cormorantGaramond(
+                    fontSize: 32,
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.w500,
+                    color: CmmsColors.textInverse,
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: 40,
+                  height: 2,
+                  color: CmmsColors.gold500,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '1 Cor 14:40',
+                  style: TextStyle(
+                    color: CmmsColors.primary300,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 48),
+                Text(
+                  '© ${DateTime.now().year} CMMS',
+                  style: TextStyle(
+                    color: CmmsColors.primary400,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoginForm extends StatelessWidget {
+  const _LoginForm({
+    required this.formKey,
+    required this.email,
+    required this.password,
+    required this.showPassword,
+    required this.onTogglePassword,
+    required this.loading,
+    required this.onSubmit,
+    required this.onSignup,
+    required this.l10n,
+  });
+
+  final GlobalKey<FormState> formKey;
+  final TextEditingController email;
+  final TextEditingController password;
+  final bool showPassword;
+  final VoidCallback onTogglePassword;
+  final bool loading;
+  final VoidCallback onSubmit;
+  final VoidCallback? onSignup;
+  final dynamic l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Form(
+      key: formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Welcome back',
+            style: GoogleFonts.cormorantGaramond(
+              fontSize: 32,
+              fontWeight: FontWeight.w600,
+              color: CmmsColors.textPrimary(isDark),
+            ),
           ),
           const SizedBox(height: 8),
           Text(
-            l10n.app_title,
-            style: Theme.of(context).textTheme.headlineMedium,
-            textAlign: TextAlign.center,
+            'Sign in to your church account',
+            style: TextStyle(
+              color: CmmsColors.textSecondary(isDark),
+              fontSize: 14,
+            ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 28),
           TextFormField(
-            controller: _email,
-            decoration: InputDecoration(labelText: l10n.auth_email_label),
+            controller: email,
+            decoration: InputDecoration(
+              labelText: l10n.auth_email_label,
+              prefixIcon: const Icon(Icons.mail_outline, size: 20),
+            ),
             keyboardType: TextInputType.emailAddress,
             validator: (v) =>
                 v != null && v.contains('@') ? null : l10n.auth_email_invalid,
           ),
           const SizedBox(height: 16),
           TextFormField(
-            controller: _password,
-            decoration: InputDecoration(labelText: l10n.auth_password_label),
-            obscureText: true,
+            controller: password,
+            decoration: InputDecoration(
+              labelText: l10n.auth_password_label,
+              prefixIcon: const Icon(Icons.lock_outline, size: 20),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  showPassword ? Icons.visibility_off : Icons.visibility,
+                  size: 20,
+                ),
+                onPressed: onTogglePassword,
+              ),
+            ),
+            obscureText: !showPassword,
             validator: (v) => v != null && v.length >= 6
                 ? null
                 : l10n.auth_password_min_length,
           ),
           const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: CmmsButton(
-              label: l10n.auth_sign_in_action,
-              onPressed: auth.loading ? null : _submit,
-              isLoading: auth.loading,
-            ),
+          CmmsButton(
+            label: l10n.auth_sign_in_action,
+            onPressed: loading ? null : onSubmit,
+            isLoading: loading,
           ),
           const SizedBox(height: 12),
           TextButton(
-            onPressed: auth.loading
-                ? null
-                : () => Navigator.pushNamed(context, AppRouter.signup),
+            onPressed: onSignup,
             child: Text(l10n.auth_create_account),
           ),
         ],
-      ),
-    );
-
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 460),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.outlineVariant,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.06),
-                      blurRadius: 24,
-                      offset: const Offset(0, 12),
-                    ),
-                  ],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: form,
-                ),
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }

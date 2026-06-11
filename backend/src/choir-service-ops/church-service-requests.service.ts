@@ -166,12 +166,15 @@ export class ChurchServiceRequestsService {
     });
 
     if (dto.status === 'APPROVED' && choirId) {
-      await this.assignments.assign(actorUserId, {
-        choirId,
-        occurrenceId: existing.occurrenceId,
-        role: existing.role,
-        overrideReason: `Church service request ${id}`,
-      });
+      const isChurch = await this.assignments.isChurchScheduler(actorUserId);
+      if (isChurch) {
+        await this.assignments.churchDirectAssign(actorUserId, {
+          choirId,
+          occurrenceId: existing.occurrenceId,
+          role: existing.role,
+          overrideReason: `Church service request ${id}`,
+        });
+      }
     }
 
     await this.audit.log({

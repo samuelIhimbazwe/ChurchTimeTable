@@ -7,10 +7,13 @@ import { ChoirsController } from './choirs.controller';
 import { ChoirContextService } from './choir-context.service';
 import { ChoirDiscoveryService } from '../member-portal/choir-discovery.service';
 import { ChoirJoinRequestsService } from '../member-portal/choir-join-requests.service';
+import { ChoirSponsorRequestsService } from '../member-portal/choir-sponsor-requests.service';
 import { ChoirMembershipRulesService } from '../member-portal/choir-membership-rules.service';
 import { MemberPortalNotificationsService } from '../member-portal/member-portal-notifications.service';
 import { ChoirMembersService } from './choir-members.service';
 import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
+import { ProtocolMembershipService } from '../member-portal/protocol-membership.service';
+import { MemberMinistryScopeService } from '../member-portal/member-ministry-scope.service';
 
 @Module({
   imports: [
@@ -25,9 +28,12 @@ import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
     ChoirContextService,
     ChoirDiscoveryService,
     ChoirJoinRequestsService,
+    ChoirSponsorRequestsService,
     ChoirMembershipRulesService,
     MemberPortalNotificationsService,
     ChoirMembersService,
+    ProtocolMembershipService,
+    MemberMinistryScopeService,
   ],
   exports: [ChoirContextService, ChoirMembershipRulesService],
 })

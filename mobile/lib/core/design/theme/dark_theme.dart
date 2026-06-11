@@ -7,10 +7,10 @@ ThemeData buildDarkTheme() {
   const brightness = Brightness.dark;
   final colorScheme = ColorScheme(
     brightness: brightness,
-    primary: CmmsColors.primaryDarkMode,
-    onPrimary: Colors.white,
-    secondary: CmmsColors.accentGold,
-    onSecondary: CmmsColors.textPrimaryDark,
+    primary: CmmsColors.primary400,
+    onPrimary: CmmsColors.primary900,
+    secondary: CmmsColors.gold400,
+    onSecondary: CmmsColors.primary900,
     error: CmmsColors.danger,
     onError: Colors.white,
     surface: CmmsColors.surfaceDark,
@@ -26,19 +26,24 @@ ThemeData buildDarkTheme() {
     brightness: brightness,
     colorScheme: colorScheme,
     scaffoldBackgroundColor: CmmsColors.backgroundDark,
-    fontFamily: CmmsTypography.fontFamily,
+    fontFamily: CmmsTypography.bodyFamily,
     textTheme: CmmsTypography.textTheme(brightness),
     appBarTheme: AppBarTheme(
-      centerTitle: true,
+      centerTitle: false,
       elevation: 0,
       scrolledUnderElevation: 0,
       backgroundColor: CmmsColors.surfaceDark,
       foregroundColor: CmmsColors.textPrimaryDark,
+      surfaceTintColor: Colors.transparent,
       titleTextStyle: CmmsTypography.textTheme(brightness).titleLarge,
+    ),
+    drawerTheme: const DrawerThemeData(
+      backgroundColor: CmmsColors.primary900,
+      surfaceTintColor: Colors.transparent,
     ),
     cardTheme: CardThemeData(
       elevation: 0,
-      color: CmmsColors.surfaceDark,
+      color: CmmsColors.surfaceVariantDark,
       shape: RoundedRectangleBorder(
         borderRadius: CmmsRadius.card,
         side: const BorderSide(color: CmmsColors.outlineDark),
@@ -47,44 +52,23 @@ ThemeData buildDarkTheme() {
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        backgroundColor: CmmsColors.primaryDarkMode,
-        foregroundColor: Colors.white,
+        backgroundColor: CmmsColors.gold500,
+        foregroundColor: CmmsColors.primary900,
         minimumSize: const Size(64, 48),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: CmmsRadius.button),
       ),
     ),
-    navigationBarTheme: NavigationBarThemeData(
-      backgroundColor: CmmsColors.surfaceDark,
-      indicatorColor: CmmsColors.primaryDarkMode.withValues(alpha: 0.2),
-      labelTextStyle: WidgetStateProperty.resolveWith((states) {
-        final selected = states.contains(WidgetState.selected);
-        return TextStyle(
-          fontSize: 12,
-          fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-          color: selected ? CmmsColors.primaryDarkMode : CmmsColors.textSecondaryDark,
-        );
-      }),
-      iconTheme: WidgetStateProperty.resolveWith((states) {
-        final selected = states.contains(WidgetState.selected);
-        return IconThemeData(
-          color: selected ? CmmsColors.primaryDarkMode : CmmsColors.textSecondaryDark,
-        );
-      }),
-    ),
     navigationRailTheme: NavigationRailThemeData(
       backgroundColor: Colors.transparent,
-      indicatorColor: CmmsColors.primaryDarkMode,
-      selectedIconTheme: const IconThemeData(color: Colors.white),
+      indicatorColor: CmmsColors.primary800,
+      selectedIconTheme: const IconThemeData(color: CmmsColors.gold400),
       selectedLabelTextStyle: const TextStyle(
-        color: Colors.white,
+        color: CmmsColors.textInverse,
         fontWeight: FontWeight.w600,
       ),
-      unselectedIconTheme: const IconThemeData(color: CmmsColors.textSecondaryDark),
-      unselectedLabelTextStyle: const TextStyle(color: CmmsColors.textSecondaryDark),
-    ),
-    drawerTheme: const DrawerThemeData(
-      backgroundColor: CmmsColors.surfaceDark,
+      unselectedIconTheme: const IconThemeData(color: CmmsColors.primary300),
+      unselectedLabelTextStyle: const TextStyle(color: CmmsColors.primary300),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
@@ -93,6 +77,11 @@ ThemeData buildDarkTheme() {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: CmmsRadius.button),
         side: const BorderSide(color: CmmsColors.outlineDark),
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: CmmsColors.gold400,
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -105,7 +94,7 @@ ThemeData buildDarkTheme() {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: CmmsRadius.button,
-        borderSide: const BorderSide(color: CmmsColors.primaryDarkMode, width: 2),
+        borderSide: const BorderSide(color: CmmsColors.gold400, width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     ),
@@ -120,7 +109,7 @@ ThemeData buildDarkTheme() {
       shape: RoundedRectangleBorder(borderRadius: CmmsRadius.button),
     ),
     dialogTheme: DialogThemeData(
-      backgroundColor: CmmsColors.surfaceDark,
+      backgroundColor: CmmsColors.surfaceVariantDark,
       shape: RoundedRectangleBorder(borderRadius: CmmsRadius.dialog),
     ),
   );

@@ -64,7 +64,16 @@ function adminToolsForPermissions(choirId: string, permissions: string[]): NavIt
     items.push({ label: 'Join requests', icon: UserPlus, path: choirPath(choirId, 'join-requests') })
     items.push({ label: 'Position roles', icon: KeyRound, path: choirPath(choirId, 'roles') })
   }
-  if (permissions.some((p) => ['family:manage', 'choir.family.manage'].includes(p))) {
+  if (
+    permissions.some((p) =>
+      [
+        'family:view',
+        'family:manage',
+        'choir.family.view',
+        'choir.family.manage',
+      ].includes(p),
+    )
+  ) {
     items.push({ label: 'Families structure', icon: Users, path: choirPath(choirId, 'admin/families') })
   }
   if (permissions.some((p) => ['choir.ops.manage', 'choir.oversight'].includes(p))) {
@@ -108,6 +117,43 @@ export function getComposedChoirNav(
   const adminTools = adminToolsForPermissions(choirId, permissions)
   if (adminTools.length > 0) {
     sections.push({ section: 'Administration', items: adminTools })
+  }
+
+  const financeItems: NavItem[] = []
+  if (
+    permissions.some((p) =>
+      [
+        'choir.contribution.view.all',
+        'choir.finance.view',
+        'choir.finance.manage',
+        'choir.contribution.adjust',
+      ].includes(p),
+    )
+  ) {
+    financeItems.push({
+      label: 'Stewardship',
+      icon: DollarSign,
+      path: choirPath(choirId, 'stewardship'),
+    })
+    financeItems.push({
+      label: 'Finance analytics',
+      icon: DollarSign,
+      path: choirPath(choirId, 'finance'),
+    })
+  }
+  if (
+    permissions.some((p) =>
+      ['choir.contribution.type.manage', 'choir.contribution.campaign.manage'].includes(p),
+    )
+  ) {
+    financeItems.push({
+      label: 'Catalog & campaigns',
+      icon: FileText,
+      path: choirPath(choirId, 'stewardship/admin'),
+    })
+  }
+  if (financeItems.length > 0) {
+    sections.push({ section: 'Treasury', items: financeItems })
   }
 
   const opsItems: NavItem[] = []

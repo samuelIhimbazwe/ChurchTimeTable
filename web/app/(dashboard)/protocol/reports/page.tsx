@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { protocolApi } from '@/lib/api'
 import {
-  Card, PermissionGate, SkeletonCard, Badge,
+  Card, PermissionGate, SkeletonCard,
 } from '@/components/shared'
 import { FileText } from 'lucide-react'
 import { formatDate } from '@/lib/utils/format'

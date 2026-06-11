@@ -13,6 +13,8 @@ export interface FinanceScopeContext {
   memberId?: string;
   permissions: string[];
   ministryScopes: MinistryScope[];
+  /** Church secretary/treasurer — church-wide ledger only (not choir/protocol) */
+  churchWideFinanceOnly: boolean;
   /** President / executive: summarized KPIs only */
   executiveSummaryOnly: boolean;
   canManageChoir: boolean;
@@ -44,6 +46,21 @@ const PROTOCOL_FINANCE_MANAGE_CLAIMS = [
   PERMISSIONS.PROTOCOL_FINANCE_APPROVE,
 ] as const;
 
+const MINISTRY_FINANCE_VIEW_CLAIMS = [
+  PERMISSIONS.MINISTRY_FINANCE_VIEW,
+  PERMISSIONS.MINISTRY_FINANCE_MANAGE,
+  PERMISSIONS.MINISTRY_FINANCE_REPORT,
+] as const;
+
+const MINISTRY_SCOPED_FINANCE_CLAIMS = [
+  ...CHOIR_FINANCE_VIEW_CLAIMS,
+  ...PROTOCOL_FINANCE_VIEW_CLAIMS,
+  PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
+  PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
+  PERMISSIONS.PROTOCOL_CONTRIBUTION_VIEW_ALL,
+  PERMISSIONS.PROTOCOL_CONTRIBUTION_ADJUST,
+] as const;
+
 export function buildFinanceScopeContext(
   operational: OperationalScopeContext,
 ): FinanceScopeContext {
@@ -54,8 +71,20 @@ export function buildFinanceScopeContext(
     hasEffectivePermission(permissions, PERMISSIONS.MINISTRY_FINANCE_OVERSIGHT) ||
     hasProtocolOversight(permissions);
 
+  const hasMinistryFinance = hasAnyEffectivePermission(
+    permissions,
+    MINISTRY_FINANCE_VIEW_CLAIMS,
+  );
+  const hasUnitFinance = hasAnyEffectivePermission(
+    permissions,
+    MINISTRY_SCOPED_FINANCE_CLAIMS,
+  );
+  const churchWideFinanceOnly = hasMinistryFinance && !hasOversight && !hasUnitFinance;
+
   if (hasOversight) {
     ministryScopes.push(MinistryScope.CHOIR, MinistryScope.PROTOCOL);
+  } else if (churchWideFinanceOnly) {
+    ministryScopes.push(MinistryScope.BOTH);
   } else {
     if (
       hasAnyEffectivePermission(permissions, CHOIR_FINANCE_VIEW_CLAIMS) ||
@@ -79,6 +108,7 @@ export function buildFinanceScopeContext(
     memberId: operational.memberId,
     permissions,
     ministryScopes: [...new Set(ministryScopes)],
+    churchWideFinanceOnly,
     executiveSummaryOnly,
     canManageChoir: hasAnyEffectivePermission(permissions, CHOIR_FINANCE_MANAGE_CLAIMS),
     canManageProtocol: hasAnyEffectivePermission(
@@ -120,6 +150,14 @@ export function assertContributionStewardScope(
   if (
     (ministry === MinistryScope.CHOIR || ministry === MinistryScope.BOTH) &&
     hasEffectivePermission(ctx.permissions, PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST)
+  ) {
+    return;
+  }
+
+  if (
+    ministry === MinistryScope.PROTOCOL &&
+    (hasEffectivePermission(ctx.permissions, PERMISSIONS.PROTOCOL_CONTRIBUTION_ADJUST) ||
+      hasEffectivePermission(ctx.permissions, PERMISSIONS.PROTOCOL_FINANCE_MANAGE))
   ) {
     return;
   }

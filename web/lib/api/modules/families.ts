@@ -181,4 +181,20 @@ export const familiesApi = {
 
   getContributions: (id: string) =>
     apiClient.get<never, Contribution[]>(`/families/${id}/contributions`),
+
+  getLeadershipHistory: (id: string) =>
+    apiClient.get<never, { items: FamilyLeadershipHistoryItem[] }>(
+      `/families/${id}/leadership-history`,
+    ),
+}
+
+export type FamilyLeadershipHistoryItem = {
+  id: string
+  memberId: string
+  memberNumber: string | null
+  memberName: string
+  role: string
+  startedAt: string
+  endedAt: string | null
+  assignedByUserId: string | null
 }

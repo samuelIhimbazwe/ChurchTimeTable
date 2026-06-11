@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/auth/governance_permissions.dart';
+import '../../../core/design/components/cards/cmms_card.dart';
+import '../../../core/design/components/cards/cmms_stat_tile.dart';
 import '../../../core/design/tokens/spacing.dart';
 import '../../../core/localization/l10n.dart';
 import '../../../core/routing/app_router.dart';
-import '../../../core/widgets/mobile_tab_shell.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../choir/providers/choir_providers.dart';
 import 'welfare_case_detail_screen.dart';
@@ -69,9 +70,7 @@ class _WelfareScreenState extends ConsumerState<WelfareScreen> {
     final perms = ref.watch(authProvider).permissions;
     final canManage = canManageWelfare(perms);
 
-    return MobileTabShell(
-      currentRoute: AppRouter.welfare,
-      child: RefreshIndicator(
+    return RefreshIndicator(
         onRefresh: _load,
         child: _loading
             ? const Center(child: CircularProgressIndicator())
@@ -106,17 +105,35 @@ class _WelfareScreenState extends ConsumerState<WelfareScreen> {
                       ],
                     ),
                   if (_dashboard != null) ...[
-                    Text('${l10n.welfare_open_cases}: ${_dashboard!['openCases']}'),
-                    Text('${l10n.welfare_funds_raised}: ${_dashboard!['fundsRaised']}'),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: CmmsStatTile(
+                            label: l10n.welfare_open_cases,
+                            value: '${_dashboard!['openCases'] ?? 0}',
+                            icon: Icons.volunteer_activism_outlined,
+                            accent: true,
+                          ),
+                        ),
+                        const SizedBox(width: Spacing.sm),
+                        Expanded(
+                          child: CmmsStatTile(
+                            label: l10n.welfare_funds_raised,
+                            value: '${_dashboard!['fundsRaised'] ?? 0}',
+                            icon: Icons.payments_outlined,
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: Spacing.md),
                   ],
                   ..._cases.map((item) {
                     final member = item['member'] as Map<String, dynamic>? ?? {};
-                    return ListTile(
-                      title: Text(item['title']?.toString() ?? ''),
-                      subtitle: Text(
-                        '${member['firstName'] ?? ''} ${member['lastName'] ?? ''} · ${item['status']}',
-                      ),
+                    return CmmsCard(
+                      title: item['title']?.toString() ?? '',
+                      subtitle:
+                          '${member['firstName'] ?? ''} ${member['lastName'] ?? ''} · ${item['status']}',
+                      leading: const Icon(Icons.folder_open_outlined),
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
@@ -130,7 +147,6 @@ class _WelfareScreenState extends ConsumerState<WelfareScreen> {
                   }),
                 ],
               ),
-      ),
     );
   }
 }

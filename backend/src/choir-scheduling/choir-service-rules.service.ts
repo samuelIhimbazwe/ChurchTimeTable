@@ -120,4 +120,57 @@ export class ChoirServiceRulesService {
 
     return recommendations;
   }
+
+  /** Soft validation — church admin may bypass with bypassRules. */
+  async validateChoirSlot(
+    choirId: string,
+    occurrenceId: string,
+    role: ChoirServiceAssignmentRole,
+  ): Promise<{ allowed: boolean; warnings: string[] }> {
+    const occurrence = await this.prisma.operationOccurrence.findUniqueOrThrow({
+      where: { id: occurrenceId },
+      include: { template: true },
+    });
+    const choir = await this.prisma.choir.findUniqueOrThrow({
+      where: { id: choirId },
+      include: { serviceEligibility: true },
+    });
+    const warnings: string[] = [];
+    const templateCode = occurrence.template?.code ?? null;
+    const e = choir.serviceEligibility;
+
+    if (e) {
+      if (!e.eligibleForMainServices) {
+        warnings.push(`${choir.name} is not marked eligible for main services.`);
+      }
+      if (templateCode === 'SUNDAY_SERVICE_1' && !e.eligibleForSunday1) {
+        warnings.push(`${choir.name} is not eligible for Sunday Service 1.`);
+      }
+      if (templateCode === 'SUNDAY_SERVICE_2' && !e.eligibleForSunday2) {
+        warnings.push(`${choir.name} is not eligible for Sunday Service 2.`);
+      }
+      if (templateCode === 'TUESDAY_SERVICE' && !e.eligibleForTuesday) {
+        warnings.push(`${choir.name} is not eligible for Tuesday service.`);
+      }
+      if (templateCode === 'IGABURO' && !e.eligibleForIgaburo) {
+        warnings.push(`${choir.name} is not eligible for IGABURO.`);
+      }
+      if (role === 'CHILDREN' && !e.isChildrenChoir) {
+        warnings.push(`${choir.name} is not a children choir but CHILDREN role was selected.`);
+      }
+      if (role === 'PRIMARY' && e.isChildrenChoir && templateCode === 'SUNDAY_SERVICE_1') {
+        warnings.push(
+          `Sunday Service 1 primary slots usually exclude children choirs; ${choir.name} is a children choir.`,
+        );
+      }
+    }
+
+    const slots = this.resolveSlots(templateCode, occurrence.startAt);
+    const roleSlots = slots.filter((s) => s.role === role);
+    if (roleSlots.length === 0 && templateCode) {
+      warnings.push(`Role ${role} is not in the default slot plan for ${templateCode}.`);
+    }
+
+    return { allowed: warnings.length === 0, warnings };
+  }
 }

@@ -40,7 +40,13 @@ import { ApproveContributionDto } from './dto/approve-contribution.dto';
 import { RejectFamilyContributionDto } from './dto/reject-family-contribution.dto';
 import { SubmitContributionDto } from './dto/submit-contribution.dto';
 import { ContributionSubmissionService } from './contribution-submission.service';
+import { ContributionProtocolService } from './contribution-protocol.service';
+import { ContributionCatalogAdminService } from './contribution-catalog-admin.service';
 import { ContributionMemberService } from './contribution-member.service';
+import { CreateContributionCatalogDto } from './dto/create-contribution-catalog.dto';
+import { UpdateContributionCatalogDto } from './dto/update-contribution-catalog.dto';
+import { CreateContributionCampaignDto } from './dto/create-contribution-campaign.dto';
+import { UpdateContributionCampaignDto } from './dto/update-contribution-campaign.dto';
 import { ContributionFamilyContextService } from './contribution-family-context.service';
 import { ContributionAdjustmentsListService } from './contribution-adjustments-list.service';
 import { ContributionStatus } from '@prisma/client';
@@ -70,12 +76,26 @@ const FINANCE_MANAGE_ANY = FINANCE_MANAGE_PERMISSIONS;
 const CONTRIBUTION_RECORD_WRITE_ANY = [
   ...FINANCE_MANAGE_PERMISSIONS,
   PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
+  PERMISSIONS.PROTOCOL_CONTRIBUTION_ADJUST,
 ] as const;
 
 const STEWARDSHIP_ANALYTICS_ANY = [
   ...FINANCE_VIEW_PERMISSIONS,
   PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
   PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
+  PERMISSIONS.PROTOCOL_CONTRIBUTION_VIEW_ALL,
+  PERMISSIONS.PROTOCOL_CONTRIBUTION_ADJUST,
+] as const;
+
+const CONTRIBUTION_LIST_VIEW_ANY = [
+  PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
+  PERMISSIONS.CHOIR_FINANCE_VIEW,
+  PERMISSIONS.CHOIR_FINANCE_MANAGE,
+  PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
+  PERMISSIONS.PROTOCOL_CONTRIBUTION_VIEW_ALL,
+  PERMISSIONS.PROTOCOL_FINANCE_VIEW,
+  PERMISSIONS.PROTOCOL_FINANCE_MANAGE,
+  PERMISSIONS.PROTOCOL_CONTRIBUTION_ADJUST,
 ] as const;
 
 const MEMBER_CONTRIBUTION_ACCESS = [
@@ -102,6 +122,8 @@ export class FinanceController {
     private contributionCorrections: ContributionCorrectionService,
     private contributionTimeline: ContributionTimelineService,
     private contributionSubmission: ContributionSubmissionService,
+    private contributionProtocol: ContributionProtocolService,
+    private contributionCatalogAdmin: ContributionCatalogAdminService,
     private contributionMember: ContributionMemberService,
     private contributionFamilyContext: ContributionFamilyContextService,
     private contributionAdjustmentsList: ContributionAdjustmentsListService,
@@ -120,8 +142,27 @@ export class FinanceController {
   @Get('contributions/submit-options')
   @RequirePermissions(PERMISSIONS.CHOIR_CONTRIBUTION_SUBMIT)
   @SkipPhoneEnforcement()
-  contributionSubmitOptions(@CurrentUser() user: JwtPayload) {
-    return this.contributionSubmission.getSubmitOptions(user.sub);
+  contributionSubmitOptions(
+    @CurrentUser() user: JwtPayload,
+    @Query('choirId') choirId?: string,
+  ) {
+    return this.contributionSubmission.getSubmitOptions(user.sub, choirId);
+  }
+
+  @Post('contributions/protocol/submit')
+  @RequirePermissions(PERMISSIONS.PROTOCOL_CONTRIBUTION_SUBMIT)
+  submitProtocolContribution(
+    @Body() dto: SubmitContributionDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.contributionProtocol.submit(user.sub, dto);
+  }
+
+  @Get('contributions/protocol/submit-options')
+  @RequirePermissions(PERMISSIONS.PROTOCOL_CONTRIBUTION_SUBMIT)
+  @SkipPhoneEnforcement()
+  protocolContributionSubmitOptions(@CurrentUser() user: JwtPayload) {
+    return this.contributionProtocol.getSubmitOptions(user.sub);
   }
 
   @Get('contributions/member')
@@ -155,15 +196,62 @@ export class FinanceController {
     );
   }
 
+  @Get('contributions/sponsor/inbox')
+  @SkipPhoneEnforcement()
+  @RequireAnyPermissions(
+    PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
+    PERMISSIONS.CHOIR_FINANCE_MANAGE,
+    PERMISSIONS.CHOIR_FINANCE_APPROVE,
+    PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
+  )
+  sponsorContributionInbox(
+    @CurrentUser() user: JwtPayload,
+    @Query('choirId') choirId: string,
+    @Query('status') status?: ContributionStatus,
+    @Query('limit') limit?: string,
+  ) {
+    return this.contributionGovernance.getSponsorInbox(
+      user.sub,
+      choirId,
+      status,
+      limit ? Number(limit) : 30,
+    );
+  }
+
+  @Get('contributions/protocol/inbox')
+  @SkipPhoneEnforcement()
+  @RequireAnyPermissions(
+    PERMISSIONS.PROTOCOL_FINANCE_APPROVE,
+    PERMISSIONS.PROTOCOL_FINANCE_MANAGE,
+  )
+  protocolContributionInbox(
+    @CurrentUser() user: JwtPayload,
+    @Query('status') status?: ContributionStatus,
+    @Query('limit') limit?: string,
+  ) {
+    return this.contributionGovernance.getProtocolInbox(
+      user.sub,
+      status,
+      limit ? Number(limit) : 30,
+    );
+  }
+
   @Get('contributions')
   @SkipPhoneEnforcement()
+  @RequireAnyPermissions(...CONTRIBUTION_LIST_VIEW_ANY)
   listContributions(
     @CurrentUser() user: JwtPayload,
     @Query('limit') limit?: string,
+    @Query('ministryScope') ministryScope?: MinistryScope,
+    @Query('status') status?: ContributionStatus,
+    @Query('familyOnly') familyOnly?: string,
   ) {
     return this.contributionGovernance.listAllContributions(
       user.sub,
       limit ? Number(limit) : 50,
+      ministryScope ?? MinistryScope.CHOIR,
+      status,
+      familyOnly === 'true',
     );
   }
 
@@ -579,6 +667,66 @@ export class FinanceController {
       (body.dueType as any) ?? 'MONTHLY_DUES',
       user.sub,
     );
+  }
+
+  @Get('contributions/admin/catalog')
+  @SkipPhoneEnforcement()
+  @RequirePermissions(PERMISSIONS.CHOIR_CONTRIBUTION_TYPE_MANAGE)
+  listContributionCatalog(
+    @CurrentUser() user: JwtPayload,
+    @Query('choirId') choirId: string,
+  ) {
+    return this.contributionCatalogAdmin.listCatalog(user.sub, choirId);
+  }
+
+  @Post('contributions/admin/catalog')
+  @RequirePermissions(PERMISSIONS.CHOIR_CONTRIBUTION_TYPE_MANAGE)
+  createContributionCatalog(
+    @CurrentUser() user: JwtPayload,
+    @Query('choirId') choirId: string,
+    @Body() dto: CreateContributionCatalogDto,
+  ) {
+    return this.contributionCatalogAdmin.createCatalog(user.sub, choirId, dto);
+  }
+
+  @Patch('contributions/admin/catalog/:id')
+  @RequirePermissions(PERMISSIONS.CHOIR_CONTRIBUTION_TYPE_MANAGE)
+  updateContributionCatalog(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+    @Body() dto: UpdateContributionCatalogDto,
+  ) {
+    return this.contributionCatalogAdmin.updateCatalog(user.sub, id, dto);
+  }
+
+  @Get('contributions/admin/campaigns')
+  @SkipPhoneEnforcement()
+  @RequirePermissions(PERMISSIONS.CHOIR_CONTRIBUTION_CAMPAIGN_MANAGE)
+  listContributionCampaigns(
+    @CurrentUser() user: JwtPayload,
+    @Query('choirId') choirId: string,
+  ) {
+    return this.contributionCatalogAdmin.listCampaigns(user.sub, choirId);
+  }
+
+  @Post('contributions/admin/campaigns')
+  @RequirePermissions(PERMISSIONS.CHOIR_CONTRIBUTION_CAMPAIGN_MANAGE)
+  createContributionCampaign(
+    @CurrentUser() user: JwtPayload,
+    @Query('choirId') choirId: string,
+    @Body() dto: CreateContributionCampaignDto,
+  ) {
+    return this.contributionCatalogAdmin.createCampaign(user.sub, choirId, dto);
+  }
+
+  @Patch('contributions/admin/campaigns/:id')
+  @RequirePermissions(PERMISSIONS.CHOIR_CONTRIBUTION_CAMPAIGN_MANAGE)
+  updateContributionCampaign(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+    @Body() dto: UpdateContributionCampaignDto,
+  ) {
+    return this.contributionCatalogAdmin.updateCampaign(user.sub, id, dto);
   }
 
   /** Platform finance audit — requires admin audit visibility */

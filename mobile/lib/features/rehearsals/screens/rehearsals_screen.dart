@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/design/components/cards/cmms_card.dart';
+import '../../../core/design/components/cards/cmms_stat_tile.dart';
 import '../../../core/design/tokens/spacing.dart';
 import '../../../core/localization/l10n.dart';
 import '../../../core/routing/app_router.dart';
-import '../../../core/widgets/mobile_tab_shell.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../choir/providers/choir_providers.dart';
 import 'rehearsal_detail_screen.dart';
@@ -61,9 +62,7 @@ class _RehearsalsScreenState extends ConsumerState<RehearsalsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return MobileTabShell(
-      currentRoute: AppRouter.rehearsals,
-      child: RefreshIndicator(
+    return RefreshIndicator(
         onRefresh: _load,
         child: _loading
             ? const Center(child: CircularProgressIndicator())
@@ -72,16 +71,37 @@ class _RehearsalsScreenState extends ConsumerState<RehearsalsScreen> {
                 children: [
                   if (_offline) Text(l10n.welfare_offline_banner),
                   if (_dashboard != null) ...[
-                    Text('${l10n.rehearsals_prep_score}: ${_dashboard!['servicePrepScore'] ?? 0}%'),
-                    Text('${l10n.welfare_open_cases}: ${_dashboard!['attendanceRate'] ?? 0}%'),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: CmmsStatTile(
+                            label: l10n.rehearsals_prep_score,
+                            value: '${_dashboard!['servicePrepScore'] ?? 0}',
+                            suffix: '%',
+                            icon: Icons.music_note_outlined,
+                            accent: true,
+                          ),
+                        ),
+                        const SizedBox(width: Spacing.sm),
+                        Expanded(
+                          child: CmmsStatTile(
+                            label: l10n.nav_attendance,
+                            value: '${_dashboard!['attendanceRate'] ?? 0}',
+                            suffix: '%',
+                            icon: Icons.fact_check_outlined,
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: Spacing.md),
                   ],
                   ..._items.map((item) {
                     final readiness =
                         (item['readiness'] as Map<String, dynamic>?)?['overall'] ?? 0;
-                    return ListTile(
-                      title: Text(item['title']?.toString() ?? ''),
-                      subtitle: Text('${l10n.rehearsals_readiness}: $readiness%'),
+                    return CmmsCard(
+                      title: item['title']?.toString() ?? '',
+                      subtitle: '${l10n.rehearsals_readiness}: $readiness%',
+                      leading: const Icon(Icons.event_outlined),
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
@@ -96,7 +116,6 @@ class _RehearsalsScreenState extends ConsumerState<RehearsalsScreen> {
                   }),
                 ],
               ),
-      ),
     );
   }
 }

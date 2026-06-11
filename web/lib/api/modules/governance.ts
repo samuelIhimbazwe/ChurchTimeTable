@@ -26,6 +26,23 @@ export const governanceApi = {
   }) =>
     apiClient.post<never, unknown>('/governance/choir/members', data),
 
+  assignProtocolMember: (data: {
+    scopeId: string
+    memberId: string
+    roleId: string
+  }) =>
+    apiClient.post<never, unknown>('/governance/protocol/members', data),
+
+  revokeProtocolMember: (assignmentId: string) =>
+    apiClient.delete<never, { revoked: boolean }>(`/governance/protocol/members/${assignmentId}`),
+
+  upsertProtocolRole: (data: {
+    scopeId: string
+    name: string
+    permissions: string[]
+  }) =>
+    apiClient.post<never, unknown>('/governance/protocol/roles', data),
+
   getPermissionAudit: () =>
     apiClient.get<never, unknown[]>('/pilot/permission-audit'),
 }

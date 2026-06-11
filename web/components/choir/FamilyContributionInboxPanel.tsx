@@ -70,9 +70,10 @@ export function FamilyContributionInboxPanel({ familyId, canApprove = true }: Pr
   return (
     <>
       <Card padding="md">
-        <p className="font-semibold mb-1">Team contribution inbox</p>
+        <p className="font-semibold mb-1">Family contribution inbox</p>
         <p className="text-xs text-text-muted mb-3">
-          Members pay to your family MoMo/bank, then submit a claim here for you to confirm.
+          Choir singers in your family pay to your family MoMo/bank, then submit a claim here.
+          Sponsor gifts go to the treasurer — not this inbox.
         </p>
         {isLoading ? (
           <p className="text-sm text-text-muted">Loading…</p>
@@ -120,8 +121,8 @@ export function FamilyContributionInboxPanel({ familyId, canApprove = true }: Pr
                 <label className="text-sm font-medium">Amount you received (RWF)</label>
                 <input
                   type="number"
-                  min="0"
-                  step="100"
+                  min="1"
+                  step="1"
                   value={confirmedAmount}
                   onChange={(e) => setConfirmedAmount(e.target.value)}
                   className="mt-1 w-full px-3 py-2 rounded-lg text-sm border border-border bg-surface"

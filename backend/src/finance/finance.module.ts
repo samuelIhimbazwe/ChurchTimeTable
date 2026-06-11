@@ -25,10 +25,14 @@ import { ContributionSmsChannel } from './contribution-sms.channel';
 import { FinanceController } from './finance.controller';
 import { ReceiptUploadService } from './receipt/receipt-upload.service';
 import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
+import { AuthUxModule } from '../auth-ux/auth-ux.module';
+import { ContributionProtocolService } from './contribution-protocol.service';
+import { ContributionCatalogAdminService } from './contribution-catalog-admin.service';
 
 @Module({
   imports: [
     AuthModule,
+    AuthUxModule,
     I18nModule,
     GovernanceModule,
     AuditModule,
@@ -50,6 +54,8 @@ import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enfo
     ContributionCorrectionService,
     ContributionTimelineService,
     ContributionSubmissionService,
+    ContributionProtocolService,
+    ContributionCatalogAdminService,
     ContributionMemberService,
     ContributionFamilyContextService,
     ContributionAdjustmentsListService,
@@ -71,6 +77,7 @@ import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enfo
     ContributionCorrectionService,
     ContributionTimelineService,
     ContributionSubmissionService,
+    ContributionProtocolService,
     ContributionMemberService,
     ThankYouService,
   ],

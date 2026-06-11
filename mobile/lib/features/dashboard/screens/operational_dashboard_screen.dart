@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/auth/governance_permissions.dart';
 import '../../../core/design/components/cards/cmms_card.dart';
+import '../../../core/design/components/cards/cmms_stat_tile.dart';
+import '../../../core/widgets/shell_aware_scaffold.dart';
 import '../../../core/design/layout/adaptive_spacing.dart';
 import '../../../core/design/tokens/spacing.dart';
 import '../../../core/localization/l10n.dart';
@@ -20,16 +22,16 @@ class OperationalDashboardScreen extends ConsumerWidget {
     final role = resolveOperationalDashboardRole(auth.permissions);
 
     if (role == null) {
-      return Scaffold(
-        appBar: AppBar(title: Text(l10n.operational_title)),
+      return ShellAwareScaffold(
+        title: l10n.operational_title,
         body: Center(child: Text(l10n.operational_unauthorized)),
       );
     }
 
     final summaryAsync = ref.watch(operationalDashboardProvider(role));
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.operational_title)),
+    return ShellAwareScaffold(
+      title: l10n.operational_title,
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(operationalDashboardProvider(role)),
         child: summaryAsync.when(
@@ -138,13 +140,13 @@ class OperationalDashboardScreen extends ConsumerWidget {
         crossAxisSpacing: CmmsSpacing.sm,
         childAspectRatio: 1.35,
         children: stats
+            .asMap()
+            .entries
             .map(
-              (entry) => CmmsCard(
-                title: entry.$1,
-                child: Text(
-                  '${entry.$2}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
+              (entry) => CmmsStatTile(
+                label: entry.value.$1,
+                value: '${entry.value.$2}',
+                accent: entry.key == 0,
               ),
             )
             .toList(),

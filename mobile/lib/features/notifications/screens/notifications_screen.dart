@@ -4,6 +4,7 @@ import '../../../core/api/api_response.dart';
 import '../../../core/localization/l10n.dart';
 import '../../../core/localization/locale_date_format.dart';
 import '../../../core/localization/locale_provider.dart';
+import '../../../core/widgets/shell_aware_scaffold.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
@@ -47,17 +48,15 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     final l10n = context.l10n;
     final lang = ref.watch(localeProvider).languageCode;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.notifications_title),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: l10n.common_refresh,
-            onPressed: _load,
-          ),
-        ],
-      ),
+    return ShellAwareScaffold(
+      title: l10n.notifications_title,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          tooltip: l10n.common_refresh,
+          onPressed: _load,
+        ),
+      ],
       body: _loading
           ? Center(child: Text(l10n.common_loading))
           : Center(

@@ -5,6 +5,7 @@ import '../../../core/design/layout/adaptive_spacing.dart';
 import '../../../core/design/theme/theme_mode_provider.dart';
 import '../../../core/localization/l10n.dart';
 import '../../../core/routing/app_router.dart';
+import '../../../core/widgets/shell_aware_scaffold.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -14,8 +15,8 @@ class SettingsScreen extends ConsumerWidget {
     final l10n = context.l10n;
     final themeMode = ref.watch(themeModeProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.settings_title)),
+    return ShellAwareScaffold(
+      title: l10n.settings_title,
       body: ListView(
         padding: AdaptiveSpacing.screen(context),
         children: [

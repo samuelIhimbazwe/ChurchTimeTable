@@ -1,10 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { contributionsApi, financeApi, familiesApi, type ContributionClaim } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import { Card, Badge, PermissionGate } from '@/components/shared'
+import { SponsorContributionInboxPanel } from '@/components/choir/SponsorContributionInboxPanel'
+import { useResolvedChoirScope } from '@/lib/hooks'
 import { formatCurrency } from '@/lib/utils/format'
 
 const ADJUST_CATEGORIES = [
@@ -44,20 +46,27 @@ function normalizeList(raw: unknown): TreasuryRow[] {
 }
 
 export function ContributionTreasuryPanel({ compact = false }: { compact?: boolean }) {
+  const { choirId } = useResolvedChoirScope()
   const qc = useQueryClient()
   const [adjusting, setAdjusting] = useState<TreasuryRow | null>(null)
   const [adjustAmount, setAdjustAmount] = useState('')
   const [adjustCategory, setAdjustCategory] = useState<(typeof ADJUST_CATEGORIES)[number]['value']>('CORRECTION')
   const [adjustReason, setAdjustReason] = useState('')
 
-  const { data: queueRaw, isLoading: loadingQueue } = useQuery({
-    queryKey: ['contribution-queue'],
-    queryFn: () => financeApi.getContributionQueue({ status: 'PENDING' }),
+  const { data: pendingFamilyRaw, isLoading: loadingPendingFamily } = useQuery({
+    queryKey: ['finance-contributions-choir-pending-family'],
+    queryFn: () =>
+      financeApi.listContributions({
+        ministryScope: 'CHOIR',
+        status: 'SUBMITTED',
+        familyOnly: true,
+        limit: 30,
+      }),
   })
 
   const { data: allRaw, isLoading: loadingAll } = useQuery({
     queryKey: ['finance-contributions-all'],
-    queryFn: () => financeApi.listContributions({ limit: 80 }),
+    queryFn: () => financeApi.listContributions({ ministryScope: 'CHOIR', limit: 80 }),
   })
 
   const { data: adjustmentsRaw } = useQuery({
@@ -65,7 +74,20 @@ export function ContributionTreasuryPanel({ compact = false }: { compact?: boole
     queryFn: () => financeApi.getRecentAdjustments({ limit: 10 }),
   })
 
-  const queue = normalizeList(queueRaw)
+  const { data: familyRows } = useQuery({
+    queryKey: ['families-treasury'],
+    queryFn: () => familiesApi.getAll(),
+  })
+
+  const familyNameById = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const f of familyRows ?? []) {
+      map.set(f.id, f.familyName ?? f.familyCode ?? 'Family')
+    }
+    return map
+  }, [familyRows])
+
+  const pendingFamily = normalizeList(pendingFamilyRaw)
   const all = normalizeList(allRaw)
   const discrepancies = all.filter(
     (c) =>
@@ -85,7 +107,7 @@ export function ContributionTreasuryPanel({ compact = false }: { compact?: boole
       toast.success('Contribution adjusted')
       qc.invalidateQueries({ queryKey: ['finance-contributions-all'] })
       qc.invalidateQueries({ queryKey: ['contribution-adjustments-recent'] })
-      qc.invalidateQueries({ queryKey: ['contribution-queue'] })
+      qc.invalidateQueries({ queryKey: ['finance-contributions-choir-pending-family'] })
       setAdjusting(null)
     },
     onError: (err: Error) => toast.error('Could not adjust', err.message),
@@ -108,14 +130,34 @@ export function ContributionTreasuryPanel({ compact = false }: { compact?: boole
     <>
       <div className={compact ? 'space-y-4' : 'space-y-6'}>
         {!compact && (
+          <Card padding="md" accent="info">
+            <p className="font-semibold mb-1">Adjustments vs governance fixes</p>
+            <div className="text-xs text-text-secondary space-y-2 mt-2">
+              <p>
+                <strong className="text-text-primary">Adjustments</strong> (correction, transfer, reversal)
+                add a signed delta to the <em>effective</em> amount after family confirmation. The original
+                claimed and confirmed amounts and the ledger transaction stay unchanged — rankings and audit
+                still show what was first approved.
+              </p>
+              <p>
+                <strong className="text-text-primary">Governance fixes</strong> change metadata only — wrong
+                family, contribution type, or campaign — with a full audit trail. They do not change amounts
+                on the ledger. Use these when the payment was right but it was filed under the wrong family or
+                category.
+              </p>
+            </div>
+          </Card>
+        )}
+
+        {!compact && (
           <Card padding="md">
             <p className="font-semibold mb-1">Treasury overview</p>
             <p className="text-xs text-text-muted">
-              Family heads confirm claims; you follow up on mismatches and record manual corrections.
+              Singer umusanzu waits on family heads; sponsor gifts use the sponsor inbox above.
             </p>
             <div className="grid grid-cols-3 gap-4 mt-4 text-center">
               <div>
-                <p className="text-2xl font-display font-bold">{queue.length}</p>
+                <p className="text-2xl font-display font-bold">{pendingFamily.length}</p>
                 <p className="text-xs text-text-muted">Awaiting family head</p>
               </div>
               <div>
@@ -130,15 +172,24 @@ export function ContributionTreasuryPanel({ compact = false }: { compact?: boole
           </Card>
         )}
 
+        {choirId && (
+          <PermissionGate anyOf={['choir.contribution.view.all', 'choir.finance.manage', 'choir.contribution.adjust']}>
+            <SponsorContributionInboxPanel choirId={choirId} />
+          </PermissionGate>
+        )}
+
         <Card padding="md">
           <p className="font-semibold mb-2">Pending family confirmation</p>
-          {loadingQueue ? (
+          <p className="text-xs text-text-muted mb-2">
+            Singer umusanzu only — sponsors are confirmed in the inbox above.
+          </p>
+          {loadingPendingFamily ? (
             <p className="text-sm text-text-muted">Loading…</p>
-          ) : queue.length === 0 ? (
+          ) : pendingFamily.length === 0 ? (
             <p className="text-sm text-text-muted">No claims waiting on family heads.</p>
           ) : (
             <ul className="divide-y divide-border">
-              {queue.slice(0, compact ? 5 : 15).map((item) => (
+              {pendingFamily.slice(0, compact ? 5 : 15).map((item) => (
                 <li key={item.id} className="py-2 flex justify-between gap-2 text-sm">
                   <span>{item.memberName ?? 'Member'} · {formatCurrency(item.claimedAmount)}</span>
                   <Badge variant="status-pending">SUBMITTED</Badge>
@@ -184,6 +235,75 @@ export function ContributionTreasuryPanel({ compact = false }: { compact?: boole
           )}
         </Card>
 
+        <PermissionGate anyOf={['choir.contribution.view.all', 'choir.finance.manage', 'choir.contribution.adjust']}>
+          <Card padding="md">
+            <p className="font-semibold mb-1">All choir contributions</p>
+            <p className="text-xs text-text-muted mb-3">
+              Every family — view confirmed amounts and apply treasurer adjustments.
+            </p>
+            {loadingAll ? (
+              <p className="text-sm text-text-muted">Loading…</p>
+            ) : all.length === 0 ? (
+              <p className="text-sm text-text-muted">No contribution records yet.</p>
+            ) : (
+              <ul className="divide-y divide-border max-h-[28rem] overflow-y-auto">
+                {all.map((item) => {
+                  const familyLabel = item.familyId
+                    ? familyNameById.get(item.familyId) ?? 'Family'
+                    : 'Sponsor'
+                  return (
+                    <li
+                      key={item.id}
+                      className="py-3 flex flex-wrap items-center justify-between gap-2"
+                    >
+                      <div>
+                        <p className="text-sm font-medium">{item.memberName ?? 'Member'}</p>
+                        <p className="text-xs text-text-muted">
+                          {familyLabel}
+                          {item.typeName && <> · {item.typeName}</>}
+                          {' · '}
+                          {formatCurrency(item.claimedAmount)}
+                          {item.confirmedAmount != null && (
+                            <> · confirmed {formatCurrency(item.confirmedAmount)}</>
+                          )}
+                          {item.effectiveAmount != null &&
+                            item.effectiveAmount !== item.confirmedAmount && (
+                              <> · effective {formatCurrency(item.effectiveAmount)}</>
+                            )}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={
+                            item.status === 'CONFIRMED' || item.status === 'APPROVED'
+                              ? 'status-present'
+                              : item.status === 'SUBMITTED'
+                                ? 'status-pending'
+                                : 'default'
+                          }
+                        >
+                          {item.status}
+                        </Badge>
+                        {(item.status === 'CONFIRMED' || item.status === 'APPROVED') && (
+                          <PermissionGate anyOf={['choir.contribution.adjust', 'choir.finance.manage']}>
+                            <button
+                              type="button"
+                              onClick={() => openAdjust(item)}
+                              className="text-xs font-semibold text-primary-600"
+                            >
+                              Adjust
+                            </button>
+                          </PermissionGate>
+                        )}
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </Card>
+        </PermissionGate>
+
         {!compact && adjustmentItems.length > 0 && (
           <Card padding="md">
             <p className="font-semibold mb-2">Recent manual adjustments</p>
@@ -219,7 +339,7 @@ export function ContributionTreasuryPanel({ compact = false }: { compact?: boole
                 <label className="text-sm font-medium">Adjustment amount (RWF, +/-)</label>
                 <input
                   type="number"
-                  step="100"
+                  step="1"
                   value={adjustAmount}
                   onChange={(e) => setAdjustAmount(e.target.value)}
                   placeholder="e.g. -2000 or 500"

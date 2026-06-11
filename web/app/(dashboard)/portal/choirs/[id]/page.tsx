@@ -14,10 +14,13 @@ import { Music, ExternalLink, ChevronRight } from 'lucide-react'
 import {
   canAccessChoirPortalProfile,
   normalizePendingChoirJoinRequests,
+  normalizePendingChoirSponsorRequests,
   resolveChoirPortalActions,
 } from '@/lib/choir/membership-display'
+import { isSponsorJoinIntent } from '@/lib/constants/choir-positions'
 import { useChoirAccess } from '@/lib/hooks/useChoirAccess'
 import { ChoirDashboardEntryButton } from '@/components/choir/ChoirDashboardEntryButton'
+import { ChoirSponsorEntryButton } from '@/components/choir/ChoirSponsorEntryButton'
 import { ChoirPortalJoinControls } from '@/components/portal/ChoirPortalJoinControls'
 import { ChoirJoinRequestForm } from '@/components/portal/ChoirJoinRequestForm'
 
@@ -47,14 +50,31 @@ export default function ChoirDetailPage() {
     queryFn: choirApi.getMyJoinRequests,
   })
 
+  const { data: mySponsorRequests } = useQuery({
+    queryKey: ['choir-sponsor-requests', 'mine'],
+    queryFn: choirApi.getMySponsorRequests,
+  })
+
   const pendingRequests = normalizePendingChoirJoinRequests(myRequests)
+  const pendingSponsorRequests = normalizePendingChoirSponsorRequests(mySponsorRequests)
 
   const join = useMutation({
-    mutationFn: () => choirApi.requestJoin(id, message || undefined, requestType),
+    mutationFn: async () => {
+      if (isSponsorJoinIntent(requestType)) {
+        await choirApi.requestSponsor(id, message || undefined, requestType)
+        return
+      }
+      await choirApi.requestJoin(id, message || undefined, requestType)
+    },
     onSuccess: () => {
-      toast.success('Join request submitted')
+      toast.success(
+        isSponsorJoinIntent(requestType)
+          ? 'Sponsor request submitted'
+          : 'Join request submitted',
+      )
       qc.invalidateQueries({ queryKey: ['member-portal'] })
       qc.invalidateQueries({ queryKey: ['choir-join-requests'] })
+      qc.invalidateQueries({ queryKey: ['choir-sponsor-requests'] })
       qc.invalidateQueries({ queryKey: ['choir-membership-access'] })
       setJoinFormOpen(false)
       setMessage('')
@@ -76,6 +96,16 @@ export default function ChoirDetailPage() {
     onError: () => toast.error('Could not cancel request'),
   })
 
+  const cancelSponsor = useMutation({
+    mutationFn: (requestId: string) => choirApi.withdrawSponsorRequest(requestId),
+    onSuccess: () => {
+      toast.success('Sponsor request cancelled')
+      qc.invalidateQueries({ queryKey: ['member-portal'] })
+      qc.invalidateQueries({ queryKey: ['choir-sponsor-requests'] })
+    },
+    onError: () => toast.error('Could not cancel request'),
+  })
+
   const choirPortalActions = useMemo(() => {
     if (!data) return null
     return resolveChoirPortalActions(
@@ -85,18 +115,26 @@ export default function ChoirDetailPage() {
         code: data.code,
         choirKind: data.choirKind,
         joinStatus: data.joinStatus,
+        sponsorStatus: data.sponsorStatus,
+        isSponsor: data.isSponsor,
         isPublicJoinable: data.isPublicJoinable,
+        pendingSponsorRequestId: data.pendingSponsorRequestId,
       },
       pendingRequests,
+      pendingSponsorRequests,
     )
   }, [
     data?.id,
     data?.code,
     data?.choirKind,
     data?.joinStatus,
+    data?.sponsorStatus,
+    data?.isSponsor,
     data?.isPublicJoinable,
+    data?.pendingSponsorRequestId,
     activeChoirMemberships,
     pendingRequests,
+    pendingSponsorRequests,
   ])
 
   const shouldRedirect = useMemo(() => {
@@ -185,14 +223,27 @@ export default function ChoirDetailPage() {
               <ChoirDashboardEntryButton choirId={data.id} label="Open choir dashboard" />
             </>
           )}
-          {!choirPortalActions.showDashboardButton && (
+          {choirPortalActions.showSponsorDashboardButton && (
+            <>
+              <Badge variant="status-present">You are a sponsor</Badge>
+              <ChoirSponsorEntryButton choirId={data.id} label="Open sponsor dashboard" />
+            </>
+          )}
+          {!choirPortalActions.showDashboardButton &&
+            !choirPortalActions.showSponsorDashboardButton && (
             <ChoirPortalJoinControls
               actions={choirPortalActions}
               joinLabel="Join"
               joinPending={join.isPending}
-              cancelPending={cancelJoin.isPending}
+              cancelPending={cancelJoin.isPending || cancelSponsor.isPending}
               onJoin={() => setJoinFormOpen((open) => !open)}
-              onCancelPending={(requestId) => cancelJoin.mutate(requestId)}
+              onCancelPending={(requestId) => {
+                if (choirPortalActions.isPendingSponsor) {
+                  cancelSponsor.mutate(requestId)
+                } else {
+                  cancelJoin.mutate(requestId)
+                }
+              }}
             />
           )}
         </div>

@@ -7,10 +7,12 @@ import {
 import {
   CHOIR_OPERATIONS_PERMS,
   CHURCH_ADMIN_OPERATIONAL_PERMISSIONS,
+  CHURCH_SCHEDULE_SUBMIT_PERMISSIONS,
   PERMISSIONS,
   PROTOCOL_ADMIN_PERMISSIONS,
   ROLES,
 } from '../src/common/constants/roles';
+import { DEFAULT_CHURCH_FACILITIES } from '../src/church-schedule/church-schedule.constants';
 import {
   DEFAULT_PHONE_ENFORCEMENT,
   PHONE_ENFORCEMENT_ENABLED_KEY,
@@ -40,6 +42,7 @@ const ROLE_PERMISSION_MAP: Record<string, string[]> = {
     PERMISSIONS.EVENT_READ,
     PERMISSIONS.MEMBER_PORTAL_VIEW,
     PERMISSIONS.CHOIR_CONTRIBUTION_SUBMIT,
+    PERMISSIONS.PROTOCOL_CONTRIBUTION_SUBMIT,
     PERMISSIONS.CHOIR_WELFARE_VIEW,
     PERMISSIONS.CHOIR_MUSIC_VIEW,
     PERMISSIONS.CHOIR_REHEARSAL_VIEW,
@@ -54,6 +57,8 @@ const ROLE_PERMISSION_MAP: Record<string, string[]> = {
 
   [ROLES.CHOIR_ADMIN]: [
     ...CHOIR_OPERATIONS_PERMS,
+    ...CHURCH_SCHEDULE_SUBMIT_PERMISSIONS,
+    PERMISSIONS.CHOIR_SPONSOR_REVIEW,
     PERMISSIONS.CHOIR_FINANCE_VIEW,
     PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
     PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
@@ -88,6 +93,8 @@ const ROLE_PERMISSION_MAP: Record<string, string[]> = {
 
   [ROLES.CHOIR_PRESIDENT]: [
     ...CHOIR_OPERATIONS_PERMS,
+    ...CHURCH_SCHEDULE_SUBMIT_PERMISSIONS,
+    PERMISSIONS.CHOIR_SPONSOR_REVIEW,
     PERMISSIONS.CHOIR_FINANCE_VIEW,
     PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
     PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
@@ -127,6 +134,7 @@ const ROLE_PERMISSION_MAP: Record<string, string[]> = {
     PERMISSIONS.CHOIR_WELFARE_VIEW,
     PERMISSIONS.CHOIR_WELFARE_MANAGE,
     PERMISSIONS.CHOIR_JOIN_REVIEW,
+    PERMISSIONS.CHOIR_SPONSOR_REVIEW,
     PERMISSIONS.CHOIR_REPORTS_VIEW,
     PERMISSIONS.CHOIR_ANNOUNCEMENT_MANAGE,
     PERMISSIONS.REPORT_EXPORT,
@@ -144,6 +152,8 @@ const ROLE_PERMISSION_MAP: Record<string, string[]> = {
     PERMISSIONS.SWAP_MANAGE,
     PERMISSIONS.DISCIPLINE_READ_ALL,
     PERMISSIONS.CHOIR_FINANCE_VIEW,
+    PERMISSIONS.CHOIR_FAMILY_VIEW,
+    PERMISSIONS.FAMILY_VIEW,
     PERMISSIONS.CHOIR_EVENTS_MANAGE_SCOPE,
     PERMISSIONS.REPORT_EXPORT,
     PERMISSIONS.CHOIR_DEVOTION_VIEW,
@@ -152,12 +162,20 @@ const ROLE_PERMISSION_MAP: Record<string, string[]> = {
   [ROLES.CHOIR_TREASURER]: [
     PERMISSIONS.EVENT_READ,
     PERMISSIONS.CHOIR_FINANCE_VIEW,
+    PERMISSIONS.CHOIR_FINANCE_MANAGE,
+    PERMISSIONS.CHOIR_FINANCE_APPROVE,
+    PERMISSIONS.CHOIR_FAMILY_VIEW,
     PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
     PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
+    PERMISSIONS.CHOIR_CONTRIBUTION_TYPE_MANAGE,
+    PERMISSIONS.CHOIR_CONTRIBUTION_CAMPAIGN_MANAGE,
     PERMISSIONS.CHOIR_WELFARE_VIEW,
     PERMISSIONS.CHOIR_WELFARE_MANAGE,
     PERMISSIONS.CHOIR_REPORTS_VIEW,
     PERMISSIONS.REPORT_EXPORT,
+    PERMISSIONS.MINISTRY_FINANCE_VIEW,
+    PERMISSIONS.MINISTRY_FINANCE_REPORT,
+    PERMISSIONS.CHOIR_SPONSOR_REVIEW,
   ],
 
   [ROLES.CHOIR_REHEARSAL_DIRECTOR]: [
@@ -216,6 +234,7 @@ const ROLE_PERMISSION_MAP: Record<string, string[]> = {
   ],
 
   [ROLES.PROTOCOL_LEADER]: [
+    ...CHURCH_SCHEDULE_SUBMIT_PERMISSIONS,
     PERMISSIONS.EVENT_READ,
     PERMISSIONS.EVENT_WRITE,
     PERMISSIONS.ASSIGNMENT_WRITE,
@@ -228,6 +247,7 @@ const ROLE_PERMISSION_MAP: Record<string, string[]> = {
     PERMISSIONS.PROTOCOL_OVERSIGHT_SCOPE,
     PERMISSIONS.PROTOCOL_OPERATIONAL_MONITOR,
     PERMISSIONS.PROTOCOL_FINANCE_VIEW,
+    PERMISSIONS.PROTOCOL_CONTRIBUTION_SUBMIT,
     PERMISSIONS.FAMILY_VIEW,
     PERMISSIONS.FAMILY_MANAGE,
     ...PROTOCOL_ADMIN_PERMISSIONS,
@@ -237,6 +257,7 @@ const ROLE_PERMISSION_MAP: Record<string, string[]> = {
   ],
 
   [ROLES.PROTOCOL_ADMIN]: [
+    ...CHURCH_SCHEDULE_SUBMIT_PERMISSIONS,
     PERMISSIONS.EVENT_READ,
     PERMISSIONS.EVENT_WRITE,
     PERMISSIONS.ASSIGNMENT_WRITE,
@@ -270,6 +291,7 @@ const DEFAULT_CHOIR_COMMITTEE_ROLES = [
       PERMISSIONS.MEMBER_MANAGE,
       PERMISSIONS.CHOIR_WELFARE_MANAGE,
       PERMISSIONS.CHOIR_REPORTS_VIEW,
+      PERMISSIONS.CHOIR_SPONSOR_REVIEW,
     ],
   },
   {
@@ -280,6 +302,7 @@ const DEFAULT_CHOIR_COMMITTEE_ROLES = [
       PERMISSIONS.CHOIR_WELFARE_VIEW,
       PERMISSIONS.CHOIR_WELFARE_MANAGE,
       PERMISSIONS.CHOIR_JOIN_REVIEW,
+      PERMISSIONS.CHOIR_SPONSOR_REVIEW,
       PERMISSIONS.CHOIR_REPORTS_VIEW,
       PERMISSIONS.CHOIR_ANNOUNCEMENT_MANAGE,
       PERMISSIONS.REPORT_EXPORT,
@@ -344,6 +367,8 @@ const DEFAULT_CHOIR_COMMITTEE_ROLES = [
   {
     name: 'secretary',
     permissions: [
+      PERMISSIONS.CHOIR_FAMILY_VIEW,
+      PERMISSIONS.FAMILY_VIEW,
       PERMISSIONS.CHOIR_RECORDS_VIEW,
       PERMISSIONS.CHOIR_OPS_VIEW,
       PERMISSIONS.CHOIR_OPS_REPORT,
@@ -379,6 +404,7 @@ const DEFAULT_CHOIR_COMMITTEE_ROLES = [
       PERMISSIONS.CHOIR_FINANCE_VIEW,
       PERMISSIONS.CHOIR_FINANCE_MANAGE,
       PERMISSIONS.CHOIR_FINANCE_APPROVE,
+      PERMISSIONS.CHOIR_FAMILY_VIEW,
       PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
       PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
       PERMISSIONS.CHOIR_CONTRIBUTION_TYPE_MANAGE,
@@ -388,6 +414,7 @@ const DEFAULT_CHOIR_COMMITTEE_ROLES = [
       PERMISSIONS.REPORT_EXPORT,
       PERMISSIONS.MINISTRY_FINANCE_VIEW,
       PERMISSIONS.MINISTRY_FINANCE_REPORT,
+      PERMISSIONS.CHOIR_SPONSOR_REVIEW,
     ],
   },
   {
@@ -446,12 +473,38 @@ const DEFAULT_PROTOCOL_COMMITTEE_ROLES = [
     name: 'protocol_president',
     permissions: [
       PERMISSIONS.PROTOCOL_VIEW,
+      PERMISSIONS.PROTOCOL_MANAGE,
       PERMISSIONS.PROTOCOL_OVERSIGHT_SCOPE,
       PERMISSIONS.PROTOCOL_OPERATIONAL_MONITOR,
       PERMISSIONS.PROTOCOL_FINANCE_VIEW,
+      PERMISSIONS.PROTOCOL_CONTRIBUTION_VIEW_ALL,
+      PERMISSIONS.PROTOCOL_CONTRIBUTION_ADJUST,
       PERMISSIONS.PROTOCOL_INVITE,
       PERMISSIONS.PROTOCOL_CLAIM_REVIEW,
       PERMISSIONS.PROTOCOL_REPLACEMENT_MANAGE,
+      PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE,
+      PERMISSIONS.COMMITTEE_MEMBER_MANAGE_SCOPE,
+      PERMISSIONS.COMMITTEE_ROLE_MANAGE_SCOPE,
+    ],
+  },
+  {
+    name: 'protocol_admin',
+    permissions: [
+      PERMISSIONS.PROTOCOL_VIEW,
+      PERMISSIONS.PROTOCOL_INVITE,
+      PERMISSIONS.PROTOCOL_CLAIM_REVIEW,
+      PERMISSIONS.COMMITTEE_MEMBER_MANAGE_SCOPE,
+      PERMISSIONS.COMMITTEE_ROLE_MANAGE_SCOPE,
+    ],
+  },
+  {
+    name: 'protocol_vice_president',
+    permissions: [
+      PERMISSIONS.PROTOCOL_VIEW,
+      PERMISSIONS.PROTOCOL_OPERATIONAL_MONITOR,
+      PERMISSIONS.PROTOCOL_FINANCE_VIEW,
+      PERMISSIONS.PROTOCOL_CONTRIBUTION_VIEW_ALL,
+      PERMISSIONS.PROTOCOL_CONTRIBUTION_ADJUST,
     ],
   },
   {
@@ -487,11 +540,22 @@ const DEFAULT_PROTOCOL_COMMITTEE_ROLES = [
       PERMISSIONS.PROTOCOL_FINANCE_VIEW,
       PERMISSIONS.PROTOCOL_FINANCE_MANAGE,
       PERMISSIONS.PROTOCOL_FINANCE_APPROVE,
+      PERMISSIONS.PROTOCOL_CONTRIBUTION_VIEW_ALL,
+      PERMISSIONS.PROTOCOL_CONTRIBUTION_ADJUST,
+      PERMISSIONS.PROTOCOL_CONTRIBUTION_SUBMIT,
     ],
   },
 ];
 
+const DEFAULT_PROTOCOL_CONTRIBUTION_TYPE_CATALOG = [
+  { code: 'umusanzu', name: 'Umusanzu', description: 'Monthly protocol unity contribution', sortOrder: 10 },
+  { code: 'uniform', name: 'Uniform', description: 'Uniform contribution', sortOrder: 20 },
+  { code: 'special_project', name: 'Special Project', description: 'Special protocol project drives', sortOrder: 30 },
+  { code: 'other', name: 'Other', description: 'Other — specify on submit', sortOrder: 40 },
+] as const;
+
 const DEFAULT_CONTRIBUTION_TYPE_CATALOG = [
+  { id: 'ct-sponsor-support', code: 'sponsor_support', name: 'Sponsor support', description: 'General sponsor giving to support the choir', sortOrder: 5 },
   { id: 'ct-umusanzu', code: 'umusanzu', name: 'Umusanzu', description: 'Monthly choir contribution', sortOrder: 10 },
   { id: 'ct-inyubako', code: 'inyubako', name: 'Inyubako', description: 'Building fund contribution', sortOrder: 20 },
   { id: 'ct-uniform', code: 'uniform', name: 'Uniform', description: 'Uniform contribution', sortOrder: 30 },
@@ -628,6 +692,111 @@ async function main() {
     }
   }
 
+  const worshipCategory = await prisma.songCategory.upsert({
+    where: {
+      choirId_code: { choirId: MAIN_CHOIR_ID, code: 'WORSHIP' },
+    },
+    create: {
+      choirId: MAIN_CHOIR_ID,
+      code: 'WORSHIP',
+      name: 'Worship',
+      sortOrder: 1,
+    },
+    update: { name: 'Worship' },
+  });
+
+  const ijwiLyrics = `Ijwi ry'Umwami riravuga\nKo Yesu ari Umwami wacu\nTuri abana b'Ubwami\nDuhimbaze izina rye\n\nIjwi ry'Umwami riravuga\nKo twizere mu mutima\nTuri abasangirwa na We\nDuhimbaze Umwami wacu`;
+
+  await prisma.song.upsert({
+    where: { id: 'pilot-song-ijwi-ry-umwami' },
+    create: {
+      id: 'pilot-song-ijwi-ry-umwami',
+      choirId: MAIN_CHOIR_ID,
+      title: "Ijwi ry'Umwami",
+      lyricist: 'Pastor Emmanuel N.',
+      composer: 'ADEPR Choir Collective',
+      voiceParts: 'SATB',
+      language: 'rw',
+      categoryId: worshipCategory.id,
+      lyricsText: ijwiLyrics,
+      notes: 'Practice SATB — sopranos carry the melody in verse 1.',
+      active: true,
+    },
+    update: {
+      lyricsText: ijwiLyrics,
+      active: true,
+    },
+  });
+
+  await prisma.song.upsert({
+    where: { id: 'pilot-song-coming-soon' },
+    create: {
+      id: 'pilot-song-coming-soon',
+      choirId: MAIN_CHOIR_ID,
+      title: "Urukundo rw'Imana (Coming soon)",
+      lyricist: 'Grace M.',
+      composer: 'Choir Arrangers Team',
+      language: 'rw',
+      categoryId: worshipCategory.id,
+      lyricsText:
+        "Urukundo rw'Imana ruruta ibyo dushaka\nRutugeraho amahoro\nTegereza gutangazwa mu mpera z'uyu mwaka",
+      active: true,
+    },
+    update: { active: true },
+  });
+
+  await prisma.songAsset.deleteMany({
+    where: { songId: 'pilot-song-ijwi-ry-umwami' },
+  });
+  await prisma.songAsset.createMany({
+    data: [
+      {
+        songId: 'pilot-song-ijwi-ry-umwami',
+        assetType: 'PDF',
+        fileName: "Ijwi ry'Umwami — SATB score.pdf",
+        fileUrl:
+          'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+        mimeType: 'application/pdf',
+      },
+      {
+        songId: 'pilot-song-ijwi-ry-umwami',
+        assetType: 'AUDIO',
+        fileName: "Ijwi ry'Umwami — practice track.mp3",
+        fileUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+        mimeType: 'audio/mpeg',
+      },
+    ],
+  });
+
+  for (const entry of DEFAULT_PROTOCOL_CONTRIBUTION_TYPE_CATALOG) {
+    const existingProtocolType = await prisma.contributionTypeCatalog.findFirst({
+      where: { choirId: null, code: entry.code, ministryScope: 'PROTOCOL' },
+    });
+    if (existingProtocolType) {
+      await prisma.contributionTypeCatalog.update({
+        where: { id: existingProtocolType.id },
+        data: {
+          name: entry.name,
+          description: entry.description,
+          sortOrder: entry.sortOrder,
+          active: true,
+        },
+      });
+    } else {
+      await prisma.contributionTypeCatalog.create({
+        data: {
+          choirId: null,
+          code: entry.code,
+          name: entry.name,
+          description: entry.description,
+          sortOrder: entry.sortOrder,
+          ministryScope: 'PROTOCOL',
+          active: true,
+        },
+      });
+    }
+  }
+
   for (const entry of DEFAULT_CONTRIBUTION_TYPE_CATALOG) {
     await prisma.contributionTypeCatalog.upsert({
       where: {
@@ -653,6 +822,71 @@ async function main() {
       },
     });
   }
+
+  for (const facility of DEFAULT_CHURCH_FACILITIES) {
+    await prisma.churchFacility.upsert({
+      where: { code: facility.code },
+      create: {
+        code: facility.code,
+        name: facility.name,
+        building: facility.building,
+        capacity: facility.capacity,
+        requiresAdminNotify: facility.requiresAdminNotify,
+        sortOrder: facility.sortOrder,
+        isActive: true,
+      },
+      update: {
+        name: facility.name,
+        building: facility.building,
+        capacity: facility.capacity,
+        requiresAdminNotify: facility.requiresAdminNotify,
+        sortOrder: facility.sortOrder,
+        isActive: true,
+      },
+    });
+  }
+
+  const churchAdminRole = await prisma.role.findUniqueOrThrow({
+    where: { name: ROLES.CHURCH_ADMIN },
+  });
+
+  const pilotPasswordHash = await bcrypt.hash('Pilot@123', 10);
+  await prisma.user.upsert({
+    where: { email: 'church.coord@church.local' },
+    create: {
+      email: 'church.coord@church.local',
+      passwordHash: pilotPasswordHash,
+      member: {
+        create: {
+          firstName: 'Jeanne',
+          lastName: 'Coordinator',
+          ministry: 'BOTH',
+          status: 'ACTIVE',
+          onboardingCompleted: true,
+          phone: '0788111000',
+        },
+      },
+      userRoles: { create: { roleId: churchAdminRole.id } },
+    },
+    update: {
+      passwordHash: pilotPasswordHash,
+      member: {
+        update: {
+          onboardingCompleted: true,
+          status: 'ACTIVE',
+          phone: '0788111000',
+        },
+      },
+    },
+  });
+
+  const churchCoord = await prisma.user.findUniqueOrThrow({
+    where: { email: 'church.coord@church.local' },
+  });
+  await prisma.userRole.deleteMany({ where: { userId: churchCoord.id } });
+  await prisma.userRole.create({
+    data: { userId: churchCoord.id, roleId: churchAdminRole.id },
+  });
 
   const adminRole = await prisma.role.findUniqueOrThrow({
     where: { name: ROLES.SUPER_ADMIN },
@@ -862,7 +1096,9 @@ async function main() {
     update: { isActive: true },
   });
 
-  console.log('Seed complete. Admin:', admin.email, '/ Admin@123');
+  console.log('Seed complete.');
+  console.log('  Church coordinator:', 'church.coord@church.local / Pilot@123 → /church');
+  console.log('  System admin (IT):', admin.email, '/ Admin@123 → /system');
   console.log(
     'Choir officer roles:',
     Object.keys(CHOIR_OFFICER_META).join(', '),

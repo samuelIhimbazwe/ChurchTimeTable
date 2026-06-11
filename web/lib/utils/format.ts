@@ -7,6 +7,11 @@ export function formatDate(iso: string): string {
   })
 }
 
+export function formatDateTime(iso: string): string {
+  if (!iso) return ''
+  return `${formatDate(iso)} ${formatTime(iso)}`
+}
+
 export function formatTime(time: string): string {
   if (!time) return ''
   // Accepts "09:00" or full ISO

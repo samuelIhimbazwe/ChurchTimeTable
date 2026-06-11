@@ -21,20 +21,34 @@ export type PortalChoirCard = {
   code: string
   choirKind?: string
   joinStatus?: string | null
+  sponsorStatus?: string | null
+  isSponsor?: boolean
   isPublicJoinable?: boolean
   pendingRequestId?: string | null
+  pendingSponsorRequestId?: string | null
+}
+
+export type PendingChoirSponsorRequest = {
+  id: string
+  choirId: string
+  choirName?: string
+  status: string
 }
 
 export type ChoirPortalActions = {
   isActiveMember: boolean
+  isActiveSponsor: boolean
   isPendingJoin: boolean
+  isPendingSponsor: boolean
   showInList: boolean
   showJoinButton: boolean
   showDashboardButton: boolean
+  showSponsorDashboardButton: boolean
   joinBlockedByPending: boolean
   joinBlockedShortMessage: string | null
   joinBlockedMessage: string | null
   pendingRequestId: string | null
+  pendingSponsorRequestId: string | null
 }
 
 export function isYerusalemuChoir(choir: { code: string; choirKind?: string }) {
@@ -47,6 +61,18 @@ export function isPrimaryChoirKind(kind?: string) {
 
 export function isPendingChoirJoin(status: string | null | undefined) {
   return status === 'PENDING' || status === 'NEEDS_INFO'
+}
+
+export function isPendingChoirSponsor(status: string | null | undefined) {
+  return status === 'PENDING'
+}
+
+export function isChoirActiveSponsor(
+  choir: PortalChoirCard,
+  activeSponsorships: Array<{ id: string }> = [],
+) {
+  if (choir.isSponsor) return true
+  return activeSponsorships.some((s) => s.id === choir.id)
 }
 
 /** Approved singer — active choir membership record only (not a pending join request). */
@@ -102,6 +128,20 @@ function summarizeMemberships(activeMemberships: ActiveChoirMembership[]) {
   return { hasYerusalemu, hasPrimary, yerusalemuOnlyMember }
 }
 
+function pendingSponsorRequestIdForChoir(
+  choir: PortalChoirCard,
+  pendingSponsorRequests: PendingChoirSponsorRequest[],
+): string | null {
+  const fromList = pendingSponsorRequests.find(
+    (r) => r.choirId === choir.id && r.status === 'PENDING',
+  )
+  if (fromList) return fromList.id
+  if (isPendingChoirSponsor(choir.sponsorStatus) && choir.pendingSponsorRequestId) {
+    return choir.pendingSponsorRequestId
+  }
+  return null
+}
+
 function pendingRequestIdForChoir(
   choir: PortalChoirCard,
   pendingRequests: PendingChoirJoinRequest[],
@@ -154,23 +194,38 @@ export function resolveChoirPortalActions(
   activeMemberships: ActiveChoirMembership[],
   choir: PortalChoirCard,
   pendingRequests: PendingChoirJoinRequest[] = [],
+  pendingSponsorRequests: PendingChoirSponsorRequest[] = [],
+  activeSponsorships: Array<{ id: string }> = [],
 ): ChoirPortalActions {
   const isActiveMember = isChoirActiveMember(activeMemberships, choir.id)
+  const isActiveSponsor = isChoirActiveSponsor(choir, activeSponsorships)
   const pendingRequestId = pendingRequestIdForChoir(choir, pendingRequests)
+  const pendingSponsorRequestId = pendingSponsorRequestIdForChoir(
+    choir,
+    pendingSponsorRequests,
+  )
   const isPendingJoin =
     isPendingChoirJoin(choir.joinStatus) || pendingRequestId != null
+  const isPendingSponsor =
+    isPendingChoirSponsor(choir.sponsorStatus) || pendingSponsorRequestId != null
   const { hasYerusalemu, hasPrimary, yerusalemuOnlyMember } =
     summarizeMemberships(activeMemberships)
   const openPending = getOpenPendingJoinRequest(pendingRequests)
   const joinBlockedByPending = joinBlockedByPendingElsewhere(choir, openPending)
 
-  const showInList = shouldShowChoirInPortalList(activeMemberships, choir)
+  const showInList =
+    shouldShowChoirInPortalList(activeMemberships, choir) ||
+    isActiveSponsor ||
+    isPendingSponsor
   const showDashboardButton = isActiveMember
+  const showSponsorDashboardButton = isActiveSponsor
 
   let showJoinButton = false
   if (
     !isActiveMember &&
+    !isActiveSponsor &&
     !isPendingJoin &&
+    !isPendingSponsor &&
     choir.isPublicJoinable !== false &&
     showInList
   ) {
@@ -180,20 +235,43 @@ export function resolveChoirPortalActions(
       showJoinButton = !isYerusalemuChoir(choir)
     } else if (hasPrimary && isYerusalemuChoir(choir) && !hasYerusalemu) {
       showJoinButton = true
+    } else if (!hasPrimary) {
+      showJoinButton = true
     }
   }
 
   return {
     isActiveMember,
+    isActiveSponsor,
     isPendingJoin,
+    isPendingSponsor,
     showInList,
     showJoinButton,
     showDashboardButton,
+    showSponsorDashboardButton,
     joinBlockedByPending,
     joinBlockedShortMessage: joinBlockedShortMessage(choir, openPending),
     joinBlockedMessage: joinBlockedMessage(choir, openPending),
     pendingRequestId,
+    pendingSponsorRequestId,
   }
+}
+
+export function normalizePendingChoirSponsorRequests(
+  requests?: Array<{
+    id: string
+    choirId: string
+    status: string
+    choir?: { name?: string }
+  }>,
+): PendingChoirSponsorRequest[] {
+  if (!requests?.length) return []
+  return requests.map((r) => ({
+    id: r.id,
+    choirId: r.choirId,
+    choirName: r.choir?.name,
+    status: r.status,
+  }))
 }
 
 /** Whether this choir profile URL may be opened in the member portal. */

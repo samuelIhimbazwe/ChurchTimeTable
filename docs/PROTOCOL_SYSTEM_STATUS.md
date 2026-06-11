@@ -58,6 +58,20 @@ Portal → /protocol (dashboard context gate)
 | Team leader CRUD | Create/deactivate on `/protocol/team-leaders` |
 | Assign leader to team | Recommended assign on team detail page |
 
+## Sprint 3 — Protocol admin dashboard
+
+| Item | Path / API |
+|------|------------|
+| Role model | **President ≡ Leader** (naming only). **Ministry admin** is a separate assignable committee role. |
+| President hub | `/protocol/president` — full ops (teams, rankings, replacements, settings) |
+| Admin hub | `/protocol/admin` — stats, role assign/revoke, invitations, claims, team leaders (read-only settings) |
+| Committee roles API | `GET/POST /governance/protocol/:scopeId`, `POST /governance/protocol/members`, `DELETE /governance/protocol/members/:id` |
+| Admin API | `GET /protocol/dashboard/admin` |
+| Engine settings | `/protocol/admin/settings` + `PATCH /protocol/settings` (edit requires `protocol.manage`) |
+| Landing | `PROTOCOL_LEADER` system account → `/protocol/president`; `protocol_admin` committee → `/protocol/admin` |
+
+**Pilot:** `protocol.leader@church.local` → president; `protocol.admin@church.local` → admin hub / `Pilot@123`
+
 ## Sprint 2 — Completed
 
 | Item | Status |

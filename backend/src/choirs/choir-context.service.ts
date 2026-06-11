@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { MemberMinistryScopeService } from '../member-portal/member-ministry-scope.service';
 import { MAIN_CHOIR_ID } from '../common/constants/choir.constants';
 import { getActiveChoirId } from '../common/choir/choir-context.storage';
 
@@ -17,7 +18,10 @@ export interface UserChoirSummary {
 
 @Injectable()
 export class ChoirContextService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private ministryScope: MemberMinistryScopeService,
+  ) {}
 
   getActiveChoirId(): string {
     return getActiveChoirId();
@@ -91,5 +95,12 @@ export class ChoirContextService {
       create: { userId, choirId, role, isActive: true },
       update: { role, isActive: true },
     });
+    const member = await this.prisma.member.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+    if (member) {
+      await this.ministryScope.syncMinistryScope(member.id);
+    }
   }
 }

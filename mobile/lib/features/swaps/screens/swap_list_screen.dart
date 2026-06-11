@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/localization/l10n.dart';
 import '../../../core/repositories/swap_repository.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../../core/widgets/shell_aware_scaffold.dart';
 import 'swap_detail_screen.dart';
 
 class SwapListScreen extends ConsumerStatefulWidget {
@@ -37,17 +38,15 @@ class _SwapListScreenState extends ConsumerState<SwapListScreen> {
     final l10n = context.l10n;
     final isLeader = ref.watch(authProvider).isLeader;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.swap_list_title),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: l10n.common_refresh,
-            onPressed: _load,
-          ),
-        ],
-      ),
+    return ShellAwareScaffold(
+      title: l10n.swap_list_title,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          tooltip: l10n.common_refresh,
+          onPressed: _load,
+        ),
+      ],
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           await Navigator.push(

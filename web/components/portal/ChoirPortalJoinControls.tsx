@@ -29,7 +29,11 @@ export function ChoirPortalJoinControls({
 
   if (actions.showDashboardButton) return null
 
-  if (actions.isPendingJoin) {
+  if (actions.isPendingJoin || actions.isPendingSponsor) {
+    const pendingId =
+      actions.isPendingSponsor
+        ? actions.pendingSponsorRequestId
+        : actions.pendingRequestId
     return (
       <div
         className={`flex flex-col gap-1.5 ${compact ? 'items-end text-right' : 'items-start'}`}
@@ -39,12 +43,12 @@ export function ChoirPortalJoinControls({
             compact ? 'text-xs' : 'text-sm'
           }`}
         >
-          Pending request
+          {actions.isPendingSponsor ? 'Pending sponsor request' : 'Pending request'}
         </span>
-        {actions.pendingRequestId && onCancelPending && (
+        {pendingId && onCancelPending && (
           <button
             type="button"
-            onClick={() => onCancelPending(actions.pendingRequestId!)}
+            onClick={() => onCancelPending(pendingId!)}
             disabled={cancelPending}
             className={`inline-flex items-center gap-1 font-semibold text-amber-800 hover:text-amber-950 underline underline-offset-2 disabled:opacity-60 ${
               compact ? 'text-xs' : 'text-sm'

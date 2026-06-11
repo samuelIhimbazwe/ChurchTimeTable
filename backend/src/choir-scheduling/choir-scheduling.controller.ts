@@ -148,6 +148,24 @@ export class ChoirSchedulingController {
     return this.assignments.recommend(userId, occurrenceId);
   }
 
+  @Get('assignments/pending-acceptance')
+  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_SCHEDULE, PERMISSIONS.CHOIR_OPS_MANAGE)
+  listPendingAcceptance(
+    @CurrentUser('sub') userId: string,
+    @Query('choirId') choirId: string,
+  ) {
+    return this.assignments.listPendingChoirAcceptance(userId, choirId);
+  }
+
+  @Get('assignments')
+  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_VIEW, PERMISSIONS.CHOIR_OPS_SCHEDULE)
+  listChoirAssignments(
+    @CurrentUser('sub') userId: string,
+    @Query('choirId') choirId: string,
+  ) {
+    return this.assignments.listForChoir(userId, choirId);
+  }
+
   @Get('occurrences/:occurrenceId/assignments')
   @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_VIEW, PERMISSIONS.CHOIR_OPS_SCHEDULE)
   listAssignments(
@@ -157,10 +175,31 @@ export class ChoirSchedulingController {
     return this.assignments.listForOccurrence(userId, occurrenceId);
   }
 
+  @Post('assignments/:id/accept')
+  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_SCHEDULE, PERMISSIONS.CHOIR_OPS_MANAGE)
+  acceptAssignment(
+    @CurrentUser('sub') userId: string,
+    @Param('id') id: string,
+    @Body() body: { notes?: string },
+  ) {
+    return this.assignments.acceptByChoir(userId, id, body.notes);
+  }
+
+  @Post('assignments/:id/decline')
+  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_SCHEDULE, PERMISSIONS.CHOIR_OPS_MANAGE)
+  declineAssignment(
+    @CurrentUser('sub') userId: string,
+    @Param('id') id: string,
+    @Body() body: { reason?: string },
+  ) {
+    return this.assignments.declineByChoir(userId, id, body.reason);
+  }
+
   @Post('assignments')
   @RequireAnyPermissions(
-    PERMISSIONS.CHOIR_OPS_SCHEDULE,
-    PERMISSIONS.CHOIR_OPS_MANAGE,
+    PERMISSIONS.CHURCH_SCHEDULE_MANAGE,
+    PERMISSIONS.CHURCH_SCHEDULE_RESOLVE,
+    PERMISSIONS.CHURCH_GOVERNANCE_MANAGE,
   )
   assign(
     @CurrentUser('sub') userId: string,
@@ -170,13 +209,18 @@ export class ChoirSchedulingController {
       occurrenceId: string;
       role?: ChoirServiceAssignmentRole;
       overrideReason?: string;
+      bypassRules?: boolean;
     },
   ) {
-    return this.assignments.assign(userId, body);
+    return this.assignments.churchDirectAssign(userId, body);
   }
 
   @Post('occurrences/:occurrenceId/auto-assign')
-  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_SCHEDULE, PERMISSIONS.CHOIR_OPS_MANAGE)
+  @RequireAnyPermissions(
+    PERMISSIONS.CHURCH_SCHEDULE_MANAGE,
+    PERMISSIONS.CHURCH_SCHEDULE_RESOLVE,
+    PERMISSIONS.CHURCH_GOVERNANCE_MANAGE,
+  )
   autoAssign(
     @CurrentUser('sub') userId: string,
     @Param('occurrenceId') occurrenceId: string,

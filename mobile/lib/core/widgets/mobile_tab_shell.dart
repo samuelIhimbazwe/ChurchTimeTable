@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../auth/governance_permissions.dart';
 import '../../features/auth/providers/auth_provider.dart';
+import '../design/components/brand/cmms_brand_logo.dart';
 import '../localization/l10n.dart';
 import '../routing/app_router.dart';
-import '../routing/route_permissions.dart';
 import '../design/tokens/colors.dart';
+import 'shell_destinations.dart';
+import 'shell_top_bar.dart';
 
+/// Web-aligned mobile shell: top bar + navy drawer (no bottom tabs).
 class MobileTabShellScope extends InheritedWidget {
   const MobileTabShellScope({
     super.key,
@@ -39,201 +41,137 @@ class MobileTabShell extends ConsumerWidget {
   final String currentRoute;
   final Widget child;
 
-  static const _desktopBreakpoint = 900.0;
-
-  static bool shouldUse(String? routeName) {
-    switch (routeName) {
-      case AppRouter.memberDashboard:
-      case AppRouter.leaderDashboard:
-      case AppRouter.members:
-      case AppRouter.calendar:
-        return true;
-      default:
-        return false;
-    }
-  }
-
-  int _tabIndex(AuthState auth) {
-    switch (currentRoute) {
-      case AppRouter.members:
-        return 1;
-      case AppRouter.calendar:
-        return 2;
-      case AppRouter.memberDashboard:
-      case AppRouter.leaderDashboard:
-      default:
-        return 0;
-    }
-  }
-
-  String _homeRoute(AuthState auth) => dashboardRouteForPermissions(auth.permissions);
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final width = MediaQuery.sizeOf(context).width;
-    if (width >= _desktopBreakpoint) {
-      return child;
-    }
-
     final l10n = context.l10n;
     final auth = ref.watch(authProvider);
-    final selectedIndex = _tabIndex(auth);
     final title = AppRouter.pageTitle(context, currentRoute);
-    final showFab = currentRoute == AppRouter.members;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return MobileTabShellScope(
       embedded: true,
       child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: CmmsColors.surfaceRaised(isDark),
         appBar: AppBar(
-          title: Text(title),
-          actions: [
-            IconButton(
-              icon: Badge(
-                label: const Text('3'),
-                child: const Icon(Icons.notifications_outlined),
-              ),
-              onPressed: () =>
-                  Navigator.pushNamed(context, AppRouter.notifications),
+          title: Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
             ),
-          ],
+          ),
+          actions: const [ShellTopBarActions()],
         ),
-        drawer: _MobileDrawer(auth: auth),
+        drawer: _WebStyleDrawer(auth: auth, currentRoute: currentRoute),
         body: child,
-        floatingActionButton: showFab
-            ? FloatingActionButton(
-                onPressed: () {},
-                child: const Icon(Icons.add),
-              )
-            : null,
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: selectedIndex,
-          onDestinationSelected: (index) {
-            final target = switch (index) {
-              0 => _homeRoute(auth),
-              1 => AppRouter.members,
-              2 => AppRouter.calendar,
-              _ => null,
-            };
-            if (target == null) {
-              Scaffold.of(context).openDrawer();
-              return;
-            }
-            if (target == currentRoute) return;
-            Navigator.pushReplacementNamed(context, target);
-          },
-          destinations: [
-            NavigationDestination(
-              icon: const Icon(Icons.home_outlined),
-              selectedIcon: const Icon(Icons.home),
-              label: l10n.nav_home,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.people_outline),
-              selectedIcon: const Icon(Icons.people),
-              label: l10n.nav_members,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.event_outlined),
-              selectedIcon: const Icon(Icons.event),
-              label: l10n.nav_events,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.more_horiz),
-              selectedIcon: const Icon(Icons.more_horiz),
-              label: l10n.nav_more,
-            ),
-          ],
-        ),
       ),
     );
   }
 }
 
-class _MobileDrawer extends ConsumerWidget {
-  const _MobileDrawer({required this.auth});
+class _WebStyleDrawer extends ConsumerWidget {
+  const _WebStyleDrawer({
+    required this.auth,
+    required this.currentRoute,
+  });
 
   final AuthState auth;
+  final String currentRoute;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final items = <_DrawerItem>[
-      _DrawerItem(AppRouter.search, l10n.search_title, Icons.search),
-      if (hasOperationalLeaderDashboard(auth.permissions))
-        _DrawerItem(AppRouter.operational, l10n.nav_operational, Icons.dashboard_outlined),
-      if (canAccessAttendanceNav(auth.permissions))
-        _DrawerItem(AppRouter.attendance, l10n.nav_attendance, Icons.fact_check_outlined),
-      if (canAccessCoverageNav(auth.permissions))
-        _DrawerItem(AppRouter.coverage, l10n.nav_coverage, Icons.shield_outlined),
-      if (auth.hasPermission('swap:manage'))
-        _DrawerItem(AppRouter.swaps, l10n.nav_swaps, Icons.swap_horiz_outlined),
-      if (canAccessFinanceNav(auth.permissions))
-        _DrawerItem(AppRouter.finance, l10n.nav_finance, Icons.account_balance_wallet_outlined),
-      if (canViewFamilies(auth.permissions))
-        _DrawerItem(AppRouter.families, l10n.families_title, Icons.family_restroom_outlined),
-      if (canViewWelfare(auth.permissions))
-        _DrawerItem(AppRouter.welfare, l10n.welfare_title, Icons.volunteer_activism_outlined),
-      if (canViewMusic(auth.permissions))
-        _DrawerItem(AppRouter.music, l10n.music_title, Icons.library_music_outlined),
-      if (canViewRehearsals(auth.permissions))
-        _DrawerItem(AppRouter.rehearsals, l10n.rehearsals_title, Icons.music_note_outlined),
-      _DrawerItem(AppRouter.sync, l10n.nav_sync, Icons.sync_outlined),
-      _DrawerItem(AppRouter.settings, l10n.nav_settings, Icons.settings_outlined),
-    ];
+    final items = buildShellDestinations(l10n, auth);
 
     return Drawer(
+      backgroundColor: CmmsColors.primary900,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(l10n.app_title, style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 4),
-                  Text(
-                    l10n.app_tagline,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              decoration: const BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: CmmsColors.primary800),
+                ),
+              ),
+              child: const CmmsBrandLogo(
+                size: 36,
+                showWordmark: true,
+                subtitle: 'Church System',
+                lightContext: true,
               ),
             ),
             Expanded(
               child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 8),
                 children: [
                   for (final item in items)
-                    ListTile(
-                      leading: Icon(item.icon),
-                      title: Text(item.label),
-                      trailing: const Icon(Icons.chevron_right),
+                    _DrawerNavTile(
+                      item: item,
+                      selected: normalizeShellRoute(currentRoute) ==
+                          normalizeShellRoute(item.route),
                       onTap: () {
                         Navigator.pop(context);
-                        Navigator.pushNamed(context, item.route);
+                        if (currentRoute != item.route) {
+                          Navigator.pushReplacementNamed(context, item.route);
+                        }
                       },
                     ),
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: OutlinedButton.icon(
-                onPressed: () async {
-                  await ref.read(authProvider.notifier).logout();
-                  if (!context.mounted) return;
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    AppRouter.login,
-                    (_) => false,
-                  );
-                },
-                icon: const Icon(Icons.logout, color: CmmsColors.danger),
-                label: Text(
-                  l10n.common_logout,
-                  style: const TextStyle(color: CmmsColors.danger),
+            Container(
+              decoration: const BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: CmmsColors.primary800),
                 ),
+              ),
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                children: [
+                  _DrawerNavTile(
+                    item: ShellDestination(
+                      route: AppRouter.settings,
+                      icon: Icons.settings_outlined,
+                      selectedIcon: Icons.settings,
+                      label: l10n.settings_title,
+                    ),
+                    selected: normalizeShellRoute(currentRoute) ==
+                        AppRouter.settings,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushReplacementNamed(
+                        context,
+                        AppRouter.settings,
+                      );
+                    },
+                  ),
+                  TextButton.icon(
+                    onPressed: () async {
+                      await ref.read(authProvider.notifier).logout();
+                      if (!context.mounted) return;
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        AppRouter.login,
+                        (_) => false,
+                      );
+                    },
+                    icon: const Icon(
+                      Icons.logout,
+                      color: CmmsColors.danger,
+                      size: 18,
+                    ),
+                    label: Text(
+                      l10n.common_logout,
+                      style: const TextStyle(
+                        color: CmmsColors.danger,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -243,10 +181,61 @@ class _MobileDrawer extends ConsumerWidget {
   }
 }
 
-class _DrawerItem {
-  const _DrawerItem(this.route, this.label, this.icon);
+class _DrawerNavTile extends StatelessWidget {
+  const _DrawerNavTile({
+    required this.item,
+    required this.selected,
+    required this.onTap,
+  });
 
-  final String route;
-  final String label;
-  final IconData icon;
+  final ShellDestination item;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? CmmsColors.primary800 : Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              if (selected)
+                Container(
+                  width: 3,
+                  height: 20,
+                  margin: const EdgeInsets.only(right: 10),
+                  decoration: BoxDecoration(
+                    color: CmmsColors.gold500,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                )
+              else
+                const SizedBox(width: 13),
+              Icon(
+                selected ? item.selectedIcon : item.icon,
+                size: 20,
+                color: selected ? CmmsColors.gold400 : CmmsColors.primary300,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  item.label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                    color: selected
+                        ? CmmsColors.textInverse
+                        : CmmsColors.primary300,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

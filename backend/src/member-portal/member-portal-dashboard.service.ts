@@ -9,6 +9,7 @@ import { ChoirMembershipRulesService } from './choir-membership-rules.service';
 import { ChoirDiscoveryService } from './choir-discovery.service';
 import { MemberPortalDevotionService } from './member-portal-devotion.service';
 import { MemberPortalWeeklyActivitiesService } from './member-portal-weekly-activities.service';
+import { MemberPortalParticipationScheduleService } from './member-portal-participation-schedule.service';
 import {
   ChurchBrandingService,
   ChurchStreamingSettings,
@@ -53,6 +54,7 @@ export class MemberPortalDashboardService {
     private choirDiscovery: ChoirDiscoveryService,
     private portalDevotion: MemberPortalDevotionService,
     private portalWeekly: MemberPortalWeeklyActivitiesService,
+    private participationSchedule: MemberPortalParticipationScheduleService,
   ) {}
 
   async churchMemberDashboard(userId: string) {
@@ -257,9 +259,10 @@ export class MemberPortalDashboardService {
     const liveBroadcast = liveBroadcasts[0] ?? null;
     const pendingClaim = claims.find((c) => c.status === 'PENDING');
 
-    const [prayWithUs, weeklyActivitiesPreview] = await Promise.all([
+    const [prayWithUs, weeklyActivitiesPreview, participation] = await Promise.all([
       this.portalDevotion.portalPrayPreview(),
       this.portalWeekly.nearestDayPreview(),
+      this.participationSchedule.buildForUser(userId),
     ]);
 
     const welcome = {
@@ -355,6 +358,7 @@ export class MemberPortalDashboardService {
       membership,
       activities,
       broadcasts,
+      participation,
     };
   }
 

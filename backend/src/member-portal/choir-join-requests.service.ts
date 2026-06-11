@@ -63,6 +63,15 @@ export class ChoirJoinRequestsService {
       throw new BadRequestException('You are already a member of this choir');
     }
 
+    const activeSponsor = await this.prisma.choirSponsorship.findFirst({
+      where: { memberId: member.id, choirId: data.choirId, active: true },
+    });
+    if (activeSponsor) {
+      throw new BadRequestException(
+        'You sponsor this choir and cannot also join as a singer here',
+      );
+    }
+
     const pending = await this.prisma.choirJoinRequest.findFirst({
       where: {
         memberId: member.id,

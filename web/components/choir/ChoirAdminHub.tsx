@@ -109,7 +109,16 @@ export function ChoirAdminHub() {
               stat={roster?.total != null ? `${roster.total} members` : undefined}
             />
           </PermissionGate>
-          <PermissionGate anyOf={['family:manage', 'choir.family.manage', 'choir.join.review', 'member:manage']}>
+          <PermissionGate
+            anyOf={[
+              'family:view',
+              'family:manage',
+              'choir.family.view',
+              'choir.family.manage',
+              'choir.join.review',
+              'member:manage',
+            ]}
+          >
             <HubQuickLink
               href={choirLink('admin/families')}
               label="Families structure"

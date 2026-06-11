@@ -1,6 +1,7 @@
 import { protocolMemberHome, protocolPath } from '@/lib/protocol/paths'
 
 /** Maps account roles to protocol committee role keys. */
+/** System ministry leader accounts map to president (leader ≡ president). */
 export const SYSTEM_PROTOCOL_ROLE_TO_COMMITTEE: Record<string, string> = {
   PROTOCOL_LEADER: 'protocol_president',
   PROTOCOL_ADMIN: 'protocol_president',
@@ -8,7 +9,9 @@ export const SYSTEM_PROTOCOL_ROLE_TO_COMMITTEE: Record<string, string> = {
 
 /** Committee role key → dashboard hub segment under `/protocol/`. */
 export const COMMITTEE_ROLE_HUB_SEGMENT: Record<string, string> = {
+  protocol_admin: 'admin',
   protocol_president: 'president',
+  protocol_vice_president: 'vice-president',
   protocol_coordinator: 'coordinator',
   protocol_treasurer: 'treasury',
   protocol_secretary: 'secretary',
@@ -17,6 +20,8 @@ export const COMMITTEE_ROLE_HUB_SEGMENT: Record<string, string> = {
 
 export const PROTOCOL_LANDING_ROLE_PRIORITY = [
   'protocol_president',
+  'protocol_admin',
+  'protocol_vice_president',
   'protocol_coordinator',
   'protocol_treasurer',
   'protocol_secretary',

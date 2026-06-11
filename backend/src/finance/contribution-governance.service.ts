@@ -73,7 +73,122 @@ export class ContributionGovernanceService {
     return {
       familyId: resolvedFamilyId,
       pendingCount: records.length,
+      items: records.map((record) => this.serializeInboxItem(record)),
+    };
+  }
+
+  async getSponsorInbox(
+    actorUserId: string,
+    choirId: string,
+    status: ContributionStatus = ContributionStatus.SUBMITTED,
+    limit = 30,
+  ) {
+    const ctx = await this.scope.resolveActor(actorUserId);
+    this.scope.assertCanViewAll(ctx);
+
+    const choir = await this.prisma.choir.findUnique({
+      where: { id: choirId },
+      select: { id: true, isActive: true },
+    });
+    if (!choir?.isActive) {
+      throw new NotFoundException('Choir not found');
+    }
+
+    const records = await this.prisma.contributionRecord.findMany({
+      where: {
+        familyId: null,
+        choirId,
+        status,
+      },
+      orderBy: {
+        createdAt: status === ContributionStatus.SUBMITTED ? 'asc' : 'desc',
+      },
+      take: Math.min(limit, 100),
+      include: {
+        member: {
+          select: {
+            memberNumber: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        contributionTypeCatalog: { select: { code: true, name: true } },
+        contributionCampaign: { select: { name: true } },
+      },
+    });
+
+    return {
+      choirId,
+      pendingCount: records.length,
       items: records.map((record) => ({
+        ...this.serializeInboxItem(record),
+        isSponsor: true,
+      })),
+    };
+  }
+
+  async getProtocolInbox(
+    actorUserId: string,
+    status: ContributionStatus = ContributionStatus.SUBMITTED,
+    limit = 30,
+  ) {
+    const ctx = await this.scope.resolveActor(actorUserId);
+    this.scope.assertCanApproveProtocol(ctx);
+
+    const records = await this.prisma.contributionRecord.findMany({
+      where: {
+        familyId: null,
+        choirId: null,
+        status,
+        contributionTypeCatalog: { ministryScope: MinistryScope.PROTOCOL },
+      },
+      orderBy: {
+        createdAt: status === ContributionStatus.SUBMITTED ? 'asc' : 'desc',
+      },
+      take: Math.min(limit, 100),
+      include: {
+        member: {
+          select: {
+            memberNumber: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        contributionTypeCatalog: { select: { code: true, name: true } },
+        contributionCampaign: { select: { name: true } },
+      },
+    });
+
+    return {
+      pendingCount: records.length,
+      items: records.map((record) => ({
+        ...this.serializeInboxItem(record),
+        isProtocol: true,
+      })),
+    };
+  }
+
+  private serializeInboxItem(
+    record: {
+      id: string;
+      referenceNumber: string;
+      status: ContributionStatus;
+      claimedAmount: unknown;
+      amount: unknown;
+      confirmedAmount: unknown;
+      memberId: string;
+      member: {
+        memberNumber: string | null;
+        firstName: string;
+        lastName: string;
+      };
+      paymentAt: Date | null;
+      contributionTypeCatalog: { code: string; name: string } | null;
+      contributionCampaign: { name: string } | null;
+      createdAt: Date;
+    },
+  ) {
+    return {
         id: record.id,
         referenceNumber: record.referenceNumber,
         status: record.status,
@@ -88,19 +203,32 @@ export class ContributionGovernanceService {
         typeName:
           record.contributionTypeCatalog?.name ??
           record.contributionTypeCatalog?.code ??
-          record.contributionType,
+          null,
         campaignName: record.contributionCampaign?.name ?? null,
         createdAt: record.createdAt,
-      })),
     };
   }
 
-  async listAllContributions(actorUserId: string, limit = 50) {
+  async listAllContributions(
+    actorUserId: string,
+    limit = 50,
+    ministryScope: MinistryScope = MinistryScope.CHOIR,
+    status?: ContributionStatus,
+    familyOnly?: boolean,
+  ) {
     const ctx = await this.scope.resolveActor(actorUserId);
-    this.scope.assertCanViewAll(ctx);
+    if (ministryScope === MinistryScope.PROTOCOL) {
+      this.scope.assertCanViewAllProtocol(ctx);
+    } else {
+      this.scope.assertCanViewAll(ctx);
+    }
 
     const records = await this.prisma.contributionRecord.findMany({
-      where: { member: { ministry: 'CHOIR' } },
+      where: {
+        contributionTypeCatalog: { ministryScope },
+        ...(status ? { status } : {}),
+        ...(familyOnly ? { familyId: { not: null } } : {}),
+      },
       orderBy: { createdAt: 'desc' },
       take: Math.min(limit, 100),
       select: {
@@ -108,6 +236,7 @@ export class ContributionGovernanceService {
         referenceNumber: true,
         status: true,
         familyId: true,
+        choirId: true,
         memberId: true,
         claimedAmount: true,
         confirmedAmount: true,
@@ -172,11 +301,7 @@ export class ContributionGovernanceService {
     }
 
     const record = await this.findWorkflowRecord(contributionId);
-    if (!record.familyId) {
-      throw new BadRequestException('Contribution has no family');
-    }
-
-    this.scope.assertCanApproveFamily(ctx, record.familyId);
+    this.assertCanProcessRecord(ctx, record);
     this.assertSubmittedOnly(record.status);
 
     if (record.financeTransactionId) {
@@ -201,10 +326,11 @@ export class ContributionGovernanceService {
     const discrepancyReason =
       discrepancyAmount !== 0 ? dto.discrepancyReason?.trim() ?? null : null;
 
-    const approverRole = this.scope.resolveFamilyApproverRole(
-      ctx,
-      record.familyId,
-    );
+    const approverRole = record.familyId
+      ? this.scope.resolveFamilyApproverRole(ctx, record.familyId)
+      : this.isProtocolRecord(record)
+        ? 'protocol_treasurer'
+        : 'treasurer';
     const timestamp = new Date().toISOString();
     const familyApprovedAt = new Date();
 
@@ -214,7 +340,9 @@ export class ContributionGovernanceService {
           where: { id: contributionId },
           include: {
             member: { select: { ministry: true } },
-            contributionTypeCatalog: { select: { code: true, name: true } },
+            contributionTypeCatalog: {
+              select: { code: true, name: true, ministryScope: true },
+            },
           },
         });
         if (!locked) {
@@ -239,9 +367,15 @@ export class ContributionGovernanceService {
           locked.contributionTypeCatalog?.code ??
           locked.contributionType;
 
+        const ledgerScope = this.isProtocolRecord(locked)
+          ? MinistryScope.PROTOCOL
+          : locked.member.ministry === MinistryScope.PROTOCOL
+            ? MinistryScope.PROTOCOL
+            : MinistryScope.CHOIR;
+
         const transaction = await tx.financeTransaction.create({
           data: {
-            ministryScope: locked.member.ministry ?? MinistryScope.CHOIR,
+            ministryScope: ledgerScope,
             type: TransactionType.INCOME,
             category,
             amount: confirmedAmount,
@@ -322,9 +456,9 @@ export class ContributionGovernanceService {
       automatic: true,
     });
 
-    if (discrepancyAmount !== 0 && discrepancyReason) {
+    if (discrepancyAmount !== 0 && discrepancyReason && record.familyId) {
       await this.notifyDiscrepancyStakeholders({
-        familyId: record.familyId!,
+        familyId: record.familyId,
         contributionId,
         claimedAmount,
         confirmedAmount,
@@ -353,18 +487,15 @@ export class ContributionGovernanceService {
     }
 
     const record = await this.findWorkflowRecord(contributionId);
-    if (!record.familyId) {
-      throw new BadRequestException('Contribution has no family');
-    }
-
-    this.scope.assertCanRejectFamily(ctx, record.familyId);
+    this.assertCanProcessRecord(ctx, record);
     this.assertSubmittedOnly(record.status);
 
     const rejectionReason = dto.rejectionReason.trim();
-    const approverRole = this.scope.resolveFamilyApproverRole(
-      ctx,
-      record.familyId,
-    );
+    const approverRole = record.familyId
+      ? this.scope.resolveFamilyApproverRole(ctx, record.familyId)
+      : this.isProtocolRecord(record)
+        ? 'protocol_treasurer'
+        : 'treasurer';
     const timestamp = new Date().toISOString();
 
     const updated = await this.prisma.contributionRecord.update({
@@ -513,9 +644,33 @@ export class ContributionGovernanceService {
         },
       },
       contributionTypeCatalog: {
-        select: { code: true, name: true },
+        select: { code: true, name: true, ministryScope: true },
       },
     } satisfies Prisma.ContributionRecordInclude;
+  }
+
+  private isProtocolRecord(record: {
+    contributionTypeCatalog?: { ministryScope: MinistryScope } | null;
+  }): boolean {
+    return record.contributionTypeCatalog?.ministryScope === MinistryScope.PROTOCOL;
+  }
+
+  private assertCanProcessRecord(
+    ctx: Awaited<ReturnType<ContributionScopeService['resolveActor']>>,
+    record: {
+      familyId: string | null;
+      contributionTypeCatalog?: { ministryScope: MinistryScope } | null;
+    },
+  ) {
+    if (record.familyId) {
+      this.scope.assertCanApproveFamily(ctx, record.familyId);
+      return;
+    }
+    if (this.isProtocolRecord(record)) {
+      this.scope.assertCanApproveProtocol(ctx);
+      return;
+    }
+    this.scope.assertCanViewAll(ctx);
   }
 
   private async findWorkflowRecord(contributionId: string) {

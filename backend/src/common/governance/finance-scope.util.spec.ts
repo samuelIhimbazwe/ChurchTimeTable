@@ -45,6 +45,27 @@ describe('finance-scope.util', () => {
     expect(ctx.ministryScopes).toContain(MinistryScope.PROTOCOL);
   });
 
+  it('limits church finance staff to church-wide (BOTH) ledger only', () => {
+    const ctx = buildFinanceScopeContext(
+      baseOperational({
+        permissions: [PERMISSIONS.MINISTRY_FINANCE_VIEW],
+      }),
+    );
+    expect(ctx.churchWideFinanceOnly).toBe(true);
+    expect(ctx.ministryScopes).toEqual([MinistryScope.BOTH]);
+    expect(canAccessMinistryFinance(ctx, MinistryScope.CHOIR)).toBe(false);
+  });
+
+  it('limits protocol treasurer to protocol ledger only', () => {
+    const ctx = buildFinanceScopeContext(
+      baseOperational({
+        permissions: [PERMISSIONS.PROTOCOL_FINANCE_VIEW],
+      }),
+    );
+    expect(ctx.ministryScopes).toEqual([MinistryScope.PROTOCOL]);
+    expect(canAccessMinistryFinance(ctx, MinistryScope.CHOIR)).toBe(false);
+  });
+
   it('president oversight uses executive summary mode', () => {
     const ctx = buildFinanceScopeContext(
       baseOperational({

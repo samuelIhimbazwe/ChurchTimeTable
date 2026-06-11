@@ -1,6 +1,6 @@
 'use client'
 
-import { CHOIR_JOIN_REQUEST_TYPES } from '@/lib/constants/choir-positions'
+import { CHOIR_JOIN_INTENTS } from '@/lib/constants/choir-positions'
 
 type Props = {
   requestType: string
@@ -35,15 +35,15 @@ export function ChoirJoinRequestForm({
         <p className="text-xs font-semibold text-text-primary mb-2">
           How are you joining?
         </p>
-        <div className="flex flex-col sm:flex-row gap-2">
-          {CHOIR_JOIN_REQUEST_TYPES.map((t) => {
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {CHOIR_JOIN_INTENTS.map((t) => {
             const selected = requestType === t.value
             return (
               <button
                 key={t.value}
                 type="button"
                 onClick={() => onRequestTypeChange(t.value)}
-                className={`flex-1 px-3 py-2.5 rounded-lg text-sm font-semibold border transition-colors text-left ${
+                className={`px-3 py-2.5 rounded-lg text-sm font-semibold border transition-colors text-left ${
                   selected
                     ? 'bg-primary-700 text-white border-primary-700'
                     : 'bg-surface text-text-primary border-border hover:bg-surface-raised'

@@ -94,6 +94,18 @@ class MemberHomeScreen extends ConsumerWidget {
         subtitle: const Text('Choir join and membership requests'),
         onTap: () => Navigator.of(context).pushNamed(AppRouter.memberPortalRequests),
       ),
+      ListTile(
+        leading: const Icon(Icons.volunteer_activism_outlined),
+        title: const Text('My contributions'),
+        subtitle: const Text('History and submit choir claims'),
+        onTap: () => Navigator.of(context).pushNamed(AppRouter.myContributions),
+      ),
+      ListTile(
+        leading: const Icon(Icons.shield_outlined),
+        title: const Text('Protocol'),
+        subtitle: const Text('Contributions and service assignments'),
+        onTap: () => Navigator.of(context).pushNamed(AppRouter.protocolDashboard),
+      ),
     ];
   }
 }

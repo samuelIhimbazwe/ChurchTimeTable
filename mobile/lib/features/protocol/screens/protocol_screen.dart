@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/routing/app_router.dart';
 import '../protocol_cache.dart';
 
 class ProtocolScreen extends StatefulWidget {
@@ -87,6 +88,25 @@ class _ProtocolScreenState extends State<ProtocolScreen> {
                   ),
                   const SizedBox(height: 16),
                 ],
+                ListTile(
+                  leading: const Icon(Icons.payments_outlined),
+                  title: const Text('Submit contribution'),
+                  subtitle: const Text('Direct to protocol treasurer'),
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    AppRouter.protocolContribute,
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.account_balance_wallet_outlined),
+                  title: const Text('Treasury overview'),
+                  subtitle: const Text('Read-only contribution list'),
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    AppRouter.protocolTreasury,
+                  ),
+                ),
+                const Divider(),
                 Text(
                   'My assignments',
                   style: Theme.of(context).textTheme.titleSmall,

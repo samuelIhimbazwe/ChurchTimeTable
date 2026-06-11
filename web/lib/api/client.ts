@@ -52,27 +52,36 @@ export class ValidationError extends ApiError {
 }
 
 /* ── Axios instance ── */
-function resolveBaseUrl(): string {
+function resolveServerApiOrigin(): string {
   const raw =
     process.env.NEXT_PUBLIC_API_URL ??
     process.env.NEXT_PUBLIC_API_BASE_URL ??
-    'http://localhost:3000'
+    'http://127.0.0.1:3000'
   /* Support both http://localhost:3000 and .../api/v1 in env */
   return raw.replace(/\/api\/v1\/?$/, '')
 }
 
-const BASE_URL = resolveBaseUrl()
+/** Browser: same-origin /api/v1 (Next rewrite + tunnel). SSR: direct backend. */
+function getApiOrigin(): string {
+  if (typeof window !== 'undefined') return ''
+  return resolveServerApiOrigin()
+}
+
+function apiBaseUrl(): string {
+  const origin = getApiOrigin()
+  return origin ? `${origin}/api/v1` : '/api/v1'
+}
 
 export const apiClient: AxiosInstance = axios.create({
-  baseURL: `${BASE_URL}/api/v1`,
   withCredentials: true,          // sends refresh cookie
   headers: { 'Content-Type': 'application/json' },
-  timeout: 15_000,
+  timeout: 30_000,
 })
 
-/* ── Request interceptor: attach access token ── */
+/* ── Request interceptor: base URL + access token ── */
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    config.baseURL = apiBaseUrl()
     const token = getAccessToken()
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
@@ -131,7 +140,7 @@ apiClient.interceptors.response.use(
 
       try {
         const res = await axios.post<{ data: { accessToken: string } }>(
-          `${BASE_URL}/api/v1/auth/refresh`,
+          `${apiBaseUrl()}/auth/refresh`,
           {},
           { withCredentials: true },
         )

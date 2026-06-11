@@ -96,6 +96,7 @@ async function upsertPilotUser(
     phone?: string;
     memberNumber?: string;
     choirRole?: string;
+    skipChoirMembership?: boolean;
   },
 ) {
   const role = await prisma.role.findUniqueOrThrow({ where: { name: roleName } });
@@ -154,6 +155,7 @@ async function upsertPilotUser(
 
   if (
     resolved.member &&
+    !options?.skipChoirMembership &&
     (member.ministry === 'CHOIR' || member.ministry === 'BOTH')
   ) {
     await ensureChoirMembership(
@@ -313,6 +315,7 @@ async function main() {
     ROLES.CHOIR_TREASURER,
     { firstName: 'Eric', lastName: 'Habimana', ministry: 'CHOIR' },
   );
+  await assignChoirCommitteeRole('choir.treasurer@church.local', 'treasurer');
   await upsertPilotUser(
     'choir.rehearsal@church.local',
     ROLES.CHOIR_REHEARSAL_DIRECTOR,
@@ -391,6 +394,11 @@ async function main() {
     ROLES.MEMBER,
     { firstName: 'Sandrine', lastName: 'Uwase', ministry: 'PROTOCOL' },
   );
+  await upsertPilotUser(
+    'protocol.admin@church.local',
+    ROLES.MEMBER,
+    { firstName: 'Alice', lastName: 'Mukamana', ministry: 'PROTOCOL' },
+  );
 
   await assignProtocolCommitteeRole(
     'protocol.president@church.local',
@@ -404,6 +412,10 @@ async function main() {
     'protocol.teamhead@church.local',
     'protocol_team_head',
   );
+  await assignProtocolCommitteeRole(
+    'protocol.admin@church.local',
+    'protocol_admin',
+  );
   await upsertPilotUser(
     'protocol.treasurer@church.local',
     ROLES.MEMBER,
@@ -412,6 +424,15 @@ async function main() {
   await assignProtocolCommitteeRole(
     'protocol.treasurer@church.local',
     'protocol_treasurer',
+  );
+  await upsertPilotUser(
+    'protocol.vice@church.local',
+    ROLES.MEMBER,
+    { firstName: 'Claudine', lastName: 'Mukeshimana', ministry: 'PROTOCOL' },
+  );
+  await assignProtocolCommitteeRole(
+    'protocol.vice@church.local',
+    'protocol_vice_president',
   );
 
   const members = await Promise.all(
@@ -545,10 +566,47 @@ async function main() {
     'PROTOCOL_TEAM',
   );
 
+  const pilotGivingInfo = {
+    giving: {
+      tithesOfferings: {
+        momoNumber: '0788001122',
+        momoAccountName: 'Church Tithes & Offerings',
+        instructions:
+          'Tithes and offerings — include your full name in the MoMo note.',
+      },
+      inyubako: {
+        momoNumber: '0788003344',
+        momoAccountName: 'Inyubako Building Fund',
+        bankAccount: '1234567890',
+        bankName: 'BK Church Account',
+        instructions:
+          'Inyubako (church building) — MoMo or bank transfer. Reference "Inyubako" in the note.',
+      },
+      protocolTreasury: {
+        momoNumber: '0788005566',
+        momoAccountName: 'Protocol Unity Treasury',
+        instructions:
+          'Protocol unity contributions — include your name in the MoMo note, then submit your claim.',
+      },
+    },
+  };
+
+  const existingChurchConfig = await prisma.churchConfiguration.findUnique({
+    where: { id: 'default' },
+  });
+  const existingInfo = (existingChurchConfig?.churchInfo ?? {}) as Record<string, unknown>;
+
   await prisma.churchConfiguration.upsert({
     where: { id: 'default' },
-    create: { id: 'default', demoModeEnabled: true },
-    update: { demoModeEnabled: true },
+    create: {
+      id: 'default',
+      demoModeEnabled: true,
+      churchInfo: pilotGivingInfo,
+    },
+    update: {
+      demoModeEnabled: true,
+      churchInfo: { ...existingInfo, ...pilotGivingInfo },
+    },
   });
 
   const pilotFamily = await prisma.family.upsert({
@@ -560,8 +618,18 @@ async function main() {
       familyCode: 'PILOT-A',
       familyName: 'Pilot Family Alpha',
       delegationEnabled: false,
+      paymentMomoNumber: '0788123456',
+      paymentMomoAccountName: 'Main Choir Treasury',
+      paymentInstructions:
+        'Use this MoMo for sponsor gifts and family contributions. Reference your name in the payment note.',
     },
-    update: { familyName: 'Pilot Family Alpha' },
+    update: {
+      familyName: 'Pilot Family Alpha',
+      paymentMomoNumber: '0788123456',
+      paymentMomoAccountName: 'Main Choir Treasury',
+      paymentInstructions:
+        'Use this MoMo for sponsor gifts and family contributions. Reference your name in the payment note.',
+    },
   });
 
   const pilotFamilyB = await prisma.family.upsert({
@@ -579,6 +647,142 @@ async function main() {
 
   const member1 = members.find((u) => u.email === 'member1@church.local');
   const member2 = members.find((u) => u.email === 'member2@church.local');
+  if (member1?.member) {
+    await ensureProtocolMembership(member1.member.id);
+    await ensureProtocolProfile(member1.member.id);
+    await prisma.member.update({
+      where: { id: member1.member.id },
+      data: { ministry: 'BOTH' },
+    });
+  }
+  const sponsorUser = await upsertPilotUser(
+    'sponsor@church.local',
+    ROLES.MEMBER,
+    { firstName: 'Jeanne', lastName: 'Uwimana', ministry: 'CHOIR' },
+    { status: 'ACTIVE', skipChoirMembership: true },
+  );
+  if (sponsorUser.member) {
+    await prisma.choirSponsorship.upsert({
+      where: {
+        memberId_choirId: {
+          memberId: sponsorUser.member.id,
+          choirId: MAIN_CHOIR_ID,
+        },
+      },
+      create: {
+        memberId: sponsorUser.member.id,
+        choirId: MAIN_CHOIR_ID,
+        active: true,
+      },
+      update: { active: true, endedAt: null },
+    });
+  }
+
+  const songCategory = await prisma.songCategory.upsert({
+    where: {
+      choirId_code: { choirId: MAIN_CHOIR_ID, code: 'WORSHIP' },
+    },
+    create: {
+      choirId: MAIN_CHOIR_ID,
+      code: 'WORSHIP',
+      name: 'Worship',
+      sortOrder: 1,
+    },
+    update: { name: 'Worship' },
+  });
+
+  await prisma.song.upsert({
+    where: { id: 'pilot-song-ijwi-ry-umwami' },
+    create: {
+      id: 'pilot-song-ijwi-ry-umwami',
+      choirId: MAIN_CHOIR_ID,
+      title: 'Ijwi ry\'Umwami',
+      lyricist: 'Pastor Emmanuel N.',
+      composer: 'ADEPR Choir Collective',
+      conductedBy: 'David Hoza',
+      producedBy: 'Kigali Sound Studio',
+      performedBy: 'Ijwi ry\'Umwami Choir',
+      genre: 'Gospel / Worship',
+      voiceParts: 'SATB',
+      durationSeconds: 312,
+      releaseDate: new Date('2024-11-15'),
+      shortSummary: 'A celebration of Christ as King — recorded live at the annual choir concert.',
+      fullDescription:
+        'Written for the 2024 concert season, this anthem blends traditional hymnody with contemporary Rwandan harmonies.',
+      recordingStudio: 'Kigali Sound Studio',
+      mixingEngineer: 'Eric Mugisha',
+      masteringBy: 'Studio Master RW',
+      recordingType: 'Live concert',
+      listenLinksJson: [
+        { platform: 'YouTube', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
+        { platform: 'Spotify', url: 'https://open.spotify.com/track/example' },
+      ],
+      categoryId: songCategory.id,
+      language: 'rw',
+      lyricsText: `Ijwi ry'Umwami riravuga\nKo Yesu ari Umwami wacu\nTuri abana b'Ubwami\nDuhimbaze izina rye\n\nIjwi ry'Umwami riravuga\nKo twizere mu mutima\nTuri abasangirwa na We\nDuhimbaze Umwami wacu`,
+      notes: 'Practice SATB — sopranos carry the melody in verse 1.',
+      active: true,
+    },
+    update: {
+      title: 'Ijwi ry\'Umwami',
+      lyricist: 'Pastor Emmanuel N.',
+      composer: 'ADEPR Choir Collective',
+      releaseDate: new Date('2024-11-15'),
+      lyricsText: `Ijwi ry'Umwami riravuga\nKo Yesu ari Umwami wacu\nTuri abana b'Ubwami\nDuhimbaze izina rye\n\nIjwi ry'Umwami riravuga\nKo twizere mu mutima\nTuri abasangirwa na We\nDuhimbaze Umwami wacu`,
+      notes: 'Practice SATB — sopranos carry the melody in verse 1.',
+      listenLinksJson: [
+        { platform: 'YouTube', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
+        { platform: 'Spotify', url: 'https://open.spotify.com/track/example' },
+      ],
+      active: true,
+    },
+  });
+
+  await prisma.songAsset.deleteMany({
+    where: { songId: 'pilot-song-ijwi-ry-umwami' },
+  });
+  await prisma.songAsset.createMany({
+    data: [
+      {
+        songId: 'pilot-song-ijwi-ry-umwami',
+        assetType: 'PDF',
+        fileName: 'Ijwi ry\'Umwami — SATB score.pdf',
+        fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+        mimeType: 'application/pdf',
+      },
+      {
+        songId: 'pilot-song-ijwi-ry-umwami',
+        assetType: 'AUDIO',
+        fileName: 'Ijwi ry\'Umwami — practice track.mp3',
+        fileUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+        mimeType: 'audio/mpeg',
+      },
+    ],
+  });
+
+  await prisma.song.upsert({
+    where: { id: 'pilot-song-coming-soon' },
+    create: {
+      id: 'pilot-song-coming-soon',
+      choirId: MAIN_CHOIR_ID,
+      title: 'Urukundo rw\'Imana (Coming soon)',
+      lyricist: 'Grace M.',
+      composer: 'Choir Arrangers Team',
+      genre: 'Worship',
+      shortSummary: 'New single in production — sponsors will be the first to hear it.',
+      listenLinksJson: [],
+      categoryId: songCategory.id,
+      language: 'rw',
+      lyricsText: `Urukundo rw'Imana ruruta ibyo dushaka\nRutugeraho amahoro\nTegereza gutangazwa mu mpera z'uyu mwaka`,
+      active: true,
+    },
+    update: {
+      title: 'Urukundo rw\'Imana (Coming soon)',
+      lyricsText: `Urukundo rw'Imana ruruta ibyo dushaka\nRutugeraho amahoro\nTegereza gutangazwa mu mpera z'uyu mwaka`,
+      active: true,
+    },
+  });
+
   if (member1?.member && member2?.member) {
     for (const [memberId, role] of [
       [member1.member.id, FamilyMemberRole.HEAD],
@@ -600,9 +804,12 @@ async function main() {
   for (const email of [
     'protocol.leader@church.local',
     'protocol.president@church.local',
+    'protocol.vice@church.local',
     'protocol.coordinator@church.local',
     'protocol.teamhead@church.local',
     'protocol.treasurer@church.local',
+    'protocol.admin@church.local',
+    'member1@church.local',
     'member3@church.local',
     'member4@church.local',
   ]) {
@@ -630,6 +837,7 @@ async function main() {
     'protocol.president@church.local',
     'protocol.coordinator@church.local',
     'protocol.treasurer@church.local',
+    'member1@church.local',
     'member3@church.local',
     'member4@church.local',
   ]) {
@@ -738,17 +946,22 @@ async function main() {
   console.log('    Family sec.:    choir.familysec@church.local');
   console.log('    Regular singer: choir.singer@church.local');
   console.log('');
-  console.log('  Other choir singers: member1@church.local, member2@church.local');
+  console.log('  Other choir singers: member2@church.local');
+  console.log('  Choir sponsor:     sponsor@church.local → /choir/<id>/sponsor');
+  console.log('  Dual member (choir+protocol): member1@church.local → /portal (BOTH)');
   console.log('');
   console.log('  PROTOCOL — dashboard QA (password Pilot@123)');
   console.log('    President:     protocol.president@church.local  → /protocol/president');
-  console.log('    Leader:        protocol.leader@church.local     → /protocol/president');
+  console.log('    Vice President: protocol.vice@church.local     → /protocol/vice-president');
+  console.log('    Leader:        protocol.leader@church.local     → /protocol/president (same as president)');
+  console.log('    Ministry admin: protocol.admin@church.local    → /protocol/admin');
   console.log('    Coordinator:   protocol.coordinator@church.local → /protocol/coordinator');
   console.log('    Treasurer:     protocol.treasurer@church.local → /protocol/treasury');
   console.log('    Team head:     protocol.teamhead@church.local  → /protocol/team-leader');
   console.log('    Regular member: member3@church.local, member4@church.local → /protocol/member');
   console.log('  Pending onboarding:  pending.choir@church.local, pending.protocol@church.local');
-  console.log('  Admin:               admin@church.local / Admin@123');
+  console.log('  Church coordinator:  church.coord@church.local → /church (CHURCH_ADMIN)');
+  console.log('  Admin (IT):          admin@church.local / Admin@123');
   console.log('  Occurrences:', choirOccurrence.title, '|', protocolOccurrence.title);
 }
 

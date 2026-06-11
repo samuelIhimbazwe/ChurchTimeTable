@@ -22,6 +22,17 @@ import { generateContributionReferenceNumber } from './contribution-reference.ut
 import { ContributionScopeService } from './contribution-scope.service';
 import { PAYMENT_AT_FUTURE_TOLERANCE_MS } from './contribution-submission.constants';
 import { SubmitContributionDto } from './dto/submit-contribution.dto';
+import { PERMISSIONS } from '../common/constants/roles';
+import { hasEffectivePermission } from '../common/governance/governance-permissions.util';
+
+const SPONSOR_TYPE_CODES = new Set([
+  'sponsor_support',
+  'inyubako',
+  'concert',
+  'live_recording',
+  'special_project',
+  'other',
+]);
 
 @Injectable()
 export class ContributionSubmissionService {
@@ -37,7 +48,10 @@ export class ContributionSubmissionService {
     const ctx = await this.scope.resolveActor(actorUserId);
     this.scope.assertCanSubmit(ctx);
 
-    const { member, familyId } = await this.assertEligibleMember(ctx.memberId!);
+    const { member, familyId, submissionMode } = await this.resolveSubmitter(
+      ctx.memberId!,
+      dto.choirId,
+    );
 
     const catalog = await this.prisma.contributionTypeCatalog.findUnique({
       where: { id: dto.contributionTypeCatalogId },
@@ -46,6 +60,15 @@ export class ContributionSubmissionService {
       throw new NotFoundException('Contribution type not found');
     }
     if (!catalog.active || catalog.ministryScope !== MinistryScope.CHOIR) {
+      throw new BadRequestException('Contribution type is not available');
+    }
+    if (
+      submissionMode === 'sponsor' &&
+      !SPONSOR_TYPE_CODES.has(catalog.code)
+    ) {
+      throw new BadRequestException('Contribution type is not available for sponsors');
+    }
+    if (submissionMode === 'family' && catalog.code === 'sponsor_support') {
       throw new BadRequestException('Contribution type is not available');
     }
 
@@ -84,10 +107,14 @@ export class ContributionSubmissionService {
     const legacyType = legacyContributionTypeFromCatalogCode(catalog.code);
     const currency = dto.currency ?? 'RWF';
 
+    const sponsorChoirId =
+      submissionMode === 'sponsor' ? dto.choirId! : null;
+
     const created = await this.prisma.contributionRecord.create({
       data: {
         memberId: member.id,
         familyId,
+        choirId: sponsorChoirId,
         contributionTypeCatalogId: catalog.id,
         contributionCampaignId: campaignId,
         contributionType: legacyType,
@@ -124,6 +151,7 @@ export class ContributionSubmissionService {
       newValue: {
         memberId: member.id,
         familyId,
+        choirId: sponsorChoirId,
         catalogId: catalog.id,
         campaignId,
         claimedAmount: dto.claimedAmount,
@@ -135,12 +163,20 @@ export class ContributionSubmissionService {
       },
     });
 
-    await this.notifyFamilyApprovers(familyId, created.id, member.firstName);
+    if (submissionMode === 'sponsor') {
+      await this.notifyTreasurerApprovers(
+        dto.choirId!,
+        created.id,
+        member.firstName,
+      );
+    } else {
+      await this.notifyFamilyApprovers(familyId!, created.id, member.firstName);
+    }
 
     return this.serializeSubmitted(created);
   }
 
-  private async assertEligibleMember(memberId: string) {
+  private async resolveSubmitter(memberId: string, choirId?: string) {
     const member = await this.prisma.member.findUnique({
       where: { id: memberId },
       select: {
@@ -156,10 +192,6 @@ export class ContributionSubmissionService {
       throw new ForbiddenException('Active member profile required to submit');
     }
 
-    if (member.ministry !== MinistryScope.CHOIR) {
-      throw new ForbiddenException('Choir membership required to submit');
-    }
-
     if (!member.phone?.trim()) {
       throw new ForbiddenException({
         code: 'FORBIDDEN',
@@ -172,11 +204,36 @@ export class ContributionSubmissionService {
       select: { familyId: true },
     });
 
-    if (!familyMember) {
-      throw new ForbiddenException('Member must belong to a family before submitting');
+    if (familyMember) {
+      if (member.ministry !== MinistryScope.CHOIR) {
+        throw new ForbiddenException('Choir membership required to submit');
+      }
+      return {
+        member,
+        familyId: familyMember.familyId,
+        submissionMode: 'family' as const,
+      };
     }
 
-    return { member, familyId: familyMember.familyId };
+    if (!choirId) {
+      throw new ForbiddenException(
+        'Select a choir to give as a sponsor, or join a family to submit singer contributions',
+      );
+    }
+
+    const sponsorship = await this.prisma.choirSponsorship.findFirst({
+      where: { memberId, choirId, active: true },
+      include: { choir: { select: { id: true, isActive: true } } },
+    });
+    if (!sponsorship?.choir.isActive) {
+      throw new ForbiddenException('Active choir sponsorship required to give');
+    }
+
+    return {
+      member,
+      familyId: null,
+      submissionMode: 'sponsor' as const,
+    };
   }
 
   private parsePaymentAt(value: string): Date {
@@ -266,15 +323,9 @@ export class ContributionSubmissionService {
     return this.i18n.resolveLocale(user?.preferredLanguage ?? 'rw');
   }
 
-  async getSubmitOptions(actorUserId: string) {
+  async getSubmitOptions(actorUserId: string, choirId?: string) {
     const ctx = await this.scope.resolveActor(actorUserId);
     this.scope.assertCanSubmit(ctx);
-
-    const types = await this.prisma.contributionTypeCatalog.findMany({
-      where: { ministryScope: MinistryScope.CHOIR, active: true },
-      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-      select: { id: true, code: true, name: true },
-    });
 
     const familyMember = ctx.memberId
       ? await this.prisma.familyMember.findUnique({
@@ -299,10 +350,43 @@ export class ContributionSubmissionService {
         })
       : null;
 
+    const sponsorChoirs = ctx.memberId
+      ? await this.loadActiveSponsorChoirs(ctx.memberId)
+      : [];
+
+    const resolvedChoirId =
+      choirId ??
+      (familyMember ? undefined : sponsorChoirs[0]?.id);
+
+    const submissionMode = familyMember
+      ? 'family'
+      : resolvedChoirId
+        ? 'sponsor'
+        : sponsorChoirs.length > 0
+          ? 'sponsor'
+          : 'none';
+
+    const typeFilter =
+      submissionMode === 'sponsor'
+        ? { code: { in: [...SPONSOR_TYPE_CODES] } }
+        : { code: { not: 'sponsor_support' } };
+
+    const types = await this.prisma.contributionTypeCatalog.findMany({
+      where: {
+        ministryScope: MinistryScope.CHOIR,
+        active: true,
+        ...(resolvedChoirId ? { choirId: resolvedChoirId } : {}),
+        ...typeFilter,
+      },
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+      select: { id: true, code: true, name: true },
+    });
+
     const campaigns = await this.prisma.contributionCampaign.findMany({
       where: {
         status: ContributionCampaignStatus.ACTIVE,
         contributionTypeId: { in: types.map((t) => t.id) },
+        ...(resolvedChoirId ? { choirId: resolvedChoirId } : {}),
       },
       orderBy: { name: 'asc' },
       select: {
@@ -314,7 +398,14 @@ export class ContributionSubmissionService {
       },
     });
 
+    const sponsorChoir =
+      submissionMode === 'sponsor' && resolvedChoirId
+        ? sponsorChoirs.find((c) => c.id === resolvedChoirId) ??
+          (await this.loadSponsorChoirContext(resolvedChoirId))
+        : null;
+
     return {
+      mode: submissionMode,
       types,
       family: familyMember
         ? {
@@ -333,6 +424,8 @@ export class ContributionSubmissionService {
             },
           }
         : null,
+      sponsorChoir,
+      sponsorChoirs,
       campaigns: campaigns.map((c) => ({
         id: c.id,
         name: c.name,
@@ -341,6 +434,133 @@ export class ContributionSubmissionService {
         status: c.status,
       })),
     };
+  }
+
+  private async loadActiveSponsorChoirs(memberId: string) {
+    const rows = await this.prisma.choirSponsorship.findMany({
+      where: { memberId, active: true },
+      include: {
+        choir: {
+          select: { id: true, name: true, code: true, isActive: true },
+        },
+      },
+      orderBy: { startedAt: 'asc' },
+    });
+    const contexts = await Promise.all(
+      rows
+        .filter((r) => r.choir.isActive)
+        .map(async (r) => this.loadSponsorChoirContext(r.choir.id)),
+    );
+    return contexts;
+  }
+
+  private async loadSponsorChoirContext(choirId: string) {
+    const choir = await this.prisma.choir.findFirst({
+      where: { id: choirId, isActive: true },
+      select: { id: true, name: true, code: true },
+    });
+    if (!choir) {
+      throw new NotFoundException('Choir not found');
+    }
+
+    const paymentFamily = await this.prisma.family.findFirst({
+      where: {
+        choirId,
+        OR: [
+          { paymentMomoNumber: { not: null } },
+          { paymentBankAccount: { not: null } },
+          { paymentInstructions: { not: null } },
+        ],
+      },
+      orderBy: { familyCode: 'asc' },
+      select: {
+        paymentMomoNumber: true,
+        paymentMomoAccountName: true,
+        paymentBankAccount: true,
+        paymentBankName: true,
+        paymentInstructions: true,
+      },
+    });
+
+    return {
+      id: choir.id,
+      name: choir.name,
+      code: choir.code,
+      payment: {
+        momoNumber: paymentFamily?.paymentMomoNumber ?? null,
+        momoAccountName: paymentFamily?.paymentMomoAccountName ?? null,
+        bankAccount: paymentFamily?.paymentBankAccount ?? null,
+        bankName: paymentFamily?.paymentBankName ?? null,
+        instructions:
+          paymentFamily?.paymentInstructions ??
+          'Pay using the choir treasurer MoMo or bank details below, then submit your claim for confirmation.',
+      },
+    };
+  }
+
+  private async notifyTreasurerApprovers(
+    choirId: string,
+    contributionId: string,
+    submitterFirstName: string,
+  ) {
+    const treasurerRoles = await this.prisma.choirCommitteeMember.findMany({
+      where: {
+        choirId,
+        role: { name: 'treasurer' },
+      },
+      include: {
+        member: { select: { userId: true } },
+      },
+    });
+
+    const recipientUserIds = treasurerRoles
+      .map((row) => row.member.userId)
+      .filter((id): id is string => Boolean(id));
+
+    if (!recipientUserIds.length) {
+      const usersWithFinance = await this.prisma.userRole.findMany({
+        where: {
+          role: {
+            rolePermissions: {
+              some: {
+                permission: {
+                  code: PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
+                },
+              },
+            },
+          },
+        },
+        select: { userId: true },
+        take: 5,
+      });
+      recipientUserIds.push(...usersWithFinance.map((u) => u.userId));
+    }
+
+    for (const userId of [...new Set(recipientUserIds)]) {
+      const locale = await this.resolveUserLocale(userId);
+      const title = this.i18n.translate(
+        locale,
+        'NOTIFICATION_CONTRIBUTION_SUBMITTED_HEAD_TITLE',
+      );
+      const body = this.i18n.translate(
+        locale,
+        'NOTIFICATION_CONTRIBUTION_SUBMITTED_HEAD_BODY',
+        undefined,
+        { name: `${submitterFirstName} (sponsor)` },
+      );
+
+      await this.notifications.create(
+        userId,
+        NotificationType.GENERAL,
+        title,
+        body,
+        {
+          kind: 'sponsor_contribution_submitted',
+          contributionId,
+          choirId,
+        },
+      );
+    }
   }
 
   private serializeSubmitted(
@@ -361,6 +581,7 @@ export class ContributionSubmissionService {
       memberId: record.memberId,
       memberNumber: record.member.memberNumber,
       familyId: record.familyId,
+      choirId: record.choirId,
       contributionTypeCatalogId: record.contributionTypeCatalogId,
       contributionCampaignId: record.contributionCampaignId,
       claimedAmount: Number(record.claimedAmount),

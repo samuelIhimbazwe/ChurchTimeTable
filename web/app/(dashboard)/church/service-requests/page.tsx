@@ -63,9 +63,14 @@ export default function ChurchServiceRequestsPage() {
         status: args.status,
         assignedChoirId: args.assignedChoirId,
       }),
-    onSuccess: () => {
-      toast.success('Request updated')
+    onSuccess: (_data, vars) => {
+      toast.success(
+        vars.status === 'APPROVED'
+          ? 'Request noted — assign the choir from Service Assignments'
+          : 'Request updated',
+      )
       qc.invalidateQueries({ queryKey: ['church-service-requests'] })
+      qc.invalidateQueries({ queryKey: ['church-service-assignments'] })
     },
     onError: () => toast.error('Failed to review request'),
   })
@@ -76,7 +81,7 @@ export default function ChurchServiceRequestsPage() {
         <div>
           <h2 className="font-display text-3xl text-text-primary">Church service requests</h2>
           <p className="text-text-secondary text-sm mt-1">
-            Request a choir for a church service — approval assigns the choir to that occurrence
+            Request a choir for a church service — church coordination assigns the choir from Service Assignments
           </p>
         </div>
         <PermissionGate anyOf={['church.governance.manage', 'operations:manage']}>
@@ -205,7 +210,7 @@ export default function ChurchServiceRequestsPage() {
                         }
                         className="text-xs font-semibold text-primary-600 disabled:opacity-50"
                       >
-                        Approve & assign
+                        Recommend choir
                       </button>
                       <button
                         type="button"

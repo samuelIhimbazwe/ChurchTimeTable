@@ -286,6 +286,46 @@ export interface MemberPortalHome {
 
   } | null
 
+  participation?: {
+
+    ministryScope: string
+
+    isDualMember: boolean
+
+    hasChoirMembership: boolean
+
+    hasProtocolMembership: boolean
+
+    thisWeek: Array<{
+
+      id: string
+
+      title: string
+
+      startAt: string
+
+      endAt?: string | null
+
+      ministry: 'CHOIR' | 'PROTOCOL'
+
+      kind: string
+
+      subtitle?: string | null
+
+    }>
+
+    conflicts: Array<{
+
+      date: string
+
+      choirTitle: string
+
+      protocolTitle: string
+
+    }>
+
+  }
+
 }
 
 
@@ -370,6 +410,12 @@ export interface ChoirPublicProfile {
 
   joinStatus: string | null
 
+  sponsorStatus?: string | null
+
+  isSponsor?: boolean
+
+  pendingSponsorRequestId?: string | null
+
 }
 
 
@@ -380,7 +426,11 @@ export const memberPortalApi = {
 
     apiClient.get<never, MemberPortalHome>('/member-portal/home'),
 
-
+  getParticipationSchedule: () =>
+    apiClient.get<
+      never,
+      NonNullable<MemberPortalHome['participation']>
+    >('/member-portal/participation-schedule'),
 
   getMembershipCenter: () =>
     apiClient.get<
@@ -437,6 +487,44 @@ export const memberPortalApi = {
       never,
       import('@/lib/choir/dashboard-context').ChoirDashboardContext
     >(`/member-portal/choirs/${id}/dashboard-context`),
+
+  getChoirSponsorDashboardContext: (id: string) =>
+    apiClient.get<
+      never,
+      import('@/lib/choir/sponsor-dashboard-context').ChoirSponsorDashboardContext
+    >(`/member-portal/choirs/${id}/sponsor/dashboard-context`),
+
+  getChoirSponsorSongs: async (
+    choirId: string,
+    params?: { page?: number; limit?: number; q?: string },
+  ) => {
+    const raw = await apiClient.get<
+      never,
+      {
+        items: import('@/lib/choir/sponsor-dashboard-context').SponsorCatalogSong[]
+        meta?: { total: number; page: number; limit: number; totalPages: number }
+      }
+    >(`/member-portal/choirs/${choirId}/sponsor/songs`, { params })
+    const meta = raw.meta ?? {
+      total: raw.items.length,
+      page: 1,
+      limit: 50,
+      totalPages: 1,
+    }
+    return {
+      items: raw.items,
+      total: meta.total,
+      page: meta.page,
+      limit: meta.limit,
+      totalPages: meta.totalPages,
+    }
+  },
+
+  getChoirSponsorSong: (choirId: string, songId: string) =>
+    apiClient.get<
+      never,
+      import('@/lib/choir/sponsor-dashboard-context').SponsorCatalogSongDetail
+    >(`/member-portal/choirs/${choirId}/sponsor/songs/${songId}`),
 
   getChoirMyFamily: (choirId: string) =>
     apiClient.get<

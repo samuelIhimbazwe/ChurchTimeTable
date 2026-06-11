@@ -62,6 +62,102 @@ export class ChoirSchedulingNotificationsService {
     }
   }
 
+  async notifyPendingChoirAcceptance(
+    choirId: string,
+    assignmentId: string,
+    choirName: string,
+    occurrenceTitle: string,
+    occurrenceId: string,
+    conflictReason: string,
+  ) {
+    const officerRoles = [
+      ROLES.CHOIR_PRESIDENT,
+      ROLES.CHOIR_VICE_PRESIDENT,
+      ROLES.CHOIR_SECRETARY,
+      ROLES.CHOIR_LEADER,
+      ROLES.CHOIR_ADMIN,
+    ];
+    const officers = await this.prisma.user.findMany({
+      where: {
+        choirMemberships: { some: { choirId, isActive: true } },
+        userRoles: { some: { role: { name: { in: officerRoles } } } },
+      },
+      select: { id: true },
+      take: 20,
+    });
+    for (const user of officers) {
+      await this.notify(
+        user.id,
+        'Service assignment needs your confirmation',
+        `Church assigned ${choirName} to ${occurrenceTitle}, but it conflicts with: ${conflictReason}. Accept only if the choir can cover both.`,
+        {
+          kind: 'choir_assignment_pending_acceptance',
+          assignmentId,
+          occurrenceId,
+          choirId,
+        },
+      );
+    }
+  }
+
+  async notifyChoirDeclinedAssignment(
+    assignmentId: string,
+    choirName: string,
+    occurrenceTitle: string,
+    reason?: string | null,
+  ) {
+    const churchAdmins = await this.prisma.user.findMany({
+      where: {
+        userRoles: {
+          some: {
+            role: {
+              name: { in: [ROLES.CHURCH_ADMIN, ROLES.SUPER_ADMIN] },
+            },
+          },
+        },
+      },
+      select: { id: true },
+      take: 20,
+    });
+    for (const user of churchAdmins) {
+      await this.notify(
+        user.id,
+        'Choir declined service assignment',
+        `${choirName} declined ${occurrenceTitle}. Replace with another choir or reschedule. ${reason ?? ''}`.trim(),
+        { kind: 'choir_assignment_declined', assignmentId },
+      );
+    }
+  }
+
+  async notifyPendingChurchConfirmation(
+    assignmentId: string,
+    choirName: string,
+    occurrenceTitle: string,
+    occurrenceId: string,
+  ) {
+    const churchAdmins = await this.prisma.user.findMany({
+      where: {
+        userRoles: {
+          some: {
+            role: {
+              name: { in: [ROLES.CHURCH_ADMIN, ROLES.SUPER_ADMIN] },
+            },
+          },
+        },
+      },
+      select: { id: true },
+      take: 20,
+    });
+    for (const user of churchAdmins) {
+      await this.notify(
+        user.id,
+        'Choir assignment pending confirmation',
+        `${choirName} proposed for ${occurrenceTitle} — confirm before announcing to the choir`,
+        { kind: 'choir_assignment_pending', assignmentId, occurrenceId, choirName },
+      );
+    }
+  }
+
   async notifyAssignment(choirId: string, occurrenceTitle: string, occurrenceId: string) {
     if (!(await this.notificationRules.isEnabled(NotificationRuleTrigger.CHOIR_ASSIGNMENT))) {
       return;

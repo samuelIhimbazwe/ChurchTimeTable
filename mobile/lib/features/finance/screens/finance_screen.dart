@@ -6,6 +6,7 @@ import '../../../core/design/tokens/spacing.dart';
 import '../../../core/localization/l10n.dart';
 import '../../../core/routing/app_router.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../../core/widgets/shell_aware_scaffold.dart';
 
 class FinanceScreen extends ConsumerStatefulWidget {
   const FinanceScreen({super.key});
@@ -38,22 +39,20 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.finance_summary_title),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.receipt_long_outlined),
-            tooltip: l10n.my_contributions_title,
-            onPressed: () =>
-                Navigator.pushNamed(context, AppRouter.myContributions),
-          ),
-          IconButton(
-            icon: const Icon(Icons.savings),
-            onPressed: () => Navigator.pushNamed(context, AppRouter.budgets),
-          ),
-        ],
-      ),
+    return ShellAwareScaffold(
+      title: l10n.finance_summary_title,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.receipt_long_outlined),
+          tooltip: l10n.my_contributions_title,
+          onPressed: () =>
+              Navigator.pushNamed(context, AppRouter.myContributions),
+        ),
+        IconButton(
+          icon: const Icon(Icons.savings),
+          onPressed: () => Navigator.pushNamed(context, AppRouter.budgets),
+        ),
+      ],
       body: _summary == null
           ? Center(child: Text(l10n.common_loading))
           : Center(

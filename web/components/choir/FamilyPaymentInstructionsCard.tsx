@@ -24,7 +24,7 @@ export function FamilyPaymentInstructionsCard({
   return (
     <Card padding="md" accent="gold">
       <p className="font-semibold text-text-primary">
-        Pay to {familyName ? `${familyName} family` : 'your family'}
+        Pay to {familyName ?? 'choir treasury'}
       </p>
       {!compact && headName && (
         <p className="text-xs text-text-muted mt-1">Family head: {headName}</p>

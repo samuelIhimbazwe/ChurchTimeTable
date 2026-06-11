@@ -82,8 +82,18 @@ export const financeApi = {
       payload,
     ),
 
-  listContributions: (params?: { limit?: number }) =>
-    apiClient.get<never, { items: unknown[] }>('/finance/contributions', { params }),
+  listContributions: (params?: {
+    limit?: number
+    ministryScope?: string
+    status?: string
+    familyOnly?: boolean
+  }) =>
+    apiClient.get<never, { items: unknown[] }>('/finance/contributions', {
+      params: {
+        ...params,
+        familyOnly: params?.familyOnly ? 'true' : undefined,
+      },
+    }),
 
   getRecentAdjustments: (params?: { limit?: number }) =>
     apiClient.get<never, { items: unknown[] }>('/finance/contributions/adjustments/recent', { params }),

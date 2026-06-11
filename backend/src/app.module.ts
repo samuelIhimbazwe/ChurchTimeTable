@@ -36,6 +36,7 @@ import { MinistryServicesModule } from './ministry-services/ministry-services.mo
 import { AssetsModule } from './assets/assets.module';
 import { MinistryFinanceModule } from './ministry-finance/ministry-finance.module';
 import { ChurchIntelligenceModule } from './church-intelligence/church-intelligence.module';
+import { ChurchScheduleModule } from './church-schedule/church-schedule.module';
 import { OperationsModule } from './operations/operations.module';
 import { ProtocolModule } from './protocol/protocol.module';
 import { ChoirSchedulingModule } from './choir-scheduling/choir-scheduling.module';
@@ -72,6 +73,7 @@ import { ChoirContextMiddleware } from './common/middleware/choir-context.middle
     AssetsModule,
     MinistryFinanceModule,
     ChurchIntelligenceModule,
+    ChurchScheduleModule,
     OperationsModule,
     ProtocolModule,
     ChoirSchedulingModule,

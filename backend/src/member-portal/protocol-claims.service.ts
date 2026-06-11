@@ -12,6 +12,7 @@ import { PERMISSIONS } from '../common/constants/roles';
 import { hasEffectivePermission } from '../common/governance/governance-permissions.util';
 import { MEMBER_PORTAL_AUDIT } from './member-portal.constants';
 import { ProtocolMembershipService } from './protocol-membership.service';
+import { MemberMinistryScopeService } from './member-ministry-scope.service';
 import { MemberPortalNotificationsService } from './member-portal-notifications.service';
 
 @Injectable()
@@ -21,6 +22,7 @@ export class ProtocolClaimsService {
     private audit: AuditService,
     private permissions: PermissionsResolver,
     private protocolMembership: ProtocolMembershipService,
+    private ministryScope: MemberMinistryScopeService,
     private notify: MemberPortalNotificationsService,
   ) {}
 
@@ -106,6 +108,7 @@ export class ProtocolClaimsService {
 
     if (data.status === 'APPROVED') {
       await this.protocolMembership.ensureProtocolMembership(claim.memberId);
+      await this.ministryScope.syncMinistryScope(claim.memberId);
     }
 
     const updated = await this.prisma.protocolMembershipClaim.update({

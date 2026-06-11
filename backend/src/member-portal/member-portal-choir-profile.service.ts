@@ -63,17 +63,33 @@ export class MemberPortalChoirProfileService {
     if (!choir) throw new NotFoundException('Choir not found');
 
     let joinStatus: string | null = null;
+    let sponsorStatus: string | null = null;
+    let isSponsor = false;
+    let pendingSponsorRequestId: string | null = null;
     if (actorUserId) {
       const member = await this.prisma.member.findUnique({
         where: { userId: actorUserId },
         select: { id: true },
       });
       if (member) {
-        const req = await this.prisma.choirJoinRequest.findFirst({
-          where: { memberId: member.id, choirId },
-          orderBy: { createdAt: 'desc' },
-        });
-        joinStatus = req?.status ?? null;
+        const [joinReq, sponsorReq, sponsorship] = await Promise.all([
+          this.prisma.choirJoinRequest.findFirst({
+            where: { memberId: member.id, choirId },
+            orderBy: { createdAt: 'desc' },
+          }),
+          this.prisma.choirSponsorRequest.findFirst({
+            where: { memberId: member.id, choirId },
+            orderBy: { createdAt: 'desc' },
+          }),
+          this.prisma.choirSponsorship.findFirst({
+            where: { memberId: member.id, choirId, active: true },
+          }),
+        ]);
+        joinStatus = joinReq?.status ?? null;
+        sponsorStatus = sponsorReq?.status ?? null;
+        isSponsor = Boolean(sponsorship);
+        pendingSponsorRequestId =
+          sponsorReq?.status === 'PENDING' ? sponsorReq.id : null;
       }
     }
 
@@ -107,6 +123,9 @@ export class MemberPortalChoirProfileService {
       featuredReleaseOverride: profile.featuredRelease ?? null,
       featuredRelease: featuredRelease?.url ? featuredRelease : null,
       joinStatus,
+      sponsorStatus,
+      isSponsor,
+      pendingSponsorRequestId,
     };
   }
 

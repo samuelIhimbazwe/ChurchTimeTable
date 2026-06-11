@@ -10,6 +10,7 @@ import '../../../core/localization/locale_provider.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../core/repositories/sync_repository.dart';
 import '../../../core/services/sync_service.dart';
+import '../../../core/widgets/shell_aware_scaffold.dart';
 
 class SyncStatusScreen extends ConsumerStatefulWidget {
   const SyncStatusScreen({super.key});
@@ -81,8 +82,8 @@ class _SyncStatusScreenState extends ConsumerState<SyncStatusScreen> {
     final lastSync = _lastSyncLabel();
     final rejected = _lastResult?.rejected ?? 0;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.sync_title)),
+    return ShellAwareScaffold(
+      title: l10n.sync_title,
       body: RefreshIndicator(
         onRefresh: () async {
           await _sync();

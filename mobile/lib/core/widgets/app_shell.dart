@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../auth/governance_permissions.dart';
 import '../../features/auth/providers/auth_provider.dart';
+import '../design/components/brand/cmms_brand_logo.dart';
+import '../design/tokens/colors.dart';
 import '../localization/l10n.dart';
-import '../../l10n/generated/app_localizations.dart';
-import '../routing/app_router.dart';
 import 'mobile_tab_shell.dart';
+import '../routing/app_router.dart';
+import 'shell_destinations.dart';
+import 'shell_top_bar.dart';
 
 class AppShell extends ConsumerWidget {
   const AppShell({
@@ -45,99 +47,120 @@ class AppShell extends ConsumerWidget {
       case AppRouter.ministryDetail:
       case AppRouter.operationalUnits:
       case AppRouter.operationalUnitDetail:
+      case AppRouter.welfare:
+      case AppRouter.music:
+      case AppRouter.rehearsals:
+      case AppRouter.search:
+      case AppRouter.devotions:
         return true;
       default:
         return false;
     }
   }
 
-  static String normalizeRoute(String routeName) {
-    if (routeName == AppRouter.language) {
-      return AppRouter.settings;
-    }
-    return routeName;
-  }
+  static String normalizeRoute(String routeName) =>
+      normalizeShellRoute(routeName);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final width = MediaQuery.sizeOf(context).width;
-    final auth = ref.watch(authProvider);
-    if (width < _desktopBreakpoint || !auth.isAuthenticated) {
-      if (MobileTabShell.shouldUse(currentRoute)) {
-        return MobileTabShell(
-          currentRoute: currentRoute,
-          child: child,
-        );
-      }
-      return child;
+    if (width < _desktopBreakpoint) {
+      return MobileTabShell(
+        currentRoute: currentRoute,
+        child: child,
+      );
     }
 
     final l10n = context.l10n;
-    final destinations = _buildDestinations(l10n, auth);
+    final auth = ref.watch(authProvider);
+    final destinations = buildShellDestinations(l10n, auth);
     final selectedRoute = normalizeRoute(currentRoute);
     final selectedIndex = destinations.indexWhere(
       (destination) => destination.route == selectedRoute,
     );
     final extended = width >= 1180;
-    final userLabel = _userLabel(auth);
-    final subtitle = auth.roleNames.isEmpty ? null : auth.roleNames.join(' · ');
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primary = Theme.of(context).colorScheme.primary;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
+    final pageTitle = AppRouter.pageTitle(context, currentRoute);
+
+    return MobileTabShellScope(
+      embedded: true,
+      child: Scaffold(
+        backgroundColor: CmmsColors.surfaceRaised(isDark),
+        body: SafeArea(
         child: Row(
           children: [
             Container(
-              width: extended ? 280 : 96,
-              margin: const EdgeInsets.fromLTRB(20, 20, 0, 20),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                ),
-              ),
+              width: extended ? 240 : 64,
+              color: CmmsColors.primary900,
               child: Column(
                 children: [
                   Padding(
-                    padding: EdgeInsets.all(extended ? 20 : 12),
-                    child: _ShellBrand(
-                      extended: extended,
-                      title: l10n.app_title,
-                      subtitle: subtitle,
-                      userLabel: userLabel,
-                      brandColor: primary,
-                    ),
+                    padding: EdgeInsets.all(extended ? 16 : 8),
+                    child: extended
+                        ? const CmmsBrandLogo(
+                            size: 36,
+                            showWordmark: true,
+                            subtitle: 'Church System',
+                            lightContext: true,
+                          )
+                        : const CmmsBrandLogo(size: 32, lightContext: true),
                   ),
+                  const Divider(height: 1, color: CmmsColors.primary800),
                   Expanded(
-                    child: NavigationRail(
-                      extended: extended,
-                      minExtendedWidth: 232,
-                      selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
-                      useIndicator: true,
-                      labelType: extended ? null : NavigationRailLabelType.all,
-                      leading: const SizedBox(height: 8),
-                      destinations: [
-                        for (final destination in destinations)
-                          NavigationRailDestination(
-                            icon: Icon(destination.icon),
-                            selectedIcon: Icon(destination.selectedIcon),
-                            label: Text(destination.label),
+                    child: Theme(
+                      data: Theme.of(context).copyWith(
+                        navigationRailTheme: NavigationRailThemeData(
+                          backgroundColor: CmmsColors.primary900,
+                          indicatorColor: CmmsColors.primary800,
+                          selectedIconTheme: const IconThemeData(
+                            color: CmmsColors.gold400,
+                            size: 22,
                           ),
-                      ],
-                      onDestinationSelected: (index) => _navigateTo(
-                        context,
-                        targetRoute: destinations[index].route,
+                          unselectedIconTheme: const IconThemeData(
+                            color: CmmsColors.primary300,
+                            size: 22,
+                          ),
+                          selectedLabelTextStyle: const TextStyle(
+                            color: CmmsColors.textInverse,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                          unselectedLabelTextStyle: const TextStyle(
+                            color: CmmsColors.primary300,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      child: NavigationRail(
+                        extended: extended,
+                        minExtendedWidth: 220,
+                        selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
+                        useIndicator: true,
+                        labelType:
+                            extended ? null : NavigationRailLabelType.all,
+                        leading: const SizedBox(height: 8),
+                        destinations: [
+                          for (final destination in destinations)
+                            NavigationRailDestination(
+                              icon: Icon(destination.icon),
+                              selectedIcon: Icon(destination.selectedIcon),
+                              label: Text(destination.label),
+                            ),
+                        ],
+                        onDestinationSelected: (index) => _navigateTo(
+                          context,
+                          targetRoute: destinations[index].route,
+                        ),
                       ),
                     ),
                   ),
                   Padding(
                     padding: EdgeInsets.fromLTRB(
-                      extended ? 16 : 8,
+                      extended ? 12 : 4,
                       8,
-                      extended ? 16 : 8,
+                      extended ? 12 : 4,
                       16,
                     ),
                     child: Column(
@@ -173,281 +196,23 @@ class AppShell extends ConsumerWidget {
               ),
             ),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1360),
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface,
-                        borderRadius: BorderRadius.circular(28),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outlineVariant,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(
-                              alpha: isDark ? 0.35 : 0.05,
-                            ),
-                            blurRadius: 24,
-                            offset: const Offset(0, 12),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(28),
-                        child: child,
-                      ),
+              child: Column(
+                children: [
+                  ShellTopBar(title: pageTitle),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                      child: child,
                     ),
                   ),
-                ),
+                ],
               ),
             ),
           ],
         ),
+        ),
       ),
     );
-  }
-
-  String _userLabel(AuthState auth) {
-    final member = auth.profile?['member'] as Map<String, dynamic>?;
-    final firstName = member?['firstName']?.toString();
-    final lastName = member?['lastName']?.toString();
-    final fullName = [firstName, lastName]
-        .whereType<String>()
-        .where((value) => value.isNotEmpty)
-        .join(' ');
-    if (fullName.isNotEmpty) {
-      return fullName;
-    }
-    return auth.profile?['email']?.toString() ?? 'CMMS User';
-  }
-
-  List<_ShellDestination> _buildDestinations(
-    AppLocalizations l10n,
-    AuthState auth,
-  ) {
-    final items = <_ShellDestination>[
-      _ShellDestination(
-        route: auth.canAccessLeaderDashboard
-            ? AppRouter.leaderDashboard
-            : AppRouter.memberDashboard,
-        icon: Icons.dashboard_outlined,
-        selectedIcon: Icons.dashboard,
-        label: auth.canAccessLeaderDashboard
-            ? l10n.dashboard_leader_title
-            : l10n.dashboard_member_title,
-      ),
-    ];
-
-    void add({
-      required String route,
-      required IconData icon,
-      IconData? selectedIcon,
-      required String label,
-      required bool show,
-    }) {
-      if (!show) return;
-      items.add(
-        _ShellDestination(
-          route: route,
-          icon: icon,
-          selectedIcon: selectedIcon ?? icon,
-          label: label,
-        ),
-      );
-    }
-
-    if (auth.canAccessLeaderDashboard) {
-      add(
-        route: AppRouter.operational,
-        icon: Icons.dashboard_outlined,
-        selectedIcon: Icons.dashboard,
-        label: l10n.nav_operational,
-        show: hasOperationalLeaderDashboard(auth.permissions),
-      );
-      add(
-        route: AppRouter.calendar,
-        icon: Icons.calendar_month_outlined,
-        selectedIcon: Icons.calendar_month,
-        label: l10n.nav_calendar,
-        show: auth.hasPermission('event:read'),
-      );
-      add(
-        route: AppRouter.assignments,
-        icon: Icons.assignment_outlined,
-        selectedIcon: Icons.assignment,
-        label: l10n.nav_assignments,
-        show: auth.hasPermission('assignment:write'),
-      );
-      add(
-        route: AppRouter.choirRotation,
-        icon: Icons.music_note_outlined,
-        selectedIcon: Icons.music_note,
-        label: l10n.nav_choir_rotation,
-        show: auth.hasPermission('assignment:write'),
-      );
-      add(
-        route: AppRouter.attendance,
-        icon: Icons.fact_check_outlined,
-        selectedIcon: Icons.fact_check,
-        label: l10n.nav_attendance,
-        show: canAccessAttendanceNav(auth.permissions),
-      );
-      add(
-        route: AppRouter.coverage,
-        icon: Icons.shield_outlined,
-        selectedIcon: Icons.shield,
-        label: l10n.nav_coverage,
-        show: canAccessCoverageNav(auth.permissions),
-      );
-      add(
-        route: AppRouter.swaps,
-        icon: Icons.swap_horiz_outlined,
-        selectedIcon: Icons.swap_horiz,
-        label: l10n.nav_swaps,
-        show: auth.hasPermission('swap:manage'),
-      );
-      add(
-        route: AppRouter.replacements,
-        icon: Icons.person_add_alt_outlined,
-        selectedIcon: Icons.person_add_alt_1,
-        label: l10n.nav_replacements,
-        show: auth.hasPermission('swap:manage'),
-      );
-      add(
-        route: AppRouter.notifications,
-        icon: Icons.notifications_outlined,
-        selectedIcon: Icons.notifications,
-        label: l10n.nav_notifications,
-        show: auth.hasPermission('event:read'),
-      );
-      add(
-        route: AppRouter.discipline,
-        icon: Icons.gavel_outlined,
-        selectedIcon: Icons.gavel,
-        label: l10n.nav_discipline,
-        show: auth.hasPermission('discipline:read_all'),
-      );
-      add(
-        route: AppRouter.finance,
-        icon: Icons.account_balance_wallet_outlined,
-        selectedIcon: Icons.account_balance_wallet,
-        label: l10n.nav_finance,
-        show: canAccessFinanceNav(auth.permissions),
-      );
-      add(
-        route: AppRouter.budgets,
-        icon: Icons.pie_chart_outline,
-        selectedIcon: Icons.pie_chart,
-        label: l10n.nav_budgets,
-        show: canAccessFinanceNav(auth.permissions) &&
-            hasEffectivePermission(auth.permissions, 'choir.finance.manage'),
-      );
-      add(
-        route: AppRouter.members,
-        icon: Icons.people_outlined,
-        selectedIcon: Icons.people,
-        label: l10n.nav_members,
-        show: auth.hasPermission('member:manage'),
-      );
-      add(
-        route: AppRouter.families,
-        icon: Icons.family_restroom_outlined,
-        selectedIcon: Icons.family_restroom,
-        label: l10n.families_title,
-        show: canViewFamilies(auth.permissions),
-      );
-      add(
-        route: AppRouter.ministries,
-        icon: Icons.church_outlined,
-        selectedIcon: Icons.church,
-        label: l10n.ministries_title,
-        show: canViewMinistries(auth.permissions),
-      );
-      add(
-        route: AppRouter.operationalUnits,
-        icon: Icons.groups_outlined,
-        selectedIcon: Icons.groups,
-        label: l10n.operational_units_title,
-        show: canViewOperationalUnits(auth.permissions),
-      );
-      add(
-        route: AppRouter.sync,
-        icon: Icons.sync_outlined,
-        selectedIcon: Icons.sync,
-        label: l10n.nav_sync,
-        show: true,
-      );
-    } else {
-      final member = auth.profile?['member'] as Map<String, dynamic>?;
-      add(
-        route: AppRouter.calendar,
-        icon: Icons.calendar_month_outlined,
-        selectedIcon: Icons.calendar_month,
-        label: l10n.nav_calendar,
-        show: true,
-      );
-      add(
-        route: AppRouter.attendance,
-        icon: Icons.fact_check_outlined,
-        selectedIcon: Icons.fact_check,
-        label: l10n.nav_attendance,
-        show: true,
-      );
-      add(
-        route: AppRouter.coverage,
-        icon: Icons.shield_outlined,
-        selectedIcon: Icons.shield,
-        label: l10n.nav_coverage,
-        show: true,
-      );
-      add(
-        route: AppRouter.swaps,
-        icon: Icons.swap_horiz_outlined,
-        selectedIcon: Icons.swap_horiz,
-        label: l10n.nav_swaps,
-        show: true,
-      );
-      add(
-        route: AppRouter.replacements,
-        icon: Icons.person_add_alt_outlined,
-        selectedIcon: Icons.person_add_alt_1,
-        label: l10n.nav_replacements,
-        show: true,
-      );
-      add(
-        route: AppRouter.notifications,
-        icon: Icons.notifications_outlined,
-        selectedIcon: Icons.notifications,
-        label: l10n.nav_notifications,
-        show: true,
-      );
-      add(
-        route: AppRouter.discipline,
-        icon: Icons.gavel_outlined,
-        selectedIcon: Icons.gavel,
-        label: l10n.nav_discipline,
-        show: true,
-      );
-      add(
-        route: AppRouter.finance,
-        icon: Icons.account_balance_wallet_outlined,
-        selectedIcon: Icons.account_balance_wallet,
-        label: l10n.nav_finance,
-        show: member?['ministry'] == 'CHOIR',
-      );
-      add(
-        route: AppRouter.sync,
-        icon: Icons.sync_outlined,
-        selectedIcon: Icons.sync,
-        label: l10n.nav_sync,
-        show: true,
-      );
-    }
-
-    return items;
   }
 
   void _navigateTo(
@@ -458,82 +223,6 @@ class AppShell extends ConsumerWidget {
       return;
     }
     Navigator.pushReplacementNamed(context, targetRoute);
-  }
-}
-
-class _ShellBrand extends StatelessWidget {
-  const _ShellBrand({
-    required this.extended,
-    required this.title,
-    required this.subtitle,
-    required this.userLabel,
-    required this.brandColor,
-  });
-
-  final bool extended;
-  final String title;
-  final String? subtitle;
-  final String userLabel;
-  final Color brandColor;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    if (!extended) {
-      return Column(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: brandColor.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(Icons.church, color: brandColor),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            userLabel.characters.first.toUpperCase(),
-            style: textTheme.titleMedium,
-          ),
-        ],
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: brandColor.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Icon(Icons.church, color: brandColor, size: 28),
-        ),
-        const SizedBox(height: 16),
-        Text(title, style: textTheme.titleLarge),
-        const SizedBox(height: 4),
-        Text(
-          userLabel,
-          style: textTheme.bodyMedium,
-          overflow: TextOverflow.ellipsis,
-        ),
-        if (subtitle != null && subtitle!.isNotEmpty) ...[
-          const SizedBox(height: 4),
-          Text(
-            subtitle!,
-            style: textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ],
-    );
   }
 }
 
@@ -555,12 +244,18 @@ class _ShellAction extends StatelessWidget {
     if (extended) {
       return SizedBox(
         width: double.infinity,
-        child: OutlinedButton.icon(
+        child: TextButton.icon(
           onPressed: onTap,
-          icon: Icon(icon),
+          icon: Icon(icon, color: CmmsColors.primary300, size: 18),
           label: Align(
             alignment: Alignment.centerLeft,
-            child: Text(label),
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: CmmsColors.primary300,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
         ),
       );
@@ -569,21 +264,7 @@ class _ShellAction extends StatelessWidget {
     return IconButton(
       onPressed: onTap,
       tooltip: label,
-      icon: Icon(icon),
+      icon: Icon(icon, color: CmmsColors.primary300),
     );
   }
-}
-
-class _ShellDestination {
-  const _ShellDestination({
-    required this.route,
-    required this.icon,
-    required this.selectedIcon,
-    required this.label,
-  });
-
-  final String route;
-  final IconData icon;
-  final IconData selectedIcon;
-  final String label;
 }

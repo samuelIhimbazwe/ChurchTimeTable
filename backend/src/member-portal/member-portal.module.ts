@@ -15,12 +15,16 @@ import { ProtocolClaimsService } from './protocol-claims.service';
 import { ProtocolMembershipService } from './protocol-membership.service';
 import { MemberPortalDashboardService } from './member-portal-dashboard.service';
 import { ChoirDashboardContextService } from './choir-dashboard-context.service';
+import { ChoirSponsorDashboardContextService } from './choir-sponsor-dashboard-context.service';
+import { ChoirSponsorCatalogService } from './choir-sponsor-catalog.service';
 import { ChoirMyFamilyService } from './choir-my-family.service';
 import { ProtocolDashboardContextService } from './protocol-dashboard-context.service';
 import { MemberPortalChoirProfileService } from './member-portal-choir-profile.service';
 import { MemberPortalDevotionService } from './member-portal-devotion.service';
 import { MemberPortalPrayerService } from './member-portal-prayer.service';
 import { MemberPortalWeeklyActivitiesService } from './member-portal-weekly-activities.service';
+import { MemberPortalParticipationScheduleService } from './member-portal-participation-schedule.service';
+import { MemberMinistryScopeService } from './member-ministry-scope.service';
 import { MemberPortalNotificationsService } from './member-portal-notifications.service';
 import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
 
@@ -50,11 +54,19 @@ import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
     MemberPortalDevotionService,
     MemberPortalPrayerService,
     MemberPortalWeeklyActivitiesService,
+    MemberPortalParticipationScheduleService,
+    MemberMinistryScopeService,
     MemberPortalChoirProfileService,
     ChoirDashboardContextService,
+    ChoirSponsorDashboardContextService,
+    ChoirSponsorCatalogService,
     ChoirMyFamilyService,
     ProtocolDashboardContextService,
   ],
-  exports: [MemberPortalDashboardService],
+  exports: [
+    MemberPortalDashboardService,
+    MemberMinistryScopeService,
+    MemberPortalParticipationScheduleService,
+  ],
 })
 export class MemberPortalModule {}

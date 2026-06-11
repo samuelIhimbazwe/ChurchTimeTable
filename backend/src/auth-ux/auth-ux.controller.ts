@@ -7,6 +7,7 @@ import { RequireAnyPermissions } from '../common/decorators/roles.decorator';
 import { PERMISSIONS } from '../common/constants/roles';
 import { ChurchWelcomeService } from './church-welcome.service';
 import { ChurchBrandingService } from './church-branding.service';
+import { ChurchGivingService } from './church-giving.service';
 import { UxAnalyticsService } from './ux-analytics.service';
 import { ChoirDiscoveryService } from '../member-portal/choir-discovery.service';
 
@@ -16,6 +17,7 @@ export class ChurchPublicController {
   constructor(
     private welcomeService: ChurchWelcomeService,
     private branding: ChurchBrandingService,
+    private giving: ChurchGivingService,
     private discovery: ChoirDiscoveryService,
     private analytics: UxAnalyticsService,
   ) {}
@@ -28,6 +30,11 @@ export class ChurchPublicController {
   @Get('branding')
   brandingSettings() {
     return this.branding.getPublicBranding();
+  }
+
+  @Get('giving')
+  givingSettings() {
+    return this.giving.getPublicGiving();
   }
 
   @Get('choirs')
@@ -93,5 +100,44 @@ export class ChurchBrandingController {
     },
   ) {
     return this.branding.updateBranding(_userId, body);
+  }
+}
+
+@Controller('church/giving')
+@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+export class ChurchGivingController {
+  constructor(private giving: ChurchGivingService) {}
+
+  @Get()
+  get() {
+    return this.giving.getPublicGiving();
+  }
+
+  @Patch()
+  @RequireAnyPermissions(
+    PERMISSIONS.MINISTRY_FINANCE_MANAGE,
+    PERMISSIONS.ADMIN_SETTINGS_MANAGE,
+  )
+  update(
+    @CurrentUser('sub') userId: string,
+    @Body()
+    body: {
+      tithesOfferings?: {
+        momoNumber?: string | null;
+        momoAccountName?: string | null;
+        bankAccount?: string | null;
+        bankName?: string | null;
+        instructions?: string | null;
+      };
+      inyubako?: {
+        momoNumber?: string | null;
+        momoAccountName?: string | null;
+        bankAccount?: string | null;
+        bankName?: string | null;
+        instructions?: string | null;
+      };
+    },
+  ) {
+    return this.giving.updateGiving(userId, body);
   }
 }

@@ -17,6 +17,7 @@ import { ChoirReportsService } from './choir-reports.service';
 import { ChoirCalendarService } from './choir-calendar.service';
 import { ChoirSearchService } from './choir-search.service';
 import { ChoirSchedulingNotificationsService } from './choir-scheduling-notifications.service';
+import { ChoirScheduleConflictService } from './choir-schedule-conflict.service';
 import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
 
 @Module({
@@ -42,7 +43,8 @@ import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
     ChoirCalendarService,
     ChoirSearchService,
     ChoirSchedulingNotificationsService,
+    ChoirScheduleConflictService,
   ],
-  exports: [ChoirCalendarService, ChoirServiceAssignmentsService],
+  exports: [ChoirCalendarService, ChoirServiceAssignmentsService, ChoirScheduleConflictService],
 })
 export class ChoirSchedulingModule {}

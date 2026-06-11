@@ -15,6 +15,19 @@ export class ServiceQuotaEngine {
     });
   }
 
+  async updateSettings(data: {
+    maxOfficialServicesPerMonth?: number;
+    maxNonChoirMembers?: number;
+    backupPoolSize?: number;
+    membersCanViewFullRanking?: boolean;
+  }) {
+    return this.prisma.protocolEngineSettings.upsert({
+      where: { id: 'default' },
+      create: { id: 'default', ...data },
+      update: data,
+    });
+  }
+
   async countOfficialServicesInMonth(
     memberId: string,
     year: number,

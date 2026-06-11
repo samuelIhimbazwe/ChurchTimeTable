@@ -48,4 +48,9 @@ export class SubmitContributionDto {
   @IsString()
   @MaxLength(120)
   customTypeLabel?: string;
+
+  /** Required for sponsor giving when the member is not in a choir family */
+  @IsOptional()
+  @IsUUID()
+  choirId?: string;
 }

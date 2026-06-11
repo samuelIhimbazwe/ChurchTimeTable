@@ -7,6 +7,7 @@ import { ChoirServiceOpsController } from './choir-service-ops.controller';
 import { ChurchServiceRequestsService } from './church-service-requests.service';
 import { ServicePreparationService } from './service-preparation.service';
 import { ChoirDissolutionService } from './choir-dissolution.service';
+import { ChurchServiceOccurrenceService } from './church-service-occurrence.service';
 
 @Module({
   imports: [AuditModule, AuthModule, ChoirSchedulingModule, MemberPhoneEnforcementModule],
@@ -15,6 +16,7 @@ import { ChoirDissolutionService } from './choir-dissolution.service';
     ChurchServiceRequestsService,
     ServicePreparationService,
     ChoirDissolutionService,
+    ChurchServiceOccurrenceService,
   ],
   exports: [
     ChurchServiceRequestsService,
