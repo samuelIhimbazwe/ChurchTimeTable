@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationType } from '@prisma/client';
+import {
+  ChurchScheduleSubmissionStatus,
+  NotificationType,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ROLES } from '../common/constants/roles';
@@ -114,6 +117,59 @@ export class ChurchScheduleNotificationsService {
       bodies[outcome],
       { kind: `church_schedule_${outcome}`, submissionId },
     );
+  }
+
+  async sendDailyDigest() {
+    const since = new Date();
+    since.setDate(since.getDate() - 1);
+
+    const [addedCount, conflictCount] = await Promise.all([
+      this.prisma.churchScheduleSubmission.count({
+        where: {
+          status: {
+            in: [
+              ChurchScheduleSubmissionStatus.AUTO_PUBLISHED,
+              ChurchScheduleSubmissionStatus.ADMIN_PUBLISHED,
+            ],
+          },
+          submittedAt: { gte: since },
+        },
+      }),
+      this.prisma.churchScheduleSubmission.count({
+        where: { status: ChurchScheduleSubmissionStatus.CONFLICT_HELD },
+      }),
+    ]);
+
+    if (addedCount === 0 && conflictCount === 0) {
+      return { notified: 0, addedCount, conflictCount };
+    }
+
+    const parts: string[] = [];
+    if (addedCount > 0) {
+      parts.push(`${addedCount} added to the timetable`);
+    }
+    if (conflictCount > 0) {
+      parts.push(`${conflictCount} need attention`);
+    }
+    const body = parts.join('; ') + '.';
+
+    const adminIds = await this.churchAdminUserIds();
+    for (const adminId of adminIds) {
+      await this.notify(
+        adminId,
+        NotificationType.OPERATION_SCHEDULE,
+        'Church schedule daily digest',
+        body,
+        {
+          kind: 'church_schedule_daily_digest',
+          addedCount,
+          conflictCount,
+          link: '/church/schedule/conflicts',
+        },
+      );
+    }
+
+    return { notified: adminIds.length, addedCount, conflictCount };
   }
 
   async notifyEntryChanged(

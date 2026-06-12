@@ -1,13 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { churchScheduleApi } from '@/lib/api'
 import type { ChurchScheduleSubmission } from '@/lib/api/modules/churchSchedule'
 import { toast } from '@/components/shared/Toast'
 import { Card, Badge } from '@/components/shared'
 import { formatDateTime } from '@/lib/utils/format'
-import { ACTIVITY_TYPE_LABELS } from '@/lib/church/schedule-display'
+import { ACTIVITY_TYPE_LABELS, toLocalDatetimeInput } from '@/lib/church/schedule-display'
 
 type Props = {
   submission: ChurchScheduleSubmission
@@ -17,6 +17,18 @@ export function ChurchScheduleConflictPanel({ submission }: Props) {
   const qc = useQueryClient()
   const [overrideReason, setOverrideReason] = useState('')
   const [rejectReason, setRejectReason] = useState('')
+  const [showCounter, setShowCounter] = useState(false)
+  const [counterFacilityId, setCounterFacilityId] = useState(submission.facilityId)
+  const [counterStart, setCounterStart] = useState(
+    toLocalDatetimeInput(submission.startAt),
+  )
+  const [counterEnd, setCounterEnd] = useState(toLocalDatetimeInput(submission.endAt))
+  const [counterReason, setCounterReason] = useState('')
+
+  const { data: facilities = [] } = useQuery({
+    queryKey: ['church-facilities'],
+    queryFn: () => churchScheduleApi.listFacilities(),
+  })
 
   const resolve = useMutation({
     mutationFn: (body: Parameters<typeof churchScheduleApi.resolveConflict>[1]) =>
@@ -26,6 +38,7 @@ export function ChurchScheduleConflictPanel({ submission }: Props) {
       qc.invalidateQueries({ queryKey: ['church-schedule-conflicts'] })
       qc.invalidateQueries({ queryKey: ['church-schedule-timetable'] })
       qc.invalidateQueries({ queryKey: ['church-schedule-mine'] })
+      setShowCounter(false)
     },
     onError: (err: Error) => toast.error('Action failed', err.message),
   })
@@ -107,6 +120,84 @@ export function ChurchScheduleConflictPanel({ submission }: Props) {
         >
           Approve as requested
         </button>
+      </div>
+
+      <div className="border-t border-border pt-4 space-y-2">
+        <p className="text-xs font-medium text-text-muted">Counter-propose (suggest new slot)</p>
+        {!showCounter ? (
+          <button
+            type="button"
+            onClick={() => setShowCounter(true)}
+            className="px-3 py-1.5 rounded-lg border border-primary-300 text-primary-700 text-xs font-semibold"
+          >
+            Suggest different time or room
+          </button>
+        ) : (
+          <div className="space-y-2">
+            <select
+              className={inputClass}
+              value={counterFacilityId}
+              onChange={(e) => setCounterFacilityId(e.target.value)}
+            >
+              {facilities.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.name}
+                </option>
+              ))}
+            </select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <label className="text-xs text-text-muted">
+                Start
+                <input
+                  type="datetime-local"
+                  className={`${inputClass} mt-1`}
+                  value={counterStart}
+                  onChange={(e) => setCounterStart(e.target.value)}
+                />
+              </label>
+              <label className="text-xs text-text-muted">
+                End
+                <input
+                  type="datetime-local"
+                  className={`${inputClass} mt-1`}
+                  value={counterEnd}
+                  onChange={(e) => setCounterEnd(e.target.value)}
+                />
+              </label>
+            </div>
+            <input
+              className={inputClass}
+              value={counterReason}
+              onChange={(e) => setCounterReason(e.target.value)}
+              placeholder="Note for submitter (optional)"
+            />
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={resolve.isPending || !counterFacilityId || !counterStart || !counterEnd}
+                onClick={() =>
+                  resolve.mutate({
+                    action: 'COUNTER_PROPOSE',
+                    facilityId: counterFacilityId,
+                    startAt: new Date(counterStart).toISOString(),
+                    endAt: new Date(counterEnd).toISOString(),
+                    reason: counterReason.trim() || undefined,
+                  })
+                }
+                className="px-3 py-1.5 rounded-lg bg-primary-600 text-white text-xs font-semibold disabled:opacity-50"
+              >
+                Send counter-proposal
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCounter(false)}
+                className="px-3 py-1.5 rounded-lg border border-border text-xs font-semibold"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="border-t border-border pt-4 space-y-2">

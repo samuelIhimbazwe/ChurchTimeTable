@@ -92,6 +92,12 @@ export class ChurchScheduleSubmissionsController {
     return this.submissions.submit(userId, id);
   }
 
+  @Post(':id/accept-counter')
+  @RequireAnyPermissions(PERMISSIONS.CHURCH_SCHEDULE_SUBMIT)
+  acceptCounter(@CurrentUser('sub') userId: string, @Param('id') id: string) {
+    return this.submissions.acceptCounterProposal(userId, id);
+  }
+
   @Post(':id/cancel')
   @RequireAnyPermissions(
     PERMISSIONS.CHURCH_SCHEDULE_SUBMIT,

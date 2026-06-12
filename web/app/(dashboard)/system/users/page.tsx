@@ -15,7 +15,7 @@ import {
   type CreateSystemUserPayload,
   type SystemUser,
 } from '@/lib/api'
-import { Search, UserPlus, KeyRound, UserX, UserCheck } from 'lucide-react'
+import { Search, UserPlus, KeyRound, UserX, UserCheck, Shield } from 'lucide-react'
 
 export default function SystemUsersPage() {
   const qc = useQueryClient()
@@ -24,6 +24,7 @@ export default function SystemUsersPage() {
   const [page, setPage] = useState(1)
   const [showCreate, setShowCreate] = useState(false)
   const [resetUser, setResetUser] = useState<SystemUser | null>(null)
+  const [rolesUser, setRolesUser] = useState<SystemUser | null>(null)
   const [newPassword, setNewPassword] = useState('')
 
   const { data, isLoading } = useQuery({
@@ -65,6 +66,17 @@ export default function SystemUsersPage() {
       setNewPassword('')
     },
     onError: (err: Error) => toast.error(err.message || 'Reset failed'),
+  })
+
+  const rolesMutation = useMutation({
+    mutationFn: ({ id, roleNames }: { id: string; roleNames: string[] }) =>
+      systemUsersApi.assignRoles(id, { roleNames, mode: 'replace' }),
+    onSuccess: () => {
+      toast.success('Roles updated')
+      setRolesUser(null)
+      qc.invalidateQueries({ queryKey: ['system-users'] })
+    },
+    onError: (err: Error) => toast.error(err.message || 'Role update failed'),
   })
 
   const users = data?.items ?? []
@@ -146,6 +158,13 @@ export default function SystemUsersPage() {
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       type="button"
+                      onClick={() => setRolesUser(user)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-surface-raised"
+                    >
+                      <Shield size={14} /> Edit roles
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => {
                         setResetUser(user)
                         setNewPassword('')
@@ -211,6 +230,18 @@ export default function SystemUsersPage() {
         />
       )}
 
+      {rolesUser && (
+        <EditRolesModal
+          user={rolesUser}
+          roles={roles}
+          loading={rolesMutation.isPending}
+          onClose={() => setRolesUser(null)}
+          onSave={(roleNames) =>
+            rolesMutation.mutate({ id: rolesUser.id, roleNames })
+          }
+        />
+      )}
+
       {resetUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <Card padding="md" className="w-full max-w-md">
@@ -245,6 +276,65 @@ export default function SystemUsersPage() {
           </Card>
         </div>
       )}
+    </div>
+  )
+}
+
+function EditRolesModal({
+  user,
+  roles,
+  loading,
+  onClose,
+  onSave,
+}: {
+  user: SystemUser
+  roles: { id: string; name: string }[]
+  loading: boolean
+  onClose: () => void
+  onSave: (roleNames: string[]) => void
+}) {
+  const [roleNames, setRoleNames] = useState<string[]>(user.roles.map((r) => r.name))
+
+  function toggleRole(name: string) {
+    setRoleNames((prev) =>
+      prev.includes(name) ? prev.filter((r) => r !== name) : [...prev, name],
+    )
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 overflow-y-auto">
+      <Card padding="md" className="w-full max-w-lg my-8">
+        <h3 className="font-display text-lg">Edit roles</h3>
+        <p className="text-sm text-text-secondary mt-1">{user.email}</p>
+        <div className="mt-4">
+          <p className="text-xs font-medium text-text-secondary mb-2">Roles</p>
+          <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
+            {roles.map((r) => (
+              <label key={r.id} className="inline-flex items-center gap-1 text-xs">
+                <input
+                  type="checkbox"
+                  checked={roleNames.includes(r.name)}
+                  onChange={() => toggleRole(r.name)}
+                />
+                {r.name}
+              </label>
+            ))}
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 mt-6">
+          <button type="button" onClick={onClose} className="px-3 py-2 text-sm rounded-lg border border-border">
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={loading || roleNames.length === 0}
+            onClick={() => onSave(roleNames)}
+            className="px-3 py-2 text-sm rounded-lg bg-gold-500 text-primary-900 font-semibold disabled:opacity-50"
+          >
+            Save roles
+          </button>
+        </div>
+      </Card>
     </div>
   )
 }

@@ -29,6 +29,7 @@ import { ChurchScheduleConflictService } from './church-schedule-conflict.servic
 import { ChurchScheduleScopeService } from './church-schedule-scope.service';
 
 import { ChurchScheduleNotificationsService } from './church-schedule-notifications.service';
+import { ChurchScheduleDigestTask } from './church-schedule-digest.task';
 
 
 
@@ -73,6 +74,8 @@ import { ChurchScheduleNotificationsService } from './church-schedule-notificati
     ChurchScheduleScopeService,
 
     ChurchScheduleNotificationsService,
+
+    ChurchScheduleDigestTask,
 
   ],
 

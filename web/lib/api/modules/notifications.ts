@@ -1,9 +1,11 @@
 import { apiClient } from '../client'
 import type { ApiNotification } from '@/types'
+import { linkFromNotificationData } from '@/lib/notifications/links'
 
 function mapNotificationType(type: unknown): ApiNotification['type'] {
   const t = String(type ?? '').toUpperCase()
-  if (t.includes('DISCIPLINE') || t.includes('SWAP') || t.includes('CHANGE')) return 'warning'
+  if (t.includes('DISCIPLINE') || t.includes('SWAP')) return 'warning'
+  if (t.includes('SCHEDULE_CHANGE') || t.includes('CHANGE')) return 'warning'
   if (t.includes('ATTENDANCE') || t.includes('ASSIGNMENT') || t.includes('APPROVED')) return 'success'
   if (t.includes('ERROR') || t.includes('FAIL') || t.includes('REJECT')) return 'error'
   return 'info'
@@ -17,7 +19,7 @@ function toNotification(row: Record<string, unknown>): ApiNotification {
     body:      String(row.body ?? ''),
     type:      mapNotificationType(row.type),
     read:      Boolean(row.read),
-    link:      data?.link != null ? String(data.link) : data?.href != null ? String(data.href) : undefined,
+    link:      linkFromNotificationData(data),
     createdAt: String(row.createdAt ?? new Date().toISOString()),
   }
 }

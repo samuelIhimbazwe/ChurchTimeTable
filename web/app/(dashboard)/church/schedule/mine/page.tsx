@@ -1,10 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { churchScheduleApi } from '@/lib/api'
 import {
-  Card, Badge, SkeletonCard, EmptyState, PermissionGate,
+  Card, Badge, SkeletonCard, EmptyState, PermissionGate, toast,
 } from '@/components/shared'
 import { ClipboardList } from 'lucide-react'
 import { formatDateTime } from '@/lib/utils/format'
@@ -15,9 +15,20 @@ import {
 } from '@/lib/church/schedule-display'
 
 export default function ChurchScheduleMinePage() {
+  const qc = useQueryClient()
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ['church-schedule-mine'],
     queryFn: () => churchScheduleApi.listMySubmissions(),
+  })
+
+  const acceptCounter = useMutation({
+    mutationFn: (id: string) => churchScheduleApi.acceptCounterProposal(id),
+    onSuccess: () => {
+      toast.success('Counter-proposal accepted and resubmitted')
+      qc.invalidateQueries({ queryKey: ['church-schedule-mine'] })
+      qc.invalidateQueries({ queryKey: ['church-schedule-timetable'] })
+    },
+    onError: (err: Error) => toast.error(err.message || 'Could not accept counter-proposal'),
   })
 
   const items = Array.isArray(rows) ? rows : []
@@ -78,10 +89,26 @@ export default function ChurchScheduleMinePage() {
                   </p>
                 )}
                 {row.counterProposal && (
-                  <p className="text-xs text-text-secondary">
-                    Counter-proposal: {formatDateTime(row.counterProposal.startAt)} — update your
-                    draft and resubmit.
-                  </p>
+                  <div className="rounded-lg border border-primary-200 bg-primary-50 px-3 py-2 space-y-2">
+                    <p className="text-xs text-text-primary font-medium">
+                      Church office suggests a new slot
+                    </p>
+                    <p className="text-xs text-text-secondary">
+                      {formatDateTime(row.counterProposal.startAt)} –{' '}
+                      {formatDateTime(row.counterProposal.endAt)}
+                      {row.counterProposal.reason
+                        ? ` — ${row.counterProposal.reason}`
+                        : ''}
+                    </p>
+                    <button
+                      type="button"
+                      disabled={acceptCounter.isPending}
+                      onClick={() => acceptCounter.mutate(row.id)}
+                      className="px-3 py-1.5 rounded-lg bg-primary-600 text-white text-xs font-semibold disabled:opacity-50"
+                    >
+                      Accept & resubmit
+                    </button>
+                  </div>
                 )}
               </li>
             ))}

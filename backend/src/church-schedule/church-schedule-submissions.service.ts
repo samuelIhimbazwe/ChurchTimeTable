@@ -364,6 +364,46 @@ export class ChurchScheduleSubmissionsService {
     return held;
   }
 
+  async acceptCounterProposal(actorUserId: string, id: string) {
+    const existing = await this.getOne(actorUserId, id);
+    if (existing.createdByUserId !== actorUserId) {
+      throw new ForbiddenException('Only the submitter can accept a counter-proposal');
+    }
+    if (existing.status !== ChurchScheduleSubmissionStatus.COUNTER_PROPOSED) {
+      throw new BadRequestException('No counter-proposal to accept');
+    }
+
+    const cp = existing.counterProposal as {
+      facilityId?: string;
+      startAt?: string;
+      endAt?: string;
+    } | null;
+    if (!cp?.facilityId || !cp.startAt || !cp.endAt) {
+      throw new BadRequestException('Counter-proposal data is incomplete');
+    }
+
+    await this.assertFacility(cp.facilityId);
+    const dates = this.parseDates({
+      calendarDate: new Date(cp.startAt).toISOString(),
+      startAt: cp.startAt,
+      endAt: cp.endAt,
+    });
+
+    await this.prisma.churchScheduleSubmission.update({
+      where: { id },
+      data: {
+        facilityId: cp.facilityId,
+        calendarDate: dates.calendarDate,
+        startAt: dates.startAt,
+        endAt: dates.endAt,
+        counterProposal: Prisma.JsonNull,
+        status: ChurchScheduleSubmissionStatus.DRAFT,
+      },
+    });
+
+    return this.submit(actorUserId, id);
+  }
+
   async cancel(actorUserId: string, id: string) {
     const existing = await this.getOne(actorUserId, id);
     const resolved = await this.permissions.resolveForUser(actorUserId);

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useNotifications } from '@/lib/hooks'
 import { X, Bell, CheckCheck, Info, CheckCircle2, AlertTriangle, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -27,7 +28,16 @@ interface NotificationPanelProps {
 }
 
 export default function NotificationPanel({ open, onClose }: NotificationPanelProps) {
+  const router = useRouter()
   const { data: notifications, isLoading, markRead, markAllRead } = useNotifications()
+
+  function openNotification(n: ApiNotification) {
+    if (!n.read) markRead.mutate(n.id)
+    if (n.link) {
+      onClose()
+      router.push(n.link)
+    }
+  }
 
   const unread = notifications?.filter((n) => !n.read).length ?? 0
 
@@ -91,7 +101,7 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
                 return (
                   <li
                     key={n.id}
-                    onClick={() => !n.read && markRead.mutate(n.id)}
+                    onClick={() => openNotification(n)}
                     className={cn(
                       'flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors',
                       n.read ? 'hover:bg-surface-raised' : 'bg-primary-50 hover:bg-primary-100',

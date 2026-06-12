@@ -418,6 +418,16 @@ export const churchScheduleApi = {
 
 
 
+  acceptCounterProposal: (id: string) =>
+
+    apiClient.post<never, ChurchScheduleSubmission>(
+
+      `/church/schedule/submissions/${id}/accept-counter`,
+
+    ),
+
+
+
   cancelSubmission: (id: string) =>
 
     apiClient.post<never, ChurchScheduleSubmission>(
