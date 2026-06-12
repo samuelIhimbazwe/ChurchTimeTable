@@ -31,7 +31,24 @@ export default function ChurchScheduleMinePage() {
     onError: (err: Error) => toast.error(err.message || 'Could not accept counter-proposal'),
   })
 
+  const cancelSubmission = useMutation({
+    mutationFn: (id: string) => churchScheduleApi.cancelSubmission(id),
+    onSuccess: () => {
+      toast.success('Submission cancelled')
+      qc.invalidateQueries({ queryKey: ['church-schedule-mine'] })
+    },
+    onError: (err: Error) => toast.error(err.message || 'Could not cancel'),
+  })
+
   const items = Array.isArray(rows) ? rows : []
+
+  function canEdit(status: string) {
+    return status === 'DRAFT' || status === 'COUNTER_PROPOSED'
+  }
+
+  function canCancel(status: string) {
+    return ['DRAFT', 'CONFLICT_HELD', 'COUNTER_PROPOSED', 'SUBMITTED'].includes(status)
+  }
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
@@ -88,6 +105,29 @@ export default function ChurchScheduleMinePage() {
                     {row.rejectionReason}
                   </p>
                 )}
+                <div className="flex flex-wrap gap-2">
+                  {canEdit(row.status) && (
+                    <Link
+                      href={`/church/schedule/submit?id=${row.id}`}
+                      className="px-3 py-1.5 rounded-lg border border-border text-xs font-semibold hover:bg-surface-raised"
+                    >
+                      Edit draft
+                    </Link>
+                  )}
+                  {canCancel(row.status) && (
+                    <button
+                      type="button"
+                      disabled={cancelSubmission.isPending}
+                      onClick={() => {
+                        if (!window.confirm('Cancel this submission?')) return
+                        cancelSubmission.mutate(row.id)
+                      }}
+                      className="px-3 py-1.5 rounded-lg border border-red-200 text-red-800 text-xs font-semibold"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
                 {row.counterProposal && (
                   <div className="rounded-lg border border-primary-200 bg-primary-50 px-3 py-2 space-y-2">
                     <p className="text-xs text-text-primary font-medium">

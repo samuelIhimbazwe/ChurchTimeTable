@@ -39,6 +39,9 @@ function mapSystemHealth(
 }
 
 export const systemApi = {
+  getSyncConflicts: () =>
+    apiClient.get<never, unknown[]>('/sync/conflicts'),
+
   getStats: async (): Promise<SystemStats> => {
     const raw = await apiClient.get<never, Record<string, unknown>>('/system/stats')
     return {

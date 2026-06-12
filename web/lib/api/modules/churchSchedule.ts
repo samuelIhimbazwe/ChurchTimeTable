@@ -302,6 +302,16 @@ export const churchScheduleApi = {
 
 
 
+  getSubmission: (id: string) =>
+
+    apiClient.get<never, ChurchScheduleSubmission>(
+
+      `/church/schedule/submissions/${id}`,
+
+    ),
+
+
+
   listConflicts: () =>
 
     apiClient.get<never, ChurchScheduleSubmission[]>('/church/schedule/conflicts'),

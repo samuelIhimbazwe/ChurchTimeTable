@@ -35,7 +35,7 @@ export { memberPortalApi }      from './modules/memberPortal'
 export { devotionsApi }         from './modules/devotions'
 
 export type {
-  LoginPayload, LoginResponse, AuthUser,
+  LoginPayload, RegisterPayload, LoginResponse, AuthUser,
 } from './modules/auth'
 export type { ContributionClaim } from './modules/contributions'
 export type { SongAsset, SongAssetType } from './modules/music'

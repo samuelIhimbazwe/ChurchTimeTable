@@ -20,20 +20,37 @@ export class SystemController {
 
   @Get('stats')
   @RequireAnyPermissions(...ADMIN_SETTINGS_ACCESS)
-  stats() {
-    return this.prisma.$transaction([
-      this.prisma.user.count(),
-      this.prisma.member.count(),
-      this.prisma.operationOccurrence.count(),
-      this.prisma.auditLog.count(),
-      this.prisma.syncConflict.count(),
-    ]).then(([users, members, operationOccurrences, auditLogs, syncConflicts]) => ({
+  async stats() {
+    const started = Date.now();
+    const [users, members, operationOccurrences, auditLogs, syncConflicts, activeChoirs] =
+      await this.prisma.$transaction([
+        this.prisma.user.count(),
+        this.prisma.member.count(),
+        this.prisma.operationOccurrence.count(),
+        this.prisma.auditLog.count(),
+        this.prisma.syncConflict.count(),
+        this.prisma.choir.count({ where: { isActive: true } }),
+      ]);
+
+    const apiResponseMs = Date.now() - started;
+    const systemHealth =
+      syncConflicts > 10 ? 'attention' : syncConflicts > 0 ? 'warning' : 'healthy';
+
+    return {
       users,
       members,
       operationOccurrences,
       auditLogs,
       syncConflicts,
-    }));
+      choirs: activeChoirs,
+      activeChoirs,
+      totalMembers: members,
+      totalOccurrences: operationOccurrences,
+      systemHealth,
+      dbSize: 'managed',
+      lastBackup: 'see deployment center',
+      apiResponseMs,
+    };
   }
 
   @Get('data-quality')

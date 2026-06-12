@@ -472,14 +472,21 @@ function usesChoirRoleNav(role: string | undefined) {
 }
 
 /** Sidebar for /portal, /events, etc. — church member first; one link into choir when approved. */
+function hasChurchScheduleSubmit(permissions: string[]) {
+  return permissions.includes('church.schedule.submit')
+}
+
 export function getPortalNavForUser(
   role: string | undefined,
   choirAccess: Pick<ChoirAccessState, 'canAccessChoirArea' | 'isChoirMember'>,
   permissions: string[] = [],
   activeChoirMemberships: ActiveChoirMembership[] = [],
 ): NavSection[] {
-  void permissions
   const sections: NavSection[] = [...MEMBER_PORTAL]
+
+  if (hasChurchScheduleSubmit(permissions)) {
+    sections.push(CHURCH_SCHEDULE_SUBMIT_NAV)
+  }
 
   if (choirAccess.canAccessChoirArea && choirAccess.isChoirMember) {
     for (const choir of activeChoirMemberships) {

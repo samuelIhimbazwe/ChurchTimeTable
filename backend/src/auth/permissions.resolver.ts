@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CHURCH_SCHEDULE_SUBMIT_PERMISSIONS } from '../common/constants/roles';
 
 /**
  * Resolves effective permissions from DB role grants + committee assignments.
@@ -131,6 +132,20 @@ export class PermissionsResolver {
           `operational_unit:${item.operationalUnitId}:${item.permission}`,
         ]),
       );
+
+      const [ministryLeadership, unitLeadership] = await Promise.all([
+        this.prisma.ministryLeadershipAssignment.findFirst({
+          where: { memberId: user.member.id, endedAt: null },
+          select: { id: true },
+        }),
+        this.prisma.operationalUnitLeadershipAssignment.findFirst({
+          where: { memberId: user.member.id, endedAt: null },
+          select: { id: true },
+        }),
+      ]);
+      if (ministryLeadership || unitLeadership) {
+        permissions.push(...CHURCH_SCHEDULE_SUBMIT_PERMISSIONS);
+      }
     }
 
     return {

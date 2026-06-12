@@ -4,17 +4,35 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { protocolApi } from '@/lib/api'
 import {
-  Card, PermissionGate, SkeletonCard,
+  Card, PermissionGate, SkeletonCard, toast,
 } from '@/components/shared'
-import { FileText } from 'lucide-react'
+import { FileText, Download } from 'lucide-react'
 import { formatDate } from '@/lib/utils/format'
 import {
   ProtocolTeamReportForm,
   teamReportOptionsFromDashboard,
 } from '@/components/protocol/ProtocolTeamReportForm'
 
+async function downloadBlob(fetcher: () => Promise<Blob>, filename: string) {
+  try {
+    const blob = await fetcher()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success('Export downloaded')
+  } catch {
+    toast.error('Export failed')
+  }
+}
+
 export default function ProtocolReportsPage() {
   const [showForm, setShowForm] = useState(false)
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.getMonth() + 1
 
   const { data: reports, isLoading } = useQuery({
     queryKey: ['protocol-reports'],
@@ -68,6 +86,39 @@ export default function ProtocolReportsPage() {
           onSuccess={() => setShowForm(false)}
         />
       )}
+
+      <PermissionGate permission="protocol.report">
+        <Card padding="md" className="space-y-3">
+          <h3 className="text-sm font-semibold text-text-primary">Operational exports</h3>
+          <p className="text-xs text-text-muted">CSV downloads for {year}, month {month}</p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                downloadBlob(
+                  () => protocolApi.exportReportCsv('monthly-service', { year, month }),
+                  `protocol-monthly-service-${year}-${month}.csv`,
+                )
+              }
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border hover:bg-surface-raised"
+            >
+              <Download size={14} /> Monthly service CSV
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                downloadBlob(
+                  () => protocolApi.exportReportCsv('reliability', { year, month }),
+                  `protocol-reliability-${year}-${month}.csv`,
+                )
+              }
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border hover:bg-surface-raised"
+            >
+              <Download size={14} /> Reliability CSV
+            </button>
+          </div>
+        </Card>
+      </PermissionGate>
 
       {isLoading ? (
         <SkeletonCard rows={4} />

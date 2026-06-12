@@ -1,4 +1,4 @@
-export { useAuth, useLogin, useLogout } from './useAuth'
+export { useAuth, useLogin, useRegister, useLogout } from './useAuth'
 export { useDashboard }                 from './useDashboard'
 export { useMemberPortalHome }          from './useMemberPortalHome'
 export { useMembers, useMember }        from './useMembers'

@@ -104,23 +104,10 @@ export function ChurchScheduleConflictPanel({ submission }: Props) {
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          disabled={resolve.isPending}
-          onClick={() =>
-            resolve.mutate({
-              action: 'PUBLISH',
-              facilityId: submission.facilityId,
-              startAt: submission.startAt,
-              endAt: submission.endAt,
-            })
-          }
-          className="px-3 py-1.5 rounded-lg bg-primary-600 text-white text-xs font-semibold"
-        >
-          Approve as requested
-        </button>
-      </div>
+      <p className="text-xs text-text-secondary bg-surface-raised rounded-lg px-3 py-2">
+        The original slot still conflicts with the timetable. Pick a suggested alternative,
+        send a counter-proposal, or use override below to force publish.
+      </p>
 
       <div className="border-t border-border pt-4 space-y-2">
         <p className="text-xs font-medium text-text-muted">Counter-propose (suggest new slot)</p>

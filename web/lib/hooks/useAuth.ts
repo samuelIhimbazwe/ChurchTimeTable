@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { authApi, setAccessToken, LoginPayload } from '../api'
+import { authApi, setAccessToken, LoginPayload, RegisterPayload } from '../api'
 import { useAuthStore } from '@/stores'
 
 export function useAuth() {
@@ -49,6 +49,26 @@ export function useLogin() {
       /* Redirect to original destination or dashboard */
       const from = searchParams.get('from') ?? '/dashboard'
       router.push(from)
+    },
+  })
+}
+
+export function useRegister() {
+  const router     = useRouter()
+  const storeLogin = useAuthStore((s) => s.login)
+
+  return useMutation({
+    mutationFn: (payload: RegisterPayload) => authApi.register(payload),
+    onSuccess: (data) => {
+      setAccessToken(data.accessToken)
+      storeLogin({
+        id:          data.user.id,
+        name:        data.user.name,
+        email:       data.user.email,
+        role:        data.user.role,
+        permissions: data.user.permissions,
+      })
+      router.push('/portal')
     },
   })
 }

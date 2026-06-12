@@ -192,6 +192,12 @@ export const protocolApi = {
   getReports: () =>
     apiClient.get<never, unknown[]>('/protocol/reports'),
 
+  exportReportCsv: (type: 'monthly-service' | 'reliability', params?: { year?: number; month?: number }) =>
+    apiClient.get<never, Blob>(`/protocol/reports/${type}/export`, {
+      params,
+      responseType: 'blob',
+    }),
+
   submitReport: (data: { teamId: string; summary: string; issues?: string; recommendations?: string }) =>
     apiClient.post<never, Record<string, unknown>>('/protocol/reports', data),
 

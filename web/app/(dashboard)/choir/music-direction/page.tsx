@@ -10,6 +10,8 @@ import {
 } from '@/components/shared'
 import { ChoirPositionHubShell, HubQuickLink } from '@/components/choir/ChoirPositionHubShell'
 import { MusicSongNotifyForm } from '@/components/choir/MusicSongNotifyForm'
+import { MusicCreateSongForm } from '@/components/choir/MusicCreateSongForm'
+import { RehearsalPlanEditor } from '@/components/choir/RehearsalPlanEditor'
 import { formatDate, formatTime } from '@/lib/utils/format'
 import { Music, Calendar, Mic2, CheckCircle2, Megaphone } from 'lucide-react'
 
@@ -27,6 +29,7 @@ function num(v: unknown) {
 
 export default function MusicDirectorHubPage() {
   const [tab, setTab] = useState('overview')
+  const [planEvent, setPlanEvent] = useState<{ id: string; title: string } | null>(null)
 
   const { data: songs, isLoading: loadingSongs } = useQuery({
     queryKey: ['music-songs-count'],
@@ -103,12 +106,12 @@ export default function MusicDirectorHubPage() {
       {tab === 'library' && (
         <div className="space-y-4">
           <PermissionGate anyOf={['choir.music.manage']}>
-            <Card padding="md" accent="gold">
-              <p className="font-semibold mb-2">Manage the catalog</p>
+            <div className="flex flex-wrap items-center gap-3">
+              <MusicCreateSongForm />
               <Link href={choirLink('music')} className="inline-flex px-4 py-2 text-sm font-semibold bg-primary-700 text-white rounded-lg">
-                Open music library →
+                Open full library →
               </Link>
-            </Card>
+            </div>
           </PermissionGate>
           {loadingSongs ? (
             <SkeletonCard rows={5} />
@@ -136,13 +139,20 @@ export default function MusicDirectorHubPage() {
 
       {tab === 'rehearsals' && (
         <div className="space-y-4">
+          {planEvent && (
+            <RehearsalPlanEditor
+              eventId={planEvent.id}
+              eventTitle={planEvent.title}
+              onClose={() => setPlanEvent(null)}
+            />
+          )}
           {loadingAct ? (
             <SkeletonCard rows={4} />
           ) : (
             <ul className="space-y-3">
               {rehearsalItems.slice(0, 8).map((a) => (
                 <Card key={a.id} padding="md">
-                  <div className="flex justify-between gap-3 items-center">
+                  <div className="flex flex-wrap justify-between gap-3 items-center">
                     <div>
                       <p className="font-semibold text-sm">{a.title}</p>
                       <p className="text-xs text-text-muted mt-1">
@@ -150,9 +160,20 @@ export default function MusicDirectorHubPage() {
                         {a.startTime ? ` · ${formatTime(a.startTime)}` : ''}
                       </p>
                     </div>
-                    <Link href={choirLink('attendance', a.id)} className="text-xs font-semibold text-primary-600 shrink-0">
-                      Attendance →
-                    </Link>
+                    <div className="flex flex-wrap gap-2 shrink-0">
+                      <PermissionGate anyOf={['choir.rehearsal.manage', 'choir.music.manage']}>
+                        <button
+                          type="button"
+                          onClick={() => setPlanEvent({ id: a.id, title: a.title })}
+                          className="text-xs font-semibold text-primary-600 hover:underline"
+                        >
+                          Plan songs
+                        </button>
+                      </PermissionGate>
+                      <Link href={choirLink('attendance', a.id)} className="text-xs font-semibold text-primary-600">
+                        Attendance →
+                      </Link>
+                    </div>
                   </div>
                 </Card>
               ))}

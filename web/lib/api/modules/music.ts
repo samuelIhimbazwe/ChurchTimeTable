@@ -108,6 +108,14 @@ export const musicApi = {
 
   getCategories: () =>
     apiClient.get<never, { id: string; name: string }[]>('/choir/music/categories'),
+
+  createSong: (body: {
+    title: string
+    language?: string
+    composer?: string
+    lyricist?: string
+    lyricsText?: string
+  }) => apiClient.post<never, SongDetail>('/choir/music/songs', body),
 }
 
 /** @deprecated use SongListItem */

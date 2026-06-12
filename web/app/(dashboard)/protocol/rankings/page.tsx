@@ -34,8 +34,8 @@ export default function ProtocolRankingsPage() {
   const qc = useQueryClient()
   const now = new Date()
   const [category, setCategory] = useState<CategoryId>('OVERALL')
-  const year = now.getFullYear()
-  const month = now.getMonth() + 1
+  const [year, setYear] = useState(now.getFullYear())
+  const [month, setMonth] = useState(now.getMonth() + 1)
 
   const { data: rankings, isLoading } = useQuery({
     queryKey: ['protocol-rankings', year, month, category],
@@ -73,6 +73,32 @@ export default function ProtocolRankingsPage() {
           </button>
         </PermissionGate>
       </div>
+
+      <Card padding="sm" className="flex flex-wrap items-end gap-3">
+        <label className="text-xs text-text-muted">
+          Year
+          <input
+            type="number"
+            min={2020}
+            max={2100}
+            value={year}
+            onChange={(e) => setYear(Number(e.target.value))}
+            className="mt-1 block w-24 rounded-lg border border-border bg-surface px-2 py-1.5 text-sm"
+          />
+        </label>
+        <label className="text-xs text-text-muted">
+          Month
+          <select
+            value={month}
+            onChange={(e) => setMonth(Number(e.target.value))}
+            className="mt-1 block w-32 rounded-lg border border-border bg-surface px-2 py-1.5 text-sm"
+          >
+            {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+              <option key={m} value={m}>Month {m}</option>
+            ))}
+          </select>
+        </label>
+      </Card>
 
       <div className="flex flex-wrap gap-2">
         {CATEGORIES.map((cat) => (

@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState } from 'react'
 import { Eye, EyeOff, Lock, Mail, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -268,11 +269,11 @@ export default function LoginPage() {
 
           </form>
 
-          <p className="text-center text-xs text-text-muted">
+          <p className="text-center text-sm text-text-muted">
             Don&apos;t have an account?{' '}
-            <span className="text-text-secondary font-medium">
-              Contact your church administrator.
-            </span>
+            <Link href="/register" className="font-semibold text-primary-600 hover:underline">
+              Create an account
+            </Link>
           </p>
 
         </div>

@@ -2,10 +2,11 @@
 
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { churchScheduleApi } from '@/lib/api'
+import type { ChurchScheduleEntry } from '@/lib/api/modules/churchSchedule'
 import {
-  Card, Badge, SkeletonCard, EmptyState, PermissionGate,
+  Card, Badge, SkeletonCard, EmptyState, PermissionGate, toast,
 } from '@/components/shared'
 import { Calendar, Clock, Building2 } from 'lucide-react'
 import { formatDate, formatDateTime } from '@/lib/utils/format'
@@ -13,15 +14,37 @@ import {
   ACTIVITY_TYPE_LABELS,
   weekRange,
 } from '@/lib/church/schedule-display'
+import { ChurchTimetableManagePanel } from '@/components/church/ChurchTimetableManagePanel'
 
 export default function ChurchTimetablePage() {
+  const qc = useQueryClient()
   const [weekAnchor, setWeekAnchor] = useState(() => new Date())
+  const [facilityId, setFacilityId] = useState('')
   const range = useMemo(() => weekRange(weekAnchor), [weekAnchor])
 
+  const { data: facilities = [] } = useQuery({
+    queryKey: ['church-facilities'],
+    queryFn: () => churchScheduleApi.listFacilities(),
+  })
+
   const { data: entries = [], isLoading } = useQuery({
-    queryKey: ['church-schedule-timetable', range.from, range.to],
+    queryKey: ['church-schedule-timetable', range.from, range.to, facilityId],
     queryFn: () =>
-      churchScheduleApi.listTimetable({ from: range.from, to: range.to }),
+      churchScheduleApi.listTimetable({
+        from: range.from,
+        to: range.to,
+        facilityId: facilityId || undefined,
+      }),
+  })
+
+  const cancelEntry = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) =>
+      churchScheduleApi.cancelEntry(id, reason),
+    onSuccess: () => {
+      toast.success('Entry cancelled')
+      qc.invalidateQueries({ queryKey: ['church-schedule-timetable'] })
+    },
+    onError: (err: Error) => toast.error(err.message || 'Cancel failed'),
   })
 
   const shiftWeek = (delta: number) => {
@@ -53,15 +76,18 @@ export default function ChurchTimetablePage() {
           <PermissionGate permission="church.schedule.submit">
             <Link
               href="/church/schedule/submit"
-              className="px-3 py-1.5 rounded-lg bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700"
+              className="px-3 py-1.5 rounded-lg border border-border text-sm font-semibold hover:bg-surface-raised"
             >
               Submit activity
             </Link>
           </PermissionGate>
+          <PermissionGate permission="church.schedule.manage">
+            <ChurchTimetableManagePanel />
+          </PermissionGate>
         </div>
       </div>
 
-      <Card padding="sm">
+      <Card padding="sm" className="space-y-3">
         <div className="flex items-center justify-between gap-3">
           <button
             type="button"
@@ -82,6 +108,19 @@ export default function ChurchTimetablePage() {
             Next week →
           </button>
         </div>
+        <div>
+          <label className="text-xs text-text-muted block mb-1">Filter by room</label>
+          <select
+            value={facilityId}
+            onChange={(e) => setFacilityId(e.target.value)}
+            className="w-full max-w-xs rounded-lg border border-border bg-surface px-3 py-2 text-sm"
+          >
+            <option value="">All rooms</option>
+            {facilities.map((f) => (
+              <option key={f.id} value={f.id}>{f.name}</option>
+            ))}
+          </select>
+        </div>
       </Card>
 
       <Card padding="none">
@@ -95,7 +134,7 @@ export default function ChurchTimetablePage() {
           />
         ) : (
           <ul className="divide-y divide-border">
-            {items.map((entry) => (
+            {items.map((entry: ChurchScheduleEntry) => (
               <li
                 key={entry.id}
                 className="flex items-start gap-4 px-5 py-4 hover:bg-surface-raised transition-colors"
@@ -117,9 +156,25 @@ export default function ChurchTimetablePage() {
                     <p className="text-xs text-text-secondary mt-1">{entry.purpose}</p>
                   )}
                 </div>
-                <Badge variant="status-present" className="shrink-0 text-[10px]">
-                  {entry.source.replace(/_/g, ' ')}
-                </Badge>
+                <div className="flex flex-col items-end gap-2 shrink-0">
+                  <Badge variant="status-present" className="text-[10px]">
+                    {entry.source.replace(/_/g, ' ')}
+                  </Badge>
+                  <PermissionGate permission="church.schedule.manage">
+                    <button
+                      type="button"
+                      disabled={cancelEntry.isPending}
+                      onClick={() => {
+                        const reason = window.prompt('Reason for cancellation (optional)') ?? undefined
+                        if (reason === null) return
+                        cancelEntry.mutate({ id: entry.id, reason: reason || undefined })
+                      }}
+                      className="text-xs text-red-700 font-semibold hover:underline"
+                    >
+                      Cancel
+                    </button>
+                  </PermissionGate>
+                </div>
               </li>
             ))}
           </ul>

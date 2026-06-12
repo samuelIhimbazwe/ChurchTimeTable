@@ -56,13 +56,26 @@ export class ChurchScheduleNotificationsService {
       { kind: 'church_schedule_auto_published', submissionId },
     );
 
+    const submission = await this.prisma.churchScheduleSubmission.findUnique({
+      where: { id: submissionId },
+      include: { facility: { select: { name: true, requiresAdminNotify: true } } },
+    });
+    const sanctuaryAlert = submission?.facility?.requiresAdminNotify === true;
+
     for (const adminId of await this.churchAdminUserIds()) {
       await this.notify(
         adminId,
-        NotificationType.OPERATION_SCHEDULE,
-        'Timetable updated',
-        `New entry: ${title}`,
-        { kind: 'church_schedule_timetable_updated', submissionId },
+        sanctuaryAlert ? NotificationType.SCHEDULE_CHANGE : NotificationType.OPERATION_SCHEDULE,
+        sanctuaryAlert ? 'Sanctuary booking added' : 'Timetable updated',
+        sanctuaryAlert
+          ? `Sanctuary: ${title}`
+          : `New entry: ${title}`,
+        {
+          kind: 'church_schedule_timetable_updated',
+          submissionId,
+          priority: sanctuaryAlert ? 'high' : 'low',
+          link: '/church/timetable',
+        },
       );
     }
   }
