@@ -14,6 +14,7 @@ import { ChoirSponsorDashboardContextService } from './choir-sponsor-dashboard-c
 import { ChoirSponsorCatalogService } from './choir-sponsor-catalog.service';
 import { ChoirMyFamilyService } from './choir-my-family.service';
 import { ProtocolDashboardContextService } from './protocol-dashboard-context.service';
+import { ChoirCapabilitiesService } from './choir-capabilities.service';
 import {
   MemberPortalChoirProfileService,
   type UpdateChoirPublicProfileBody,
@@ -34,6 +35,7 @@ export class MemberPortalController {
     private choirSponsorCatalog: ChoirSponsorCatalogService,
     private choirMyFamilyService: ChoirMyFamilyService,
     private protocolDashboardCtx: ProtocolDashboardContextService,
+    private choirCapabilities: ChoirCapabilitiesService,
   ) {}
 
   @Get('dashboard')
@@ -129,6 +131,15 @@ export class MemberPortalController {
     @Param('id') id: string,
   ) {
     return this.choirDashboardCtx.getContext(userId, id);
+  }
+
+  @Get('choirs/:id/capabilities')
+  @SkipPhoneEnforcement()
+  choirCapabilities(
+    @CurrentUser('sub') userId: string,
+    @Param('id') id: string,
+  ) {
+    return this.choirCapabilities.resolveForUser(userId, id);
   }
 
   @Get('choirs/:id/sponsor/dashboard-context')

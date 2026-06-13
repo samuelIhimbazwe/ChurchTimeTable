@@ -19,6 +19,7 @@ import { ChoirSponsorDashboardContextService } from './choir-sponsor-dashboard-c
 import { ChoirSponsorCatalogService } from './choir-sponsor-catalog.service';
 import { ChoirMyFamilyService } from './choir-my-family.service';
 import { ProtocolDashboardContextService } from './protocol-dashboard-context.service';
+import { ChoirCapabilitiesService } from './choir-capabilities.service';
 import { MemberPortalChoirProfileService } from './member-portal-choir-profile.service';
 import { MemberPortalDevotionService } from './member-portal-devotion.service';
 import { MemberPortalPrayerService } from './member-portal-prayer.service';
@@ -62,6 +63,7 @@ import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
     ChoirSponsorCatalogService,
     ChoirMyFamilyService,
     ProtocolDashboardContextService,
+    ChoirCapabilitiesService,
   ],
   exports: [
     MemberPortalDashboardService,

@@ -88,6 +88,40 @@ export interface WeeklyActivityItem {
 
 
 
+export interface ChoirCapabilityTile {
+
+  id: string
+
+  label: string
+
+  desc: string
+
+  routeSegments: string[]
+
+  group: string
+
+  matchedPermission?: string
+
+}
+
+
+
+export interface ChoirCapabilitiesResponse {
+
+  choirId: string
+
+  totalRegistryCount: number
+
+  visibleCount: number
+
+  customRoleLabels: string[]
+
+  capabilities: ChoirCapabilityTile[]
+
+}
+
+
+
 export interface DevotionItem {
 
   id: string
@@ -531,6 +565,11 @@ export const memberPortalApi = {
       never,
       import('@/lib/choir/my-family').ChoirMyFamilyResponse
     >(`/member-portal/choirs/${choirId}/my-family`),
+
+  getChoirCapabilities: (choirId: string) =>
+    apiClient.get<never, ChoirCapabilitiesResponse>(
+      `/member-portal/choirs/${choirId}/capabilities`,
+    ),
 
   getProtocolDashboardContext: () =>
     apiClient.get<

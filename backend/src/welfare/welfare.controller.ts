@@ -120,6 +120,23 @@ export class WelfareController {
     res.send(exported.content);
   }
 
+  @Get('care/dashboard')
+  @SkipPhoneEnforcement()
+  @RequireAnyPermissions(...WELFARE_VIEW_ANY)
+  careDashboard(@CurrentUser() user: JwtPayload) {
+    return this.welfare.getCareDashboard(user.sub);
+  }
+
+  @Get('care/inbox')
+  @SkipPhoneEnforcement()
+  @RequireAnyPermissions(...WELFARE_VIEW_ANY)
+  careInbox(
+    @CurrentUser() user: JwtPayload,
+    @Query('limit') limit?: string,
+  ) {
+    return this.welfare.getCareInbox(user.sub, limit ? Number(limit) : 50);
+  }
+
   @Get('cases')
   @SkipPhoneEnforcement()
   @RequireAnyPermissions(...WELFARE_VIEW_ANY)

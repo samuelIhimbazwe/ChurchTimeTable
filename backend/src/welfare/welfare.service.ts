@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { WelfareCaseStatus, Prisma } from '@prisma/client';
+import { WelfareCaseStatus, Prisma, WelfareUrgency } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { PermissionsResolver } from '../auth/permissions.resolver';
@@ -31,6 +31,7 @@ import {
   enrichWelfareCaseFinancials,
   sumWelfareContributions,
 } from './welfare-case.util';
+import { computeCareCaseSla } from './welfare-care-desk.util';
 import { ChoirNotificationsService } from '../choir-mvp/choir-notifications.service';
 import { ReportsService } from '../reports/reports.service';
 
@@ -136,6 +137,103 @@ export class WelfareService {
       this.prisma.welfareCase.count({ where }),
     ]);
     return paginatedResult(items, total, page, limit);
+  }
+
+  private serializeCareInboxItem(row: {
+    id: string;
+    title: string;
+    description: string;
+    status: WelfareCaseStatus;
+    urgency: WelfareUrgency;
+    openedAt: Date;
+    supportPlan: string | null;
+    member: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      memberNumber: string | null;
+    };
+    category: { name: string };
+    coordinator: { firstName: string; lastName: string } | null;
+  }) {
+    const sla = computeCareCaseSla(row.openedAt, row.urgency);
+    const coordinatorName = row.coordinator
+      ? `${row.coordinator.firstName} ${row.coordinator.lastName}`.trim()
+      : null;
+    return {
+      id: row.id,
+      title: row.title,
+      description: row.description,
+      status: row.status,
+      urgency: row.urgency,
+      openedAt: row.openedAt.toISOString(),
+      memberId: row.member.id,
+      memberName: `${row.member.firstName} ${row.member.lastName}`.trim(),
+      memberNumber: row.member.memberNumber,
+      categoryName: row.category.name,
+      coordinatorName,
+      supportPlan: row.supportPlan,
+      slaHours: sla.ageHours,
+      slaLimitHours: sla.slaLimitHours,
+      slaBreached: sla.breached,
+      hoursRemaining: sla.hoursRemaining,
+    };
+  }
+
+  async getCareInbox(userId: string, limit = 50) {
+    await this.assertWelfareAccess(userId);
+    const rows = await this.prisma.welfareCase.findMany({
+      where: {
+        ...this.choirCaseFilter(),
+        status: { in: ACTIVE_WELFARE_STATUSES },
+      },
+      orderBy: [{ urgency: 'desc' }, { openedAt: 'asc' }],
+      take: Math.min(limit, 100),
+      include: {
+        member: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            memberNumber: true,
+          },
+        },
+        category: { select: { name: true } },
+        coordinator: {
+          select: { firstName: true, lastName: true },
+        },
+      },
+    });
+
+    const items = rows.map((row) => this.serializeCareInboxItem(row));
+    return {
+      pendingCount: items.length,
+      slaBreaches: items.filter((i) => i.slaBreached).length,
+      items,
+    };
+  }
+
+  async getCareDashboard(userId: string) {
+    await this.assertWelfareAccess(userId);
+    const inbox = await this.getCareInbox(userId, 100);
+    const urgentCount = inbox.items.filter(
+      (i) => i.urgency === 'HIGH' || i.urgency === 'CRITICAL',
+    ).length;
+    const oldest = inbox.items.reduce<(typeof inbox.items)[0] | null>(
+      (acc, item) => {
+        if (!acc || item.slaHours > acc.slaHours) return item;
+        return acc;
+      },
+      null,
+    );
+
+    return {
+      openCases: inbox.pendingCount,
+      slaBreaches: inbox.slaBreaches,
+      urgentCases: urgentCount,
+      oldestCaseHours: oldest?.slaHours ?? null,
+      oldestCaseId: oldest?.id ?? null,
+    };
   }
 
   async getCase(userId: string, id: string) {

@@ -15,6 +15,7 @@ import { toast } from '@/components/shared/Toast'
 import {
   Card, Badge, Avatar, HubTabs, PermissionGate, SkeletonCard, EmptyState,
 } from '@/components/shared'
+import { CareCommandHome } from '@/components/choir/committee/CareCommandHome'
 import { formatDate } from '@/lib/utils/format'
 import { Heart, Shield, FileText, Megaphone, Calendar, ExternalLink } from 'lucide-react'
 import { useResolvedChoirScope } from '@/lib/hooks'
@@ -178,7 +179,11 @@ export default function CareHubPage() {
       <HubTabs tabs={TABS} active={tab} onChange={setTab} />
 
       {tab === 'overview' && (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="space-y-6">
+          <PermissionGate anyOf={['choir.welfare.view', 'choir.welfare.manage']}>
+            <CareCommandHome />
+          </PermissionGate>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card padding="md">
             <Shield size={20} className="text-warning mb-2" />
             <p className="text-2xl font-display font-bold">{activeDiscipline.length}</p>
@@ -224,6 +229,7 @@ export default function CareHubPage() {
               )}
             </ul>
           </Card>
+          </div>
         </div>
       )}
 
