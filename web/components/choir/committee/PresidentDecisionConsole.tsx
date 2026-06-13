@@ -52,11 +52,13 @@ function oldestPendingAge(items: JoinRequestRow[]): string | null {
 type Props = {
   readOnly?: boolean
   readOnlyMessage?: string
+  actingForPresident?: boolean
 }
 
 export function PresidentDecisionConsole({
   readOnly = false,
   readOnlyMessage,
+  actingForPresident = false,
 }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -180,6 +182,11 @@ export function PresidentDecisionConsole({
               {row.status.replace('_', ' ')}
             </Badge>
           </div>
+          {actingForPresident && (
+            <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 mt-2">
+              Acting for president
+            </p>
+          )}
           <dl className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4 text-sm">
             <div>
               <dt className="text-xs text-text-muted">Applicant</dt>
@@ -415,7 +422,11 @@ export function PresidentDecisionConsole({
     >
       <SplitQueueConsole
         title="Decision console"
-        subtitle="Review join requests — approve, send requirements, or reject with context."
+        subtitle={
+          actingForPresident
+            ? 'Acting for president — review join requests and decide membership.'
+            : 'Review join requests — approve, send requirements, or reject with context.'
+        }
         queueTitle="Join requests"
         queueCount={items.length}
         queueMeta={oldestPendingAge(items) ? `Oldest: ${oldestPendingAge(items)}` : null}

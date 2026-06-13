@@ -33,4 +33,8 @@ export type ChoirDashboardContext = {
     description: string | null
     permissions: string[]
   }>
+  presidentDelegation?: {
+    outOfOffice: boolean
+    joinReview: boolean
+  }
 }

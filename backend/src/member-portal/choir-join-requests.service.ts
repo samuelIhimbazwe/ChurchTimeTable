@@ -13,7 +13,7 @@ import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { PermissionsResolver } from '../auth/permissions.resolver';
-import { PERMISSIONS } from '../common/constants/roles';
+import { PERMISSIONS, ROLES } from '../common/constants/roles';
 import { hasEffectivePermission } from '../common/governance/governance-permissions.util';
 import { ChoirContextService } from '../choirs/choir-context.service';
 import { MEMBER_PORTAL_AUDIT, YERUSALEMU_CHOIR_CODE } from './member-portal.constants';
@@ -47,6 +47,59 @@ export class ChoirJoinRequestsService {
       hasEffectivePermission(perms, PERMISSIONS.CHOIR_OPERATIONS_MANAGE) ||
       hasEffectivePermission(perms, PERMISSIONS.MEMBER_MANAGE)
     );
+  }
+
+  private async loadCommitteeRoleNames(
+    memberId: string | null | undefined,
+    choirId: string,
+  ): Promise<string[]> {
+    if (!memberId) return [];
+    const rows = await this.prisma.choirCommitteeMember.findMany({
+      where: { memberId, choirId },
+      include: { role: { select: { name: true } } },
+    });
+    return rows.map((row) => row.role.name);
+  }
+
+  private async assertCanDecideJoin(
+    actorUserId: string,
+    choirId: string,
+  ): Promise<void> {
+    const resolved = await this.permissions.resolveForUser(actorUserId);
+    if (!this.canReview(resolved.permissions)) {
+      throw new ForbiddenException('Denied');
+    }
+
+    if (resolved.roles.includes(ROLES.CHOIR_PRESIDENT)) return;
+    if (
+      hasEffectivePermission(resolved.permissions, PERMISSIONS.CHOIR_OPERATIONS_MANAGE) ||
+      hasEffectivePermission(resolved.permissions, PERMISSIONS.MEMBER_MANAGE)
+    ) {
+      return;
+    }
+
+    const committeeRoles = await this.loadCommitteeRoleNames(
+      resolved.memberId,
+      choirId,
+    );
+    if (committeeRoles.includes('president')) return;
+
+    const isVp =
+      committeeRoles.includes('vice_president') ||
+      resolved.roles.includes(ROLES.CHOIR_VICE_PRESIDENT);
+
+    if (isVp) {
+      const choir = await this.prisma.choir.findUnique({
+        where: { id: choirId },
+        select: { presidentDelegationJoinReview: true },
+      });
+      if (!choir?.presidentDelegationJoinReview) {
+        throw new ForbiddenException(
+          'Presidential delegation is required for vice-president join decisions',
+        );
+      }
+      return;
+    }
   }
 
   async submit(
@@ -222,6 +275,8 @@ export class ChoirJoinRequestsService {
       where: { id: requestId },
       include: { member: true, choir: true },
     });
+
+    await this.assertCanDecideJoin(actorUserId, request.choirId);
 
     if (request.status !== 'PENDING' && request.status !== 'NEEDS_INFO') {
       throw new BadRequestException('Request is not reviewable');

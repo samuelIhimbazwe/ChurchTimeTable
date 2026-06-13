@@ -1117,6 +1117,10 @@ model Choir {
   leaderDisplayName String?
   isPublicJoinable Boolean @default(true)
   isActive    Boolean  @default(true)
+  /// President out-of-office — surfaces VP escalation in committee consoles
+  presidentOutOfOffice          Boolean @default(false)
+  /// When true, VP may approve/reject join requests (Power Automate delegation)
+  presidentDelegationJoinReview Boolean @default(false)
   showMemberCountPublic Boolean @default(false)
   publicProfileJson     Json?
   createdAt   DateTime @default(now())

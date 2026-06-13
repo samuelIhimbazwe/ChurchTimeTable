@@ -83,6 +83,10 @@ export type ChoirDashboardContext = {
   canAccess: boolean;
   familyOffices: ChoirFamilyOffice[];
   customRoles: ChoirCustomRoleAssignment[];
+  presidentDelegation: {
+    outOfOffice: boolean;
+    joinReview: boolean;
+  };
 };
 
 @Injectable()
@@ -96,7 +100,10 @@ export class ChoirDashboardContextService {
   async getContext(userId: string, choirId: string): Promise<ChoirDashboardContext> {
     const choir = await this.prisma.choir.findFirst({
       where: { id: choirId, isActive: true },
-      select: { id: true, name: true, code: true, choirKind: true },
+      select: { id: true, name: true, code: true, choirKind: true,
+        presidentOutOfOffice: true,
+        presidentDelegationJoinReview: true,
+      },
     });
     if (!choir) {
       throw new NotFoundException('Choir not found');
@@ -250,7 +257,12 @@ export class ChoirDashboardContextService {
     }
 
     return {
-      choir,
+      choir: {
+        id: choir.id,
+        name: choir.name,
+        code: choir.code,
+        choirKind: choir.choirKind,
+      },
       membership: isActiveMember
         ? { role: membership!.role, isActive: true as const }
         : null,
@@ -260,6 +272,10 @@ export class ChoirDashboardContextService {
       canAccess: isAdminOverride || isActiveMember || canViewInPortal,
       familyOffices,
       customRoles,
+      presidentDelegation: {
+        outOfOffice: choir.presidentOutOfOffice,
+        joinReview: choir.presidentDelegationJoinReview,
+      },
     };
   }
 }

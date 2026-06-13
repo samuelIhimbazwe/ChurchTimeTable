@@ -11,6 +11,7 @@ import { ChoirSponsorRequestsService } from '../member-portal/choir-sponsor-requ
 import { ChoirMembershipRulesService } from '../member-portal/choir-membership-rules.service';
 import { MemberPortalNotificationsService } from '../member-portal/member-portal-notifications.service';
 import { ChoirMembersService } from './choir-members.service';
+import { ChoirGovernanceService } from './choir-governance.service';
 import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
 import { ProtocolMembershipService } from '../member-portal/protocol-membership.service';
 import { MemberMinistryScopeService } from '../member-portal/member-ministry-scope.service';
@@ -32,6 +33,7 @@ import { MemberMinistryScopeService } from '../member-portal/member-ministry-sco
     ChoirMembershipRulesService,
     MemberPortalNotificationsService,
     ChoirMembersService,
+    ChoirGovernanceService,
     ProtocolMembershipService,
     MemberMinistryScopeService,
   ],

@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { choirApi } from '@/lib/api'
 import { ChoirPositionHubShell } from '@/components/choir/ChoirPositionHubShell'
 import { PresidentCommandHome } from '@/components/choir/committee/PresidentCommandHome'
+import { PresidentDelegationPanel } from '@/components/choir/committee/PresidentDelegationPanel'
 import { ChoirExecutiveHubContent } from '@/components/choir/ChoirExecutiveHubContent'
 import { HubTabs } from '@/components/shared'
 import { useResolvedChoirId, useResolvedChoirScope } from '@/lib/hooks'
@@ -56,7 +57,12 @@ export default function PresidentHubPage() {
         </div>
 
         {tab === 'overview' && <PresidentCommandHome />}
-        {tab === 'governance' && <ChoirExecutiveHubContent />}
+        {tab === 'governance' && (
+          <div className="space-y-4">
+            <PresidentDelegationPanel />
+            <ChoirExecutiveHubContent />
+          </div>
+        )}
       </div>
     </ChoirPositionHubShell>
   )

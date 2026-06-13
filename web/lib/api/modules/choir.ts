@@ -121,6 +121,24 @@ export const choirApi = {
   }) =>
     apiClient.post<never, unknown>('/choirs/members/revoke-position', data),
 
+  getPresidentDelegation: (choirId: string) =>
+    apiClient.get<
+      never,
+      { presidentOutOfOffice: boolean; presidentDelegationJoinReview: boolean }
+    >(`/choirs/${choirId}/governance/president-delegation`),
+
+  updatePresidentDelegation: (
+    choirId: string,
+    payload: {
+      presidentOutOfOffice?: boolean
+      presidentDelegationJoinReview?: boolean
+    },
+  ) =>
+    apiClient.patch<
+      never,
+      { presidentOutOfOffice: boolean; presidentDelegationJoinReview: boolean }
+    >(`/choirs/${choirId}/governance/president-delegation`, payload),
+
   getMeetings: () =>
     apiClient.get<never, unknown[]>('/choir/meetings'),
 

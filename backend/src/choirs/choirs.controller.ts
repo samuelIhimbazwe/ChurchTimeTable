@@ -17,6 +17,8 @@ import { ChoirJoinRequestsService } from '../member-portal/choir-join-requests.s
 import { ChoirSponsorRequestsService } from '../member-portal/choir-sponsor-requests.service';
 import { ChoirMembershipRulesService } from '../member-portal/choir-membership-rules.service';
 import { ChoirMembersService } from './choir-members.service';
+import { ChoirGovernanceService } from './choir-governance.service';
+import { UpdatePresidentDelegationDto } from './dto/update-president-delegation.dto';
 
 import { IsString } from 'class-validator';
 
@@ -36,6 +38,7 @@ export class ChoirsController {
     private sponsorRequests: ChoirSponsorRequestsService,
     private rules: ChoirMembershipRulesService,
     private choirMembers: ChoirMembersService,
+    private choirGovernance: ChoirGovernanceService,
   ) {}
 
   @Get()
@@ -81,6 +84,20 @@ export class ChoirsController {
   @Get('membership-rules')
   membershipRules(@CurrentUser() user: JwtPayload) {
     return this.rules.describeMembershipRules(user.sub);
+  }
+
+  @Get(':choirId/governance/president-delegation')
+  getPresidentDelegation(@Param('choirId') choirId: string) {
+    return this.choirGovernance.getPresidentDelegation(choirId);
+  }
+
+  @Patch(':choirId/governance/president-delegation')
+  updatePresidentDelegation(
+    @CurrentUser() user: JwtPayload,
+    @Param('choirId') choirId: string,
+    @Body() dto: UpdatePresidentDelegationDto,
+  ) {
+    return this.choirGovernance.updatePresidentDelegation(user.sub, choirId, dto);
   }
 
   @Get('position-roles')
