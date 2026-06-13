@@ -8,6 +8,7 @@ import {
   evaluateChoirMemberAssignmentSoD,
   evaluateChoirPermissionSoD,
 } from '../common/governance/choir-sod-rules.util';
+import { activeChoirCommitteeMemberWhere } from '../common/governance/choir-committee-member.util';
 
 @Injectable()
 export class GovernanceService {
@@ -52,6 +53,7 @@ export class GovernanceService {
     actorUserId: string,
   ) {
     await this.ensureChoirRole(dto.roleId);
+    const assignedAt = dto.effectiveStart ? new Date(dto.effectiveStart) : new Date();
     const assignment = await this.prisma.choirCommitteeMember.upsert({
       where: {
         choirId_memberId_roleId: {
@@ -65,8 +67,14 @@ export class GovernanceService {
         memberId: dto.memberId,
         roleId: dto.roleId,
         assignedBy: actorUserId,
+        assignedAt,
+        effectiveEnd: null,
       },
-      update: { assignedBy: actorUserId, assignedAt: new Date() },
+      update: {
+        assignedBy: actorUserId,
+        assignedAt,
+        effectiveEnd: null,
+      },
       include: { role: true, member: true },
     });
 
@@ -79,7 +87,11 @@ export class GovernanceService {
     });
 
     const memberRoles = await this.prisma.choirCommitteeMember.findMany({
-      where: { choirId: dto.scopeId, memberId: dto.memberId },
+      where: {
+        choirId: dto.scopeId,
+        memberId: dto.memberId,
+        ...activeChoirCommitteeMemberWhere(),
+      },
       include: { role: true },
     });
     const sodWarnings = evaluateChoirMemberAssignmentSoD(
@@ -158,6 +170,32 @@ export class GovernanceService {
       }),
     ]);
     return { roles, members };
+  }
+
+  async revokeChoirCommitteeMember(
+    assignmentId: string,
+    actorUserId: string,
+    effectiveEnd?: string,
+  ) {
+    const assignment = await this.prisma.choirCommitteeMember.findUniqueOrThrow({
+      where: { id: assignmentId },
+      include: { role: true, member: true },
+    });
+    const endedAt = effectiveEnd ? new Date(effectiveEnd) : new Date();
+    const updated = await this.prisma.choirCommitteeMember.update({
+      where: { id: assignmentId },
+      data: { effectiveEnd: endedAt },
+      include: { role: true, member: true },
+    });
+    await this.audit.log({
+      userId: actorUserId,
+      action: 'CHOIR_COMMITTEE_MEMBER_REVOKE',
+      entity: 'ChoirCommitteeMember',
+      entityId: assignmentId,
+      oldValue: assignment,
+      newValue: updated,
+    });
+    return { revoked: true, id: assignmentId, effectiveEnd: endedAt.toISOString() };
   }
 
   async revokeProtocolCommitteeMember(

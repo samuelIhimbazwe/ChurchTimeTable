@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { musicApi, rehearsalsApi, choirActivityApi, choirSchedulingApi } from '@/lib/api'
 import { useResolvedChoirScope } from '@/lib/hooks'
@@ -14,6 +15,7 @@ import { MusicCreateSongForm } from '@/components/choir/MusicCreateSongForm'
 import { RehearsalPlanEditor } from '@/components/choir/RehearsalPlanEditor'
 import { formatDate, formatTime } from '@/lib/utils/format'
 import { MusicDirectorCommandHome } from '@/components/choir/committee/MusicDirectorCommandHome'
+import { MusicNotifyDeliveryPanel } from '@/components/choir/MusicNotifyDeliveryPanel'
 import { Music, Calendar, Mic2, Megaphone } from 'lucide-react'
 
 const TABS = [
@@ -29,8 +31,19 @@ function num(v: unknown) {
 }
 
 export default function MusicDirectorHubPage() {
-  const [tab, setTab] = useState('overview')
+  const searchParams = useSearchParams()
+  const initialTab = searchParams.get('tab')
+  const [tab, setTab] = useState(
+    TABS.some((t) => t.id === initialTab) ? initialTab! : 'overview',
+  )
   const [planEvent, setPlanEvent] = useState<{ id: string; title: string } | null>(null)
+
+  useEffect(() => {
+    const nextTab = searchParams.get('tab')
+    if (nextTab && TABS.some((t) => t.id === nextTab)) {
+      setTab(nextTab)
+    }
+  }, [searchParams])
 
   const { data: songs, isLoading: loadingSongs } = useQuery({
     queryKey: ['music-songs-count'],
@@ -93,6 +106,7 @@ export default function MusicDirectorHubPage() {
       {tab === 'notify' && (
         <div className="space-y-4">
           <MusicSongNotifyForm />
+          <MusicNotifyDeliveryPanel />
           <Link href={choirLink('announcements')} className="text-sm font-semibold text-primary-600">
             View all choir announcements →
           </Link>

@@ -164,6 +164,15 @@ export class ChoirOperationsController {
     return this.equipment.returnAssignment(user.sub, id, dto?.notes);
   }
 
+  @Get('announcements/music-notify')
+  @SkipPhoneEnforcement()
+  listMusicNotifyDelivery(
+    @CurrentUser() user: JwtPayload,
+    @Query('choirId') choirId: string,
+  ) {
+    return this.announcements.listMusicNotifyDelivery(user.sub, choirId);
+  }
+
   @Get('announcements')
   @SkipPhoneEnforcement()
   listAnnouncements(

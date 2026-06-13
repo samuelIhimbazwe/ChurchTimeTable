@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { activeChoirCommitteeMemberWhere } from '../common/governance/choir-committee-member.util';
 import { CHURCH_SCHEDULE_SUBMIT_PERMISSIONS } from '../common/constants/roles';
 
 /**
@@ -52,7 +53,10 @@ export class PermissionsResolver {
       });
       const [choirAssignments, protocolAssignments] = await Promise.all([
         this.prisma.choirCommitteeMember.findMany({
-          where: { memberId: user.member.id },
+          where: {
+            memberId: user.member.id,
+            ...activeChoirCommitteeMemberWhere(),
+          },
           include: { role: true },
         }),
         this.prisma.protocolCommitteeMember.findMany({

@@ -1,4 +1,4 @@
-import { IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class AssignCommitteeMemberDto {
   @IsString()
@@ -9,4 +9,9 @@ export class AssignCommitteeMemberDto {
 
   @IsString()
   roleId: string;
+
+  /** Optional effective start — defaults to now when assigning or re-opening a seat. */
+  @IsOptional()
+  @IsString()
+  effectiveStart?: string;
 }

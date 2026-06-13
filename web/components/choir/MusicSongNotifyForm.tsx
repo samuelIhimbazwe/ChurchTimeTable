@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { musicApi, announcementsApi } from '@/lib/api'
-import { useChoirMinistry } from '@/lib/hooks/useChoirMinistry'
+import { musicApi, choirOperationsApi } from '@/lib/api'
+import { useResolvedChoirScope } from '@/lib/hooks'
 import { toast } from '@/components/shared/Toast'
 import { Card, Badge, PermissionGate } from '@/components/shared'
 import { Megaphone, Music } from 'lucide-react'
@@ -20,7 +20,7 @@ type Props = { defaultOccasion?: string }
 
 export function MusicSongNotifyForm({ defaultOccasion = 'REHEARSAL' }: Props) {
   const qc = useQueryClient()
-  const { choirMinistry } = useChoirMinistry()
+  const { choirId } = useResolvedChoirScope()
   const [occasion, setOccasion] = useState(defaultOccasion)
   const [eventDate, setEventDate] = useState('')
   const [eventLabel, setEventLabel] = useState('')
@@ -42,7 +42,7 @@ export function MusicSongNotifyForm({ defaultOccasion = 'REHEARSAL' }: Props) {
 
   const publish = useMutation({
     mutationFn: async () => {
-      if (!choirMinistry?.id) throw new Error('No choir ministry')
+      if (!choirId) throw new Error('No choir selected')
       const occasionLabel = OCCASIONS.find((o) => o.value === occasion)?.label ?? occasion
       const titleParts = [occasionLabel]
       if (eventLabel.trim()) titleParts.push(eventLabel.trim())
@@ -64,7 +64,13 @@ export function MusicSongNotifyForm({ defaultOccasion = 'REHEARSAL' }: Props) {
         .filter(Boolean)
         .join('\n')
 
-      return announcementsApi.createMinistry(choirMinistry.id, { title, body })
+      return choirOperationsApi.createAnnouncement({
+        choirId,
+        title,
+        body,
+        audience: 'ENTIRE_CHOIR',
+        publish: true,
+      })
     },
     onSuccess: () => {
       toast.success('Song list sent to all choir members')
@@ -72,6 +78,7 @@ export function MusicSongNotifyForm({ defaultOccasion = 'REHEARSAL' }: Props) {
       setExtraNotes('')
       setEventLabel('')
       qc.invalidateQueries({ queryKey: ['choir-announcements'] })
+      qc.invalidateQueries({ queryKey: ['choir-music-notify-delivery', choirId] })
     },
     onError: () => toast.error('Could not publish music notice'),
   })

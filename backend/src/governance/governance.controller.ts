@@ -45,6 +45,20 @@ export class GovernanceController {
     return this.governance.assignChoirCommitteeMember(dto, user.sub);
   }
 
+  @Delete('choir/members/:assignmentId')
+  @RequirePermissions(PERMISSIONS.COMMITTEE_MEMBER_MANAGE_SCOPE)
+  revokeChoirMember(
+    @Param('assignmentId') assignmentId: string,
+    @CurrentUser() user: JwtPayload,
+    @Body() body?: { effectiveEnd?: string },
+  ) {
+    return this.governance.revokeChoirCommitteeMember(
+      assignmentId,
+      user.sub,
+      body?.effectiveEnd,
+    );
+  }
+
   @Get('choir/:scopeId')
   @RequirePermissions(PERMISSIONS.EVENT_READ)
   listChoirCommittee(@Param('scopeId') scopeId: string) {

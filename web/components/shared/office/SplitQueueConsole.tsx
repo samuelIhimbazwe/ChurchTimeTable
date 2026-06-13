@@ -20,6 +20,7 @@ export type SplitQueueConsoleProps<T> = {
   loadingState?: React.ReactNode
   mobileShowDetail: boolean
   onMobileShowDetail: (show: boolean) => void
+  mobileQueueHint?: string
 }
 
 export function SplitQueueConsole<T>({
@@ -39,6 +40,7 @@ export function SplitQueueConsole<T>({
   loadingState,
   mobileShowDetail,
   onMobileShowDetail,
+  mobileQueueHint = 'Tap a row to review details',
 }: SplitQueueConsoleProps<T>) {
   const selected = items.find((item) => getItemId(item) === selectedId) ?? null
 
@@ -65,6 +67,7 @@ export function SplitQueueConsole<T>({
           </Badge>
         </div>
         {queueMeta && <p className="text-xs text-text-muted mt-1">{queueMeta}</p>}
+        <p className="text-xs text-text-muted mt-1 lg:hidden">{mobileQueueHint}</p>
       </div>
       <ul className="flex-1 overflow-y-auto divide-y divide-border">
         {items.map((item) => {

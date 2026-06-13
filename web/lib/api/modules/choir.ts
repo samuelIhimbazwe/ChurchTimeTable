@@ -139,6 +139,43 @@ export const choirApi = {
       { presidentOutOfOffice: boolean; presidentDelegationJoinReview: boolean }
     >(`/choirs/${choirId}/governance/president-delegation`, payload),
 
+  getOfficerSla: (choirId: string) =>
+    apiClient.get<
+      never,
+      {
+        choirId: string
+        generatedAt: string
+        officers: Array<{
+          id: string
+          label: string
+          queueCount: number
+          breachCount: number
+          staleCount: number
+          oldestHours: number | null
+          oldestLabel: string | null
+          status: 'ok' | 'attention' | 'breach'
+        }>
+        totals: {
+          breachCount: number
+          staleCount: number
+          attentionCount: number
+        }
+      }
+    >(`/choirs/${choirId}/executive/officer-sla`),
+
+  exportExecutivePackPdf: async (choirId: string) => {
+    const blob = await apiClient.get<never, Blob>(
+      `/choirs/${choirId}/executive/export/pdf`,
+      { responseType: 'blob' },
+    )
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = 'choir-executive-pack.pdf'
+    anchor.click()
+    URL.revokeObjectURL(url)
+  },
+
   getMeetings: () =>
     apiClient.get<never, unknown[]>('/choir/meetings'),
 

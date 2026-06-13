@@ -40,8 +40,15 @@ export const governanceApi = {
     scopeId: string
     memberId: string
     roleId: string
+    effectiveStart?: string
   }) =>
     apiClient.post<never, unknown>('/governance/choir/members', data),
+
+  revokeChoirMember: (assignmentId: string, effectiveEnd?: string) =>
+    apiClient.delete<never, { revoked: boolean }>(
+      `/governance/choir/members/${assignmentId}`,
+      { data: effectiveEnd ? { effectiveEnd } : undefined },
+    ),
 
   assignProtocolMember: (data: {
     scopeId: string

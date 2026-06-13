@@ -6,6 +6,7 @@ import {
 import { PermissionsResolver } from '../auth/permissions.resolver';
 import { PERMISSIONS, ROLES } from '../common/constants/roles';
 import { hasEffectivePermission } from '../common/governance/governance-permissions.util';
+import { activeChoirCommitteeMemberWhere } from '../common/governance/choir-committee-member.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdatePresidentDelegationDto } from './dto/update-president-delegation.dto';
 
@@ -97,6 +98,7 @@ export class ChoirGovernanceService {
           choirId,
           memberId: member.id,
           role: { name: 'president' },
+          ...activeChoirCommitteeMemberWhere(),
         },
         select: { id: true },
       });

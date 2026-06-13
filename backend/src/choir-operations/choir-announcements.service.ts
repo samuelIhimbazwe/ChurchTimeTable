@@ -30,6 +30,57 @@ export class ChoirAnnouncementsService {
     private appLinks: AppLinkService,
   ) {}
 
+  async listMusicNotifyDelivery(userId: string, choirId: string) {
+    const resolved = await this.permissions.resolveForUser(userId);
+    assertChoirOpsView(
+      resolved.permissions,
+      PERMISSIONS.CHOIR_ANNOUNCEMENT_MANAGE,
+    );
+
+    const rows = await this.prisma.choirAnnouncement.findMany({
+      where: {
+        choirId,
+        title: { startsWith: 'Music —' },
+        publishedAt: { not: null },
+      },
+      orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
+      take: 30,
+    });
+
+    const items = await Promise.all(
+      rows.map(async (row) => {
+        const [deliveredCount, readCount, acknowledgedCount] = await Promise.all([
+          this.prisma.choirMembership.count({
+            where: { choirId, isActive: true },
+          }),
+          this.prisma.choirAnnouncementRead.count({
+            where: { announcementId: row.id },
+          }),
+          this.prisma.choirAnnouncementRead.count({
+            where: { announcementId: row.id, acknowledged: true },
+          }),
+        ]);
+        const audienceSize = deliveredCount > 0 ? deliveredCount : readCount;
+        const deliveryRate =
+          audienceSize > 0 ? Math.round((readCount / audienceSize) * 100) : null;
+
+        return {
+          id: row.id,
+          title: row.title,
+          publishedAt: row.publishedAt?.toISOString() ?? null,
+          audience: row.audience,
+          deliveredCount,
+          readCount,
+          acknowledgedCount,
+          audienceSize,
+          deliveryRate,
+        };
+      }),
+    );
+
+    return { items };
+  }
+
   private async assertManage(userId: string) {
     const resolved = await this.permissions.resolveForUser(userId);
     assertChoirOpsManage(

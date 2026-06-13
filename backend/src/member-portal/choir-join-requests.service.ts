@@ -15,6 +15,7 @@ import { AuditService } from '../audit/audit.service';
 import { PermissionsResolver } from '../auth/permissions.resolver';
 import { PERMISSIONS, ROLES } from '../common/constants/roles';
 import { hasEffectivePermission } from '../common/governance/governance-permissions.util';
+import { activeChoirCommitteeMemberWhere } from '../common/governance/choir-committee-member.util';
 import { ChoirContextService } from '../choirs/choir-context.service';
 import { MEMBER_PORTAL_AUDIT, YERUSALEMU_CHOIR_CODE } from './member-portal.constants';
 import { ChoirMembershipRulesService } from './choir-membership-rules.service';
@@ -55,7 +56,7 @@ export class ChoirJoinRequestsService {
   ): Promise<string[]> {
     if (!memberId) return [];
     const rows = await this.prisma.choirCommitteeMember.findMany({
-      where: { memberId, choirId },
+      where: { memberId, choirId, ...activeChoirCommitteeMemberWhere() },
       include: { role: { select: { name: true } } },
     });
     return rows.map((row) => row.role.name);
@@ -400,17 +401,25 @@ export class ChoirJoinRequestsService {
         choirId: data.choirId,
         memberId: data.memberId,
         roleId: data.roleId,
+        ...activeChoirCommitteeMemberWhere(),
       },
     });
     if (!assignment) {
       throw new NotFoundException('Position assignment not found');
     }
 
-    await this.prisma.choirCommitteeMember.delete({
+    const endedAt = new Date();
+    await this.prisma.choirCommitteeMember.update({
       where: { id: assignment.id },
+      data: { effectiveEnd: endedAt },
     });
 
-    return { removed: true, memberId: data.memberId, roleId: data.roleId };
+    return {
+      removed: true,
+      memberId: data.memberId,
+      roleId: data.roleId,
+      effectiveEnd: endedAt.toISOString(),
+    };
   }
 
   private async assignCommitteeRole(
@@ -435,8 +444,13 @@ export class ChoirJoinRequestsService {
         memberId,
         roleId: role.id,
         assignedBy: actorUserId,
+        effectiveEnd: null,
       },
-      update: { assignedBy: actorUserId, assignedAt: new Date() },
+      update: {
+        assignedBy: actorUserId,
+        assignedAt: new Date(),
+        effectiveEnd: null,
+      },
       include: { role: true, member: true },
     });
   }

@@ -38,6 +38,23 @@ export const choirOperationsApi = {
   publishAnnouncement: (id: string) =>
     apiClient.post<never, ChoirAnnouncement>(`/choir/announcements/${id}/publish`),
 
+  getMusicNotifyDelivery: (choirId: string) =>
+    apiClient.get<
+      never,
+      {
+        items: Array<{
+          id: string
+          title: string
+          publishedAt: string | null
+          deliveredCount: number
+          readCount: number
+          acknowledgedCount: number
+          audienceSize: number
+          deliveryRate: number | null
+        }>
+      }
+    >('/choir/announcements/music-notify', { params: { choirId } }),
+
   getUniformTypes: () =>
     apiClient.get<never, Array<{ id: string; name: string; code: string; items?: unknown[] }>>(
       '/choir/uniforms/types',

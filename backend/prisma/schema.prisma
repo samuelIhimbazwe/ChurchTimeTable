@@ -740,6 +740,7 @@ model ChoirCommitteeMember {
   memberId    String
   roleId      String
   assignedAt  DateTime @default(now())
+  effectiveEnd DateTime?
   assignedBy  String
   createdAt   DateTime @default(now())
 
@@ -750,6 +751,7 @@ model ChoirCommitteeMember {
   @@index([choirId])
   @@index([memberId])
   @@index([roleId])
+  @@index([effectiveEnd])
 }
 
 model ProtocolCommitteeRole {

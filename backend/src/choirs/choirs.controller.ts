@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, Res, UseGuards } from '@nestjs/common';
+import type { Response } from 'express';
 import {
   ChoirJoinRequestStatus,
   ChoirJoinRequestType,
@@ -18,6 +19,7 @@ import { ChoirSponsorRequestsService } from '../member-portal/choir-sponsor-requ
 import { ChoirMembershipRulesService } from '../member-portal/choir-membership-rules.service';
 import { ChoirMembersService } from './choir-members.service';
 import { ChoirGovernanceService } from './choir-governance.service';
+import { ChoirExecutiveDashboardService } from './choir-executive-dashboard.service';
 import { UpdatePresidentDelegationDto } from './dto/update-president-delegation.dto';
 
 import { IsString } from 'class-validator';
@@ -39,6 +41,7 @@ export class ChoirsController {
     private rules: ChoirMembershipRulesService,
     private choirMembers: ChoirMembersService,
     private choirGovernance: ChoirGovernanceService,
+    private executiveDashboard: ChoirExecutiveDashboardService,
   ) {}
 
   @Get()
@@ -84,6 +87,32 @@ export class ChoirsController {
   @Get('membership-rules')
   membershipRules(@CurrentUser() user: JwtPayload) {
     return this.rules.describeMembershipRules(user.sub);
+  }
+
+  @Get(':choirId/executive/officer-sla')
+  getOfficerSla(
+    @CurrentUser() user: JwtPayload,
+    @Param('choirId') choirId: string,
+  ) {
+    return this.executiveDashboard.getOfficerSla(user.sub, choirId);
+  }
+
+  @Get(':choirId/executive/export/pdf')
+  async exportExecutivePack(
+    @CurrentUser() user: JwtPayload,
+    @Param('choirId') choirId: string,
+    @Res() res: Response,
+  ) {
+    const exported = await this.executiveDashboard.exportExecutivePackPdf(
+      user.sub,
+      choirId,
+    );
+    res.setHeader('Content-Type', exported.mimeType);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${exported.filename}"`,
+    );
+    res.send(exported.buffer);
   }
 
   @Get(':choirId/governance/president-delegation')
