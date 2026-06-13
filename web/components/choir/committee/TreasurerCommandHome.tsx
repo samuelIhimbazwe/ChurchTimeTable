@@ -1,8 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { contributionsApi, financeApi } from '@/lib/api'
 import { OfficeCommandHome } from '@/components/shared/office/OfficeCommandHome'
+import { TreasuryPeriodCloseDrawer } from '@/components/choir/committee/TreasuryPeriodCloseDrawer'
 import { Card, SkeletonCard } from '@/components/shared'
 import { useResolvedChoirScope } from '@/lib/hooks'
 
@@ -21,6 +23,7 @@ function hoursLabel(hours: number | null | undefined): string | null {
 
 export function TreasurerCommandHome() {
   const { choirId, choirLink } = useResolvedChoirScope()
+  const [periodCloseOpen, setPeriodCloseOpen] = useState(false)
 
   const { data: dashboard, isLoading: loadingDash } = useQuery({
     queryKey: ['treasury-dashboard', choirId],
@@ -48,6 +51,7 @@ export function TreasurerCommandHome() {
   const queueCount = dashboard?.verificationQueueCount ?? 0
   const treasuryCount = dashboard?.treasuryQueueCount ?? 0
   const sponsorCount = dashboard?.sponsorQueueCount ?? 0
+  const periodClose = dashboard?.periodClose
   const oldest =
     hoursLabel(dashboard?.oldestTreasuryHours) ??
     hoursLabel(dashboard?.oldestSponsorHours)
@@ -55,42 +59,70 @@ export function TreasurerCommandHome() {
   const verifyHref = choirLink('budget/verify')
   const a = analytics as Record<string, unknown> | undefined
 
+  const closePrimary = periodClose?.monthClosed
+    ? '✓'
+    : `${periodClose?.checklistComplete ?? 0}/${periodClose?.checklistTotal ?? 3}`
+  const closeSecondary = periodClose?.monthClosed
+    ? `Closed ${periodClose.monthLabel}`
+    : periodClose?.canClose
+      ? 'Ready to mark closed'
+      : queueCount > 0
+        ? 'Clear verification queue first'
+        : periodClose?.exportGenerated
+          ? 'Export done — review & close'
+          : 'Generate month export pack'
+
   return (
-    <OfficeCommandHome
-      title="Treasury command"
-      subtitle="Verify family-approved gifts, post to the ledger, and track stewardship."
-      widgets={[
-        {
-          id: 'verify',
-          label: 'Verification queue',
-          primary: queueCount > 0 ? queueCount : '✓',
-          secondary:
-            queueCount > 0
-              ? oldest
-                ? `Oldest: ${oldest} · ${treasuryCount} family · ${sponsorCount} sponsor`
-                : `${treasuryCount} family · ${sponsorCount} sponsor`
-              : 'Nothing awaiting verification',
-          cta: queueCount > 0 ? 'Open verify console →' : 'Review verify history →',
-          href: verifyHref,
-          tone: queueCount > 0 ? 'warning' : 'success',
-        },
-        {
-          id: 'collections',
-          label: 'Contributions (MTD)',
-          primary: num(a?.contributionsMtd ?? a?.totalContributions).toLocaleString(),
-          secondary: 'Confirmed choir giving this month',
-          cta: 'Finance analytics →',
-          href: choirLink('finance'),
-        },
-        {
-          id: 'budgets',
-          label: 'Budget planning',
-          primary: 'Plan',
-          secondary: 'Recording, concerts, uniforms, and project savings',
-          cta: 'Budgets tab →',
-          href: `${choirLink('budget')}?tab=budgets`,
-        },
-      ]}
-    />
+    <>
+      <OfficeCommandHome
+        title="Treasury command"
+        subtitle="Verify family-approved gifts, post to the ledger, and close each month."
+        widgets={[
+          {
+            id: 'verify',
+            label: 'Verification queue',
+            primary: queueCount > 0 ? queueCount : '✓',
+            secondary:
+              queueCount > 0
+                ? oldest
+                  ? `Oldest: ${oldest} · ${treasuryCount} family · ${sponsorCount} sponsor`
+                  : `${treasuryCount} family · ${sponsorCount} sponsor`
+                : 'Nothing awaiting verification',
+            cta: queueCount > 0 ? 'Open verify console →' : 'Review verify history →',
+            href: verifyHref,
+            tone: queueCount > 0 ? 'warning' : 'success',
+          },
+          {
+            id: 'collections',
+            label: 'Contributions (MTD)',
+            primary: num(a?.contributionsMtd ?? a?.totalContributions).toLocaleString(),
+            secondary: 'Confirmed choir giving this month',
+            cta: 'Finance analytics →',
+            href: choirLink('finance'),
+          },
+          {
+            id: 'period-close',
+            label: 'Period close',
+            primary: closePrimary,
+            secondary: closeSecondary,
+            cta: periodClose?.monthClosed ? 'View close record →' : 'Open close drawer →',
+            onClick: () => setPeriodCloseOpen(true),
+            tone: periodClose?.monthClosed
+              ? 'success'
+              : periodClose?.canClose
+                ? 'default'
+                : queueCount > 0
+                  ? 'warning'
+                  : 'default',
+          },
+        ]}
+      />
+      <TreasuryPeriodCloseDrawer
+        open={periodCloseOpen}
+        onClose={() => setPeriodCloseOpen(false)}
+        choirId={choirId}
+        status={periodClose}
+      />
+    </>
   )
 }

@@ -26,6 +26,11 @@ import { ApproveContributionDto } from './dto/approve-contribution.dto';
 import { RejectFamilyContributionDto } from './dto/reject-family-contribution.dto';
 import { ThankYouService } from './thank-you.service';
 import { isTreasuryVerifySplitEnabled } from './contribution-treasury-workflow.util';
+import { FinanceExportService } from './finance-export.service';
+import {
+  resolveTreasuryPeriodMonth,
+} from './contribution-treasury-period.util';
+import { CloseTreasuryPeriodDto } from './dto/close-treasury-period.dto';
 
 @Injectable()
 export class ContributionGovernanceService {
@@ -37,6 +42,7 @@ export class ContributionGovernanceService {
     private notifications: NotificationsService,
     private i18n: I18nService,
     private thankYou: ThankYouService,
+    private financeExport: FinanceExportService,
   ) {}
 
   async getFamilyInbox(
@@ -356,6 +362,12 @@ export class ContributionGovernanceService {
         )
       : null;
 
+    const periodClose = await this.buildPeriodCloseStatus(
+      choirId,
+      treasuryCount,
+      sponsorCount,
+    );
+
     return {
       choirId,
       splitWorkflowEnabled: isTreasuryVerifySplitEnabled(),
@@ -366,6 +378,149 @@ export class ContributionGovernanceService {
       oldestSponsorHours,
       oldestTreasuryContributionId: oldestTreasury?.id ?? null,
       oldestSponsorContributionId: oldestSponsor?.id ?? null,
+      periodClose,
+    };
+  }
+
+  async exportTreasuryPeriodPack(
+    actorUserId: string,
+    choirId: string,
+    monthKey?: string,
+  ) {
+    const ctx = await this.scope.resolveActor(actorUserId);
+    this.scope.assertCanVerifyTreasury(ctx);
+    await this.assertActiveChoir(choirId);
+    return this.financeExport.exportChoirTreasuryPeriodPdf(
+      actorUserId,
+      choirId,
+      monthKey,
+    );
+  }
+
+  async closeTreasuryPeriod(
+    actorUserId: string,
+    choirId: string,
+    dto: CloseTreasuryPeriodDto,
+  ) {
+    const ctx = await this.scope.resolveActor(actorUserId);
+    this.scope.assertCanVerifyTreasury(ctx);
+    await this.assertActiveChoir(choirId);
+
+    const bounds = resolveTreasuryPeriodMonth(dto.month);
+    const dashboard = await this.getTreasuryDashboard(actorUserId, choirId);
+    const status = dashboard.periodClose;
+
+    if (status.month !== bounds.monthKey) {
+      throw new BadRequestException('Period close month mismatch');
+    }
+    if (!status.treasuryQueueEmpty || !status.sponsorQueueEmpty) {
+      throw new BadRequestException(
+        'Clear the verification queue before closing the period',
+      );
+    }
+    if (!status.exportGenerated) {
+      throw new BadRequestException(
+        'Generate the month export pack before closing',
+      );
+    }
+    if (status.monthClosed) {
+      throw new ConflictException('This month is already closed');
+    }
+
+    await this.audit.log({
+      userId: actorUserId,
+      action: 'TREASURY_PERIOD_CLOSED',
+      entity: 'Choir',
+      entityId: choirId,
+      newValue: {
+        month: bounds.monthKey,
+        label: bounds.label,
+        notes: dto.notes?.trim() || null,
+      },
+    });
+
+    return this.buildPeriodCloseStatus(
+      choirId,
+      dashboard.treasuryQueueCount,
+      dashboard.sponsorQueueCount,
+      bounds.monthKey,
+    );
+  }
+
+  private async assertActiveChoir(choirId: string) {
+    const choir = await this.prisma.choir.findUnique({
+      where: { id: choirId },
+      select: { id: true, isActive: true },
+    });
+    if (!choir?.isActive) {
+      throw new NotFoundException('Choir not found');
+    }
+  }
+
+  private async buildPeriodCloseStatus(
+    choirId: string,
+    treasuryQueueCount: number,
+    sponsorQueueCount: number,
+    monthKey?: string,
+  ) {
+    const bounds = resolveTreasuryPeriodMonth(monthKey);
+    const [exportLog, closeLog] = await Promise.all([
+      this.prisma.auditLog.findFirst({
+        where: {
+          entity: 'Choir',
+          entityId: choirId,
+          action: 'TREASURY_PERIOD_EXPORT',
+        },
+        orderBy: { createdAt: 'desc' },
+        include: { user: { select: { email: true } } },
+      }),
+      this.prisma.auditLog.findFirst({
+        where: {
+          entity: 'Choir',
+          entityId: choirId,
+          action: 'TREASURY_PERIOD_CLOSED',
+        },
+        orderBy: { createdAt: 'desc' },
+        include: { user: { select: { email: true } } },
+      }),
+    ]);
+
+    const exportMeta = exportLog?.newValue as { month?: string } | null;
+    const closeMeta = closeLog?.newValue as { month?: string } | null;
+    const exportForMonth =
+      exportMeta?.month === bounds.monthKey ? exportLog : null;
+    const closeForMonth =
+      closeMeta?.month === bounds.monthKey ? closeLog : null;
+
+    const treasuryQueueEmpty = treasuryQueueCount === 0;
+    const sponsorQueueEmpty = sponsorQueueCount === 0;
+    const exportGenerated = Boolean(exportForMonth);
+    const monthClosed = Boolean(closeForMonth);
+    const checks = [
+      treasuryQueueEmpty,
+      sponsorQueueEmpty,
+      exportGenerated,
+    ];
+    const checklistComplete = checks.filter(Boolean).length;
+
+    return {
+      month: bounds.monthKey,
+      monthLabel: bounds.label,
+      treasuryQueueEmpty,
+      sponsorQueueEmpty,
+      exportGenerated,
+      exportGeneratedAt: exportForMonth?.createdAt?.toISOString() ?? null,
+      exportGeneratedBy: exportForMonth?.user?.email ?? null,
+      monthClosed,
+      closedAt: closeForMonth?.createdAt?.toISOString() ?? null,
+      closedBy: closeForMonth?.user?.email ?? null,
+      canClose:
+        treasuryQueueEmpty &&
+        sponsorQueueEmpty &&
+        exportGenerated &&
+        !monthClosed,
+      checklistComplete,
+      checklistTotal: 3,
     };
   }
 

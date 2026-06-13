@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { MinistryScope, Prisma } from '@prisma/client';
+import { ContributionStatus, MinistryScope, Prisma } from '@prisma/client';
 import PDFDocument from 'pdfkit';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
@@ -8,6 +8,11 @@ import {
   canAccessMinistryFinance,
   ministryScopeFilter,
 } from '../common/governance/finance-scope.util';
+import {
+  choirContributionScopeWhere,
+  resolveTreasuryPeriodMonth,
+  type TreasuryPeriodBounds,
+} from './contribution-treasury-period.util';
 
 export interface FinanceExportFilters {
   ministryScope?: MinistryScope;
@@ -80,6 +85,48 @@ export class FinanceExportService {
       filename: `my-contributions-${this.dateStamp()}.csv`,
       content,
       mimeType: 'text/csv',
+    };
+  }
+
+  async exportChoirTreasuryPeriodPdf(
+    actorUserId: string,
+    choirId: string,
+    monthKey?: string,
+  ) {
+    const bounds = resolveTreasuryPeriodMonth(monthKey);
+    const rows = await this.choirConfirmedContributionsForPeriod(choirId, bounds);
+    const total = rows.reduce((sum, row) => sum + row.amount, 0);
+    const lines = [
+      `Choir treasury period: ${bounds.label}`,
+      `Period: ${bounds.from.toISOString().slice(0, 10)} — ${bounds.to.toISOString().slice(0, 10)}`,
+      `Confirmed gifts: ${rows.length}`,
+      `Total posted: ${total.toLocaleString()} RWF`,
+      '',
+      ...rows.slice(0, 120).map(
+        (row) =>
+          `${row.date} | ${row.referenceNumber} | ${row.memberName} | ${row.amount.toLocaleString()} | ${row.status}`,
+      ),
+    ];
+    const buffer = await this.buildPdf(`Choir Treasury — ${bounds.label}`, lines);
+    await this.audit.log({
+      userId: actorUserId,
+      action: 'TREASURY_PERIOD_EXPORT',
+      entity: 'Choir',
+      entityId: choirId,
+      newValue: {
+        month: bounds.monthKey,
+        label: bounds.label,
+        rowCount: rows.length,
+        totalAmount: total,
+      },
+    });
+    return {
+      filename: `choir-treasury-${bounds.monthKey}.pdf`,
+      buffer,
+      mimeType: 'application/pdf',
+      monthKey: bounds.monthKey,
+      rowCount: rows.length,
+      totalAmount: total,
     };
   }
 
@@ -317,5 +364,47 @@ export class FinanceExportService {
 
   private dateStamp() {
     return new Date().toISOString().slice(0, 10);
+  }
+
+  private async choirConfirmedContributionsForPeriod(
+    choirId: string,
+    bounds: TreasuryPeriodBounds,
+  ) {
+    const families = await this.prisma.family.findMany({
+      where: { choirId },
+      select: { id: true },
+    });
+    const familyIds = families.map((family) => family.id);
+
+    const records = await this.prisma.contributionRecord.findMany({
+      where: {
+        status: ContributionStatus.CONFIRMED,
+        confirmedAt: { gte: bounds.from, lte: bounds.to },
+        ...choirContributionScopeWhere(choirId, familyIds),
+      },
+      orderBy: { confirmedAt: 'asc' },
+      take: 500,
+      include: {
+        member: {
+          select: { firstName: true, lastName: true, memberNumber: true },
+        },
+      },
+    });
+
+    return records.map((record) => {
+      const member = record.member;
+      const memberName = member
+        ? `${member.firstName ?? ''} ${member.lastName ?? ''}`.trim() ||
+          member.memberNumber ||
+          'Member'
+        : 'Member';
+      return {
+        date: (record.confirmedAt ?? record.createdAt).toISOString().slice(0, 10),
+        referenceNumber: record.referenceNumber,
+        memberName,
+        amount: Number(record.confirmedAmount ?? record.amount),
+        status: record.status,
+      };
+    });
   }
 }

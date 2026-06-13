@@ -23,6 +23,7 @@ import { CreateContributionDto } from './dto/create-contribution.dto';
 import { RejectContributionDto } from './dto/reject-contribution.dto';
 import { ContributionService } from './contribution.service';
 import { ContributionGovernanceService } from './contribution-governance.service';
+import { CloseTreasuryPeriodDto } from './dto/close-treasury-period.dto';
 import { ContributionTotalsService } from './contribution-totals.service';
 import { ContributionListService } from './contribution-list.service';
 import { ContributionRankingsService } from './contribution-rankings.service';
@@ -436,6 +437,49 @@ export class FinanceController {
       user.sub,
       choirId,
       limit ? Number(limit) : 30,
+    );
+  }
+
+  @Get('contributions/treasury/export/pdf')
+  @SkipPhoneEnforcement()
+  @RequireAnyPermissions(
+    PERMISSIONS.CHOIR_FINANCE_APPROVE,
+    PERMISSIONS.CHOIR_FINANCE_MANAGE,
+  )
+  async treasuryPeriodExportPdf(
+    @CurrentUser() user: JwtPayload,
+    @Query('choirId') choirId: string,
+    @Query('month') month: string | undefined,
+    @Res() res: Response,
+  ) {
+    const exported = await this.contributionGovernance.exportTreasuryPeriodPack(
+      user.sub,
+      choirId,
+      month,
+    );
+    res.setHeader('Content-Type', exported.mimeType);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${exported.filename}"`,
+    );
+    res.send(exported.buffer);
+  }
+
+  @Post('contributions/treasury/period-close')
+  @SkipPhoneEnforcement()
+  @RequireAnyPermissions(
+    PERMISSIONS.CHOIR_FINANCE_APPROVE,
+    PERMISSIONS.CHOIR_FINANCE_MANAGE,
+  )
+  closeTreasuryPeriod(
+    @CurrentUser() user: JwtPayload,
+    @Query('choirId') choirId: string,
+    @Body() dto: CloseTreasuryPeriodDto,
+  ) {
+    return this.contributionGovernance.closeTreasuryPeriod(
+      user.sub,
+      choirId,
+      dto,
     );
   }
 

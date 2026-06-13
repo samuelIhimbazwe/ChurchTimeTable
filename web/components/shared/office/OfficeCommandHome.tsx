@@ -10,7 +10,8 @@ export type OfficeCommandWidget = {
   primary: string | number
   secondary?: string
   cta: string
-  href: string
+  href?: string
+  onClick?: () => void
   tone?: 'default' | 'success' | 'warning'
 }
 
@@ -30,11 +31,11 @@ export function OfficeCommandHome({ title, subtitle, widgets }: Props) {
         {subtitle && <p className="text-sm text-text-muted mt-1">{subtitle}</p>}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {visible.map((widget) => (
-          <Link key={widget.id} href={widget.href}>
+        {visible.map((widget) => {
+          const card = (
             <Card
               padding="md"
-              className="h-full hover:shadow-raised transition-shadow group"
+              className="h-full hover:shadow-raised transition-shadow group text-left w-full"
               accent={
                 widget.tone === 'success'
                   ? 'success'
@@ -57,8 +58,27 @@ export function OfficeCommandHome({ title, subtitle, widgets }: Props) {
                 <ChevronRight size={14} />
               </p>
             </Card>
-          </Link>
-        ))}
+          )
+
+          if (widget.onClick) {
+            return (
+              <button
+                key={widget.id}
+                type="button"
+                onClick={widget.onClick}
+                className="block w-full text-left"
+              >
+                {card}
+              </button>
+            )
+          }
+
+          return (
+            <Link key={widget.id} href={widget.href ?? '#'}>
+              {card}
+            </Link>
+          )
+        })}
       </div>
     </div>
   )

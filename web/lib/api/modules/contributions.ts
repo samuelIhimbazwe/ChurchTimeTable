@@ -42,6 +42,22 @@ export type SubmitContributionContext = {
   }>
 }
 
+export type TreasuryPeriodCloseStatus = {
+  month: string
+  monthLabel: string
+  treasuryQueueEmpty: boolean
+  sponsorQueueEmpty: boolean
+  exportGenerated: boolean
+  exportGeneratedAt: string | null
+  exportGeneratedBy: string | null
+  monthClosed: boolean
+  closedAt: string | null
+  closedBy: string | null
+  canClose: boolean
+  checklistComplete: number
+  checklistTotal: number
+}
+
 export type ContributionClaim = {
   id: string
   referenceNumber?: string
@@ -316,8 +332,35 @@ export const contributionsApi = {
         oldestSponsorHours: number | null
         oldestTreasuryContributionId: string | null
         oldestSponsorContributionId: string | null
+        periodClose?: TreasuryPeriodCloseStatus
       }
     >('/finance/contributions/treasury/dashboard', { params: { choirId } }),
+
+  exportTreasuryPeriodPdf: async (choirId: string, month?: string) => {
+    const blob = await apiClient.get<never, Blob>(
+      '/finance/contributions/treasury/export/pdf',
+      {
+        params: { choirId, month },
+        responseType: 'blob',
+      },
+    )
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = month ? `choir-treasury-${month}.pdf` : 'choir-treasury-pack.pdf'
+    anchor.click()
+    URL.revokeObjectURL(url)
+  },
+
+  closeTreasuryPeriod: (
+    choirId: string,
+    payload?: { month?: string; notes?: string },
+  ) =>
+    apiClient.post<never, TreasuryPeriodCloseStatus>(
+      '/finance/contributions/treasury/period-close',
+      payload ?? {},
+      { params: { choirId } },
+    ),
 
   verifyTreasury: (contributionId: string) =>
     apiClient.post<never, ContributionClaim>(
