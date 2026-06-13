@@ -13,7 +13,8 @@ import { MusicSongNotifyForm } from '@/components/choir/MusicSongNotifyForm'
 import { MusicCreateSongForm } from '@/components/choir/MusicCreateSongForm'
 import { RehearsalPlanEditor } from '@/components/choir/RehearsalPlanEditor'
 import { formatDate, formatTime } from '@/lib/utils/format'
-import { Music, Calendar, Mic2, CheckCircle2, Megaphone } from 'lucide-react'
+import { MusicDirectorCommandHome } from '@/components/choir/committee/MusicDirectorCommandHome'
+import { Music, Calendar, Mic2, Megaphone } from 'lucide-react'
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
@@ -73,12 +74,7 @@ export default function MusicDirectorHubPage() {
     <ChoirPositionHubShell roleKey="music_director" tabs={TABS} activeTab={tab} onTabChange={setTab}>
       {tab === 'overview' && (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatTile label="Songs in library" value={songs?.total ?? '—'} icon={Music} animate />
-            <StatTile label="Voice sections" value={voiceSections?.length ?? 0} icon={Mic2} animate />
-            <StatTile label="Rehearsal attendance" value={num(h?.rehearsalAttendanceRate ?? h?.attendanceRate)} suffix="%" icon={CheckCircle2} animate />
-            <StatTile label="Upcoming rehearsals" value={rehearsalItems.length || num(rehearsalDash?.upcomingCount)} icon={Calendar} animate />
-          </div>
+          <MusicDirectorCommandHome />
           <div className="grid sm:grid-cols-2 gap-4">
             <button type="button" onClick={() => setTab('notify')} className="text-left">
               <Card padding="md" className="hover:shadow-raised transition-shadow h-full">

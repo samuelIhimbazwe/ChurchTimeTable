@@ -19,6 +19,7 @@ import {
   FileText, Music, Calendar, Package, Users, ScrollText,
   BarChart3, Megaphone, ChevronRight, Clock, Activity,
 } from 'lucide-react'
+import { RecordsCommandHome } from '@/components/choir/committee/RecordsCommandHome'
 import { useResolvedChoirScope } from '@/lib/hooks'
 
 const TABS = [
@@ -105,6 +106,7 @@ export default function RecordsHubPage() {
 
       {tab === 'overview' && (
         <>
+        <RecordsCommandHome />
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Card padding="md">
             <p className="text-xs text-text-muted">Equipment</p>

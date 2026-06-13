@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { choirSchedulingApi, documentsApi, assetsApi } from '@/lib/api'
 import { useResolvedChoirId } from '@/lib/hooks'
@@ -11,6 +11,7 @@ import {
 import { ChoirPositionHubShell } from '@/components/choir/ChoirPositionHubShell'
 import { AdvisorCapabilityPanel } from '@/components/choir/AdvisorCapabilityPanel'
 import { Calendar, Shield, DollarSign } from 'lucide-react'
+import { AdvisorCommandHome } from '@/components/choir/committee/AdvisorCommandHome'
 
 const TABS = [
   { id: 'my-access', label: 'My assigned access' },
@@ -28,6 +29,12 @@ export default function AdvisorHubPage() {
   const hasAnyPermission = useAuthStore((s) => s.hasAnyPermission)
 
   const choirId = useResolvedChoirId()
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#snapshot') {
+      setTab('snapshot')
+    }
+  }, [])
 
   const canSeeSnapshot = hasAnyPermission([
     'event:read', 'choir.reports.view', 'choir.finance.view', 'discipline:read_all', 'choir.ops.view',
@@ -62,7 +69,12 @@ export default function AdvisorHubPage() {
       activeTab={tab}
       onTabChange={setTab}
     >
-      {tab === 'my-access' && <AdvisorCapabilityPanel />}
+      {tab === 'my-access' && (
+        <div className="space-y-6">
+          <AdvisorCommandHome />
+          <AdvisorCapabilityPanel />
+        </div>
+      )}
 
       {tab === 'snapshot' && (
         <div className="space-y-4">

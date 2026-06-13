@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { choirApi, governanceApi } from '@/lib/api'
+import { ChoirSodWarningsPanel } from '@/components/choir/committee/ChoirSodWarningsPanel'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { toast } from '@/components/shared/Toast'
 import {
@@ -48,8 +49,11 @@ export default function ChoirRolesPage() {
         permissions,
       })
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success('Position role saved')
+      if (data.sodWarnings?.length) {
+        toast.info('SoD review: see warnings on this role')
+      }
       qc.invalidateQueries({ queryKey: ['choir-position-roles'] })
       setEditing(null)
       setCreating(false)
@@ -80,6 +84,15 @@ export default function ChoirRolesPage() {
   }
 
   const showForm = creating || editing
+
+  const { data: sodCheck } = useQuery({
+    queryKey: ['choir-sod-check', name, permissions],
+    queryFn: () => governanceApi.checkChoirSod(permissions, name.trim()),
+    enabled: showForm && name.trim().length > 0,
+  })
+
+  const sodWarnings = sodCheck?.warnings ?? []
+  const hasHighSod = sodWarnings.some((w) => w.severity === 'high')
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-8">
@@ -137,6 +150,7 @@ export default function ChoirRolesPage() {
                 ))}
               </div>
             </div>
+            <ChoirSodWarningsPanel warnings={sodWarnings} />
             <div className="flex gap-2 justify-end">
               <button
                 type="button"
@@ -147,7 +161,7 @@ export default function ChoirRolesPage() {
               </button>
               <button
                 type="button"
-                disabled={save.isPending || !name.trim()}
+                disabled={save.isPending || !name.trim() || hasHighSod}
                 onClick={() => save.mutate()}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-primary-700 text-white rounded-lg disabled:opacity-60"
               >

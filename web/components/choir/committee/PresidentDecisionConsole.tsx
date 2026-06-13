@@ -16,7 +16,8 @@ import {
 } from '@/lib/constants/choir-positions'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { formatDate, relativeTime } from '@/lib/utils/format'
-import { CheckCircle2, MessageSquare, XCircle } from 'lucide-react'
+import { CheckCircle2, MessageSquare, UserCircle, XCircle } from 'lucide-react'
+import { Applicant360Panel } from '@/components/choir/committee/Applicant360Panel'
 import type { ChoirJoinRequest } from '@/types'
 
 const REJECT_TEMPLATES = [
@@ -70,6 +71,7 @@ export function PresidentDecisionConsole({
   const [assignedRoleId, setAssignedRoleId] = useState('')
   const [showNeedsInfoForm, setShowNeedsInfoForm] = useState(false)
   const [showRejectForm, setShowRejectForm] = useState(false)
+  const [showApplicant360, setShowApplicant360] = useState(false)
 
   const { data: rawRequests, isLoading } = useQuery({
     queryKey: ['choir-join-requests', choirId, 'decisions'],
@@ -174,6 +176,14 @@ export function PresidentDecisionConsole({
               <p className="text-xs text-text-muted mt-0.5">
                 {requestTypeLabel(row.requestType)}
               </p>
+              <button
+                type="button"
+                onClick={() => setShowApplicant360(true)}
+                className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-primary-600 hover:underline"
+              >
+                <UserCircle size={14} />
+                Applicant 360
+              </button>
             </div>
             <Badge
               variant={row.status === 'NEEDS_INFO' ? 'status-excused' : 'status-pending'}
@@ -469,6 +479,13 @@ export function PresidentDecisionConsole({
           </Card>
         }
       />
+      {showApplicant360 && selected?.memberId && (
+        <Applicant360Panel
+          memberId={selected.memberId}
+          memberName={memberName(selected)}
+          onClose={() => setShowApplicant360(false)}
+        />
+      )}
     </PermissionGate>
   )
 }

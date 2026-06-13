@@ -1,6 +1,14 @@
 import { apiClient } from '../client'
 import type { ChoirPositionRole } from './choir'
 
+export type ChoirSodWarning = {
+  id: string
+  severity: 'high' | 'medium' | 'low'
+  message: string
+  permissions?: string[]
+  roleNames?: string[]
+}
+
 export const governanceApi = {
   getChoirScope: (scopeId: string) =>
     apiClient.get<
@@ -17,7 +25,16 @@ export const governanceApi = {
     permissions: string[]
     description?: string
   }) =>
-    apiClient.post<never, ChoirPositionRole>('/governance/choir/roles', data),
+    apiClient.post<
+      never,
+      { role: ChoirPositionRole; sodWarnings: ChoirSodWarning[] }
+    >('/governance/choir/roles', data),
+
+  checkChoirSod: (permissions: string[], roleName?: string) =>
+    apiClient.post<never, { warnings: ChoirSodWarning[] }>(
+      '/governance/choir/sod-check',
+      { permissions, roleName },
+    ),
 
   assignChoirMember: (data: {
     scopeId: string

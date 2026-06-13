@@ -4,6 +4,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { AssignCommitteeMemberDto } from './dto/assign-committee-member.dto';
 import { UpsertCommitteeRoleDto } from './dto/upsert-committee-role.dto';
+import {
+  evaluateChoirMemberAssignmentSoD,
+  evaluateChoirPermissionSoD,
+} from '../common/governance/choir-sod-rules.util';
 
 @Injectable()
 export class GovernanceService {
@@ -13,6 +17,8 @@ export class GovernanceService {
   ) {}
 
   async upsertChoirCommitteeRole(dto: UpsertCommitteeRoleDto, actorUserId: string) {
+    const sodWarnings = evaluateChoirPermissionSoD(dto.permissions, dto.name);
+
     const role = await this.prisma.choirCommitteeRole.upsert({
       where: { choirId_name: { choirId: dto.scopeId, name: dto.name } },
       create: {
@@ -30,9 +36,15 @@ export class GovernanceService {
       action: 'CHOIR_COMMITTEE_ROLE_UPSERT',
       entity: 'ChoirCommitteeRole',
       entityId: role.id,
-      newValue: role,
+      newValue: { role, sodWarnings },
     });
-    return role;
+    return { role, sodWarnings };
+  }
+
+  checkChoirPermissionSoD(permissions: string[], roleName?: string) {
+    return {
+      warnings: evaluateChoirPermissionSoD(permissions, roleName),
+    };
   }
 
   async assignChoirCommitteeMember(
@@ -65,7 +77,16 @@ export class GovernanceService {
       entityId: assignment.id,
       newValue: assignment,
     });
-    return assignment;
+
+    const memberRoles = await this.prisma.choirCommitteeMember.findMany({
+      where: { choirId: dto.scopeId, memberId: dto.memberId },
+      include: { role: true },
+    });
+    const sodWarnings = evaluateChoirMemberAssignmentSoD(
+      memberRoles.map((row) => row.role.name),
+    );
+
+    return { assignment, sodWarnings };
   }
 
   async upsertProtocolCommitteeRole(dto: UpsertCommitteeRoleDto, actorUserId: string) {

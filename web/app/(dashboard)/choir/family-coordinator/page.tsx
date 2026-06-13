@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
-import { familiesApi, welfareApi, choirActivityApi } from '@/lib/api'
+import { familiesApi, choirActivityApi } from '@/lib/api'
 import {
   Card, StatTile, Badge, SkeletonCard, PermissionGate,
 } from '@/components/shared'
@@ -13,7 +13,8 @@ import { ContributionTreasuryPanel } from '@/components/choir/ContributionTreasu
 import { FamilyRankingsPanel } from '@/components/choir/FamilyRankingsPanel'
 import { formatDate } from '@/lib/utils/format'
 import { ContributionAmountDisplay } from '@/components/choir/ContributionAmountDisplay'
-import { Users, Heart, DollarSign, Calendar, BarChart3, Trophy } from 'lucide-react'
+import { FamilyCoordinatorCommandHome } from '@/components/choir/committee/FamilyCoordinatorCommandHome'
+import { Users, Heart, Calendar, BarChart3, DollarSign, Trophy } from 'lucide-react'
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
@@ -32,36 +33,17 @@ export default function FamilyCoordinatorHubPage() {
     queryFn: () => familiesApi.getAll({ includeMetrics: true, limit: 100 }),
   })
 
-  const { data: welfare } = useQuery({
-    queryKey: ['welfare'],
-    queryFn: () => welfareApi.getAll(),
-  })
-
   const { data: activities } = useQuery({
     queryKey: ['choir-activities-coord', choirId],
     queryFn: () => choirActivityApi.getAll({ choirId, limit: 10 }),
     enabled: !!choirId && (tab === 'operations' || tab === 'overview'),
   })
 
-  const openWelfare = welfare?.filter((c) => c.status !== 'RESOLVED').length ?? 0
-  const totalMembers = families?.reduce((sum, f) => sum + (f.memberCount ?? 0), 0) ?? 0
-
   return (
     <ChoirPositionHubShell roleKey="family_coordinator" tabs={TABS} activeTab={tab} onTabChange={setTab}>
       {tab === 'overview' && (
         <div className="space-y-4">
-          <Card padding="md" accent="gold">
-            <p className="text-sm text-text-secondary">
-              You oversee <strong>all families</strong> in the choir — rankings, contributions,
-              attendance health, activities, and operations across every team.
-            </p>
-          </Card>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatTile label="Families" value={families?.length ?? 0} icon={Users} animate />
-            <StatTile label="Total members" value={totalMembers} icon={Users} animate />
-            <StatTile label="Open welfare" value={openWelfare} icon={Heart} animate />
-            <StatTile label="Upcoming activities" value={activities?.items?.length ?? 0} icon={Calendar} animate />
-          </div>
+          <FamilyCoordinatorCommandHome />
           <div className="grid sm:grid-cols-2 gap-4">
             <HubQuickLink href={choirLink('families')} label="Manage families" desc="Assign heads and members" icon={Users} />
             <HubQuickLink href={choirLink('welfare')} label="Welfare" desc="Care across all families" icon={Heart} />

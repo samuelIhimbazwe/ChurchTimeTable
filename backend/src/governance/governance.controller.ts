@@ -14,6 +14,7 @@ import { ProtocolTeamGenerationService } from './protocol-team-generation.servic
 import { AssignCommitteeMemberDto } from './dto/assign-committee-member.dto';
 import { GenerateProtocolTeamsDto } from './dto/generate-protocol-teams.dto';
 import { UpsertCommitteeRoleDto } from './dto/upsert-committee-role.dto';
+import { ChoirSodCheckDto } from './dto/choir-sod-check.dto';
 
 @Controller('governance')
 @UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
@@ -27,6 +28,12 @@ export class GovernanceController {
   @RequirePermissions(PERMISSIONS.COMMITTEE_ROLE_MANAGE_SCOPE)
   upsertChoirRole(@Body() dto: UpsertCommitteeRoleDto, @CurrentUser() user: JwtPayload) {
     return this.governance.upsertChoirCommitteeRole(dto, user.sub);
+  }
+
+  @Post('choir/sod-check')
+  @RequirePermissions(PERMISSIONS.COMMITTEE_ROLE_MANAGE_SCOPE)
+  checkChoirSod(@Body() dto: ChoirSodCheckDto) {
+    return this.governance.checkChoirPermissionSoD(dto.permissions, dto.roleName);
   }
 
   @Post('choir/members')

@@ -9,6 +9,7 @@ import {
   Card, Badge, HubTabs, PermissionGate, SkeletonCard, EmptyState,
 } from '@/components/shared'
 import { formatDate } from '@/lib/utils/format'
+import { SpiritualCommandHome } from '@/components/choir/committee/SpiritualCommandHome'
 import { BookOpen, HeartHandshake, Sparkles } from 'lucide-react'
 
 const TABS = [
@@ -117,7 +118,8 @@ export default function SpiritualHubPage() {
       <HubTabs tabs={TABS} active={tab} onChange={setTab} />
 
       {tab === 'intercession' && (
-        <div className="space-y-4">
+        <div className="space-y-6">
+          <SpiritualCommandHome />
           <Card padding="md" accent="gold">
             <div className="flex items-start gap-3">
               <HeartHandshake size={20} className="text-gold-700 shrink-0" />
