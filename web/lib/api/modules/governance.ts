@@ -50,6 +50,68 @@ export const governanceApi = {
       { data: effectiveEnd ? { effectiveEnd } : undefined },
     ),
 
+  listChoirRoleTemplates: () =>
+    apiClient.get<
+      never,
+      {
+        templates: Array<{
+          id: string
+          name: string
+          label: string
+          description: string | null
+          permissions: string[]
+          permissionCount: number
+        }>
+      }
+    >('/governance/choir/role-templates'),
+
+  applyChoirRoleTemplate: (
+    templateId: string,
+    data: { scopeId: string; roleName?: string },
+  ) =>
+    apiClient.post<
+      never,
+      { role: ChoirPositionRole; sodWarnings: ChoirSodWarning[] }
+    >(`/governance/choir/role-templates/${templateId}/apply`, data),
+
+  listAdvisorElevations: (choirId: string, activeOnly = true) =>
+    apiClient.get<
+      never,
+      {
+        items: Array<{
+          id: string
+          memberId: string
+          memberName: string | null
+          memberNumber: string | null
+          permissions: string[]
+          reason: string | null
+          startsAt: string
+          endsAt: string
+          revokedAt: string | null
+          isActive: boolean
+        }>
+      }
+    >(`/governance/choir/${choirId}/advisor-elevations`, {
+      params: { activeOnly: activeOnly ? 'true' : 'false' },
+    }),
+
+  createAdvisorElevation: (data: {
+    scopeId: string
+    memberId: string
+    permissions: string[]
+    durationDays?: number
+    reason?: string
+  }) =>
+    apiClient.post<never, { elevation: unknown; sodWarnings: ChoirSodWarning[] }>(
+      '/governance/choir/advisor-elevations',
+      data,
+    ),
+
+  revokeAdvisorElevation: (elevationId: string) =>
+    apiClient.delete<never, { revoked: boolean }>(
+      `/governance/choir/advisor-elevations/${elevationId}`,
+    ),
+
   assignProtocolMember: (data: {
     scopeId: string
     memberId: string

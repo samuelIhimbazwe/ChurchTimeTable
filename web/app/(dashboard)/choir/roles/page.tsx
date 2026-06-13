@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { choirApi, governanceApi } from '@/lib/api'
 import { ChoirSodWarningsPanel } from '@/components/choir/committee/ChoirSodWarningsPanel'
+import { ChoirRoleTemplateLibrary } from '@/components/choir/committee/ChoirRoleTemplateLibrary'
+import { AdvisorElevationPanel } from '@/components/choir/committee/AdvisorElevationPanel'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { toast } from '@/components/shared/Toast'
 import {
@@ -36,6 +38,12 @@ export default function ChoirRolesPage() {
   const { data: roles, isLoading } = useQuery({
     queryKey: ['choir-position-roles', choirId],
     queryFn: () => choirApi.getPositionRoles(choirId),
+    enabled: !!choirId,
+  })
+
+  const { data: templateData } = useQuery({
+    queryKey: ['choir-role-templates'],
+    queryFn: () => governanceApi.listChoirRoleTemplates(),
     enabled: !!choirId,
   })
 
@@ -172,6 +180,9 @@ export default function ChoirRolesPage() {
           </div>
         </Card>
       )}
+
+      <ChoirRoleTemplateLibrary templates={templateData?.templates ?? []} />
+      <AdvisorElevationPanel />
 
       {isLoading ? (
         <SkeletonCard rows={6} />

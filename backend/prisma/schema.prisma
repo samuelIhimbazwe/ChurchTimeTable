@@ -573,6 +573,7 @@ model User {
   devotionsCreated  Devotion[]          @relation("DevotionAuthor")
   devotionBookmarks DevotionBookmark[]
   customRolesCreated ChoirCustomRole[]  @relation("CustomRoleAuthor")
+  advisorElevationsGranted ChoirAdvisorElevation[] @relation("AdvisorElevationGranter")
   ministryLeadershipAssigned MinistryLeadershipAssignment[] @relation("MinistryLeadershipAssigner")
   ministryPermissionsGranted MinistryPermissionAssignment[] @relation("MinistryPermissionGranter")
   operationalUnitLeadershipAssigned OperationalUnitLeadershipAssignment[] @relation("OperationalUnitLeadershipAssigner")
@@ -713,6 +714,8 @@ model Member {
   protocolInvitationsSent              ProtocolInvitation[] @relation("ProtocolInviter")
   protocolClaimsReviewed               ProtocolMembershipClaim[] @relation("ProtocolClaimReviewer")
   familyPulseEntries                   FamilyPulseEntry[]
+  executivePulseEntries                ChoirExecutivePulseEntry[]
+  advisorElevations                    ChoirAdvisorElevation[]
   prayerRequests                       PrayerRequest[]
 
   @@index([status])
@@ -752,6 +755,58 @@ model ChoirCommitteeMember {
   @@index([memberId])
   @@index([roleId])
   @@index([effectiveEnd])
+}
+
+/// SAP GRC-style shared templates — apply to any choir via governance
+model ChoirCommitteeRoleTemplate {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  label           String
+  description     String?
+  permissionsJson Json
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+/// Entra PIM-style temporary advisor permission grants
+model ChoirAdvisorElevation {
+  id              String    @id @default(uuid())
+  choirId         String
+  memberId        String
+  permissionsJson Json
+  reason          String?
+  startsAt        DateTime
+  endsAt          DateTime
+  grantedByUserId String
+  revokedAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  choir           Choir     @relation(fields: [choirId], references: [id], onDelete: Cascade)
+  member          Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  grantedBy       User      @relation("AdvisorElevationGranter", fields: [grantedByUserId], references: [id])
+
+  @@index([choirId])
+  @@index([memberId])
+  @@index([endsAt])
+  @@index([revokedAt])
+}
+
+/// Viva-style weekly leadership team health pulse
+model ChoirExecutivePulseEntry {
+  id                 String   @id @default(uuid())
+  choirId            String
+  weekStart          DateTime
+  score              Int
+  note               String?
+  recordedByMemberId String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  choir              Choir    @relation(fields: [choirId], references: [id], onDelete: Cascade)
+  recordedBy         Member?  @relation(fields: [recordedByMemberId], references: [id], onDelete: SetNull)
+
+  @@unique([choirId, weekStart])
+  @@index([choirId])
+  @@index([weekStart])
 }
 
 model ProtocolCommitteeRole {
@@ -1147,6 +1202,8 @@ model Choir {
   contributionCampaigns ContributionCampaign[]
   sponsorContributions  ContributionRecord[]
   committeeRoles        ChoirCommitteeRole[]
+  advisorElevations     ChoirAdvisorElevation[]
+  executivePulseEntries ChoirExecutivePulseEntry[]
   notifications         Notification[]
   protocolTeamLeaders   ProtocolTeamLeader[]
   activities            ChoirActivity[]

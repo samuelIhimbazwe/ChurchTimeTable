@@ -176,6 +176,30 @@ export const choirApi = {
     URL.revokeObjectURL(url)
   },
 
+  getExecutivePulse: (choirId: string, weekStart?: string) =>
+    apiClient.get<
+      never,
+      {
+        choirId: string
+        weekStart: string
+        entry: {
+          score: number
+          note: string | null
+          recordedByName: string | null
+          updatedAt: string
+        } | null
+        recent: Array<{ weekStart: string; score: number; note: string | null }>
+      }
+    >(`/choirs/${choirId}/executive/pulse`, {
+      params: weekStart ? { weekStart } : undefined,
+    }),
+
+  upsertExecutivePulse: (
+    choirId: string,
+    payload: { score: number; note?: string; weekStart?: string },
+  ) =>
+    apiClient.post<never, unknown>(`/choirs/${choirId}/executive/pulse`, payload),
+
   getMeetings: () =>
     apiClient.get<never, unknown[]>('/choir/meetings'),
 

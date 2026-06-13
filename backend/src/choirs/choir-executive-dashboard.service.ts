@@ -20,6 +20,8 @@ import {
 import { computeCareCaseSla } from '../welfare/welfare-care-desk.util';
 import { ACTIVE_WELFARE_STATUSES } from '../welfare/welfare-case.util';
 import { choirContributionScopeWhere } from '../finance/contribution-treasury-period.util';
+import { resolvePulseWeekStart } from '../common/pulse/pulse-week.util';
+import type { UpsertChoirExecutivePulseDto } from './dto/upsert-choir-executive-pulse.dto';
 
 export type OfficerSlaItem = {
   id: string;
@@ -249,6 +251,104 @@ export class ChoirExecutiveDashboardService {
     };
   }
 
+  async getExecutivePulse(actorUserId: string, choirId: string, weekStart?: string) {
+    await this.assertExecutiveView(actorUserId, choirId);
+    const resolvedWeekStart = resolvePulseWeekStart(weekStart);
+
+    const entry = await this.prisma.choirExecutivePulseEntry.findUnique({
+      where: {
+        choirId_weekStart: {
+          choirId,
+          weekStart: resolvedWeekStart,
+        },
+      },
+      include: {
+        recordedBy: {
+          select: { firstName: true, lastName: true },
+        },
+      },
+    });
+
+    const recent = await this.prisma.choirExecutivePulseEntry.findMany({
+      where: { choirId },
+      orderBy: { weekStart: 'desc' },
+      take: 8,
+      select: {
+        weekStart: true,
+        score: true,
+        note: true,
+      },
+    });
+
+    return {
+      choirId,
+      weekStart: resolvedWeekStart.toISOString(),
+      entry: entry
+        ? {
+            score: entry.score,
+            note: entry.note,
+            recordedByName: entry.recordedBy
+              ? `${entry.recordedBy.firstName} ${entry.recordedBy.lastName}`.trim()
+              : null,
+            updatedAt: entry.updatedAt.toISOString(),
+          }
+        : null,
+      recent: recent.map((row) => ({
+        weekStart: row.weekStart.toISOString(),
+        score: row.score,
+        note: row.note,
+      })),
+    };
+  }
+
+  async upsertExecutivePulse(
+    actorUserId: string,
+    choirId: string,
+    dto: UpsertChoirExecutivePulseDto,
+  ) {
+    const ctx = await this.assertExecutivePulseRecord(actorUserId, choirId);
+    const weekStart = resolvePulseWeekStart(dto.weekStart);
+
+    const entry = await this.prisma.choirExecutivePulseEntry.upsert({
+      where: {
+        choirId_weekStart: {
+          choirId,
+          weekStart,
+        },
+      },
+      create: {
+        choirId,
+        weekStart,
+        score: dto.score,
+        note: dto.note?.trim() || null,
+        recordedByMemberId: ctx.memberId ?? null,
+      },
+      update: {
+        score: dto.score,
+        note: dto.note?.trim() || null,
+        recordedByMemberId: ctx.memberId ?? null,
+      },
+    });
+
+    await this.audit.log({
+      userId: actorUserId,
+      action: 'CHOIR_EXECUTIVE_PULSE_UPSERT',
+      entity: 'ChoirExecutivePulseEntry',
+      entityId: entry.id,
+      newValue: { score: dto.score, weekStart: weekStart.toISOString() },
+    });
+
+    return {
+      choirId,
+      weekStart: weekStart.toISOString(),
+      entry: {
+        score: entry.score,
+        note: entry.note,
+        updatedAt: entry.updatedAt.toISOString(),
+      },
+    };
+  }
+
   private buildOfficerItem(input: {
     id: string;
     label: string;
@@ -304,6 +404,34 @@ export class ChoirExecutiveDashboardService {
     }
 
     throw new ForbiddenException('Executive dashboard access required');
+  }
+
+  private async assertExecutivePulseRecord(actorUserId: string, choirId: string) {
+    const resolved = await this.permissions.resolveForUser(actorUserId);
+    const memberId = resolved.memberId;
+    if (!memberId) {
+      throw new ForbiddenException('Member profile required to record executive pulse');
+    }
+
+    const pulseSeat = await this.prisma.choirCommitteeMember.findFirst({
+      where: {
+        choirId,
+        memberId,
+        role: {
+          name: {
+            in: ['president', 'vice_president', 'vice-president', 'secretary'],
+          },
+        },
+        ...activeChoirCommitteeMemberWhere(),
+      },
+      select: { id: true },
+    });
+    if (pulseSeat) {
+      return { memberId };
+    }
+
+    await this.assertExecutiveView(actorUserId, choirId);
+    return { memberId };
   }
 
   private async assertActiveChoir(choirId: string) {

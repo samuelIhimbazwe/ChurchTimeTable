@@ -38,6 +38,7 @@ interface MeResponse {
   permissions: string[]
   onboardingCompleted: boolean
   member?: {
+    id: string
     firstName: string
     lastName: string
   } | null
@@ -115,6 +116,8 @@ export const authApi = {
     const profile = await apiClient.get<never, MeResponse>('/auth/me')
     return mapMeToAuthUser(profile)
   },
+
+  getProfile: () => apiClient.get<never, MeResponse>('/auth/me'),
 
   completeOnboarding: () =>
     apiClient.patch<never, void>('/auth/onboarding-complete'),

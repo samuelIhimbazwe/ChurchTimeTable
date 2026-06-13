@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { choirApi, choirSchedulingApi, financeApi } from '@/lib/api'
 import { OfficeCommandHome } from '@/components/shared/office/OfficeCommandHome'
 import { OfficerSlaPanel } from '@/components/choir/committee/OfficerSlaPanel'
+import { ChoirExecutivePulsePanel } from '@/components/choir/committee/ChoirExecutivePulsePanel'
 import { Card, SkeletonCard } from '@/components/shared'
 import { toast } from '@/components/shared/Toast'
 import { useResolvedChoirScope } from '@/lib/hooks'
@@ -170,6 +171,8 @@ export function PresidentCommandHome() {
       />
 
       <OfficerSlaPanel />
+
+      {choirId && <ChoirExecutivePulsePanel choirId={choirId} />}
 
       {pendingCount > 0 && (
         <Card padding="md" accent="warning">

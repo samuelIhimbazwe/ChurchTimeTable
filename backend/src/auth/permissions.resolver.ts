@@ -113,6 +113,22 @@ export class PermissionsResolver {
         ),
       );
 
+      const now = new Date();
+      const advisorElevations = await this.prisma.choirAdvisorElevation.findMany({
+        where: {
+          memberId: user.member.id,
+          revokedAt: null,
+          startsAt: { lte: now },
+          endsAt: { gt: now },
+        },
+        select: { choirId: true, permissionsJson: true },
+      });
+      permissions.push(
+        ...advisorElevations.flatMap((item) =>
+          parsePermissions(item.permissionsJson),
+        ),
+      );
+
       const ministryAssignments =
         await this.prisma.ministryPermissionAssignment.findMany({
           where: { memberId: user.member.id, revokedAt: null },

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -15,6 +15,8 @@ import { AssignCommitteeMemberDto } from './dto/assign-committee-member.dto';
 import { GenerateProtocolTeamsDto } from './dto/generate-protocol-teams.dto';
 import { UpsertCommitteeRoleDto } from './dto/upsert-committee-role.dto';
 import { ChoirSodCheckDto } from './dto/choir-sod-check.dto';
+import { ApplyChoirRoleTemplateDto } from './dto/apply-choir-role-template.dto';
+import { CreateAdvisorElevationDto } from './dto/create-advisor-elevation.dto';
 
 @Controller('governance')
 @UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
@@ -56,6 +58,52 @@ export class GovernanceController {
       assignmentId,
       user.sub,
       body?.effectiveEnd,
+    );
+  }
+
+  @Get('choir/role-templates')
+  @RequirePermissions(PERMISSIONS.COMMITTEE_ROLE_MANAGE_SCOPE)
+  listChoirRoleTemplates() {
+    return this.governance.listChoirRoleTemplates();
+  }
+
+  @Post('choir/role-templates/:templateId/apply')
+  @RequirePermissions(PERMISSIONS.COMMITTEE_ROLE_MANAGE_SCOPE)
+  applyChoirRoleTemplate(
+    @Param('templateId') templateId: string,
+    @Body() dto: ApplyChoirRoleTemplateDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.governance.applyChoirRoleTemplate(templateId, dto, user.sub);
+  }
+
+  @Post('choir/advisor-elevations')
+  @RequirePermissions(PERMISSIONS.COMMITTEE_ROLE_MANAGE_SCOPE)
+  createAdvisorElevation(
+    @Body() dto: CreateAdvisorElevationDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.governance.createAdvisorElevation(dto, user.sub);
+  }
+
+  @Delete('choir/advisor-elevations/:elevationId')
+  @RequirePermissions(PERMISSIONS.COMMITTEE_ROLE_MANAGE_SCOPE)
+  revokeAdvisorElevation(
+    @Param('elevationId') elevationId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.governance.revokeAdvisorElevation(elevationId, user.sub);
+  }
+
+  @Get('choir/:scopeId/advisor-elevations')
+  @RequirePermissions(PERMISSIONS.EVENT_READ)
+  listAdvisorElevations(
+    @Param('scopeId') scopeId: string,
+    @Query('activeOnly') activeOnly?: string,
+  ) {
+    return this.governance.listAdvisorElevations(
+      scopeId,
+      activeOnly !== 'false',
     );
   }
 

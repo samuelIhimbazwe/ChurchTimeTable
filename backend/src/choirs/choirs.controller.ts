@@ -21,6 +21,7 @@ import { ChoirMembersService } from './choir-members.service';
 import { ChoirGovernanceService } from './choir-governance.service';
 import { ChoirExecutiveDashboardService } from './choir-executive-dashboard.service';
 import { UpdatePresidentDelegationDto } from './dto/update-president-delegation.dto';
+import { UpsertChoirExecutivePulseDto } from './dto/upsert-choir-executive-pulse.dto';
 
 import { IsString } from 'class-validator';
 
@@ -95,6 +96,24 @@ export class ChoirsController {
     @Param('choirId') choirId: string,
   ) {
     return this.executiveDashboard.getOfficerSla(user.sub, choirId);
+  }
+
+  @Get(':choirId/executive/pulse')
+  getExecutivePulse(
+    @CurrentUser() user: JwtPayload,
+    @Param('choirId') choirId: string,
+    @Query('weekStart') weekStart?: string,
+  ) {
+    return this.executiveDashboard.getExecutivePulse(user.sub, choirId, weekStart);
+  }
+
+  @Post(':choirId/executive/pulse')
+  upsertExecutivePulse(
+    @CurrentUser() user: JwtPayload,
+    @Param('choirId') choirId: string,
+    @Body() dto: UpsertChoirExecutivePulseDto,
+  ) {
+    return this.executiveDashboard.upsertExecutivePulse(user.sub, choirId, dto);
   }
 
   @Get(':choirId/executive/export/pdf')

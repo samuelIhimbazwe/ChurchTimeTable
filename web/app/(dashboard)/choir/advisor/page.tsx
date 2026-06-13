@@ -12,6 +12,7 @@ import { ChoirPositionHubShell } from '@/components/choir/ChoirPositionHubShell'
 import { AdvisorCapabilityPanel } from '@/components/choir/AdvisorCapabilityPanel'
 import { Calendar, Shield, DollarSign } from 'lucide-react'
 import { AdvisorCommandHome } from '@/components/choir/committee/AdvisorCommandHome'
+import { AdvisorElevationNotice } from '@/components/choir/committee/AdvisorElevationNotice'
 
 const TABS = [
   { id: 'my-access', label: 'My assigned access' },
@@ -72,6 +73,7 @@ export default function AdvisorHubPage() {
       {tab === 'my-access' && (
         <div className="space-y-6">
           <AdvisorCommandHome />
+          <AdvisorElevationNotice />
           <AdvisorCapabilityPanel />
         </div>
       )}

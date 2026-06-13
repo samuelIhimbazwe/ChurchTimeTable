@@ -22,6 +22,7 @@ import {
   MAIN_CHOIR_CODE,
   MAIN_CHOIR_ID,
 } from '../src/common/constants/choir.constants';
+import { DEFAULT_CHOIR_COMMITTEE_ROLE_TEMPLATES } from '../src/common/governance/choir-committee-role-templates.constant';
 import {
   DEFAULT_MINISTRIES,
   leadershipPositionsForMinistry,
@@ -940,6 +941,23 @@ async function main() {
       },
       update: {
         permissionsJson: role.permissions,
+      },
+    });
+  }
+
+  for (const template of DEFAULT_CHOIR_COMMITTEE_ROLE_TEMPLATES) {
+    await prisma.choirCommitteeRoleTemplate.upsert({
+      where: { name: template.name },
+      create: {
+        name: template.name,
+        label: template.label,
+        description: template.description,
+        permissionsJson: template.permissions,
+      },
+      update: {
+        label: template.label,
+        description: template.description,
+        permissionsJson: template.permissions,
       },
     });
   }
