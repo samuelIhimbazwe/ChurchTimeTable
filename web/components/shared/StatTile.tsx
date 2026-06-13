@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -15,8 +16,9 @@ interface StatTileProps {
   suffix?: string         /* e.g. "%" */
   animate?: boolean
   onClick?: () => void
+  href?: string
   className?: string
-  accent?: boolean        /* gold left border variant */
+  accent?: boolean        /* primary left border highlight */
 }
 
 function useCountUp(target: number, animate: boolean, duration = 800) {
@@ -51,6 +53,7 @@ export default function StatTile({
   suffix = '',
   animate = true,
   onClick,
+  href,
   className,
   accent = false,
 }: StatTileProps) {
@@ -61,18 +64,20 @@ export default function StatTile({
   const deltaNeutral  = delta === 0
   const DeltaIcon     = deltaNeutral ? Minus : deltaPositive ? TrendingUp : TrendingDown
 
-  return (
+  const interactive = !!onClick || !!href
+
+  const body = (
     <div
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
-      onClick={onClick}
+      role={onClick && !href ? 'button' : undefined}
+      tabIndex={onClick && !href ? 0 : undefined}
+      onKeyDown={onClick && !href ? (e) => e.key === 'Enter' && onClick() : undefined}
+      onClick={href ? undefined : onClick}
       className={cn(
         'relative bg-surface rounded-lg p-4 sm:p-5 min-w-0',
         'border border-border shadow-card',
         'flex flex-col gap-3',
-        accent && 'border-l-4 border-l-gold-500',
-        onClick && 'cursor-pointer hover:shadow-raised hover:-translate-y-0.5',
+        accent && 'border-l-[3px] border-l-primary-600',
+        interactive && 'cursor-pointer hover:shadow-raised hover:-translate-y-0.5',
         'transition-all duration-fast',
         className,
       )}
@@ -115,4 +120,14 @@ export default function StatTile({
       )}
     </div>
   )
+
+  if (href) {
+    return (
+      <Link href={href} className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
+        {body}
+      </Link>
+    )
+  }
+
+  return body
 }

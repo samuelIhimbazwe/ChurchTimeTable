@@ -19,7 +19,7 @@ export const COMMITTEE_ROLE_HUB_PATH: Record<string, string> = {
   vice_president: 'vice-president',
   music_director: 'music-direction',
   family_coordinator: 'family-coordinator',
-  family_head: 'family-head',
+  family_head: 'family-leadership',
   advisor: 'advisor',
   secretary: 'records',
   treasurer: 'budget',

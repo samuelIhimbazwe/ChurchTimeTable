@@ -14,6 +14,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { PermissionsResolver } from '../auth/permissions.resolver';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { IndividualWhatsAppService } from '../messaging/individual-whatsapp.service';
+import { AppLinkService } from '../messaging/app-link.service';
 import { PERMISSIONS } from '../common/constants/roles';
 import { assertChoirOpsManage, assertChoirOpsView } from './choir-operations.util';
 
@@ -24,6 +26,8 @@ export class ChoirAnnouncementsService {
     private permissions: PermissionsResolver,
     private audit: AuditService,
     private notifications: NotificationsService,
+    private individualWhatsApp: IndividualWhatsAppService,
+    private appLinks: AppLinkService,
   ) {}
 
   private async assertManage(userId: string) {
@@ -153,6 +157,7 @@ export class ChoirAnnouncementsService {
       row.audienceRef,
     );
     const preview = row.body.slice(0, 200);
+    const actionUrl = this.appLinks.choirAnnouncement(row.choirId, row.id);
     for (const targetUserId of userIds) {
       await this.notifications.create(
         targetUserId,
@@ -164,8 +169,20 @@ export class ChoirAnnouncementsService {
           announcementId: row.id,
           choirId: row.choirId,
           audience: row.audience,
+          actionUrl,
         },
+        row.choirId,
       );
+
+      void this.individualWhatsApp
+        .sendAnnouncement({
+          userId: targetUserId,
+          title: row.title,
+          preview,
+          choirId: row.choirId,
+          announcementId: row.id,
+        })
+        .catch(() => undefined);
     }
   }
 

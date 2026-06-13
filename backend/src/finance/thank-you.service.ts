@@ -23,6 +23,9 @@ import {
   ContributionSmsChannel,
   type ContributionSmsResult,
 } from './contribution-sms.channel';
+import { ContributionScopeService } from './contribution-scope.service';
+import { IndividualWhatsAppService } from '../messaging/individual-whatsapp.service';
+import { AppLinkService } from '../messaging/app-link.service';
 
 @Injectable()
 export class ThankYouService {
@@ -32,6 +35,9 @@ export class ThankYouService {
     private notifications: NotificationsService,
     private operationalScope: OperationalScopeService,
     private sms: ContributionSmsChannel,
+    private contributionScope: ContributionScopeService,
+    private individualWhatsApp: IndividualWhatsAppService,
+    private appLinks: AppLinkService,
   ) {}
 
   async scopeForUser(actorUserId: string): Promise<FinanceScopeContext> {
@@ -122,6 +128,19 @@ export class ThankYouService {
       });
     }
 
+    let whatsappResult: Awaited<
+      ReturnType<IndividualWhatsAppService['sendThankYou']>
+    > = { sent: false, skippedReason: 'no_phone' };
+    if (phone) {
+      whatsappResult = await this.individualWhatsApp.sendThankYou({
+        phone,
+        memberName,
+        amount: confirmedAmount,
+        currency: record.currency,
+        referenceNumber: record.referenceNumber,
+      });
+    }
+
     const sentAt = new Date();
 
     if (options.automatic) {
@@ -152,6 +171,7 @@ export class ThankYouService {
         currency: record.currency,
         contributionId: record.id,
         referenceNumber: record.referenceNumber,
+        actionUrl: this.appLinks.portalContributions(),
       });
 
       const updated = options.automatic
@@ -178,6 +198,7 @@ export class ThankYouService {
             referenceNumber: record.referenceNumber,
             channel: 'in_app',
             sms: smsResult,
+            whatsapp: whatsappResult,
             automatic: true,
             timestamp: sentAt.toISOString(),
           },
@@ -218,7 +239,14 @@ export class ThankYouService {
       throw new NotFoundException('Contribution not found');
     }
 
-    this.assertManageScope(ctx, record.member.ministry);
+    const actorScope = await this.contributionScope.resolveActor(actorUserId);
+    const familyMayResend =
+      Boolean(record.familyId) &&
+      this.contributionScope.canApproveFamily(actorScope, record.familyId!);
+
+    if (!familyMayResend) {
+      this.assertManageScope(ctx, record.member.ministry);
+    }
 
     if (record.status !== ContributionStatus.CONFIRMED) {
       throw new BadRequestException(

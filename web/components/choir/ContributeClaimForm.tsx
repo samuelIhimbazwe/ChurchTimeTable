@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { contributionsApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
@@ -19,14 +19,26 @@ function toLocalDatetimeInput(d = new Date()) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-export function ContributeClaimForm({ onSuccess }: { onSuccess?: () => void }) {
+export function ContributeClaimForm({
+  onSuccess,
+  choirId,
+  initialTypeId,
+}: {
+  onSuccess?: (claim?: { id: string }) => void
+  choirId?: string
+  initialTypeId?: string
+}) {
   const qc = useQueryClient()
   const { data: ctx, isLoading } = useQuery({
-    queryKey: ['contribution-submit-context'],
-    queryFn: contributionsApi.getSubmitContext,
+    queryKey: ['contribution-submit-context', choirId],
+    queryFn: () => contributionsApi.getSubmitContext(choirId),
   })
 
-  const [typeId, setTypeId] = useState('')
+  const [typeId, setTypeId] = useState(initialTypeId ?? '')
+
+  useEffect(() => {
+    if (initialTypeId) setTypeId(initialTypeId)
+  }, [initialTypeId])
   const [customType, setCustomType] = useState('')
   const [amount, setAmount] = useState('')
   const [paymentAt, setPaymentAt] = useState(toLocalDatetimeInput())
@@ -47,15 +59,17 @@ export function ContributeClaimForm({ onSuccess }: { onSuccess?: () => void }) {
         notes: notes.trim() || undefined,
         customTypeLabel: isOther ? customType.trim() : undefined,
       }),
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success('Payment claim submitted', 'Your family head will review it.')
       qc.invalidateQueries({ queryKey: ['contribution-submit-context'] })
       qc.invalidateQueries({ queryKey: ['my-contributions'] })
+      qc.invalidateQueries({ queryKey: ['my-contributions-list'] })
+      qc.invalidateQueries({ queryKey: ['member-contribution-totals'] })
       qc.invalidateQueries({ queryKey: ['family-contribution-inbox'] })
       setAmount('')
       setNotes('')
       setCustomType('')
-      onSuccess?.()
+      onSuccess?.(data)
     },
     onError: (err: Error) => {
       toast.error('Could not submit', err.message || 'Check your details and try again.')

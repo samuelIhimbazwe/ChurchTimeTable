@@ -4,6 +4,7 @@ import { FamiliesService } from './families.service';
 import { ParticipationModule } from '../common/participation/participation.module';
 import { GovernanceModule } from '../governance/governance.module';
 import { AuditModule } from '../audit/audit.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
 import { FamilyMetricsService } from './family-metrics.service';
 import { FinanceModule } from '../finance/finance.module';
@@ -12,6 +13,7 @@ import { FinanceModule } from '../finance/finance.module';
   imports: [
     GovernanceModule,
     AuditModule,
+    NotificationsModule,
     ParticipationModule,
     MemberPhoneEnforcementModule,
     FinanceModule,

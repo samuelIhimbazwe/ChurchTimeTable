@@ -8,6 +8,8 @@ import { DevotionType, NotificationType, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { IndividualWhatsAppService } from '../messaging/individual-whatsapp.service';
+import { AppLinkService } from '../messaging/app-link.service';
 import { getActiveChoirId, choirScopeFilter } from '../common/choir/choir-context.storage';
 import type { CreateDevotionDto, UpdateDevotionDto } from './dto/devotion.dto';
 
@@ -17,6 +19,8 @@ export class DevotionsService {
     private prisma: PrismaService,
     private audit: AuditService,
     private notifications: NotificationsService,
+    private individualWhatsApp: IndividualWhatsAppService,
+    private appLinks: AppLinkService,
   ) {}
 
   private publishedFilter(now = new Date()): Prisma.DevotionWhereInput {
@@ -181,7 +185,7 @@ export class DevotionsService {
       newValue: { publishedAt: now.toISOString() },
     });
 
-    await this.notifyMembersIfAllowed(choirId, row.title, row.id);
+    await this.notifyMembersIfAllowed(choirId, row);
 
     return row;
   }
@@ -212,8 +216,13 @@ export class DevotionsService {
 
   private async notifyMembersIfAllowed(
     choirId: string,
-    title: string,
-    devotionId: string,
+    devotion: {
+      id: string;
+      title: string;
+      type: DevotionType;
+      verseReference: string | null;
+      verseText: string | null;
+    },
   ) {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
@@ -248,15 +257,39 @@ export class DevotionsService {
             })
           ).map((u) => u.id);
 
+    const actionUrl = this.appLinks.portalDevotion();
+    const preview =
+      devotion.type === DevotionType.VERSE_OF_DAY && devotion.verseText
+        ? devotion.verseText.slice(0, 200)
+        : 'A new devotion has been published for your choir.';
+
     for (const userId of userIds) {
       await this.notifications.create(
         userId,
         NotificationType.CHOIR_DEVOTION,
-        title,
-        'A new devotion has been published for your choir.',
-        { devotionId, choirId },
+        devotion.title,
+        preview,
+        {
+          devotionId: devotion.id,
+          choirId,
+          kind: 'choir_devotion',
+          actionUrl,
+        },
         choirId,
       );
+
+      if (devotion.type === DevotionType.VERSE_OF_DAY) {
+        void this.individualWhatsApp
+          .sendVerseOfDay({
+            userId,
+            title: devotion.title,
+            verseReference: devotion.verseReference,
+            verseText: devotion.verseText,
+            choirId,
+            devotionId: devotion.id,
+          })
+          .catch(() => undefined);
+      }
     }
   }
 

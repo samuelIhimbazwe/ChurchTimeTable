@@ -27,6 +27,7 @@ CMMS (shared: login, profile, portal, church calendar, member records)
 | **Role landing** | `/choir/{choirId}` → highest-priority role hub (president → … → family head → member). |
 | **Membership rules** | One primary choir + Yerusalemu exception; hidden choirs blocked at API and redirected in UI. |
 | **Role Hub** | Personalized desk (president, family head, singer, etc.) — **not** an 11th module. |
+| **Family Department** | Four sovereign offices (member, head, deputy, secretary) — see [`architecture/FAMILY_DEPARTMENT_SPEC.md`](architecture/FAMILY_DEPARTMENT_SPEC.md) for external reference imports and improvement tiers (S/A/B/C; AI deferred). |
 
 ---
 

@@ -676,6 +676,7 @@ export class NotificationsService {
     currency: string;
     contributionId: string;
     referenceNumber: string;
+    actionUrl?: string;
   }) {
     const locale = await this.userLocale(event.userId);
     const params = {
@@ -705,6 +706,7 @@ export class NotificationsService {
       currency: event.currency,
       contributionType: event.contributionType,
       memberNumber: event.memberNumber,
+      actionUrl: event.actionUrl,
     });
   }
 

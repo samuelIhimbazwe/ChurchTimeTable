@@ -7,6 +7,7 @@ import {
 import {
   ChoirJoinRequestStatus,
   ChoirJoinRequestType,
+  NotificationType,
 } from '@prisma/client';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -18,6 +19,9 @@ import { ChoirContextService } from '../choirs/choir-context.service';
 import { MEMBER_PORTAL_AUDIT, YERUSALEMU_CHOIR_CODE } from './member-portal.constants';
 import { ChoirMembershipRulesService } from './choir-membership-rules.service';
 import { MemberPortalNotificationsService } from './member-portal-notifications.service';
+import { IndividualWhatsAppService } from '../messaging/individual-whatsapp.service';
+import { AppLinkService } from '../messaging/app-link.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class ChoirJoinRequestsService {
@@ -28,6 +32,9 @@ export class ChoirJoinRequestsService {
     private rules: ChoirMembershipRulesService,
     private choirContext: ChoirContextService,
     private notify: MemberPortalNotificationsService,
+    private individualWhatsApp: IndividualWhatsAppService,
+    private appLinks: AppLinkService,
+    private notifications: NotificationsService,
   ) {}
 
   private async memberForUser(userId: string) {
@@ -124,7 +131,51 @@ export class ChoirJoinRequestsService {
       newValue: data as Prisma.InputJsonValue,
     });
 
+    await this.notifyJoinRequestSubmitted(request);
+
     return request;
+  }
+
+  private async notifyJoinRequestSubmitted(request: {
+    id: string;
+    choirId: string;
+    requestType: ChoirJoinRequestType;
+    choir: { name: string };
+    member: { firstName: string; lastName: string };
+  }) {
+    const memberName =
+      `${request.member.firstName} ${request.member.lastName}`.trim();
+    const actionUrl = this.appLinks.choirJoinRequests(
+      request.choirId,
+      request.id,
+    );
+
+    const reviewers = await this.individualWhatsApp.loadJoinReviewers();
+    for (const reviewer of reviewers) {
+      await this.notifications.create(
+        reviewer.userId,
+        NotificationType.GENERAL,
+        'New choir join request',
+        `${memberName} requested to join ${request.choir.name}.`,
+        {
+          kind: 'choir_join_request_admin',
+          requestId: request.id,
+          choirId: request.choirId,
+          actionUrl,
+        },
+        request.choirId,
+      );
+    }
+
+    void this.individualWhatsApp
+      .notifyJoinRequestSubmitted({
+        choirId: request.choirId,
+        choirName: request.choir.name,
+        requestId: request.id,
+        memberName,
+        requestType: request.requestType,
+      })
+      .catch(() => undefined);
   }
 
   async list(actorUserId: string, filters?: { choirId?: string; status?: ChoirJoinRequestStatus }) {

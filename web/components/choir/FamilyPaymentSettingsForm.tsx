@@ -37,6 +37,7 @@ export function FamilyPaymentSettingsForm({ familyId, initial }: Props) {
     onSuccess: () => {
       toast.success('Payment details saved', 'Members will see these when paying.')
       qc.invalidateQueries({ queryKey: ['family-detail', familyId] })
+      qc.invalidateQueries({ queryKey: ['family-payment-history', familyId] })
       qc.invalidateQueries({ queryKey: ['choir-my-family'] })
       qc.invalidateQueries({ queryKey: ['contribution-submit-context'] })
     },

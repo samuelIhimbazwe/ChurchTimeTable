@@ -20,6 +20,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { legacyContributionTypeFromCatalogCode } from './contribution-catalog.util';
 import { generateContributionReferenceNumber } from './contribution-reference.util';
 import { ContributionScopeService } from './contribution-scope.service';
+import { ContributionWorkflowNotificationsService } from './contribution-workflow-notifications.service';
 import { PAYMENT_AT_FUTURE_TOLERANCE_MS } from './contribution-submission.constants';
 import { SubmitContributionDto } from './dto/submit-contribution.dto';
 import { PERMISSIONS } from '../common/constants/roles';
@@ -42,6 +43,7 @@ export class ContributionSubmissionService {
     private audit: AuditService,
     private notifications: NotificationsService,
     private i18n: I18nService,
+    private workflowNotifications: ContributionWorkflowNotificationsService,
   ) {}
 
   async submit(actorUserId: string, dto: SubmitContributionDto) {
@@ -170,7 +172,13 @@ export class ContributionSubmissionService {
         member.firstName,
       );
     } else {
-      await this.notifyFamilyApprovers(familyId!, created.id, member.firstName);
+      await this.notifyFamilyApprovers(
+        familyId!,
+        created.id,
+        member.firstName,
+        dto.claimedAmount,
+        currency,
+      );
     }
 
     return this.serializeSubmitted(created);
@@ -254,10 +262,13 @@ export class ContributionSubmissionService {
     familyId: string,
     contributionId: string,
     submitterFirstName: string,
+    claimedAmount: number,
+    currency: string,
   ) {
     const family = await this.prisma.family.findUnique({
       where: { id: familyId },
       select: {
+        choirId: true,
         delegationEnabled: true,
         members: {
           where: {
@@ -288,30 +299,43 @@ export class ContributionSubmissionService {
       }
     }
 
+    if (!recipientUserIds.size) return;
+
+    const localizedTitles = new Map<string, string>();
+    const localizedBodies = new Map<string, string>();
     for (const userId of recipientUserIds) {
       const locale = await this.resolveUserLocale(userId);
-      const title = this.i18n.translate(
-        locale,
-        'NOTIFICATION_CONTRIBUTION_SUBMITTED_HEAD_TITLE',
-      );
-      const body = this.i18n.translate(
-        locale,
-        'NOTIFICATION_CONTRIBUTION_SUBMITTED_HEAD_BODY',
-        undefined,
-        { name: submitterFirstName },
-      );
-
-      await this.notifications.create(
+      localizedTitles.set(
         userId,
-        NotificationType.GENERAL,
-        title,
-        body,
-        {
-          kind: 'contribution_submitted',
-          contributionId,
-          familyId,
-        },
+        this.i18n.translate(
+          locale,
+          'NOTIFICATION_CONTRIBUTION_SUBMITTED_HEAD_TITLE',
+        ),
       );
+      localizedBodies.set(
+        userId,
+        this.i18n.translate(
+          locale,
+          'NOTIFICATION_CONTRIBUTION_SUBMITTED_HEAD_BODY',
+          undefined,
+          { name: submitterFirstName },
+        ),
+      );
+    }
+
+    for (const userId of recipientUserIds) {
+      await this.workflowNotifications.notifyNewContributionForApproval({
+        familyId,
+        contributionId,
+        choirId: family.choirId,
+        delegationEnabled: family.delegationEnabled,
+        submitterFirstName,
+        recipientUserIds: [userId],
+        claimedAmount,
+        currency,
+        title: localizedTitles.get(userId),
+        body: localizedBodies.get(userId),
+      });
     }
   }
 

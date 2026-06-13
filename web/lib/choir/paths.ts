@@ -17,7 +17,11 @@ export const LEGACY_CHOIR_ROUTE_SEGMENTS = new Set([
   'documents',
   'families',
   'family-coordinator',
+  'family-coordination',
+  'family-deputy',
   'family-head',
+  'family-leadership',
+  'membership',
   'finance',
   'join-requests',
   'meetings',
@@ -76,7 +80,7 @@ export function choirPath(choirId: string, ...segments: string[]): string {
 }
 
 export function choirMemberHome(choirId: string): string {
-  return choirPath(choirId, 'member')
+  return choirPath(choirId, 'membership')
 }
 
 /** Prefer scoped `/choir/{id}/…` when choir id is known; else legacy `/choir/…`. */

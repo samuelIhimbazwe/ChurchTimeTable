@@ -19,4 +19,18 @@ export type ChoirDashboardContext = {
   permissions: string[]
   landingPath: string
   canAccess: boolean
+  familyOffices?: Array<{
+    role: string
+    familyId: string
+    familyName: string
+    officePath: string
+    label: string
+  }>
+  customRoles?: Array<{
+    id: string
+    customRoleId: string
+    name: string
+    description: string | null
+    permissions: string[]
+  }>
 }

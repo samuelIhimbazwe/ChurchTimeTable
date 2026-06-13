@@ -108,7 +108,7 @@ const CHOIR_ADVISOR_HUB: NavSection = {
 
 const CHOIR_MEMBER_HUB: NavSection = {
   section: 'Choir',
-  items: [{ label: 'My choir', icon: Music, path: '/choir/member' }],
+  items: [{ label: 'My membership', icon: Music, path: '/choir/member' }],
 }
 
 const CHOIR_LEADERSHIP_NAV: NavSection = {
@@ -459,8 +459,8 @@ function officerHubsForPermissions(permissions: string[]): NavItem[] {
 }
 
 const CHOIR_DASHBOARD_ENTRY = (choir: ActiveChoirMembership): NavSection => ({
-  section: 'Choir',
-  items: [{ label: `${choir.name} dashboard`, icon: Music, path: choirMemberHome(choir.id) }],
+  section: choir.name,
+  items: [{ label: 'My membership', icon: Music, path: choirMemberHome(choir.id) }],
 })
 
 const BACK_TO_PORTAL: NavSection = {

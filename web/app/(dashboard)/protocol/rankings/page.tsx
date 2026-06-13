@@ -137,7 +137,7 @@ export default function ProtocolRankingsPage() {
               <li
                 key={`${r.memberId}-${i}`}
                 className={`flex items-center gap-4 px-5 py-4 hover:bg-surface-raised transition-colors ${
-                  i < 3 ? 'bg-gold-50' : ''
+                  i < 3 ? 'bg-surface-raised' : ''
                 }`}
               >
                 <span className={`font-display font-bold text-2xl w-8 text-right shrink-0 ${

@@ -313,3 +313,21 @@
     50%      { opacity: 0.4; }
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #family-meeting-pack,
+  #family-meeting-pack * {
+    visibility: visible;
+  }
+
+  #family-meeting-pack {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}

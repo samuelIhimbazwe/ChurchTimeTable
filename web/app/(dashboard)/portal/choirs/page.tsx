@@ -155,7 +155,7 @@ function PortalChoirsContent() {
                       </div>
                       {actions.showDashboardButton ? (
                         <div className="mt-3" onClick={(e) => e.stopPropagation()}>
-                          <ChoirDashboardEntryButton choirId={choir.id} label="Open choir dashboard" />
+                          <ChoirDashboardEntryButton choirId={choir.id} />
                         </div>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary-600 mt-2">

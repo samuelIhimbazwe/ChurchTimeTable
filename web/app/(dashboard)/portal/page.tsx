@@ -578,7 +578,7 @@ export default function MemberPortalPage() {
                         )}
                       </Link>
                       {actions.showDashboardButton ? (
-                        <ChoirDashboardEntryButton choirId={c.id} label="Dashboard" className="shrink-0" />
+                        <ChoirDashboardEntryButton choirId={c.id} className="shrink-0" />
                       ) : (
                         <ChoirPortalJoinControls
                           actions={actions}

@@ -49,7 +49,15 @@ export type ContributionClaim = {
   memberId?: string
   memberName?: string
   memberNumber?: string
+  memberPhone?: string | null
   familyId?: string
+  familyName?: string | null
+  familyCode?: string | null
+  familyApprovedByName?: string | null
+  familyApprovedByNumber?: string | null
+  familyRejectedByName?: string | null
+  familyApprovedAt?: string | null
+  familyRejectedAt?: string | null
   claimedAmount: number
   confirmedAmount: number | null
   effectiveAmount?: number | null
@@ -102,7 +110,20 @@ function mapClaim(row: Record<string, unknown>): ContributionClaim {
     memberId: row.memberId != null ? String(row.memberId) : undefined,
     memberName: row.memberName != null ? String(row.memberName) : undefined,
     memberNumber: row.memberNumber != null ? String(row.memberNumber) : undefined,
+    memberPhone: row.memberPhone != null ? String(row.memberPhone) : undefined,
     familyId: row.familyId != null ? String(row.familyId) : undefined,
+    familyName: row.familyName != null ? String(row.familyName) : undefined,
+    familyCode: row.familyCode != null ? String(row.familyCode) : undefined,
+    familyApprovedByName:
+      row.familyApprovedByName != null ? String(row.familyApprovedByName) : undefined,
+    familyApprovedByNumber:
+      row.familyApprovedByNumber != null ? String(row.familyApprovedByNumber) : undefined,
+    familyRejectedByName:
+      row.familyRejectedByName != null ? String(row.familyRejectedByName) : undefined,
+    familyApprovedAt:
+      row.familyApprovedAt != null ? String(row.familyApprovedAt) : undefined,
+    familyRejectedAt:
+      row.familyRejectedAt != null ? String(row.familyRejectedAt) : undefined,
     claimedAmount: Number(row.claimedAmount ?? row.amount ?? 0),
     confirmedAmount: row.confirmedAmount != null ? Number(row.confirmedAmount) : null,
     effectiveAmount: row.effectiveAmount != null ? Number(row.effectiveAmount) : null,
@@ -120,6 +141,7 @@ function mapClaim(row: Record<string, unknown>): ContributionClaim {
     campaignName: row.campaignName != null ? String(row.campaignName) : null,
     createdAt: row.createdAt != null ? String(row.createdAt) : undefined,
     notes: row.notes != null ? String(row.notes) : null,
+    receiptUrl: row.receiptUrl != null ? String(row.receiptUrl) : null,
   }
 }
 
@@ -154,6 +176,68 @@ export const contributionsApi = {
     const raw = await apiClient.get<never, unknown>('/finance/contributions/member')
     return normalizeClaims(raw)
   },
+
+  listMine: async (params?: {
+    page?: number
+    limit?: number
+    status?: string
+    contributionTypeCatalogId?: string
+    from?: string
+    to?: string
+  }) => {
+    const raw = await apiClient.get<
+      never,
+      {
+        items?: unknown[]
+        summary?: {
+          confirmedEffectiveTotal?: number
+          pendingClaimedTotal?: number
+          confirmedCount?: number
+          pendingCount?: number
+          rejectedCount?: number
+        }
+        total?: number
+        page?: number
+        limit?: number
+      }
+    >('/finance/contributions/member', { params })
+    return {
+      items: normalizeClaims(raw.items ?? raw),
+      summary: raw.summary ?? {},
+      total: raw.total ?? normalizeClaims(raw).length,
+      page: raw.page ?? 1,
+      limit: raw.limit ?? 20,
+    }
+  },
+
+  getById: async (id: string): Promise<ContributionClaim & Record<string, unknown>> => {
+    const raw = await apiClient.get<never, Record<string, unknown>>(
+      `/finance/contributions/${id}`,
+    )
+    return mapClaim(raw)
+  },
+
+  getTimeline: (id: string) =>
+    apiClient.get<
+      never,
+      {
+        contributionId: string
+        referenceNumber: string
+        status: string
+        events: Array<{
+          type: string
+          timestamp: string
+          summary: string
+          metadata?: Record<string, unknown>
+        }>
+      }
+    >(`/finance/contributions/${id}/timeline`),
+
+  resendThankYou: (contributionId: string) =>
+    apiClient.post<never, unknown>(
+      `/finance/contributions/${contributionId}/resend-thank-you`,
+      {},
+    ),
 
   getFamilyInbox: async (params?: { familyId?: string; status?: string; limit?: number }) => {
     const raw = await apiClient.get<never, { items?: unknown[]; familyId?: string; pendingCount?: number }>(
@@ -200,6 +284,52 @@ export const contributionsApi = {
       items: normalizeClaims(raw.items ?? []),
     }
   },
+
+  getTreasuryInbox: async (params: { choirId: string; limit?: number }) => {
+    const raw = await apiClient.get<
+      never,
+      {
+        items?: unknown[]
+        choirId?: string
+        pendingCount?: number
+        splitWorkflowEnabled?: boolean
+      }
+    >('/finance/contributions/treasury/inbox', { params })
+    return {
+      choirId: raw.choirId,
+      pendingCount: raw.pendingCount ?? 0,
+      splitWorkflowEnabled: raw.splitWorkflowEnabled ?? true,
+      items: normalizeClaims(raw.items ?? []),
+    }
+  },
+
+  getTreasuryDashboard: (choirId: string) =>
+    apiClient.get<
+      never,
+      {
+        choirId: string
+        splitWorkflowEnabled: boolean
+        verificationQueueCount: number
+        treasuryQueueCount: number
+        sponsorQueueCount: number
+        oldestTreasuryHours: number | null
+        oldestSponsorHours: number | null
+        oldestTreasuryContributionId: string | null
+        oldestSponsorContributionId: string | null
+      }
+    >('/finance/contributions/treasury/dashboard', { params: { choirId } }),
+
+  verifyTreasury: (contributionId: string) =>
+    apiClient.post<never, ContributionClaim>(
+      `/finance/contributions/${contributionId}/treasury/verify`,
+      {},
+    ),
+
+  rejectTreasury: (contributionId: string, payload: RejectContributionPayload) =>
+    apiClient.post<never, ContributionClaim>(
+      `/finance/contributions/${contributionId}/treasury/reject`,
+      payload,
+    ),
 
   approveFamily: (contributionId: string, payload: ApproveContributionPayload) =>
     apiClient.post<never, ContributionClaim>(
@@ -278,6 +408,8 @@ export type ContributionCampaignAdminItem = {
   name: string
   description: string | null
   goalAmount: number
+  memberGoalAmount: number | null
+  familyGoalAmount: number | null
   currency: string
   status: string
   periodStart: string | null
@@ -304,6 +436,8 @@ export type CreateCampaignPayload = {
   name: string
   description?: string
   goalAmount: number
+  memberGoalAmount?: number
+  familyGoalAmount?: number
   currency?: string
   status?: 'DRAFT' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED'
   periodStart?: string
@@ -314,6 +448,8 @@ export type UpdateCampaignPayload = {
   name?: string
   description?: string
   goalAmount?: number
+  memberGoalAmount?: number | null
+  familyGoalAmount?: number | null
   currency?: string
   status?: 'DRAFT' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED'
   periodStart?: string | null

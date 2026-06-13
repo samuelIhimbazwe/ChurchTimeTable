@@ -28,6 +28,16 @@ export class UpdateContributionCampaignDto {
   goalAmount?: number;
 
   @IsOptional()
+  @IsNumber()
+  @Min(1)
+  memberGoalAmount?: number | null;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  familyGoalAmount?: number | null;
+
+  @IsOptional()
   @IsString()
   @MaxLength(8)
   currency?: string;

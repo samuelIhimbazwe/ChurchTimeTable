@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/index'
 import { Card } from '@/components/shared'
 import { HubQuickLink } from '@/components/choir/ChoirPositionHubShell'
 import { useResolvedChoirScope } from '@/lib/hooks'
+import { useOptionalChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
 import {
   Calendar, Shield, DollarSign, FileText, Heart, BookOpen, Users, Music,
   BarChart3, Settings2, UserPlus, Megaphone, Scale, KeyRound,
@@ -27,7 +28,7 @@ const ADVISOR_CAPABILITY_LINKS: Array<{
   },
   {
     anyOf: ['choir.join.review', 'member:manage'],
-    href: '/choir/join-requests',
+    href: '/choir/president/decisions',
     label: 'Join requests & roster',
     desc: 'Membership growth and onboarding',
     icon: UserPlus,
@@ -128,6 +129,9 @@ export function AdvisorCapabilityPanel() {
   const hasAnyPermission = useAuthStore((s) => s.hasAnyPermission)
   const permissions = useAuthStore((s) => s.user?.permissions ?? [])
   const { choirLink } = useResolvedChoirScope()
+  const choirCtx = useOptionalChoirDashboardCtx()
+  const customRoleLabels =
+    choirCtx?.context?.customRoles?.map((r) => r.name).filter(Boolean) ?? []
 
   const visible = ADVISOR_CAPABILITY_LINKS.filter((link) => hasAnyPermission(link.anyOf))
 
@@ -139,6 +143,12 @@ export function AdvisorCapabilityPanel() {
           development, spiritual life, uniqueness, etc. This panel shows only the tools assigned to you
           ({visible.length} of {ADVISOR_CAPABILITY_LINKS.length} areas).
         </p>
+        {customRoleLabels.length > 0 && (
+          <p className="text-xs text-text-muted mt-2">
+            Your assigned profile{customRoleLabels.length > 1 ? 's' : ''}:{' '}
+            <strong className="text-text-primary">{customRoleLabels.join(', ')}</strong>
+          </p>
+        )}
         {permissions.length > 0 && (
           <p className="text-xs text-text-muted mt-2">
             Active permission codes: {permissions.slice(0, 8).join(', ')}

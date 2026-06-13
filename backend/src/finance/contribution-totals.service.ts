@@ -63,12 +63,20 @@ export class ContributionTotalsService {
       ...baseWhere,
       status: ContributionStatus.CONFIRMED,
     };
+    const rejectedWhere = {
+      ...baseWhere,
+      status: ContributionStatus.REJECTED,
+    };
 
-    const [submittedAgg, confirmedRows, catalogs, campaigns] =
+    const [submittedAgg, rejectedAgg, confirmedRows, catalogs, campaigns] =
       await Promise.all([
         this.prisma.contributionRecord.aggregate({
           where: submittedWhere,
           _sum: { claimedAmount: true, amount: true },
+          _count: true,
+        }),
+        this.prisma.contributionRecord.aggregate({
+          where: rejectedWhere,
           _count: true,
         }),
         this.loadConfirmedRows(confirmedWhere),
@@ -126,22 +134,47 @@ export class ContributionTotalsService {
     }
 
     const byCampaign = campaigns.map((campaign) => {
-      const campaignRows = confirmedRows.filter(
-        (r) => r.contributionCampaignId === campaign.id,
+      const typeRows = confirmedRows.filter(
+        (r) => r.contributionTypeCatalogId === campaign.contributionTypeId,
       );
-      const confirmedEffective = this.effective.sumRows(campaignRows);
+      const confirmedEffective = this.effective.sumRows(typeRows);
       const goalAmount = toNumber(campaign.goalAmount);
-      const progressPct =
+      const memberGoalAmount =
+        campaign.memberGoalAmount != null
+          ? toNumber(campaign.memberGoalAmount)
+          : null;
+      const leaderProgressPct =
         goalAmount > 0
           ? Math.min(100, Math.round((confirmedEffective / goalAmount) * 1000) / 10)
           : 0;
+      const memberProgressPct =
+        memberGoalAmount != null && memberGoalAmount > 0
+          ? Math.min(
+              100,
+              Math.round((confirmedEffective / memberGoalAmount) * 1000) / 10,
+            )
+          : 0;
+      const familyGoalAmount =
+        campaign.familyGoalAmount != null
+          ? toNumber(campaign.familyGoalAmount)
+          : null;
       return {
         campaignId: campaign.id,
         name: campaign.name,
         status: campaign.status,
+        contributionTypeCatalogId: campaign.contributionTypeId,
+        typeName: campaign.typeName,
+        typeCode: campaign.typeCode,
         goalAmount,
+        memberGoalAmount,
+        familyGoalAmount,
         confirmedEffective,
-        progressPct,
+        progressPct: leaderProgressPct,
+        memberProgressPct,
+        memberRemaining:
+          memberGoalAmount != null
+            ? Math.max(0, memberGoalAmount - confirmedEffective)
+            : null,
       };
     });
 
@@ -149,18 +182,104 @@ export class ContributionTotalsService {
       scope: access.mode,
       familyId: access.familyId ?? null,
       pending: { count: submittedAgg._count, claimedTotal: pendingClaimed },
+      rejected: { count: rejectedAgg._count },
       confirmed: { count: confirmedRows.length, effectiveTotal },
       byType: Array.from(byTypeMap.values()).filter(
         (row) => row.pendingClaimed > 0 || row.confirmedEffective > 0,
       ),
-      byCampaign,
+      byCampaign: this.mapCampaignTotalsForScope(access, byCampaign),
     };
 
     if (access.mode === 'choir') {
       result.byFamily = this.aggregateByFamily(confirmedRows);
     }
 
+    if (access.mode === 'own' && ctx.memberId) {
+      const member = await this.prisma.member.findUnique({
+        where: { id: ctx.memberId },
+        select: {
+          memberNumber: true,
+          firstName: true,
+          lastName: true,
+          familyMembership: {
+            select: {
+              family: { select: { familyName: true, familyCode: true } },
+            },
+          },
+        },
+      });
+      if (member) {
+        const family = member.familyMembership?.family;
+        result.member = {
+          memberNumber: member.memberNumber,
+          memberName: `${member.firstName} ${member.lastName}`.trim(),
+          familyName: family?.familyName ?? family?.familyCode ?? null,
+        };
+      }
+    }
+
     return result;
+  }
+
+  private mapCampaignTotalsForScope(
+    access: ContributionTotalsScope,
+    byCampaign: Array<{
+      campaignId: string;
+      name: string;
+      status: string;
+      contributionTypeCatalogId: string;
+      typeName: string;
+      typeCode: string;
+      goalAmount: number;
+      memberGoalAmount: number | null;
+      confirmedEffective: number;
+      progressPct: number;
+      memberProgressPct: number;
+      memberRemaining: number | null;
+      familyGoalAmount?: number | null;
+    }>,
+  ) {
+    if (access.mode === 'own') {
+      return byCampaign
+        .filter(
+          (row) => row.memberGoalAmount != null && row.memberGoalAmount > 0,
+        )
+        .map(({ goalAmount: _g, progressPct: _p, ...memberRow }) => ({
+          ...memberRow,
+          progressPct: memberRow.memberProgressPct,
+          remaining: memberRow.memberRemaining,
+        }));
+    }
+
+    if (access.mode === 'family') {
+      return byCampaign.map((row) => {
+        const familyGoal = row.familyGoalAmount;
+        const familyProgressPct =
+          familyGoal != null && familyGoal > 0
+            ? Math.min(
+                100,
+                Math.round((row.confirmedEffective / familyGoal) * 1000) / 10,
+              )
+            : 0;
+        return {
+          campaignId: row.campaignId,
+          name: row.name,
+          status: row.status,
+          contributionTypeCatalogId: row.contributionTypeCatalogId,
+          typeName: row.typeName,
+          typeCode: row.typeCode,
+          familyGoalAmount: familyGoal,
+          confirmedEffective: row.confirmedEffective,
+          progressPct: familyProgressPct,
+          remaining:
+            familyGoal != null
+              ? Math.max(0, familyGoal - row.confirmedEffective)
+              : null,
+        };
+      });
+    }
+
+    return byCampaign;
   }
 
   private aggregateByFamily(confirmedRows: ConfirmedContributionRow[]) {
@@ -512,9 +631,25 @@ export class ContributionTotalsService {
         name: true,
         status: true,
         goalAmount: true,
+        memberGoalAmount: true,
+        familyGoalAmount: true,
+        contributionTypeId: true,
+        contributionType: { select: { code: true, name: true } },
       },
       orderBy: { createdAt: 'desc' },
-    });
+    }).then((rows) =>
+      rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        status: row.status,
+        goalAmount: row.goalAmount,
+        memberGoalAmount: row.memberGoalAmount,
+        familyGoalAmount: row.familyGoalAmount,
+        contributionTypeId: row.contributionTypeId,
+        typeName: row.contributionType.name,
+        typeCode: row.contributionType.code,
+      })),
+    );
   }
 
 }

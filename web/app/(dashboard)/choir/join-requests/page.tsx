@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { choirApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
@@ -13,7 +14,8 @@ import {
   choirPositionLabel,
 } from '@/lib/constants/choir-positions'
 import { ChoirPositionGuide } from '@/components/choir/ChoirPositionGuide'
-import { useResolvedChoirId } from '@/lib/hooks'
+import { useResolvedChoirId, useResolvedChoirScope } from '@/lib/hooks'
+import { useAuthStore } from '@/stores/index'
 import { useOptionalChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
 import { UserPlus, CheckCircle2, XCircle, MessageSquare } from 'lucide-react'
 import { formatDate } from '@/lib/utils/format'
@@ -62,6 +64,8 @@ const SPONSOR_STATUS_BADGE: Record<
 }
 
 export default function JoinRequestsPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const qc = useQueryClient()
   const [tab, setTab] = useState<'singers' | 'sponsors'>('singers')
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -69,8 +73,23 @@ export default function JoinRequestsPage() {
   const [assignedRoleId, setAssignedRoleId] = useState('')
 
   const choirId = useResolvedChoirId()
+  const { choirLink } = useResolvedChoirScope()
   const choirCtx = useOptionalChoirDashboardCtx()
   const choirName = choirCtx?.context?.choir.name
+  const hasAnyPermission = useAuthStore((s) => s.hasAnyPermission)
+  const canReview = hasAnyPermission([
+    'choir.join.review',
+    'member:manage',
+    'choir.operations.manage',
+  ])
+
+  useEffect(() => {
+    if (!choirId || !canReview) return
+    if (searchParams.get('tab') === 'sponsors') return
+    const requestId = searchParams.get('requestId')
+    const qs = requestId ? `?requestId=${requestId}` : ''
+    router.replace(`${choirLink('president/decisions')}${qs}`)
+  }, [choirId, canReview, choirLink, router, searchParams])
 
   const { data, isLoading } = useQuery({
     queryKey: ['choir-join-requests', choirId],
@@ -132,6 +151,14 @@ export default function JoinRequestsPage() {
   })
 
   const defaultMemberRole = positionRoles?.find((r) => r.name === 'choir_member')
+
+  if (canReview && searchParams.get('tab') !== 'sponsors') {
+    return (
+      <p className="text-sm text-text-muted text-center py-12">
+        Opening decision console…
+      </p>
+    )
+  }
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-8">

@@ -11,7 +11,7 @@ import { ChoirPositionHubShell, HubQuickLink } from '@/components/choir/ChoirPos
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { FamilyRankingsPanel } from '@/components/choir/FamilyRankingsPanel'
 import { ContributionAmountDisplay } from '@/components/choir/ContributionAmountDisplay'
-import { FamilyContributionInboxPanel } from '@/components/choir/FamilyContributionInboxPanel'
+import { FamilyLeadershipContributionsHub } from '@/components/choir/FamilyLeadershipContributionsHub'
 import { FamilyPaymentSettingsForm } from '@/components/choir/FamilyPaymentSettingsForm'
 import { formatCurrency, formatDate, formatTime } from '@/lib/utils/format'
 import { Users, CheckCircle2, Heart, Lock } from 'lucide-react'
@@ -36,6 +36,8 @@ export default function FamilyHeadHubPage() {
   const myFamilyMeta = context?.families?.[0]
   const myFamilyId = myFamilyMeta?.familyId
   const canViewAll = context?.canViewAllFamilies ?? false
+  const leadershipDefaultTab =
+    myFamilyMeta?.role === 'SECRETARY' ? 'progress' : 'overview'
 
   const { data: myFamilyMetrics } = useQuery({
     queryKey: ['family-metrics', myFamilyId],
@@ -173,32 +175,30 @@ export default function FamilyHeadHubPage() {
 
       {tab === 'contributions' && (
         <div className="space-y-4">
-          {myFamilyId && familyDetail && (
-            <FamilyPaymentSettingsForm
+          {myFamilyId ? (
+            <FamilyLeadershipContributionsHub
               familyId={myFamilyId}
-              initial={{
-                paymentMomoNumber: familyDetail.paymentMomoNumber ?? null,
-                paymentMomoAccountName: familyDetail.paymentMomoAccountName ?? null,
-                paymentBankAccount: familyDetail.paymentBankAccount ?? null,
-                paymentBankName: familyDetail.paymentBankName ?? null,
-                paymentInstructions: familyDetail.paymentInstructions ?? null,
-              }}
+              defaultTab={leadershipDefaultTab as 'overview' | 'progress'}
+              paymentSettingsSlot={
+                familyDetail && myFamilyMeta?.role === 'HEAD' ? (
+                  <FamilyPaymentSettingsForm
+                    familyId={myFamilyId}
+                    initial={{
+                      paymentMomoNumber: familyDetail.paymentMomoNumber ?? null,
+                      paymentMomoAccountName: familyDetail.paymentMomoAccountName ?? null,
+                      paymentBankAccount: familyDetail.paymentBankAccount ?? null,
+                      paymentBankName: familyDetail.paymentBankName ?? null,
+                      paymentInstructions: familyDetail.paymentInstructions ?? null,
+                    }}
+                  />
+                ) : undefined
+              }
             />
-          )}
-          {myFamilyMetrics?.contributions && (
+          ) : (
             <Card padding="md">
-              <p className="font-semibold mb-2">Your family contributions</p>
-              <ContributionAmountDisplay
-                confirmed={myFamilyMetrics.contributions.confirmedAmount}
-                effective={myFamilyMetrics.contributions.effectiveAmount}
-                size="md"
-              />
-              <p className="text-sm text-text-muted mt-2">
-                Pending: {formatCurrency(myFamilyMetrics.contributions.pendingAmount)}
-              </p>
+              <p className="text-sm text-text-muted text-center py-6">No family assigned.</p>
             </Card>
           )}
-          <FamilyContributionInboxPanel familyId={myFamilyId} />
         </div>
       )}
 

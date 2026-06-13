@@ -23,6 +23,8 @@ export interface FamilyListItem extends Family {
 }
 
 export interface FamilyDetail extends FamilyListItem {
+  delegationEnabled?: boolean
+  workspaceTemplate?: string | null
   members?: FamilyMemberRow[]
   notes?: string
   paymentMomoNumber?: string | null
@@ -64,6 +66,16 @@ export interface FamilyMetricsDetail {
   } | null
   participation: { activeAssignments: number; activeLeaders: number; activeMembers: number }
   health: { score: number; grade: string }
+  healthBreakdown?: {
+    attendanceRate: number
+    contributionScore: number | null
+    participationScore: number
+    weights: {
+      attendance: number
+      contribution: number | null
+      participation: number
+    }
+  }
 }
 
 function headName(row: Record<string, unknown>): string {
@@ -137,8 +149,15 @@ export const familiesApi = {
     const raw = await apiClient.get<never, Record<string, unknown>>(`/families/${id}`)
     return {
       ...toFamily(raw),
+      delegationEnabled: raw.delegationEnabled as boolean | undefined,
+      workspaceTemplate: raw.workspaceTemplate as string | null | undefined,
       members: raw.members as FamilyMemberRow[] | undefined,
       notes: raw.notes as string | undefined,
+      paymentMomoNumber: raw.paymentMomoNumber as string | null | undefined,
+      paymentMomoAccountName: raw.paymentMomoAccountName as string | null | undefined,
+      paymentBankAccount: raw.paymentBankAccount as string | null | undefined,
+      paymentBankName: raw.paymentBankName as string | null | undefined,
+      paymentInstructions: raw.paymentInstructions as string | null | undefined,
     }
   },
 
@@ -148,8 +167,44 @@ export const familiesApi = {
       familyName?: string
       headMemberId?: string | null
       notes?: string | null
+      delegationEnabled?: boolean
     },
   ) => apiClient.patch<never, FamilyDetail>(`/families/${id}`, data),
+
+  updateDelegation: (familyId: string, delegationEnabled: boolean) =>
+    apiClient.patch<never, FamilyDetail>(`/families/${familyId}/delegation`, {
+      delegationEnabled,
+    }),
+
+  updateWorkspaceTemplate: (familyId: string, workspaceTemplate: string) =>
+    apiClient.patch<never, FamilyDetail>(`/families/${familyId}/workspace-template`, {
+      workspaceTemplate,
+    }),
+
+  getPulse: (familyId: string, weekStart?: string) =>
+    apiClient.get<
+      never,
+      {
+        familyId: string
+        weekStart: string
+        entry: {
+          score: number
+          note: string | null
+          recordedByName: string | null
+          updatedAt: string
+        } | null
+        recent: Array<{ weekStart: string; score: number; note: string | null }>
+      }
+    >(`/families/${familyId}/pulse`, { params: weekStart ? { weekStart } : undefined }),
+
+  upsertPulse: (
+    familyId: string,
+    data: { score: number; note?: string; weekStart?: string },
+  ) =>
+    apiClient.post<never, { familyId: string; weekStart: string; entry: { score: number } }>(
+      `/families/${familyId}/pulse`,
+      data,
+    ),
 
   addMember: (
     familyId: string,
@@ -166,6 +221,20 @@ export const familiesApi = {
       role: 'MEMBER',
     })
   },
+
+  getPaymentInstructionsHistory: (familyId: string) =>
+    apiClient.get<
+      never,
+      {
+        familyId: string
+        items: Array<{
+          id: string
+          changedAt: string
+          changedByEmail: string | null
+          snapshot: unknown
+        }>
+      }
+    >(`/families/${familyId}/payment-instructions/history`),
 
   updatePaymentInstructions: (
     familyId: string,

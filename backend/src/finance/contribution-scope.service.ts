@@ -375,12 +375,55 @@ export class ContributionScopeService {
     throw new ForbiddenException('Cannot access family contribution inbox');
   }
 
+  /**
+   * Target-population check: family leadership may only read records for their family.
+   * Executives with choir-wide view bypass this check.
+   */
+  assertCanViewFamilyRecord(
+    ctx: ContributionActorContext,
+    record: { familyId: string | null },
+  ): void {
+    this.assertNotChurchAdminAccountOnly(ctx);
+
+    if (this.canViewAll(ctx)) return;
+
+    if (!record.familyId || !this.canViewFamily(ctx, record.familyId)) {
+      this.denyHiddenFeature();
+    }
+  }
+
+  /** Ensures a member belongs to the family before family-scoped ledger filters. */
+  async assertMemberInFamily(familyId: string, memberId: string): Promise<void> {
+    const row = await this.prisma.familyMember.findFirst({
+      where: { familyId, memberId },
+      select: { id: true },
+    });
+    if (!row) {
+      throw new NotFoundException('Member not found in this family');
+    }
+  }
+
   assertCanApproveFamily(
     ctx: ContributionActorContext,
     familyId: string,
   ): void {
     if (!this.canApproveFamily(ctx, familyId)) {
       throw new ForbiddenException('Cannot approve contributions for this family');
+    }
+  }
+
+  canVerifyTreasury(ctx: ContributionActorContext): boolean {
+    if (this.isChurchAdminAccountOnly(ctx)) return false;
+    return (
+      ctx.roles.includes(ROLES.CHOIR_TREASURER) ||
+      hasEffectivePermission(ctx.permissions, PERMISSIONS.CHOIR_FINANCE_APPROVE) ||
+      hasEffectivePermission(ctx.permissions, PERMISSIONS.CHOIR_FINANCE_MANAGE)
+    );
+  }
+
+  assertCanVerifyTreasury(ctx: ContributionActorContext): void {
+    if (!this.canVerifyTreasury(ctx)) {
+      throw new ForbiddenException('Treasurer verification required');
     }
   }
 

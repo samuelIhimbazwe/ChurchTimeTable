@@ -18,7 +18,7 @@ export const COMMITTEE_ROLE_HUB_SEGMENT: Record<string, string> = {
   vice_president: 'vice-president',
   music_director: 'music-direction',
   family_coordinator: 'family-coordinator',
-  family_head: 'family-head',
+  family_head: 'family-leadership',
   advisor: 'advisor',
   secretary: 'records',
   treasurer: 'budget',
@@ -49,7 +49,7 @@ export function resolveChoirLandingPath(
       if (segment) return `/choir/${choirId}/${segment}`;
     }
   }
-  return `/choir/${choirId}/member`;
+  return `/choir/${choirId}/membership`;
 }
 
 export function inferCommitteeRoleKeys(

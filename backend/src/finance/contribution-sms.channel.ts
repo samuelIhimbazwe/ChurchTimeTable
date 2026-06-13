@@ -9,6 +9,15 @@ export type ContributionSmsPayload = {
   contributionId: string;
 };
 
+export type ContributionApprovalSmsPayload = {
+  phone: string;
+  approverName: string;
+  memberName: string;
+  amount: number;
+  currency: string;
+  actionUrl: string;
+};
+
 export type ContributionSmsResult = {
   sent: boolean;
   skippedReason?: string;
@@ -35,6 +44,22 @@ export class ContributionSmsChannel {
 
     this.logger.debug(
       `SMS thank-you skipped (no provider): ${payload.referenceNumber}`,
+    );
+    return { sent: false, skippedReason: 'provider_not_configured' };
+  }
+
+  async sendApprovalReminder(
+    payload: ContributionApprovalSmsPayload,
+  ): Promise<ContributionSmsResult> {
+    if (!this.isEnabled()) {
+      this.logger.debug(
+        `Approval reminder (log only): ${payload.approverName} — ${payload.memberName} ${payload.amount} ${payload.currency} → ${payload.actionUrl}`,
+      );
+      return { sent: false, skippedReason: 'sms_disabled' };
+    }
+
+    this.logger.debug(
+      `SMS approval reminder skipped (no provider): ${payload.actionUrl}`,
     );
     return { sent: false, skippedReason: 'provider_not_configured' };
   }

@@ -54,12 +54,22 @@ describe('ThankYouService', () => {
     sendThankYou: jest.fn().mockResolvedValue({ sent: false, skippedReason: 'sms_disabled' }),
   };
 
+  const contributionScope = {
+    resolveActor: jest.fn().mockResolvedValue({
+      familyMemberships: [],
+      permissions: [],
+      roles: [],
+    }),
+    canApproveFamily: jest.fn().mockReturnValue(false),
+  };
+
   const service = new ThankYouService(
     prisma as never,
     audit as never,
     notifications as never,
     operationalScope as never,
     sms as never,
+    contributionScope as never,
   );
 
   const baseRecord = {

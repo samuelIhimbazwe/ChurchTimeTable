@@ -48,7 +48,15 @@ import { UpdateContributionCatalogDto } from './dto/update-contribution-catalog.
 import { CreateContributionCampaignDto } from './dto/create-contribution-campaign.dto';
 import { UpdateContributionCampaignDto } from './dto/update-contribution-campaign.dto';
 import { ContributionFamilyContextService } from './contribution-family-context.service';
+import { ContributionFamilyDashboardService } from './contribution-family-dashboard.service';
+import { FamilyDashboardQueryDto } from './dto/family-dashboard-query.dto';
+import { FamilyLedgerQueryDto } from './dto/family-ledger-query.dto';
 import { ContributionAdjustmentsListService } from './contribution-adjustments-list.service';
+import { ContributionQuickActionService } from './contribution-quick-action.service';
+import {
+  QuickActionApproveDto,
+  QuickActionPreviewQueryDto,
+} from './dto/quick-action-approve.dto';
 import { ContributionStatus } from '@prisma/client';
 import { MemberContributionsQueryDto } from './dto/member-contributions-query.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -126,8 +134,10 @@ export class FinanceController {
     private contributionCatalogAdmin: ContributionCatalogAdminService,
     private contributionMember: ContributionMemberService,
     private contributionFamilyContext: ContributionFamilyContextService,
+    private contributionFamilyDashboard: ContributionFamilyDashboardService,
     private contributionAdjustmentsList: ContributionAdjustmentsListService,
     private thankYouService: ThankYouService,
+    private contributionQuickAction: ContributionQuickActionService,
   ) {}
 
   @Post('contributions/submit')
@@ -178,6 +188,41 @@ export class FinanceController {
   @SkipPhoneEnforcement()
   familyContributionContext(@CurrentUser() user: JwtPayload) {
     return this.contributionFamilyContext.getLeadershipContext(user.sub);
+  }
+
+  @Get('contributions/family/dashboard')
+  @SkipPhoneEnforcement()
+  familyContributionDashboard(
+    @CurrentUser() user: JwtPayload,
+    @Query() query: FamilyDashboardQueryDto,
+  ) {
+    return this.contributionFamilyDashboard.getDashboard(
+      user.sub,
+      query.familyId,
+      query.campaignId,
+    );
+  }
+
+  @Get('contributions/family/member-progress')
+  @SkipPhoneEnforcement()
+  familyContributionMemberProgress(
+    @CurrentUser() user: JwtPayload,
+    @Query() query: FamilyDashboardQueryDto,
+  ) {
+    return this.contributionFamilyDashboard.getMemberProgress(
+      user.sub,
+      query.familyId,
+      query.campaignId,
+    );
+  }
+
+  @Get('contributions/family/ledger')
+  @SkipPhoneEnforcement()
+  familyContributionLedger(
+    @CurrentUser() user: JwtPayload,
+    @Query() query: FamilyLedgerQueryDto,
+  ) {
+    return this.contributionFamilyDashboard.getLedger(user.sub, query);
   }
 
   @Get('contributions/family/inbox')
@@ -361,6 +406,39 @@ export class FinanceController {
     res.send(exported.buffer);
   }
 
+  @Get('contributions/treasury/dashboard')
+  @SkipPhoneEnforcement()
+  @RequireAnyPermissions(
+    PERMISSIONS.CHOIR_FINANCE_APPROVE,
+    PERMISSIONS.CHOIR_FINANCE_MANAGE,
+    PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
+  )
+  treasuryContributionDashboard(
+    @CurrentUser() user: JwtPayload,
+    @Query('choirId') choirId: string,
+  ) {
+    return this.contributionGovernance.getTreasuryDashboard(user.sub, choirId);
+  }
+
+  @Get('contributions/treasury/inbox')
+  @SkipPhoneEnforcement()
+  @RequireAnyPermissions(
+    PERMISSIONS.CHOIR_FINANCE_APPROVE,
+    PERMISSIONS.CHOIR_FINANCE_MANAGE,
+    PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
+  )
+  treasuryContributionInbox(
+    @CurrentUser() user: JwtPayload,
+    @Query('choirId') choirId: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.contributionGovernance.getTreasuryInbox(
+      user.sub,
+      choirId,
+      limit ? Number(limit) : 30,
+    );
+  }
+
   @Get('contributions/:id/timeline')
   @SkipPhoneEnforcement()
   getContributionTimeline(
@@ -407,6 +485,51 @@ export class FinanceController {
     @CurrentUser() user: JwtPayload,
   ) {
     return this.contributionCorrections.changeCampaign(user.sub, id, dto);
+  }
+
+  @Get('contributions/quick-action/preview')
+  @SkipPhoneEnforcement()
+  previewContributionQuickAction(
+    @Query() query: QuickActionPreviewQueryDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.contributionQuickAction.preview(user.sub, query.token);
+  }
+
+  @Post('contributions/quick-action/approve')
+  @SkipPhoneEnforcement()
+  approveContributionQuickAction(
+    @Body() dto: QuickActionApproveDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.contributionQuickAction.approve(user.sub, dto);
+  }
+
+  @Post('contributions/:id/treasury/verify')
+  @SkipPhoneEnforcement()
+  @RequireAnyPermissions(
+    PERMISSIONS.CHOIR_FINANCE_APPROVE,
+    PERMISSIONS.CHOIR_FINANCE_MANAGE,
+  )
+  verifyTreasuryContribution(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.contributionGovernance.verifyTreasury(user.sub, id);
+  }
+
+  @Post('contributions/:id/treasury/reject')
+  @SkipPhoneEnforcement()
+  @RequireAnyPermissions(
+    PERMISSIONS.CHOIR_FINANCE_APPROVE,
+    PERMISSIONS.CHOIR_FINANCE_MANAGE,
+  )
+  rejectTreasuryContribution(
+    @Param('id') id: string,
+    @Body() dto: RejectFamilyContributionDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.contributionGovernance.rejectTreasury(user.sub, id, dto);
   }
 
   @Post('contributions/:id/family/approve')

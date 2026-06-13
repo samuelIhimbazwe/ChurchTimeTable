@@ -31,6 +31,12 @@ const memberRecordInclude = {
     },
     orderBy: { createdAt: 'asc' as const },
   },
+  familyApprovedBy: {
+    select: { firstName: true, lastName: true, memberNumber: true },
+  },
+  familyRejectedBy: {
+    select: { firstName: true, lastName: true },
+  },
 } satisfies Prisma.ContributionRecordInclude;
 
 type MemberRecordRow = Prisma.ContributionRecordGetPayload<{
@@ -53,6 +59,16 @@ export class ContributionMemberService {
     }
 
     const { skip, take } = paginate(query.page, query.limit ?? 20);
+    const paymentRange =
+      query.from || query.to
+        ? {
+            paymentAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
+        : {};
+
     const where: Prisma.ContributionRecordWhereInput = {
       memberId: ctx.memberId,
       ...(query.status ? { status: query.status } : {}),
@@ -62,9 +78,10 @@ export class ContributionMemberService {
       ...(query.contributionCampaignId
         ? { contributionCampaignId: query.contributionCampaignId }
         : {}),
+      ...paymentRange,
     };
 
-    const [total, rows] = await Promise.all([
+    const [total, rows, rejectedCount, pendingCount] = await Promise.all([
       this.prisma.contributionRecord.count({ where }),
       this.prisma.contributionRecord.findMany({
         where,
@@ -73,26 +90,38 @@ export class ContributionMemberService {
         take,
         include: memberRecordInclude,
       }),
+      this.prisma.contributionRecord.count({
+        where: { memberId: ctx.memberId, status: ContributionStatus.REJECTED },
+      }),
+      this.prisma.contributionRecord.count({
+        where: { memberId: ctx.memberId, status: ContributionStatus.SUBMITTED },
+      }),
     ]);
 
     const familyMap = await this.loadFamilyMap(
       rows.map((row) => row.familyId).filter((id): id is string => Boolean(id)),
     );
-    const items = rows.map((row) =>
-      this.serializeMemberRecord(row, familyMap.get(row.familyId ?? '') ?? null),
+    const serialized = rows.map((row) =>
+      this.serializeMemberRecord(
+        row,
+        familyMap.get(row.familyId ?? '') ?? null,
+      ),
     );
-    const confirmed = items.filter((r) => r.status === ContributionStatus.CONFIRMED);
+    const items = serialized.map((row) => this.toMemberSafeDetail({ ...row }));
+    const confirmed = serialized.filter(
+      (r) => r.status === ContributionStatus.CONFIRMED,
+    );
     const summary = {
       confirmedEffectiveTotal: confirmed.reduce(
         (sum, row) => sum + (row.effectiveAmount ?? 0),
         0,
       ),
-      pendingClaimedTotal: items
+      pendingClaimedTotal: serialized
         .filter((r) => r.status === ContributionStatus.SUBMITTED)
         .reduce((sum, row) => sum + row.claimedAmount, 0),
       confirmedCount: confirmed.length,
-      pendingCount: items.filter((r) => r.status === ContributionStatus.SUBMITTED)
-        .length,
+      pendingCount,
+      rejectedCount,
     };
 
     const page = query.page ?? 1;
@@ -116,22 +145,40 @@ export class ContributionMemberService {
 
     const isOwn =
       Boolean(ctx.memberId) && ctx.memberId === row.memberId && this.scope.canViewOwn(ctx);
-    const isFamily =
-      Boolean(row.familyId) &&
-      this.scope.canViewFamily(ctx, row.familyId!);
     const isGlobal = this.scope.canViewAll(ctx);
+    let isFamily = false;
 
-    if (!isOwn && !isFamily && !isGlobal) {
-      this.scope.denyHiddenFeature();
+    if (!isOwn && !isGlobal) {
+      try {
+        this.scope.assertCanViewFamilyRecord(ctx, row);
+        isFamily = true;
+      } catch {
+        this.scope.denyHiddenFeature();
+      }
     }
 
     const familyMap = await this.loadFamilyMap(
       row.familyId ? [row.familyId] : [],
     );
-    return this.serializeMemberRecord(
+    const payload = this.serializeMemberRecord(
       row,
       row.familyId ? familyMap.get(row.familyId) ?? null : null,
     );
+    if (isOwn && !isGlobal && !isFamily) {
+      return this.toMemberSafeDetail({ ...payload });
+    }
+    return payload;
+  }
+
+  private toMemberSafeDetail(row: Record<string, unknown>) {
+    const {
+      thankYouDeliveryStatus: _t,
+      thankYouSentAt: _s,
+      financeTransactionId: _f,
+      adjustments: _a,
+      ...safe
+    } = row;
+    return safe;
   }
 
   private async loadFamilyMap(familyIds: string[]) {
@@ -213,6 +260,13 @@ export class ContributionMemberService {
       notes: row.notes,
       familyApprovedAt: row.familyApprovedAt,
       familyRejectedAt: row.familyRejectedAt,
+      familyApprovedByName: row.familyApprovedBy
+        ? `${row.familyApprovedBy.firstName} ${row.familyApprovedBy.lastName}`.trim()
+        : null,
+      familyApprovedByNumber: row.familyApprovedBy?.memberNumber ?? null,
+      familyRejectedByName: row.familyRejectedBy
+        ? `${row.familyRejectedBy.firstName} ${row.familyRejectedBy.lastName}`.trim()
+        : null,
       thankYouDeliveryStatus: row.thankYouDeliveryStatus,
       thankYouSentAt: row.thankYouSentAt,
       financeTransactionId: row.financeTransactionId,

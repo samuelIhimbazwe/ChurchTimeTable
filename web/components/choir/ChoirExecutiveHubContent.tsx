@@ -169,8 +169,8 @@ export function ChoirExecutiveHubContent({ deputyMode = false }: Props) {
                     {pendingJoins} pending — review applicants and assign positions.
                   </p>
                 </div>
-                <Link href={legacyOrScopedChoirPath(choirId, 'join-requests')} className="px-4 py-2 text-sm font-semibold bg-primary-700 text-white rounded-lg shrink-0">
-                  Review
+                <Link href={legacyOrScopedChoirPath(choirId, 'president/decisions')} className="px-4 py-2 text-sm font-semibold bg-primary-700 text-white rounded-lg shrink-0">
+                  Open decisions
                 </Link>
               </div>
             </Card>

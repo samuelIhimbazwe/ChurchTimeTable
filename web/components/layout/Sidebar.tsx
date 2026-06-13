@@ -36,15 +36,25 @@ export default function Sidebar({
   const { canAccessChoirArea, isChoirMember, isLoading: loadingChoirAccess, activeChoirMemberships } = useChoirAccess()
   const choirId = parseChoirIdFromPath(pathname)
   const inProtocolArea = isProtocolDashboardPath(pathname)
-  const { data: choirCtx, isLoading: loadingChoirCtx } = useChoirDashboardContext(choirId)
+  const { data: choirCtx } = useChoirDashboardContext(choirId)
   const { data: protocolCtx, isLoading: loadingProtocolCtx } = useProtocolDashboardContext(inProtocolArea)
 
+  const membershipForPath = choirId
+    ? activeChoirMemberships.find((m) => m.id === choirId)
+    : undefined
+
   const sections = (() => {
-    if (loadingChoirAccess || (choirId && loadingChoirCtx) || (inProtocolArea && loadingProtocolCtx)) {
+    if (loadingChoirAccess || (inProtocolArea && loadingProtocolCtx)) {
       return getPortalNavForUser(authRole, { canAccessChoirArea: false, isChoirMember: false }, permissions)
     }
-    if (choirId && choirCtx) {
-      return getComposedChoirNav(choirId, choirCtx.choir.name, choirCtx.permissions)
+    if (choirId && (choirCtx || membershipForPath)) {
+      return getComposedChoirNav(
+        choirId,
+        choirCtx?.choir.name ?? membershipForPath!.name,
+        choirCtx?.permissions ?? permissions,
+        choirCtx?.familyOffices ?? [],
+        choirCtx?.positions ?? [],
+      )
     }
     if (inProtocolArea && protocolCtx?.canAccess) {
       return getComposedProtocolNav(protocolCtx.ministry.name, protocolCtx.permissions)

@@ -19,6 +19,7 @@ import { ContributionTimelineService } from './contribution-timeline.service';
 import { ContributionSubmissionService } from './contribution-submission.service';
 import { ContributionMemberService } from './contribution-member.service';
 import { ContributionFamilyContextService } from './contribution-family-context.service';
+import { ContributionFamilyDashboardService } from './contribution-family-dashboard.service';
 import { ContributionAdjustmentsListService } from './contribution-adjustments-list.service';
 import { ThankYouService } from './thank-you.service';
 import { ContributionSmsChannel } from './contribution-sms.channel';
@@ -27,7 +28,10 @@ import { ReceiptUploadService } from './receipt/receipt-upload.service';
 import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
 import { AuthUxModule } from '../auth-ux/auth-ux.module';
 import { ContributionProtocolService } from './contribution-protocol.service';
+import { ContributionWorkflowNotificationsService } from './contribution-workflow-notifications.service';
 import { ContributionCatalogAdminService } from './contribution-catalog-admin.service';
+import { ContributionActionTokenService } from './contribution-action-token.service';
+import { ContributionQuickActionService } from './contribution-quick-action.service';
 
 @Module({
   imports: [
@@ -58,6 +62,10 @@ import { ContributionCatalogAdminService } from './contribution-catalog-admin.se
     ContributionCatalogAdminService,
     ContributionMemberService,
     ContributionFamilyContextService,
+    ContributionFamilyDashboardService,
+    ContributionWorkflowNotificationsService,
+    ContributionActionTokenService,
+    ContributionQuickActionService,
     ContributionAdjustmentsListService,
     ThankYouService,
     ContributionSmsChannel,
@@ -80,6 +88,8 @@ import { ContributionCatalogAdminService } from './contribution-catalog-admin.se
     ContributionProtocolService,
     ContributionMemberService,
     ThankYouService,
+    ContributionWorkflowNotificationsService,
+    ContributionActionTokenService,
   ],
 })
 export class FinanceModule {}

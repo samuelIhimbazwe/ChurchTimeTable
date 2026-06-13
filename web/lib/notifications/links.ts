@@ -9,6 +9,18 @@ export function linkFromNotificationData(
     return String(explicit)
   }
 
+  const actionUrl = data.actionUrl
+  if (actionUrl != null) {
+    const url = String(actionUrl)
+    if (url.startsWith('/')) return url
+    try {
+      const parsed = new URL(url)
+      return `${parsed.pathname}${parsed.search}`
+    } catch {
+      return undefined
+    }
+  }
+
   const kind = String(data.kind ?? '')
 
   switch (kind) {
@@ -25,6 +37,24 @@ export function linkFromNotificationData(
     case 'church_schedule_entry_edited':
     case 'church_schedule_entry_cancelled':
       return '/church/timetable'
+    case 'contribution_thank_you':
+      return '/portal/contributions'
+    case 'choir_announcement':
+      if (data.choirId) {
+        return data.announcementId
+          ? `/choir/${String(data.choirId)}/membership/announcements?id=${String(data.announcementId)}`
+          : `/choir/${String(data.choirId)}/membership/announcements`
+      }
+      return undefined
+    case 'choir_devotion':
+      return '/portal/devotion'
+    case 'choir_join_request_admin':
+      if (data.choirId) {
+        return data.requestId
+          ? `/choir/${String(data.choirId)}/president/decisions?requestId=${String(data.requestId)}`
+          : `/choir/${String(data.choirId)}/president/decisions`
+      }
+      return '/choir/join-requests'
     default:
       return undefined
   }

@@ -1,5 +1,13 @@
 import { ContributionStatus } from '@prisma/client';
-import { IsEnum, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsISO8601,
+  IsOptional,
+  IsUUID,
+  Max,
+  Min,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class MemberContributionsQueryDto {
@@ -27,4 +35,12 @@ export class MemberContributionsQueryDto {
   @IsOptional()
   @IsUUID()
   contributionCampaignId?: string;
+
+  @IsOptional()
+  @IsISO8601()
+  from?: string;
+
+  @IsOptional()
+  @IsISO8601()
+  to?: string;
 }

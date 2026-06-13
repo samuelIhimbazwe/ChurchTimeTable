@@ -101,7 +101,7 @@ export default function ReportsPage() {
             onClick={() => setActive(id)}
             className={`flex flex-col items-start gap-2 p-4 rounded-lg border transition-colors text-left ${
               active === id
-                ? 'border-gold-500 bg-gold-50 shadow-card'
+                ? 'border-primary-500 bg-surface-raised shadow-card'
                 : 'border-border bg-surface hover:bg-surface-raised'
             }`}
           >

@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -712,6 +712,7 @@ model Member {
   protocolMembershipClaims             ProtocolMembershipClaim[]
   protocolInvitationsSent              ProtocolInvitation[] @relation("ProtocolInviter")
   protocolClaimsReviewed               ProtocolMembershipClaim[] @relation("ProtocolClaimReviewer")
+  familyPulseEntries                   FamilyPulseEntry[]
   prayerRequests                       PrayerRequest[]
 
   @@index([status])
@@ -937,6 +938,10 @@ model ContributionCampaign {
   name               String
   description        String?
   goalAmount         Decimal
+  /// Per-member target (shown to singers); choir-wide goal stays in goalAmount for leaders only
+  memberGoalAmount   Decimal?
+  /// Family-level target (shown to family leadership); choir goal stays in goalAmount
+  familyGoalAmount   Decimal?
   currency           String                     @default("RWF")
   status             ContributionCampaignStatus @default(DRAFT)
   periodStart        DateTime?
@@ -1269,12 +1274,15 @@ model Family {
   paymentBankAccount     String?
   paymentBankName        String?
   paymentInstructions    String?
+  /// Head office layout template (DEFAULT | DECISIONS_FIRST | TEAM_HEALTH)
+  workspaceTemplate      String                    @default("DEFAULT")
   createdAt          DateTime                  @default(now())
   updatedAt          DateTime                  @updatedAt
   choir              Choir?                    @relation(fields: [choirId], references: [id])
   headMember         Member?                   @relation("FamilyHead", fields: [headMemberId], references: [id])
   members            FamilyMember[]
   leadershipHistory  FamilyLeadershipHistory[]
+  pulseEntries       FamilyPulseEntry[]
 
   @@unique([choirId, familyCode])
   @@index([choirId])
@@ -1313,6 +1321,23 @@ model FamilyLeadershipHistory {
   @@index([role])
   @@index([startedAt])
   @@index([endedAt])
+}
+
+model FamilyPulseEntry {
+  id                 String   @id @default(uuid())
+  familyId           String
+  weekStart          DateTime
+  score              Int
+  note               String?
+  recordedByMemberId String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  family             Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  recordedBy         Member?  @relation(fields: [recordedByMemberId], references: [id], onDelete: SetNull)
+
+  @@unique([familyId, weekStart])
+  @@index([familyId])
+  @@index([weekStart])
 }
 
 model FamilyCodeSequence {

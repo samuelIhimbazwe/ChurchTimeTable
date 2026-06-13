@@ -44,6 +44,7 @@ import { ChoirServiceOpsModule } from './choir-service-ops/choir-service-ops.mod
 import { MemberPortalModule } from './member-portal/member-portal.module';
 import { PilotReadyModule } from './pilot-ready/pilot-ready.module';
 import { AuthUxModule } from './auth-ux/auth-ux.module';
+import { MessagingModule } from './messaging/messaging.module';
 import { ChoirContextMiddleware } from './common/middleware/choir-context.middleware';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -88,6 +89,7 @@ import { AppService } from './app.service';
     SyncModule,
     ReportsModule,
     DashboardModule,
+    MessagingModule,
   ],
   controllers: [AppController],
   providers: [

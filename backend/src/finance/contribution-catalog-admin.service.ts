@@ -59,6 +59,8 @@ function serializeCampaign(row: {
   name: string;
   description: string | null;
   goalAmount: Prisma.Decimal;
+  memberGoalAmount: Prisma.Decimal | null;
+  familyGoalAmount: Prisma.Decimal | null;
   currency: string;
   status: ContributionCampaignStatus;
   periodStart: Date | null;
@@ -74,6 +76,10 @@ function serializeCampaign(row: {
     name: row.name,
     description: row.description,
     goalAmount: Number(row.goalAmount),
+    memberGoalAmount:
+      row.memberGoalAmount != null ? Number(row.memberGoalAmount) : null,
+    familyGoalAmount:
+      row.familyGoalAmount != null ? Number(row.familyGoalAmount) : null,
     currency: row.currency,
     status: row.status,
     periodStart: row.periodStart,
@@ -240,6 +246,8 @@ export class ContributionCatalogAdminService {
         name: dto.name.trim(),
         description: dto.description?.trim() || null,
         goalAmount: dto.goalAmount,
+        memberGoalAmount: dto.memberGoalAmount ?? null,
+        familyGoalAmount: dto.familyGoalAmount ?? null,
         currency: dto.currency?.trim() || 'RWF',
         status,
         periodStart: dto.periodStart ? new Date(dto.periodStart) : null,
@@ -270,6 +278,12 @@ export class ContributionCatalogAdminService {
           ? { description: dto.description?.trim() || null }
           : {}),
         ...(dto.goalAmount != null ? { goalAmount: dto.goalAmount } : {}),
+        ...(dto.memberGoalAmount !== undefined
+          ? { memberGoalAmount: dto.memberGoalAmount }
+          : {}),
+        ...(dto.familyGoalAmount !== undefined
+          ? { familyGoalAmount: dto.familyGoalAmount }
+          : {}),
         ...(dto.currency != null ? { currency: dto.currency.trim() } : {}),
         ...(dto.status != null ? { status: dto.status } : {}),
         ...(dto.periodStart !== undefined

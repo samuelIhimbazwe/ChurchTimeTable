@@ -37,6 +37,15 @@ export class ContributionFamilyContextService {
             familyCode: true,
             familyName: true,
             delegationEnabled: true,
+            members: {
+              where: { role: FamilyMemberRole.HEAD },
+              take: 1,
+              select: {
+                member: {
+                  select: { firstName: true, lastName: true },
+                },
+              },
+            },
           },
         })
       : [];
@@ -46,10 +55,15 @@ export class ContributionFamilyContextService {
     return {
       families: leadership.map((m) => {
         const meta = familyMeta.get(m.familyId);
+        const head = meta?.members[0]?.member;
+        const headName = head
+          ? `${head.firstName} ${head.lastName}`.trim()
+          : null;
         return {
           familyId: m.familyId,
           familyCode: meta?.familyCode ?? null,
           familyName: meta?.familyName ?? 'Family',
+          headName,
           role: m.role,
           delegationEnabled: meta?.delegationEnabled ?? m.delegationEnabled,
           canApprove: this.scope.canApproveFamily(ctx, m.familyId),

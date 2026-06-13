@@ -18,6 +18,9 @@ import {
 } from './dto/create-family.dto';
 import { UpdateFamilyMemberDto } from './dto/update-family-member.dto';
 import { UpdateFamilyPaymentDto } from './dto/update-family-payment.dto';
+import { UpdateFamilyDelegationDto } from './dto/update-family-delegation.dto';
+import { UpdateFamilyWorkspaceTemplateDto } from './dto/update-family-workspace-template.dto';
+import { UpsertFamilyPulseDto } from './dto/upsert-family-pulse.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -167,6 +170,88 @@ export class FamiliesController {
     @Body() dto: UpdateFamilyDto,
   ) {
     return this.familiesService.update(user.sub, id, dto);
+  }
+
+  @Get(':id/payment-instructions/history')
+  @RequireAnyPermissions(
+    PERMISSIONS.FAMILY_VIEW,
+    PERMISSIONS.FAMILY_MANAGE,
+    PERMISSIONS.CHOIR_FAMILY_VIEW,
+    PERMISSIONS.CHOIR_FAMILY_MANAGE,
+  )
+  paymentInstructionsHistory(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+  ) {
+    return this.familiesService.getPaymentInstructionsHistory(user.sub, id);
+  }
+
+  @Patch(':id/delegation')
+  @RequireAnyPermissions(
+    PERMISSIONS.FAMILY_VIEW,
+    PERMISSIONS.FAMILY_MANAGE,
+    PERMISSIONS.CHOIR_FAMILY_VIEW,
+    PERMISSIONS.CHOIR_FAMILY_MANAGE,
+  )
+  updateDelegation(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+    @Body() dto: UpdateFamilyDelegationDto,
+  ) {
+    return this.familiesService.updateDelegation(
+      user.sub,
+      id,
+      dto.delegationEnabled,
+    );
+  }
+
+  @Patch(':id/workspace-template')
+  @RequireAnyPermissions(
+    PERMISSIONS.FAMILY_VIEW,
+    PERMISSIONS.FAMILY_MANAGE,
+    PERMISSIONS.CHOIR_FAMILY_VIEW,
+    PERMISSIONS.CHOIR_FAMILY_MANAGE,
+  )
+  updateWorkspaceTemplate(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+    @Body() dto: UpdateFamilyWorkspaceTemplateDto,
+  ) {
+    return this.familiesService.updateWorkspaceTemplate(
+      user.sub,
+      id,
+      dto.workspaceTemplate,
+    );
+  }
+
+  @Get(':id/pulse')
+  @RequireAnyPermissions(
+    PERMISSIONS.FAMILY_VIEW,
+    PERMISSIONS.FAMILY_MANAGE,
+    PERMISSIONS.CHOIR_FAMILY_VIEW,
+    PERMISSIONS.CHOIR_FAMILY_MANAGE,
+  )
+  getPulse(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+    @Query('weekStart') weekStart?: string,
+  ) {
+    return this.familiesService.getPulse(user.sub, id, weekStart);
+  }
+
+  @Post(':id/pulse')
+  @RequireAnyPermissions(
+    PERMISSIONS.FAMILY_VIEW,
+    PERMISSIONS.FAMILY_MANAGE,
+    PERMISSIONS.CHOIR_FAMILY_VIEW,
+    PERMISSIONS.CHOIR_FAMILY_MANAGE,
+  )
+  upsertPulse(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+    @Body() dto: UpsertFamilyPulseDto,
+  ) {
+    return this.familiesService.upsertPulse(user.sub, id, dto);
   }
 
   @Patch(':id/payment-instructions')

@@ -9,8 +9,9 @@ import {
   Card, StatTile, HubTabs, PermissionGate, SkeletonCard, SkeletonStatTile,
 } from '@/components/shared'
 import { ContributionTreasuryPanel } from '@/components/choir/ContributionTreasuryPanel'
+import { TreasurerCommandHome } from '@/components/choir/committee/TreasurerCommandHome'
 import { useResolvedChoirScope } from '@/lib/hooks'
-import { DollarSign, Wallet, TrendingUp, ClipboardList } from 'lucide-react'
+import { DollarSign, Wallet, TrendingUp, ClipboardCheck } from 'lucide-react'
 import { formatDate } from '@/lib/utils/format'
 
 const TABS = [
@@ -111,6 +112,7 @@ export default function BudgetHubPage() {
 
       {tab === 'overview' && (
         <div className="space-y-4">
+          <TreasurerCommandHome />
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {loadingAnalytics ? (
               Array.from({ length: 4 }).map((_, i) => <SkeletonStatTile key={i} />)
@@ -125,7 +127,7 @@ export default function BudgetHubPage() {
                 <StatTile
                   label="Pending queue"
                   value={queueItems.length}
-                  icon={ClipboardList}
+                  icon={ClipboardCheck}
                   animate
                 />
                 <StatTile
@@ -144,6 +146,9 @@ export default function BudgetHubPage() {
             )}
           </div>
           <div className="flex flex-wrap gap-3">
+            <Link href={choirLink('budget/verify')} className="text-sm font-semibold text-primary-600">
+              Verification console →
+            </Link>
             <Link href={choirLink('stewardship')} className="text-sm font-semibold text-primary-600">
               Stewardship dashboard →
             </Link>

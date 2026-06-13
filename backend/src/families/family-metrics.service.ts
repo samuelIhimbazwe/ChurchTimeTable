@@ -70,6 +70,17 @@ export interface FamilyHealthScore {
   grade: FamilyHealthGrade;
 }
 
+export interface FamilyHealthBreakdown {
+  attendanceRate: number;
+  contributionScore: number | null;
+  participationScore: number;
+  weights: {
+    attendance: number;
+    contribution: number | null;
+    participation: number;
+  };
+}
+
 export interface FamilyMetricsPayload {
   familyId: string;
   familyCode: string;
@@ -78,6 +89,7 @@ export interface FamilyMetricsPayload {
   contributions: FamilyContributionMetrics | null;
   participation: FamilyParticipationMetrics;
   health: FamilyHealthScore;
+  healthBreakdown: FamilyHealthBreakdown;
 }
 
 export interface FamilyMetricsOverviewEntry {
@@ -390,6 +402,18 @@ export class FamilyMetricsService {
       contributions,
       participation,
       health,
+      healthBreakdown: {
+        attendanceRate: attendance.attendanceRate,
+        contributionScore,
+        participationScore,
+        weights: {
+          attendance: ATTENDANCE_WEIGHT,
+          contribution: includeContributions ? CONTRIBUTION_WEIGHT : null,
+          participation: includeContributions
+            ? PARTICIPATION_WEIGHT
+            : ATTENDANCE_WEIGHT + PARTICIPATION_WEIGHT,
+        },
+      },
     };
   }
 
@@ -589,6 +613,15 @@ export class FamilyMetricsService {
         null,
         participationScore,
       ),
+      healthBreakdown: {
+        ...payload.healthBreakdown,
+        contributionScore: null,
+        weights: {
+          attendance: ATTENDANCE_WEIGHT,
+          contribution: null,
+          participation: ATTENDANCE_WEIGHT + PARTICIPATION_WEIGHT,
+        },
+      },
     };
   }
 

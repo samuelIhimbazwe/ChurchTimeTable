@@ -10,7 +10,7 @@ describe('ContributionScopeService', () => {
   let service: ContributionScopeService;
 
   const prisma = {
-    familyMember: { findMany: jest.fn() },
+    familyMember: { findMany: jest.fn(), findFirst: jest.fn() },
   };
 
   const permissionsResolver = {
@@ -128,5 +128,53 @@ describe('ContributionScopeService', () => {
         status: 'CONFIRMED',
       }),
     ).toThrow();
+  });
+
+  it('allows family leadership to view records in own family only', () => {
+    const headCtx = baseCtx({
+      familyMemberships: [
+        {
+          familyId: 'fam-a',
+          role: FamilyMemberRole.HEAD,
+          delegationEnabled: false,
+        },
+      ],
+    });
+
+    expect(() =>
+      service.assertCanViewFamilyRecord(headCtx, { familyId: 'fam-a' }),
+    ).not.toThrow();
+
+    expect(() =>
+      service.assertCanViewFamilyRecord(headCtx, { familyId: 'fam-b' }),
+    ).toThrow('Not found');
+  });
+
+  it('allows secretary to view family records but not approve', () => {
+    const familyId = 'fam-1';
+    const secretaryCtx = baseCtx({
+      memberId: 'member-sec',
+      familyMemberships: [
+        {
+          familyId,
+          role: FamilyMemberRole.SECRETARY,
+          delegationEnabled: false,
+        },
+      ],
+    });
+
+    expect(service.canViewFamily(secretaryCtx, familyId)).toBe(true);
+    expect(() =>
+      service.assertCanViewFamilyRecord(secretaryCtx, { familyId }),
+    ).not.toThrow();
+    expect(service.canApproveFamily(secretaryCtx, familyId)).toBe(false);
+  });
+
+  it('assertMemberInFamily rejects members outside the family', async () => {
+    prisma.familyMember.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.assertMemberInFamily('fam-1', 'member-x'),
+    ).rejects.toThrow('Member not found in this family');
   });
 });

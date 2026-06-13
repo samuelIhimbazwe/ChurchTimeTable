@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { FamilyMemberRole } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PermissionsResolver } from '../auth/permissions.resolver';
 import { ROLES } from '../common/constants/roles';
@@ -28,9 +29,40 @@ const MEMBER_BASELINE_PERMISSIONS = [
   'choir.contribution.submit',
 ] as const;
 
+const FAMILY_LEADERSHIP_ROLES: FamilyMemberRole[] = [
+  FamilyMemberRole.HEAD,
+  FamilyMemberRole.ASSISTANT_HEAD,
+  FamilyMemberRole.SECRETARY,
+];
+
+const FAMILY_OFFICE_META: Record<
+  'HEAD' | 'ASSISTANT_HEAD' | 'SECRETARY',
+  { segment: string; label: string }
+> = {
+  HEAD: { segment: 'family-leadership', label: 'Family leadership' },
+  ASSISTANT_HEAD: { segment: 'family-deputy', label: 'Family deputy' },
+  SECRETARY: { segment: 'family-coordination', label: 'Family coordination' },
+};
+
 export type ChoirDashboardPosition = {
   roleKey: string;
   roleName: string;
+  permissions: string[];
+};
+
+export type ChoirFamilyOffice = {
+  role: FamilyMemberRole;
+  familyId: string;
+  familyName: string;
+  officePath: string;
+  label: string;
+};
+
+export type ChoirCustomRoleAssignment = {
+  id: string;
+  customRoleId: string;
+  name: string;
+  description: string | null;
   permissions: string[];
 };
 
@@ -49,6 +81,8 @@ export type ChoirDashboardContext = {
   permissions: string[];
   landingPath: string;
   canAccess: boolean;
+  familyOffices: ChoirFamilyOffice[];
+  customRoles: ChoirCustomRoleAssignment[];
 };
 
 @Injectable()
@@ -164,6 +198,57 @@ export class ChoirDashboardContextService {
       }
     }
 
+    const familyOffices: ChoirFamilyOffice[] = member
+      ? (
+          await this.prisma.familyMember.findMany({
+            where: {
+              memberId: member.id,
+              role: { in: FAMILY_LEADERSHIP_ROLES },
+              family: { choirId },
+            },
+            include: {
+              family: { select: { id: true, familyName: true } },
+            },
+          })
+        ).map((row) => {
+          const meta = FAMILY_OFFICE_META[row.role as keyof typeof FAMILY_OFFICE_META];
+          return {
+            role: row.role,
+            familyId: row.familyId,
+            familyName: row.family.familyName,
+            officePath: `/choir/${choirId}/${meta.segment}`,
+            label: meta.label,
+          };
+        })
+      : [];
+
+    const customRoleRows = member
+      ? await this.prisma.choirMemberCustomRole.findMany({
+          where: { memberId: member.id, choirId },
+          include: {
+            customRole: { include: { permissions: true } },
+          },
+        })
+      : [];
+
+    const customRoles: ChoirCustomRoleAssignment[] = customRoleRows
+      .filter((row) => row.customRole.isActive)
+      .map((row) => ({
+        id: row.id,
+        customRoleId: row.customRoleId,
+        name: row.customRole.name,
+        description: row.customRole.description,
+        permissions: row.customRole.permissions.map((p) => p.permission),
+      }));
+
+    for (const assignment of customRoles) {
+      for (const perm of assignment.permissions) {
+        if (isChoirScopedDashboardPermission(perm)) {
+          permissionSet.add(perm);
+        }
+      }
+    }
+
     return {
       choir,
       membership: isActiveMember
@@ -173,6 +258,8 @@ export class ChoirDashboardContextService {
       permissions: [...permissionSet],
       landingPath: resolveChoirLandingPath(choirId, positions),
       canAccess: isAdminOverride || isActiveMember || canViewInPortal,
+      familyOffices,
+      customRoles,
     };
   }
 }

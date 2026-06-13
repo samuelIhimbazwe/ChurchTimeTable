@@ -220,7 +220,7 @@ export default function ChoirDetailPage() {
           {choirPortalActions.showDashboardButton && (
             <>
               <Badge variant="status-present">You are a member</Badge>
-              <ChoirDashboardEntryButton choirId={data.id} label="Open choir dashboard" />
+              <ChoirDashboardEntryButton choirId={data.id} />
             </>
           )}
           {choirPortalActions.showSponsorDashboardButton && (

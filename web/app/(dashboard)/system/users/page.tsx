@@ -84,8 +84,8 @@ export default function SystemUsersPage() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-        <div>
-          <h2 className="font-display text-3xl text-text-primary">User Management</h2>
+      <div>
+        <h2 className="font-display text-3xl text-text-primary">User Management</h2>
           <p className="text-text-secondary text-sm mt-1">
             Create accounts, assign roles, reset passwords
           </p>

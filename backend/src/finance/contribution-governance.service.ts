@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import {
   ContributionStatus,
+  FamilyMemberRole,
   FinanceApprovalStatus,
   MinistryScope,
   NotificationType,
@@ -24,6 +25,7 @@ import { AdjustContributionDto } from './dto/adjust-contribution.dto';
 import { ApproveContributionDto } from './dto/approve-contribution.dto';
 import { RejectFamilyContributionDto } from './dto/reject-family-contribution.dto';
 import { ThankYouService } from './thank-you.service';
+import { isTreasuryVerifySplitEnabled } from './contribution-treasury-workflow.util';
 
 @Injectable()
 export class ContributionGovernanceService {
@@ -52,7 +54,14 @@ export class ContributionGovernanceService {
     );
 
     const records = await this.prisma.contributionRecord.findMany({
-      where: { familyId: resolvedFamilyId, status },
+      where: {
+        familyId: resolvedFamilyId,
+        status,
+        ...(status === ContributionStatus.SUBMITTED &&
+        isTreasuryVerifySplitEnabled()
+          ? { familyApprovedAt: null }
+          : {}),
+      },
       orderBy: {
         createdAt: status === ContributionStatus.SUBMITTED ? 'asc' : 'desc',
       },
@@ -63,6 +72,7 @@ export class ContributionGovernanceService {
             memberNumber: true,
             firstName: true,
             lastName: true,
+            phone: true,
           },
         },
         contributionTypeCatalog: { select: { code: true, name: true } },
@@ -181,8 +191,12 @@ export class ContributionGovernanceService {
         memberNumber: string | null;
         firstName: string;
         lastName: string;
+        phone?: string | null;
       };
       paymentAt: Date | null;
+      paymentChannel?: string | null;
+      notes?: string | null;
+      receiptUrl?: string | null;
       contributionTypeCatalog: { code: string; name: string } | null;
       contributionCampaign: { name: string } | null;
       createdAt: Date;
@@ -199,13 +213,159 @@ export class ContributionGovernanceService {
         memberId: record.memberId,
         memberName: `${record.member.firstName} ${record.member.lastName}`.trim(),
         memberNumber: record.member.memberNumber,
+        memberPhone: record.member.phone ?? null,
         paymentAt: record.paymentAt,
+        paymentChannel: record.paymentChannel ?? null,
+        notes: record.notes ?? null,
+        receiptUrl: record.receiptUrl ?? null,
         typeName:
           record.contributionTypeCatalog?.name ??
           record.contributionTypeCatalog?.code ??
           null,
         campaignName: record.contributionCampaign?.name ?? null,
         createdAt: record.createdAt,
+    };
+  }
+
+  async getTreasuryInbox(
+    actorUserId: string,
+    choirId: string,
+    limit = 30,
+  ) {
+    const ctx = await this.scope.resolveActor(actorUserId);
+    this.scope.assertCanVerifyTreasury(ctx);
+
+    const choir = await this.prisma.choir.findUnique({
+      where: { id: choirId },
+      select: { id: true, isActive: true },
+    });
+    if (!choir?.isActive) {
+      throw new NotFoundException('Choir not found');
+    }
+
+    const records = await this.prisma.contributionRecord.findMany({
+      where: {
+        status: ContributionStatus.SUBMITTED,
+        familyApprovedAt: { not: null },
+        financeTransactionId: null,
+        familyId: { not: null },
+        family: { choirId },
+      },
+      orderBy: { familyApprovedAt: 'asc' },
+      take: Math.min(limit, 100),
+      include: {
+        member: {
+          select: {
+            memberNumber: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+          },
+        },
+        family: {
+          select: {
+            id: true,
+            familyName: true,
+            familyCode: true,
+          },
+        },
+        familyApprovedBy: {
+          select: {
+            firstName: true,
+            lastName: true,
+            memberNumber: true,
+          },
+        },
+        contributionTypeCatalog: { select: { code: true, name: true } },
+        contributionCampaign: { select: { name: true } },
+      },
+    });
+
+    return {
+      choirId,
+      pendingCount: records.length,
+      splitWorkflowEnabled: isTreasuryVerifySplitEnabled(),
+      items: records.map((record) => ({
+        ...this.serializeInboxItem(record),
+        familyName: record.family?.familyName ?? null,
+        familyCode: record.family?.familyCode ?? null,
+        familyApprovedAt: record.familyApprovedAt,
+        familyApprovedByName: record.familyApprovedBy
+          ? `${record.familyApprovedBy.firstName} ${record.familyApprovedBy.lastName}`.trim()
+          : null,
+        familyApprovedByNumber: record.familyApprovedBy?.memberNumber ?? null,
+      })),
+    };
+  }
+
+  async getTreasuryDashboard(actorUserId: string, choirId: string) {
+    const ctx = await this.scope.resolveActor(actorUserId);
+    this.scope.assertCanVerifyTreasury(ctx);
+
+    const choir = await this.prisma.choir.findUnique({
+      where: { id: choirId },
+      select: { id: true, isActive: true },
+    });
+    if (!choir?.isActive) {
+      throw new NotFoundException('Choir not found');
+    }
+
+    const treasuryWhere = {
+      status: ContributionStatus.SUBMITTED,
+      familyApprovedAt: { not: null },
+      financeTransactionId: null,
+      familyId: { not: null },
+      family: { choirId },
+    };
+
+    const [treasuryCount, oldestTreasury, sponsorCount, oldestSponsor] =
+      await Promise.all([
+        this.prisma.contributionRecord.count({ where: treasuryWhere }),
+        this.prisma.contributionRecord.findFirst({
+          where: treasuryWhere,
+          orderBy: { familyApprovedAt: 'asc' },
+          select: { id: true, familyApprovedAt: true },
+        }),
+        this.prisma.contributionRecord.count({
+          where: {
+            familyId: null,
+            choirId,
+            status: ContributionStatus.SUBMITTED,
+          },
+        }),
+        this.prisma.contributionRecord.findFirst({
+          where: {
+            familyId: null,
+            choirId,
+            status: ContributionStatus.SUBMITTED,
+          },
+          orderBy: { createdAt: 'asc' },
+          select: { id: true, createdAt: true },
+        }),
+      ]);
+
+    const oldestTreasuryHours = oldestTreasury?.familyApprovedAt
+      ? Math.floor(
+          (Date.now() - oldestTreasury.familyApprovedAt.getTime()) /
+            (1000 * 60 * 60),
+        )
+      : null;
+    const oldestSponsorHours = oldestSponsor?.createdAt
+      ? Math.floor(
+          (Date.now() - oldestSponsor.createdAt.getTime()) / (1000 * 60 * 60),
+        )
+      : null;
+
+    return {
+      choirId,
+      splitWorkflowEnabled: isTreasuryVerifySplitEnabled(),
+      verificationQueueCount: treasuryCount + sponsorCount,
+      treasuryQueueCount: treasuryCount,
+      sponsorQueueCount: sponsorCount,
+      oldestTreasuryHours,
+      oldestSponsorHours,
+      oldestTreasuryContributionId: oldestTreasury?.id ?? null,
+      oldestSponsorContributionId: oldestSponsor?.id ?? null,
     };
   }
 
@@ -334,6 +494,77 @@ export class ContributionGovernanceService {
     const timestamp = new Date().toISOString();
     const familyApprovedAt = new Date();
 
+    const useSplitWorkflow =
+      isTreasuryVerifySplitEnabled() &&
+      Boolean(record.familyId) &&
+      !this.isProtocolRecord(record);
+
+    if (useSplitWorkflow) {
+      const updated = await this.prisma.contributionRecord.update({
+        where: { id: contributionId },
+        data: {
+          confirmedAmount,
+          discrepancyAmount:
+            discrepancyAmount !== 0 ? discrepancyAmount : null,
+          discrepancyReason,
+          familyApprovedAt,
+          familyApprovedByMemberId: ctx.memberId,
+        },
+        include: this.workflowRecordInclude(),
+      });
+
+      await this.audit.log({
+        userId: actorUserId,
+        action: 'CONTRIBUTION_FAMILY_APPROVED',
+        entity: 'ContributionRecord',
+        entityId: contributionId,
+        oldValue: {
+          status: record.status,
+          claimedAmount,
+        },
+        newValue: {
+          claimedAmount,
+          confirmedAmount,
+          discrepancyAmount: discrepancyAmount !== 0 ? discrepancyAmount : null,
+          discrepancyReason,
+          approverId: actorUserId,
+          approverMemberId: ctx.memberId,
+          approverRole,
+          familyId: record.familyId,
+          memberId: record.memberId,
+          status: ContributionStatus.SUBMITTED,
+          timestamp,
+        },
+      });
+
+      if (record.familyId) {
+        const choirId = await this.resolveChoirIdForFamily(record.familyId);
+        if (choirId) {
+          await this.notifyTreasurerPendingVerification({
+            choirId,
+            contributionId,
+            memberName: `${record.member.firstName} ${record.member.lastName}`.trim(),
+            confirmedAmount,
+            referenceNumber: record.referenceNumber,
+          });
+        }
+
+        if (discrepancyAmount !== 0 && discrepancyReason) {
+          await this.notifyDiscrepancyStakeholders({
+            familyId: record.familyId,
+            contributionId,
+            claimedAmount,
+            confirmedAmount,
+            discrepancyAmount,
+            discrepancyReason,
+            memberName: `${record.member.firstName} ${record.member.lastName}`.trim(),
+          });
+        }
+      }
+
+      return this.serializeWorkflowRecord(updated);
+    }
+
     const { updated, financeTransactionId } = await this.prisma.$transaction(
       async (tx) => {
         const locked = await tx.contributionRecord.findUnique({
@@ -359,35 +590,12 @@ export class ContributionGovernanceService {
           );
         }
 
-        const category = financeCategoryFromContributionType(
-          locked.contributionType,
-        );
-        const catalogLabel =
-          locked.contributionTypeCatalog?.name ??
-          locked.contributionTypeCatalog?.code ??
-          locked.contributionType;
-
-        const ledgerScope = this.isProtocolRecord(locked)
-          ? MinistryScope.PROTOCOL
-          : locked.member.ministry === MinistryScope.PROTOCOL
-            ? MinistryScope.PROTOCOL
-            : MinistryScope.CHOIR;
-
-        const transaction = await tx.financeTransaction.create({
-          data: {
-            ministryScope: ledgerScope,
-            type: TransactionType.INCOME,
-            category,
-            amount: confirmedAmount,
-            currency: locked.currency,
-            description: `Contribution ${locked.referenceNumber} (${catalogLabel})`,
-            memberId: locked.memberId,
-            recordedById: actorUserId,
-            approvedById: actorUserId,
-            approvalStatus: FinanceApprovalStatus.APPROVED,
-            receiptUrl: locked.receiptUrl,
-            transactionDate: familyApprovedAt,
-          },
+        const financeTransactionId = await this.postContributionToLedger(tx, {
+          contributionId,
+          actorUserId,
+          confirmedAmount,
+          transactionDate: familyApprovedAt,
+          record: locked,
         });
 
         const saved = await tx.contributionRecord.update({
@@ -402,12 +610,12 @@ export class ContributionGovernanceService {
             familyApprovedByMemberId: ctx.memberId,
             confirmedAt: familyApprovedAt,
             confirmedById: actorUserId,
-            financeTransactionId: transaction.id,
+            financeTransactionId,
           },
           include: this.workflowRecordInclude(),
         });
 
-        return { updated: saved, financeTransactionId: transaction.id };
+        return { updated: saved, financeTransactionId };
       },
     );
 
@@ -474,6 +682,199 @@ export class ContributionGovernanceService {
     });
 
     return this.serializeWorkflowRecord(withThankYou, financeTransactionId);
+  }
+
+  async verifyTreasury(actorUserId: string, contributionId: string) {
+    const ctx = await this.scope.resolveActor(actorUserId);
+    this.scope.assertCanVerifyTreasury(ctx);
+
+    const record = await this.findWorkflowRecord(contributionId);
+    if (!record.familyId) {
+      throw new BadRequestException(
+        'Only family-approved contributions can be treasury-verified',
+      );
+    }
+    if (this.isProtocolRecord(record)) {
+      throw new BadRequestException('Protocol contributions use a separate flow');
+    }
+    if (record.status !== ContributionStatus.SUBMITTED) {
+      throw new ConflictException(
+        `Contribution cannot be verified in status ${record.status}`,
+      );
+    }
+    if (!record.familyApprovedAt) {
+      throw new BadRequestException('Family approval is required before verification');
+    }
+    if (record.financeTransactionId) {
+      throw new ConflictException(
+        'Contribution is already linked to a finance transaction',
+      );
+    }
+
+    const confirmedAmount = Number(
+      record.confirmedAmount ?? record.claimedAmount ?? record.amount,
+    );
+    const claimedAmount = Number(record.claimedAmount ?? record.amount);
+    const timestamp = new Date().toISOString();
+    const confirmedAt = new Date();
+
+    const { updated, financeTransactionId } = await this.prisma.$transaction(
+      async (tx) => {
+        const locked = await tx.contributionRecord.findUnique({
+          where: { id: contributionId },
+          include: {
+            member: { select: { ministry: true } },
+            contributionTypeCatalog: {
+              select: { code: true, name: true, ministryScope: true },
+            },
+          },
+        });
+        if (!locked) {
+          throw new NotFoundException('Contribution not found');
+        }
+        if (!locked.familyApprovedAt) {
+          throw new BadRequestException('Family approval is required before verification');
+        }
+        if (locked.financeTransactionId) {
+          throw new ConflictException(
+            'Contribution is already linked to a finance transaction',
+          );
+        }
+        if (locked.status !== ContributionStatus.SUBMITTED) {
+          throw new ConflictException(
+            `Contribution cannot be verified in status ${locked.status}`,
+          );
+        }
+
+        const financeTransactionId = await this.postContributionToLedger(tx, {
+          contributionId,
+          actorUserId,
+          confirmedAmount,
+          transactionDate: confirmedAt,
+          record: locked,
+        });
+
+        const saved = await tx.contributionRecord.update({
+          where: { id: contributionId },
+          data: {
+            status: ContributionStatus.CONFIRMED,
+            confirmedAt,
+            confirmedById: actorUserId,
+            financeTransactionId,
+          },
+          include: this.workflowRecordInclude(),
+        });
+
+        return { updated: saved, financeTransactionId };
+      },
+    );
+
+    await this.audit.log({
+      userId: actorUserId,
+      action: 'FINANCE_TRANSACTION_CREATE',
+      entity: 'FinanceTransaction',
+      entityId: financeTransactionId,
+      newValue: {
+        contributionRecordId: contributionId,
+        financeTransactionId,
+        amount: confirmedAmount,
+        memberId: record.memberId,
+        familyId: record.familyId,
+        referenceNumber: record.referenceNumber,
+        timestamp,
+      },
+    });
+
+    await this.audit.log({
+      userId: actorUserId,
+      action: 'CONTRIBUTION_CONFIRMED',
+      entity: 'ContributionRecord',
+      entityId: contributionId,
+      oldValue: {
+        status: record.status,
+        claimedAmount,
+      },
+      newValue: {
+        claimedAmount,
+        confirmedAmount,
+        approverId: actorUserId,
+        approverMemberId: ctx.memberId,
+        approverRole: 'CHOIR_TREASURER',
+        familyId: record.familyId,
+        memberId: record.memberId,
+        financeTransactionId,
+        status: ContributionStatus.CONFIRMED,
+        timestamp,
+        treasuryVerified: true,
+      },
+    });
+
+    await this.thankYou.sendContributionThankYou(contributionId, actorUserId, {
+      automatic: true,
+    });
+
+    return this.serializeWorkflowRecord(updated, financeTransactionId);
+  }
+
+  async rejectTreasury(
+    actorUserId: string,
+    contributionId: string,
+    dto: RejectFamilyContributionDto,
+  ) {
+    const ctx = await this.scope.resolveActor(actorUserId);
+    this.scope.assertCanVerifyTreasury(ctx);
+
+    const record = await this.findWorkflowRecord(contributionId);
+    if (!record.familyId) {
+      throw new BadRequestException('Only family-approved contributions can be returned');
+    }
+    if (record.status !== ContributionStatus.SUBMITTED || !record.familyApprovedAt) {
+      throw new ConflictException('Contribution is not awaiting treasurer verification');
+    }
+
+    const returnReason = dto.rejectionReason.trim();
+    const timestamp = new Date().toISOString();
+    const existingNotes = record.notes?.trim();
+    const notes = existingNotes
+      ? `${existingNotes}\n\n[Treasurer return] ${returnReason}`
+      : `[Treasurer return] ${returnReason}`;
+
+    const updated = await this.prisma.contributionRecord.update({
+      where: { id: contributionId },
+      data: {
+        familyApprovedAt: null,
+        familyApprovedByMemberId: null,
+        confirmedAmount: null,
+        discrepancyAmount: null,
+        discrepancyReason: null,
+        notes,
+      },
+      include: this.workflowRecordInclude(),
+    });
+
+    await this.audit.log({
+      userId: actorUserId,
+      action: 'CONTRIBUTION_TREASURY_RETURNED',
+      entity: 'ContributionRecord',
+      entityId: contributionId,
+      oldValue: {
+        familyApprovedAt: record.familyApprovedAt,
+        confirmedAmount: record.confirmedAmount,
+      },
+      newValue: {
+        returnReason,
+        actorId: actorUserId,
+        actorRole: 'CHOIR_TREASURER',
+        familyId: record.familyId,
+        memberId: record.memberId,
+        status: ContributionStatus.SUBMITTED,
+        timestamp,
+      },
+    });
+
+    await this.notifyFamilyHeadTreasuryReturn(updated, returnReason);
+
+    return this.serializeWorkflowRecord(updated);
   }
 
   async rejectFamily(
@@ -664,6 +1065,7 @@ export class ContributionGovernanceService {
   ) {
     if (record.familyId) {
       this.scope.assertCanApproveFamily(ctx, record.familyId);
+      this.scope.assertCanViewFamilyRecord(ctx, record);
       return;
     }
     if (this.isProtocolRecord(record)) {
@@ -850,5 +1252,167 @@ export class ContributionGovernanceService {
       select: { preferredLanguage: true },
     });
     return this.i18n.resolveLocale(user?.preferredLanguage ?? 'rw');
+  }
+
+  private async resolveChoirIdForFamily(familyId: string): Promise<string | null> {
+    const family = await this.prisma.family.findUnique({
+      where: { id: familyId },
+      select: { choirId: true },
+    });
+    return family?.choirId ?? null;
+  }
+
+  private async postContributionToLedger(
+    tx: Prisma.TransactionClient,
+    params: {
+      contributionId: string;
+      actorUserId: string;
+      confirmedAmount: number;
+      transactionDate: Date;
+      record: {
+        contributionType: Parameters<typeof financeCategoryFromContributionType>[0];
+        referenceNumber: string;
+        currency: string;
+        receiptUrl: string | null;
+        memberId: string;
+        member: { ministry: MinistryScope };
+        contributionTypeCatalog?: {
+          code: string;
+          name: string;
+          ministryScope: MinistryScope;
+        } | null;
+      };
+    },
+  ): Promise<string> {
+    const category = financeCategoryFromContributionType(params.record.contributionType);
+    const catalogLabel =
+      params.record.contributionTypeCatalog?.name ??
+      params.record.contributionTypeCatalog?.code ??
+      params.record.contributionType;
+
+    const ledgerScope = this.isProtocolRecord(params.record)
+      ? MinistryScope.PROTOCOL
+      : params.record.member.ministry === MinistryScope.PROTOCOL
+        ? MinistryScope.PROTOCOL
+        : MinistryScope.CHOIR;
+
+    const transaction = await tx.financeTransaction.create({
+      data: {
+        ministryScope: ledgerScope,
+        type: TransactionType.INCOME,
+        category,
+        amount: params.confirmedAmount,
+        currency: params.record.currency,
+        description: `Contribution ${params.record.referenceNumber} (${catalogLabel})`,
+        memberId: params.record.memberId,
+        recordedById: params.actorUserId,
+        approvedById: params.actorUserId,
+        approvalStatus: FinanceApprovalStatus.APPROVED,
+        receiptUrl: params.record.receiptUrl,
+        transactionDate: params.transactionDate,
+      },
+    });
+
+    return transaction.id;
+  }
+
+  private async notifyTreasurerPendingVerification(params: {
+    choirId: string;
+    contributionId: string;
+    memberName: string;
+    confirmedAmount: number;
+    referenceNumber: string;
+  }) {
+    const treasurerRoles = await this.prisma.choirCommitteeMember.findMany({
+      where: {
+        choirId: params.choirId,
+        role: { name: 'treasurer' },
+      },
+      include: {
+        member: { select: { userId: true } },
+      },
+    });
+
+    const recipientUserIds = treasurerRoles
+      .map((row) => row.member.userId)
+      .filter((id): id is string => Boolean(id));
+
+    for (const userId of [...new Set(recipientUserIds)]) {
+      const locale = await this.resolveUserLocale(userId);
+      const title = this.i18n.translate(
+        locale,
+        'NOTIFICATION_CONTRIBUTION_TREASURY_VERIFY_TITLE',
+        'Contribution ready for verification',
+      );
+      const body = this.i18n.translate(
+        locale,
+        'NOTIFICATION_CONTRIBUTION_TREASURY_VERIFY_BODY',
+        `${params.memberName} — ${params.confirmedAmount} RWF (${params.referenceNumber}) approved by family head; verify and post.`,
+        {
+          name: params.memberName,
+          amount: String(params.confirmedAmount),
+          reference: params.referenceNumber,
+        },
+      );
+
+      await this.notifications.create(
+        userId,
+        NotificationType.GENERAL,
+        title,
+        body,
+        {
+          kind: 'contribution_treasury_verify',
+          contributionId: params.contributionId,
+          choirId: params.choirId,
+        },
+      );
+    }
+  }
+
+  private async notifyFamilyHeadTreasuryReturn(
+    record: Prisma.ContributionRecordGetPayload<{
+      include: ReturnType<ContributionGovernanceService['workflowRecordInclude']>;
+    }>,
+    returnReason: string,
+  ) {
+    if (!record.familyId) return;
+
+    const head = await this.prisma.familyMember.findFirst({
+      where: {
+        familyId: record.familyId,
+        role: FamilyMemberRole.HEAD,
+      },
+      include: {
+        member: { select: { userId: true, firstName: true } },
+      },
+    });
+    const userId = head?.member.userId;
+    if (!userId) return;
+
+    const locale = await this.resolveUserLocale(userId);
+    const title = this.i18n.translate(
+      locale,
+      'NOTIFICATION_CONTRIBUTION_TREASURY_RETURN_TITLE',
+      'Treasurer returned a contribution',
+    );
+    const body = this.i18n.translate(
+      locale,
+      'NOTIFICATION_CONTRIBUTION_TREASURY_RETURN_BODY',
+      `Please review and re-confirm: ${returnReason}`,
+      { reason: returnReason },
+    );
+
+    await this.notifications.create(
+      userId,
+      NotificationType.GENERAL,
+      title,
+      body,
+      {
+        kind: 'contribution_treasury_return',
+        contributionId: record.id,
+        familyId: record.familyId,
+        returnReason,
+      },
+    );
   }
 }

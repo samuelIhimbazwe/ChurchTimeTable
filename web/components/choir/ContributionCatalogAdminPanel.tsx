@@ -19,6 +19,8 @@ export function ContributionCatalogAdminPanel({ choirId }: { choirId: string }) 
   const [newName, setNewName] = useState('')
   const [campaignName, setCampaignName] = useState('')
   const [campaignGoal, setCampaignGoal] = useState('')
+  const [campaignMemberGoal, setCampaignMemberGoal] = useState('')
+  const [campaignFamilyGoal, setCampaignFamilyGoal] = useState('')
   const [campaignTypeId, setCampaignTypeId] = useState('')
 
   const { data: catalog, isLoading: loadingCatalog } = useQuery({
@@ -64,12 +66,20 @@ export function ContributionCatalogAdminPanel({ choirId }: { choirId: string }) 
         contributionTypeCatalogId: campaignTypeId,
         name: campaignName.trim(),
         goalAmount: parseFloat(campaignGoal),
+        memberGoalAmount: campaignMemberGoal
+          ? parseFloat(campaignMemberGoal)
+          : undefined,
+        familyGoalAmount: campaignFamilyGoal
+          ? parseFloat(campaignFamilyGoal)
+          : undefined,
         status: 'ACTIVE',
       }),
     onSuccess: () => {
       toast.success('Campaign created')
       setCampaignName('')
       setCampaignGoal('')
+      setCampaignMemberGoal('')
+      setCampaignFamilyGoal('')
       qc.invalidateQueries({ queryKey: ['contribution-admin-campaigns', choirId] })
     },
     onError: (err: Error) => toast.error('Could not create campaign', err.message),
@@ -165,7 +175,13 @@ export function ContributionCatalogAdminPanel({ choirId }: { choirId: string }) 
                     <p className="text-sm font-medium">{row.name}</p>
                     <p className="text-xs text-text-muted">
                       {typeName && <>{typeName} · </>}
-                      Goal {formatCurrency(row.goalAmount)}
+                      Choir goal {formatCurrency(row.goalAmount)}
+                      {row.memberGoalAmount != null && (
+                        <> · Member {formatCurrency(row.memberGoalAmount)}</>
+                      )}
+                      {row.familyGoalAmount != null && (
+                        <> · Family {formatCurrency(row.familyGoalAmount)}</>
+                      )}
                       {row.periodEnd && <> · ends {formatDate(row.periodEnd)}</>}
                     </p>
                   </div>
@@ -188,7 +204,7 @@ export function ContributionCatalogAdminPanel({ choirId }: { choirId: string }) 
             })}
           </ul>
         )}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
           <select
             value={campaignTypeId}
             onChange={(e) => setCampaignTypeId(e.target.value)}
@@ -209,7 +225,21 @@ export function ContributionCatalogAdminPanel({ choirId }: { choirId: string }) 
             type="number"
             value={campaignGoal}
             onChange={(e) => setCampaignGoal(e.target.value)}
-            placeholder="Goal (RWF)"
+            placeholder="Choir goal (RWF)"
+            className="px-3 py-2 rounded-lg text-sm border border-border bg-surface"
+          />
+          <input
+            type="number"
+            value={campaignMemberGoal}
+            onChange={(e) => setCampaignMemberGoal(e.target.value)}
+            placeholder="Member target (RWF)"
+            className="px-3 py-2 rounded-lg text-sm border border-border bg-surface"
+          />
+          <input
+            type="number"
+            value={campaignFamilyGoal}
+            onChange={(e) => setCampaignFamilyGoal(e.target.value)}
+            placeholder="Family goal (RWF)"
             className="px-3 py-2 rounded-lg text-sm border border-border bg-surface"
           />
           <button

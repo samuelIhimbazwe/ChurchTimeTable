@@ -45,7 +45,7 @@ export default function PreferencesPanel({ open, onClose }: PreferencesPanelProp
                 className={cn(
                   'flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-colors',
                   theme === 'light'
-                    ? 'border-gold-500 bg-gold-50 text-text-primary'
+                    ? 'border-primary-500 bg-surface-raised text-text-primary'
                     : 'border-border text-text-secondary hover:bg-surface-raised',
                 )}
               >
@@ -57,7 +57,7 @@ export default function PreferencesPanel({ open, onClose }: PreferencesPanelProp
                 className={cn(
                   'flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-colors',
                   theme === 'dark'
-                    ? 'border-gold-500 bg-gold-50 text-text-primary'
+                    ? 'border-primary-500 bg-surface-raised text-text-primary'
                     : 'border-border text-text-secondary hover:bg-surface-raised',
                 )}
               >

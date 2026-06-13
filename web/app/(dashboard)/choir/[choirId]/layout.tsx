@@ -8,6 +8,7 @@ import { useChoirSponsorDashboardContext } from '@/lib/hooks/useChoirSponsorDash
 import { ChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
 import { ChoirSponsorDashboardCtx } from '@/components/choir/ChoirSponsorDashboardProvider'
 import { choirMemberHome } from '@/lib/choir/paths'
+import { isSovereignOfficePath } from '@/lib/choir/office-themes'
 import { Card } from '@/components/shared'
 import { ArrowLeft, Heart, Music } from 'lucide-react'
 
@@ -60,6 +61,8 @@ export default function ChoirScopedLayout({ children }: { children: React.ReactN
     [choirId, sponsorContext, loadingSponsor, sponsorError],
   )
 
+  const isSovereignOffice = isSovereignOfficePath(pathname)
+
   const stillLoading =
     loadingMember ||
     ((memberDenied || isSponsorRoute) && loadingSponsor && !sponsorContext)
@@ -76,7 +79,7 @@ export default function ChoirScopedLayout({ children }: { children: React.ReactN
     return (
       <ChoirSponsorDashboardCtx.Provider value={sponsorProviderValue}>
         <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 px-1 py-2 rounded-lg bg-gold-50 border border-gold-200">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-1 py-2 rounded-lg bg-surface-raised border border-border">
             <p className="text-sm text-text-secondary">
               <span className="font-semibold text-text-primary">
                 {sponsorContext.choir.name}
@@ -108,31 +111,34 @@ export default function ChoirScopedLayout({ children }: { children: React.ReactN
   if (memberAccess && memberContext) {
     return (
       <ChoirDashboardCtx.Provider value={memberProviderValue}>
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 px-1 py-2 rounded-lg bg-primary-50 border border-primary-100">
-            <p className="text-sm text-text-secondary">
-              <span className="font-semibold text-text-primary">{memberContext.choir.name}</span> choir dashboard
-              {memberContext.positions.length > 0 && (
-                <span className="text-text-muted">
-                  {' '}· {memberContext.positions.map((p) => p.roleName).join(', ')}
-                </span>
-              )}
-            </p>
-            <div className="flex flex-wrap items-center gap-3 shrink-0">
-              <Link
-                href={choirMemberHome(choirId)}
-                className="text-sm font-semibold text-primary-700 hover:text-primary-900 dark:text-gold-400 dark:hover:text-gold-300"
-              >
-                My choir home
-              </Link>
-              <Link
-                href="/portal"
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-700 hover:text-primary-900 dark:text-gold-400 dark:hover:text-gold-300"
-              >
-                <ArrowLeft size={14} /> Member portal
-              </Link>
+        <div className={isSovereignOffice ? undefined : 'space-y-4'}>
+          {!isSovereignOffice && (
+            <div className="flex flex-wrap items-center justify-between gap-3 px-1 py-2 rounded-lg bg-primary-50 border border-primary-100">
+              <p className="text-sm text-text-secondary">
+                <span className="font-semibold text-text-primary">{memberContext.choir.name}</span>
+                {' · Choir workspace'}
+                {memberContext.positions.length > 0 && (
+                  <span className="text-text-muted">
+                    {' '}· {memberContext.positions.map((p) => p.roleName).join(', ')}
+                  </span>
+                )}
+              </p>
+              <div className="flex flex-wrap items-center gap-3 shrink-0">
+                <Link
+                  href={choirMemberHome(choirId)}
+                  className="text-sm font-semibold text-primary-700 hover:text-primary-900 dark:text-gold-400 dark:hover:text-gold-300"
+                >
+                  My membership
+                </Link>
+                <Link
+                  href="/portal"
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-700 hover:text-primary-900 dark:text-gold-400 dark:hover:text-gold-300"
+                >
+                  <ArrowLeft size={14} /> Member portal
+                </Link>
+              </div>
             </div>
-          </div>
+          )}
           {children}
         </div>
       </ChoirDashboardCtx.Provider>

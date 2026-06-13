@@ -5,8 +5,10 @@ import { ContributionScopeService } from './contribution-scope.service';
 
 export type ContributionTimelineEventType =
   | 'submitted'
+  | 'family_approved'
   | 'approved'
   | 'rejected'
+  | 'treasury_returned'
   | 'adjusted'
   | 'family_changed'
   | 'type_changed'
@@ -25,8 +27,10 @@ export interface ContributionTimelineEvent {
 
 const CONTRIBUTION_AUDIT_ACTIONS = [
   'CONTRIBUTION_SUBMITTED',
+  'CONTRIBUTION_FAMILY_APPROVED',
   'CONTRIBUTION_CONFIRMED',
   'CONTRIBUTION_REJECTED',
+  'CONTRIBUTION_TREASURY_RETURNED',
   'CONTRIBUTION_ADJUST',
   'CONTRIBUTION_FAMILY_CHANGE',
   'CONTRIBUTION_TYPE_CHANGE',
@@ -58,6 +62,8 @@ export class ContributionTimelineService {
         confirmedAt: true,
         thankYouSentAt: true,
         financeTransactionId: true,
+        discrepancyReason: true,
+        discrepancyAmount: true,
       },
     });
     if (!record) {
@@ -110,14 +116,17 @@ export class ContributionTimelineService {
     }
 
     if (
-      record.status === ContributionStatus.CONFIRMED &&
       record.familyApprovedAt &&
-      !events.some((e) => e.type === 'approved')
+      !events.some((e) => e.type === 'family_approved' || e.type === 'approved')
     ) {
+      const awaitingTreasury =
+        record.status === ContributionStatus.SUBMITTED && !record.confirmedAt;
       events.push({
-        type: 'approved',
+        type: awaitingTreasury ? 'family_approved' : 'approved',
         timestamp: record.familyApprovedAt.toISOString(),
-        summary: 'Contribution confirmed by family',
+        summary: awaitingTreasury
+          ? 'Family head confirmed payment — awaiting treasurer'
+          : 'Contribution confirmed by family',
       });
     }
 
@@ -133,7 +142,10 @@ export class ContributionTimelineService {
       });
     }
 
+    const isMemberOwnView = this.isMemberOwnView(ctx, record);
+
     if (
+      !isMemberOwnView &&
       record.thankYouSentAt &&
       !events.some((e) => e.type === 'thank_you_sent')
     ) {
@@ -144,7 +156,31 @@ export class ContributionTimelineService {
       });
     }
 
-    events.sort(
+    let visibleEvents = events;
+    if (isMemberOwnView) {
+      visibleEvents = events.filter((event) =>
+        ['submitted', 'family_approved', 'approved', 'rejected'].includes(event.type),
+      );
+      if (
+        record.discrepancyReason?.trim() &&
+        visibleEvents.some((event) => event.type === 'approved')
+      ) {
+        visibleEvents = visibleEvents.map((event) =>
+          event.type === 'approved'
+            ? {
+                ...event,
+                summary: 'Family head approved contribution',
+                metadata: {
+                  ...(event.metadata ?? {}),
+                  comment: record.discrepancyReason?.trim(),
+                },
+              }
+            : event,
+        );
+      }
+    }
+
+    visibleEvents.sort(
       (a, b) =>
         new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
     );
@@ -153,8 +189,21 @@ export class ContributionTimelineService {
       contributionId,
       referenceNumber: record.referenceNumber,
       status: record.status,
-      events,
+      events: visibleEvents,
     };
+  }
+
+  private isMemberOwnView(
+    ctx: Awaited<ReturnType<ContributionScopeService['resolveActor']>>,
+    record: { memberId: string; familyId: string | null },
+  ): boolean {
+    if (!ctx.memberId || ctx.memberId !== record.memberId) return false;
+    if (!this.scope.canViewOwn(ctx)) return false;
+    if (this.scope.canViewAll(ctx)) return false;
+    if (record.familyId && this.scope.canViewFamily(ctx, record.familyId)) {
+      return false;
+    }
+    return true;
   }
 
   private assertCanViewTimeline(
@@ -204,12 +253,22 @@ export class ContributionTimelineService {
           summary: 'Contribution submitted',
           metadata: payload,
         };
+      case 'CONTRIBUTION_FAMILY_APPROVED':
+        return {
+          type: 'family_approved',
+          timestamp,
+          actorRole,
+          summary: 'Family head confirmed payment — awaiting treasurer',
+          metadata: payload,
+        };
       case 'CONTRIBUTION_CONFIRMED':
         return {
           type: 'approved',
           timestamp,
           actorRole,
-          summary: 'Contribution approved',
+          summary: payload.treasuryVerified
+            ? 'Treasurer verified and posted to ledger'
+            : 'Contribution approved',
           metadata: payload,
         };
       case 'CONTRIBUTION_REJECTED':
@@ -218,6 +277,14 @@ export class ContributionTimelineService {
           timestamp,
           actorRole,
           summary: 'Contribution rejected',
+          metadata: payload,
+        };
+      case 'CONTRIBUTION_TREASURY_RETURNED':
+        return {
+          type: 'treasury_returned',
+          timestamp,
+          actorRole,
+          summary: 'Returned to family head for review',
           metadata: payload,
         };
       case 'CONTRIBUTION_ADJUST':

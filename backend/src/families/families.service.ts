@@ -27,6 +27,9 @@ import {
 } from './dto/create-family.dto';
 import { UpdateFamilyMemberDto } from './dto/update-family-member.dto';
 import { UpdateFamilyPaymentDto } from './dto/update-family-payment.dto';
+import { UpsertFamilyPulseDto } from './dto/upsert-family-pulse.dto';
+import type { FamilyWorkspaceTemplate } from './dto/update-family-workspace-template.dto';
+import { ContributionWorkflowNotificationsService } from '../finance/contribution-workflow-notifications.service';
 
 const MEMBER_SELECT = {
   id: true,
@@ -43,6 +46,7 @@ export class FamiliesService {
     private prisma: PrismaService,
     private audit: AuditService,
     private operationalScope: OperationalScopeService,
+    private workflowNotifications: ContributionWorkflowNotificationsService,
   ) {}
 
   private formatFamilyCode(value: number): string {
@@ -204,6 +208,8 @@ export class FamiliesService {
       id: family.id,
       familyCode: family.familyCode,
       familyName: family.familyName,
+      delegationEnabled: family.delegationEnabled,
+      workspaceTemplate: family.workspaceTemplate,
       notes: family.notes,
       paymentMomoNumber: family.paymentMomoNumber,
       paymentMomoAccountName: family.paymentMomoAccountName,
@@ -625,6 +631,66 @@ export class FamiliesService {
           timestamp: new Date().toISOString(),
         },
       });
+
+      void this.workflowNotifications
+        .notifyDelegationChanged(familyId, dto.delegationEnabled, actorUserId)
+        .catch(() => undefined);
+    }
+
+    return this.serializeDetail(updated);
+  }
+
+  async updateDelegation(
+    actorUserId: string,
+    familyId: string,
+    delegationEnabled: boolean,
+  ) {
+    const ctx = await this.scopeForUser(actorUserId);
+    await this.assertFamilyInScope(ctx, familyId);
+
+    if (!ctx.memberId) {
+      throw new ForbiddenException('Only the family head can change delegation');
+    }
+
+    const membership = await this.prisma.familyMember.findFirst({
+      where: { familyId, memberId: ctx.memberId },
+      select: { role: true },
+    });
+    if (membership?.role !== FamilyMemberRole.HEAD) {
+      throw new ForbiddenException('Only the family head can change delegation');
+    }
+
+    const existing = await this.prisma.family.findUnique({
+      where: { id: familyId },
+      select: { delegationEnabled: true },
+    });
+    if (!existing) {
+      throw new NotFoundException('Family not found');
+    }
+
+    const updated = await this.prisma.family.update({
+      where: { id: familyId },
+      data: { delegationEnabled },
+      include: this.detailInclude(),
+    });
+
+    if (delegationEnabled !== existing.delegationEnabled) {
+      await this.audit.log({
+        userId: actorUserId,
+        action: 'FAMILY_DELEGATION_TOGGLE',
+        entity: 'Family',
+        entityId: familyId,
+        oldValue: { delegationEnabled: existing.delegationEnabled },
+        newValue: {
+          delegationEnabled,
+          actorId: actorUserId,
+          timestamp: new Date().toISOString(),
+        },
+      });
+
+      void this.workflowNotifications
+        .notifyDelegationChanged(familyId, delegationEnabled, actorUserId)
+        .catch(() => undefined);
     }
 
     return this.serializeDetail(updated);
@@ -698,6 +764,48 @@ export class FamiliesService {
     });
 
     return this.serializeDetail(updated);
+  }
+
+  async getPaymentInstructionsHistory(actorUserId: string, familyId: string) {
+    const ctx = await this.scopeForUser(actorUserId);
+    this.assertView(ctx);
+    await this.assertFamilyInScope(ctx, familyId);
+
+    const membership = ctx.memberId
+      ? await this.prisma.familyMember.findFirst({
+          where: { familyId, memberId: ctx.memberId },
+          select: { role: true },
+        })
+      : null;
+    const canViewAsLeadership =
+      membership?.role === FamilyMemberRole.HEAD ||
+      membership?.role === FamilyMemberRole.SECRETARY ||
+      membership?.role === FamilyMemberRole.ASSISTANT_HEAD;
+
+    if (!canManageFamilies(ctx.permissions) && !canViewAsLeadership) {
+      throw new ForbiddenException('Cannot view payment settings history');
+    }
+
+    const rows = await this.prisma.auditLog.findMany({
+      where: {
+        entity: 'Family',
+        entityId: familyId,
+        action: 'FAMILY_PAYMENT_INSTRUCTIONS_UPDATE',
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 25,
+      include: { user: { select: { email: true } } },
+    });
+
+    return {
+      familyId,
+      items: rows.map((row) => ({
+        id: row.id,
+        changedAt: row.createdAt,
+        changedByEmail: row.user?.email ?? null,
+        snapshot: row.newValue,
+      })),
+    };
   }
 
   async getLeadershipHistory(actorUserId: string, familyId: string) {
@@ -963,5 +1071,182 @@ export class FamiliesService {
     });
 
     return this.findOne(actorUserId, familyId);
+  }
+
+  async updateWorkspaceTemplate(
+    actorUserId: string,
+    familyId: string,
+    workspaceTemplate: FamilyWorkspaceTemplate,
+  ) {
+    const ctx = await this.scopeForUser(actorUserId);
+    await this.assertFamilyInScope(ctx, familyId);
+
+    if (!ctx.memberId) {
+      throw new ForbiddenException('Only the family head can change workspace layout');
+    }
+
+    const membership = await this.prisma.familyMember.findFirst({
+      where: { familyId, memberId: ctx.memberId },
+      select: { role: true },
+    });
+    if (membership?.role !== FamilyMemberRole.HEAD) {
+      throw new ForbiddenException('Only the family head can change workspace layout');
+    }
+
+    const updated = await this.prisma.family.update({
+      where: { id: familyId },
+      data: { workspaceTemplate },
+      include: this.detailInclude(),
+    });
+
+    await this.audit.log({
+      userId: actorUserId,
+      action: 'FAMILY_WORKSPACE_TEMPLATE',
+      entity: 'Family',
+      entityId: familyId,
+      newValue: { workspaceTemplate },
+    });
+
+    return this.serializeDetail(updated);
+  }
+
+  async getPulse(actorUserId: string, familyId: string, weekStart?: string) {
+    await this.assertFamilyPulseAccess(actorUserId, familyId);
+    const resolvedWeekStart = this.resolvePulseWeekStart(weekStart);
+
+    const entry = await this.prisma.familyPulseEntry.findUnique({
+      where: {
+        familyId_weekStart: {
+          familyId,
+          weekStart: resolvedWeekStart,
+        },
+      },
+      include: {
+        recordedBy: {
+          select: { firstName: true, lastName: true },
+        },
+      },
+    });
+
+    const recent = await this.prisma.familyPulseEntry.findMany({
+      where: { familyId },
+      orderBy: { weekStart: 'desc' },
+      take: 8,
+      select: {
+        weekStart: true,
+        score: true,
+        note: true,
+      },
+    });
+
+    return {
+      familyId,
+      weekStart: resolvedWeekStart.toISOString(),
+      entry: entry
+        ? {
+            score: entry.score,
+            note: entry.note,
+            recordedByName: entry.recordedBy
+              ? `${entry.recordedBy.firstName} ${entry.recordedBy.lastName}`.trim()
+              : null,
+            updatedAt: entry.updatedAt,
+          }
+        : null,
+      recent: recent.map((row) => ({
+        weekStart: row.weekStart.toISOString(),
+        score: row.score,
+        note: row.note,
+      })),
+    };
+  }
+
+  async upsertPulse(
+    actorUserId: string,
+    familyId: string,
+    dto: UpsertFamilyPulseDto,
+  ) {
+    const ctx = await this.assertFamilyPulseAccess(actorUserId, familyId);
+    const weekStart = this.resolvePulseWeekStart(dto.weekStart);
+
+    const entry = await this.prisma.familyPulseEntry.upsert({
+      where: {
+        familyId_weekStart: {
+          familyId,
+          weekStart,
+        },
+      },
+      create: {
+        familyId,
+        weekStart,
+        score: dto.score,
+        note: dto.note?.trim() || null,
+        recordedByMemberId: ctx.memberId ?? null,
+      },
+      update: {
+        score: dto.score,
+        note: dto.note?.trim() || null,
+        recordedByMemberId: ctx.memberId ?? null,
+      },
+    });
+
+    return {
+      familyId,
+      weekStart: weekStart.toISOString(),
+      entry: {
+        score: entry.score,
+        note: entry.note,
+        updatedAt: entry.updatedAt,
+      },
+    };
+  }
+
+  private resolvePulseWeekStart(value?: string): Date {
+    if (value) {
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) {
+        throw new BadRequestException('Invalid weekStart');
+      }
+      return this.startOfWeekUtc(parsed);
+    }
+    return this.startOfWeekUtc(new Date());
+  }
+
+  private startOfWeekUtc(date: Date): Date {
+    const copy = new Date(
+      Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+    );
+    const day = copy.getUTCDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    copy.setUTCDate(copy.getUTCDate() + diff);
+    copy.setUTCHours(0, 0, 0, 0);
+    return copy;
+  }
+
+  private async assertFamilyPulseAccess(actorUserId: string, familyId: string) {
+    const ctx = await this.scopeForUser(actorUserId);
+    await this.assertFamilyInScope(ctx, familyId);
+
+    if (!ctx.memberId && !canManageFamilies(ctx.permissions)) {
+      throw new ForbiddenException('Member profile required');
+    }
+
+    if (canManageFamilies(ctx.permissions)) {
+      return ctx;
+    }
+
+    const membership = await this.prisma.familyMember.findFirst({
+      where: { familyId, memberId: ctx.memberId! },
+      select: { role: true },
+    });
+    const allowedRoles: FamilyMemberRole[] = [
+      FamilyMemberRole.HEAD,
+      FamilyMemberRole.ASSISTANT_HEAD,
+      FamilyMemberRole.SECRETARY,
+    ];
+    if (!membership || !allowedRoles.includes(membership.role)) {
+      throw new ForbiddenException('Family office access required');
+    }
+
+    return ctx;
   }
 }
