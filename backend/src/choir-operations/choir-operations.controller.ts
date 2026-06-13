@@ -173,6 +173,15 @@ export class ChoirOperationsController {
     return this.announcements.listMusicNotifyDelivery(user.sub, choirId);
   }
 
+  @Get('announcements/delivery')
+  @SkipPhoneEnforcement()
+  listAnnouncementDelivery(
+    @CurrentUser() user: JwtPayload,
+    @Query('choirId') choirId: string,
+  ) {
+    return this.announcements.listAnnouncementDelivery(user.sub, choirId);
+  }
+
   @Get('announcements')
   @SkipPhoneEnforcement()
   listAnnouncements(

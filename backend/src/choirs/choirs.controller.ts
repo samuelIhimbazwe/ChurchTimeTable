@@ -22,6 +22,7 @@ import { ChoirGovernanceService } from './choir-governance.service';
 import { ChoirExecutiveDashboardService } from './choir-executive-dashboard.service';
 import { UpdatePresidentDelegationDto } from './dto/update-president-delegation.dto';
 import { UpsertChoirExecutivePulseDto } from './dto/upsert-choir-executive-pulse.dto';
+import { DeactivateChoirMemberDto } from './dto/deactivate-choir-member.dto';
 
 import { IsString } from 'class-validator';
 
@@ -170,6 +171,18 @@ export class ChoirsController {
     @Body() body: { choirId: string; memberId: string; roleId: string },
   ) {
     return this.joinRequests.revokeMemberPosition(user.sub, body);
+  }
+
+  @Post('members/deactivate')
+  deactivateMember(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: DeactivateChoirMemberDto,
+  ) {
+    return this.choirMembers.deactivateMembership(
+      user.sub,
+      dto.choirId,
+      dto.memberId,
+    );
   }
 
   @Post('join-requests')

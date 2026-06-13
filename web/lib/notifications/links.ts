@@ -55,6 +55,26 @@ export function linkFromNotificationData(
           : `/choir/${String(data.choirId)}/president/decisions`
       }
       return '/choir/join-requests'
+    case 'protocol_assignment':
+      if (data.teamId) {
+        return `/protocol/teams/${String(data.teamId)}`
+      }
+      return '/protocol/teams'
+    case 'protocol_replacement_approved':
+    case 'protocol_replacement_request':
+      if (data.requestId) {
+        return `/protocol/replacements?requestId=${String(data.requestId)}`
+      }
+      return '/protocol/replacements'
+    case 'contribution_family_approve':
+    case 'contribution_approval_reminder':
+      if (data.actionUrl && String(data.actionUrl).startsWith('/')) {
+        return String(data.actionUrl)
+      }
+      if (data.familyId && data.choirId) {
+        return `/choir/${String(data.choirId)}/family-leadership/decisions`
+      }
+      return '/portal/contributions'
     default:
       return undefined
   }

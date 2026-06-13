@@ -29,7 +29,7 @@ type EquipmentRow = {
 export function ChoirAssetsManagePanel() {
   const qc = useQueryClient()
   const { choirId } = useResolvedChoirScope()
-  const [tab, setTab] = useState<'uniforms' | 'equipment' | 'registry'>('uniforms')
+  const [tab, setTab] = useState<'uniforms' | 'equipment' | 'registry' | 'maintenance'>('uniforms')
 
   const { data: uniforms, isLoading: loadingUniforms } = useQuery({
     queryKey: ['choir-uniforms'],
@@ -65,7 +65,7 @@ export function ChoirAssetsManagePanel() {
   return (
     <div className="space-y-4">
       <div className="flex gap-2 flex-wrap">
-        {(['uniforms', 'equipment', 'registry'] as const).map((id) => (
+        {(['uniforms', 'equipment', 'registry', 'maintenance'] as const).map((id) => (
           <button
             key={id}
             type="button"
@@ -76,7 +76,13 @@ export function ChoirAssetsManagePanel() {
                 : 'border-border text-text-secondary hover:bg-surface-raised'
             }`}
           >
-            {id === 'uniforms' ? 'Uniforms' : id === 'equipment' ? 'Equipment' : 'Church registry'}
+            {id === 'uniforms'
+              ? 'Uniforms'
+              : id === 'equipment'
+                ? 'Equipment'
+                : id === 'registry'
+                  ? 'Church registry'
+                  : 'Maintenance'}
           </button>
         ))}
       </div>
@@ -102,6 +108,146 @@ export function ChoirAssetsManagePanel() {
 
       {tab === 'registry' && (
         <RegistryPanel categories={categories ?? []} onDone={invalidate} />
+      )}
+
+      {tab === 'maintenance' && <MaintenancePanel onDone={invalidate} />}
+    </div>
+  )
+}
+
+function MaintenancePanel({ onDone }: { onDone: () => void }) {
+  const [assetId, setAssetId] = useState('')
+  const [maintType, setMaintType] = useState<'SERVICE' | 'REPAIR' | 'INSPECTION' | 'UPGRADE'>('SERVICE')
+  const [description, setDescription] = useState('')
+  const [nextDate, setNextDate] = useState('')
+
+  const { data: upcoming } = useQuery({
+    queryKey: ['asset-maintenance-upcoming'],
+    queryFn: () => assetsApi.getMaintenanceUpcoming(),
+  })
+
+  const { data: overdue } = useQuery({
+    queryKey: ['asset-maintenance-overdue'],
+    queryFn: () => assetsApi.getMaintenanceOverdue(),
+  })
+
+  const { data: assets } = useQuery({
+    queryKey: ['assets-all'],
+    queryFn: () => assetsApi.getAll({ limit: 100 }),
+  })
+
+  const { data: history } = useQuery({
+    queryKey: ['asset-maintenance-history', assetId],
+    queryFn: () => assetsApi.getMaintenanceHistory(assetId),
+    enabled: !!assetId,
+  })
+
+  const create = useMutation({
+    mutationFn: () =>
+      assetsApi.createMaintenance(assetId, {
+        type: maintType,
+        description: description.trim(),
+        nextMaintenanceDate: nextDate || undefined,
+      }),
+    onSuccess: () => {
+      toast.success('Maintenance logged')
+      setDescription('')
+      setNextDate('')
+      onDone()
+    },
+    onError: () => toast.error('Could not log maintenance'),
+  })
+
+  const assetItems = assets?.items ?? []
+
+  return (
+    <div className="space-y-4">
+      {(overdue?.length ?? 0) > 0 && (
+        <Card padding="md" accent="warning">
+          <p className="text-sm font-semibold text-text-primary mb-2">Overdue maintenance</p>
+          <ul className="text-xs text-text-secondary space-y-1">
+            {overdue!.slice(0, 5).map((row) => (
+              <li key={row.id}>
+                {row.asset?.name ?? 'Asset'} — {row.description}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      <Card padding="md">
+        <p className="text-sm font-semibold text-text-primary mb-3">Log maintenance</p>
+        <div className="space-y-3">
+          <select
+            value={assetId}
+            onChange={(e) => setAssetId(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg text-sm border border-border bg-surface"
+          >
+            <option value="">Select asset…</option>
+            {assetItems.map((a) => (
+              <option key={a.id} value={a.id}>{a.name}</option>
+            ))}
+          </select>
+          <select
+            value={maintType}
+            onChange={(e) => setMaintType(e.target.value as typeof maintType)}
+            className="w-full px-3 py-2 rounded-lg text-sm border border-border bg-surface"
+          >
+            <option value="SERVICE">Service</option>
+            <option value="REPAIR">Repair</option>
+            <option value="INSPECTION">Inspection</option>
+            <option value="UPGRADE">Upgrade</option>
+          </select>
+          <input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="What was done?"
+            className="w-full px-3 py-2 rounded-lg text-sm border border-border bg-surface"
+          />
+          <input
+            type="date"
+            value={nextDate}
+            onChange={(e) => setNextDate(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg text-sm border border-border bg-surface"
+          />
+          <button
+            type="button"
+            disabled={!assetId || !description.trim() || create.isPending}
+            onClick={() => create.mutate()}
+            className="px-4 py-2 text-sm font-semibold bg-primary-700 text-white rounded-lg disabled:opacity-60"
+          >
+            {create.isPending ? 'Saving…' : 'Log maintenance'}
+          </button>
+        </div>
+      </Card>
+
+      {assetId && (history?.length ?? 0) > 0 && (
+        <Card padding="md">
+          <p className="text-sm font-semibold text-text-primary mb-2">History</p>
+          <ul className="text-xs text-text-muted space-y-2">
+            {history!.map((row) => (
+              <li key={row.id}>
+                {row.type} — {row.description}
+                {row.nextMaintenanceDate && (
+                  <> · next {new Date(row.nextMaintenanceDate).toLocaleDateString()}</>
+                )}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {(upcoming?.length ?? 0) > 0 && (
+        <Card padding="md">
+          <p className="text-sm font-semibold text-text-primary mb-2">Upcoming (30 days)</p>
+          <ul className="text-xs text-text-muted space-y-1">
+            {upcoming!.slice(0, 8).map((row) => (
+              <li key={row.id}>
+                {row.asset?.name ?? 'Asset'} — {row.description}
+              </li>
+            ))}
+          </ul>
+        </Card>
       )}
     </div>
   )

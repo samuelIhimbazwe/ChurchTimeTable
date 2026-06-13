@@ -1,9 +1,16 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PermissionsResolver } from '../auth/permissions.resolver';
+import { AuditService } from '../audit/audit.service';
 import { PERMISSIONS, ROLES } from '../common/constants/roles';
 import { hasEffectivePermission } from '../common/governance/governance-permissions.util';
+import { activeChoirCommitteeMemberWhere } from '../common/governance/choir-committee-member.util';
 
 const ADMIN_ROLES: ReadonlySet<string> = new Set([
   ROLES.CHOIR_ADMIN,
@@ -27,6 +34,7 @@ export class ChoirMembersService {
   constructor(
     private prisma: PrismaService,
     private permissions: PermissionsResolver,
+    private audit: AuditService,
   ) {}
 
   private async assertCanList(actorUserId: string, choirId: string) {
@@ -182,6 +190,85 @@ export class ChoirMembersService {
       page,
       limit,
       totalPages: Math.max(1, Math.ceil(total / limit)),
+    };
+  }
+
+  private async assertCanManage(actorUserId: string, choirId: string) {
+    const resolved = await this.permissions.resolveForUser(actorUserId);
+    const isAdmin = resolved.roles.some((r) => ADMIN_ROLES.has(r));
+    const canManage =
+      isAdmin ||
+      hasEffectivePermission(resolved.permissions, PERMISSIONS.MEMBER_MANAGE) ||
+      hasEffectivePermission(resolved.permissions, PERMISSIONS.CHOIR_OPERATIONS_MANAGE);
+
+    if (!canManage) {
+      throw new ForbiddenException('Choir roster manage denied');
+    }
+
+    const choir = await this.prisma.choir.findFirst({
+      where: { id: choirId, isActive: true },
+      select: { id: true },
+    });
+    if (!choir) {
+      throw new NotFoundException('Choir not found');
+    }
+  }
+
+  async deactivateMembership(
+    actorUserId: string,
+    choirId: string,
+    memberId: string,
+  ) {
+    await this.assertCanManage(actorUserId, choirId);
+
+    const member = await this.prisma.member.findUnique({
+      where: { id: memberId },
+      select: { id: true, userId: true, firstName: true, lastName: true },
+    });
+    if (!member?.userId) {
+      throw new NotFoundException('Member not found');
+    }
+
+    const membership = await this.prisma.choirMembership.findUnique({
+      where: {
+        userId_choirId: { userId: member.userId, choirId },
+      },
+    });
+    if (!membership) {
+      throw new NotFoundException('Choir membership not found');
+    }
+    if (!membership.isActive) {
+      throw new BadRequestException('Member is already inactive in this choir');
+    }
+
+    const updated = await this.prisma.choirMembership.update({
+      where: { id: membership.id },
+      data: { isActive: false },
+    });
+
+    await this.prisma.choirCommitteeMember.updateMany({
+      where: {
+        choirId,
+        memberId,
+        ...activeChoirCommitteeMemberWhere(),
+      },
+      data: { effectiveEnd: new Date() },
+    });
+
+    await this.audit.log({
+      userId: actorUserId,
+      action: 'CHOIR_MEMBERSHIP_DEACTIVATE',
+      entity: 'ChoirMembership',
+      entityId: membership.id,
+      oldValue: membership,
+      newValue: updated,
+    });
+
+    return {
+      deactivated: true,
+      membershipId: membership.id,
+      memberId,
+      memberName: `${member.firstName} ${member.lastName}`.trim(),
     };
   }
 }

@@ -71,4 +71,54 @@ export const assetsApi = {
     expectedReturnAt?: string
     notes?: string
   }) => apiClient.post<never, unknown>(`/assets/${id}/assignments`, data),
+
+  getMaintenanceUpcoming: () =>
+    apiClient.get<
+      never,
+      Array<{
+        id: string
+        type: string
+        description: string
+        nextMaintenanceDate: string | null
+        asset?: { id: string; code: string; name: string }
+      }>
+    >('/assets/maintenance/upcoming'),
+
+  getMaintenanceOverdue: () =>
+    apiClient.get<
+      never,
+      Array<{
+        id: string
+        type: string
+        description: string
+        nextMaintenanceDate: string | null
+        asset?: { id: string; code: string; name: string }
+      }>
+    >('/assets/maintenance/overdue'),
+
+  getMaintenanceHistory: (assetId: string) =>
+    apiClient.get<
+      never,
+      Array<{
+        id: string
+        type: string
+        description: string
+        cost: number | null
+        performedAt: string
+        nextMaintenanceDate: string | null
+      }>
+    >(`/assets/${assetId}/maintenance`),
+
+  createMaintenance: (
+    assetId: string,
+    data: {
+      type: 'REPAIR' | 'SERVICE' | 'INSPECTION' | 'UPGRADE'
+      description: string
+      cost?: number
+      vendor?: string
+      performedBy?: string
+      performedAt?: string
+      nextMaintenanceDate?: string
+    },
+  ) => apiClient.post<never, unknown>(`/assets/${assetId}/maintenance`, data),
 }

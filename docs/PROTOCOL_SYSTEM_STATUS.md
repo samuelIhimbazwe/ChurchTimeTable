@@ -85,10 +85,8 @@ Portal → /protocol (dashboard context gate)
 
 | Priority | Item |
 |----------|------|
-| P2 | Reports CSV export (`GET /protocol/reports/:type/export`) |
-| P3 | Settings admin UI (`GET /protocol/settings`) |
 | P3 | Dedicated protocol finance module (if needed later) |
-| P3 | In-app notifications for protocol events |
+| P3 | In-app notifications for protocol events — deep links **done** |
 
 ---
 

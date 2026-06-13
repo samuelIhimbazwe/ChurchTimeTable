@@ -58,6 +58,17 @@ export function ChoirRosterActions({ member, choirId }: Props) {
     onError: () => toast.error('Could not remove position'),
   })
 
+  const deactivate = useMutation({
+    mutationFn: () =>
+      choirApi.deactivateMember({ choirId, memberId: member.memberId }),
+    onSuccess: (data) => {
+      toast.success(`${data.memberName} removed from choir roster`)
+      setOpen(false)
+      invalidate()
+    },
+    onError: () => toast.error('Could not deactivate membership'),
+  })
+
   if (!open) {
     return (
       <button
@@ -136,6 +147,23 @@ export function ChoirRosterActions({ member, choirId }: Props) {
       >
         View in church directory →
       </Link>
+
+      <button
+        type="button"
+        onClick={() => {
+          if (
+            window.confirm(
+              `Remove ${member.name} from this choir? Committee seats will end today.`,
+            )
+          ) {
+            deactivate.mutate()
+          }
+        }}
+        disabled={deactivate.isPending}
+        className="w-full mt-2 px-3 py-1.5 text-xs font-semibold text-danger border border-danger/30 rounded-lg hover:bg-danger/5 disabled:opacity-60"
+      >
+        {deactivate.isPending ? 'Removing…' : 'Remove from choir'}
+      </button>
     </div>
   )
 }

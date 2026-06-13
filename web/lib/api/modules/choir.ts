@@ -121,6 +121,12 @@ export const choirApi = {
   }) =>
     apiClient.post<never, unknown>('/choirs/members/revoke-position', data),
 
+  deactivateMember: (data: { choirId: string; memberId: string }) =>
+    apiClient.post<
+      never,
+      { deactivated: boolean; membershipId: string; memberId: string; memberName: string }
+    >('/choirs/members/deactivate', data),
+
   getPresidentDelegation: (choirId: string) =>
     apiClient.get<
       never,

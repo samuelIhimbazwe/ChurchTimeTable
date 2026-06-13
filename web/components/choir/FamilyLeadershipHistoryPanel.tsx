@@ -12,6 +12,7 @@ export function FamilyLeadershipHistoryPanel({ choirId }: { choirId?: string }) 
   const { data: families } = useQuery({
     queryKey: ['families-list-admin', choirId],
     queryFn: () => familiesApi.getAll({ limit: 50 }),
+    enabled: !!choirId,
   })
 
   const { data: history, isLoading } = useQuery({
@@ -22,6 +23,14 @@ export function FamilyLeadershipHistoryPanel({ choirId }: { choirId?: string }) 
 
   const items = families ?? []
   const rows = history?.items ?? []
+
+  if (!choirId) {
+    return (
+      <Card padding="md">
+        <p className="text-sm text-text-muted">Open from an active choir to browse families.</p>
+      </Card>
+    )
+  }
 
   return (
     <Card padding="md">

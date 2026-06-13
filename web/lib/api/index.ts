@@ -34,6 +34,7 @@ export { churchGivingApi }      from './modules/churchGiving'
 export { governanceApi }        from './modules/governance'
 export { memberPortalApi }      from './modules/memberPortal'
 export { devotionsApi }         from './modules/devotions'
+export { pilotApi }             from './modules/pilot'
 
 export type {
   LoginPayload, RegisterPayload, LoginResponse, AuthUser,

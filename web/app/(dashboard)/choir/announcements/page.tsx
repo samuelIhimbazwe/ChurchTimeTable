@@ -46,6 +46,16 @@ export default function AnnouncementsPage() {
     enabled: !!choirId,
   })
 
+  const { data: delivery } = useQuery({
+    queryKey: ['choir-announcement-delivery', choirId],
+    queryFn: () => choirOperationsApi.getAnnouncementDelivery(choirId!),
+    enabled: !!choirId,
+  })
+
+  const deliveryById = new Map(
+    (delivery?.items ?? []).map((row) => [row.id, row]),
+  )
+
   const { data: families } = useQuery({
     queryKey: ['announcement-families'],
     queryFn: () => familiesApi.getAll({ limit: 100 }),
@@ -208,7 +218,9 @@ export default function AnnouncementsPage() {
         </Card>
       ) : (
         <div className="space-y-3">
-          {announcements?.map((a) => (
+          {announcements?.map((a) => {
+            const stats = deliveryById.get(a.id)
+            return (
             <Card key={a.id} padding="md">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
@@ -216,6 +228,18 @@ export default function AnnouncementsPage() {
                     <p className="text-sm font-semibold text-text-primary">{a.title}</p>
                     <Badge variant="default">{audienceLabel(a)}</Badge>
                     {!a.publishedAt && <Badge variant="status-pending">Draft</Badge>}
+                    {stats && a.publishedAt && (
+                      <Badge
+                        variant={
+                          stats.deliveryRate != null && stats.deliveryRate >= 70
+                            ? 'status-approved'
+                            : 'status-pending'
+                        }
+                      >
+                        {stats.readCount} read
+                        {stats.deliveryRate != null ? ` · ${stats.deliveryRate}%` : ''}
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-sm text-text-secondary mt-2 whitespace-pre-wrap">{a.body}</p>
                   <p className="text-xs text-text-muted mt-2">
@@ -237,7 +261,8 @@ export default function AnnouncementsPage() {
                 )}
               </div>
             </Card>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

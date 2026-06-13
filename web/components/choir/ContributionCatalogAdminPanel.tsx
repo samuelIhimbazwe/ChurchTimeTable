@@ -17,11 +17,16 @@ export function ContributionCatalogAdminPanel({ choirId }: { choirId: string }) 
   const qc = useQueryClient()
   const [newCode, setNewCode] = useState('')
   const [newName, setNewName] = useState('')
+  const [newDesc, setNewDesc] = useState('')
+  const [newSortOrder, setNewSortOrder] = useState('')
   const [campaignName, setCampaignName] = useState('')
+  const [campaignDesc, setCampaignDesc] = useState('')
   const [campaignGoal, setCampaignGoal] = useState('')
   const [campaignMemberGoal, setCampaignMemberGoal] = useState('')
   const [campaignFamilyGoal, setCampaignFamilyGoal] = useState('')
   const [campaignTypeId, setCampaignTypeId] = useState('')
+  const [campaignStart, setCampaignStart] = useState('')
+  const [campaignEnd, setCampaignEnd] = useState('')
 
   const { data: catalog, isLoading: loadingCatalog } = useQuery({
     queryKey: ['contribution-admin-catalog', choirId],
@@ -41,11 +46,15 @@ export function ContributionCatalogAdminPanel({ choirId }: { choirId: string }) 
       contributionsApi.createAdminCatalog(choirId, {
         code: newCode.trim(),
         name: newName.trim(),
+        description: newDesc.trim() || undefined,
+        sortOrder: newSortOrder ? Number(newSortOrder) : undefined,
       }),
     onSuccess: () => {
       toast.success('Contribution type added')
       setNewCode('')
       setNewName('')
+      setNewDesc('')
+      setNewSortOrder('')
       qc.invalidateQueries({ queryKey: ['contribution-admin-catalog', choirId] })
     },
     onError: (err: Error) => toast.error('Could not add type', err.message),
@@ -66,6 +75,9 @@ export function ContributionCatalogAdminPanel({ choirId }: { choirId: string }) 
         contributionTypeCatalogId: campaignTypeId,
         name: campaignName.trim(),
         goalAmount: parseFloat(campaignGoal),
+        description: campaignDesc.trim() || undefined,
+        periodStart: campaignStart || undefined,
+        periodEnd: campaignEnd || undefined,
         memberGoalAmount: campaignMemberGoal
           ? parseFloat(campaignMemberGoal)
           : undefined,
@@ -77,9 +89,12 @@ export function ContributionCatalogAdminPanel({ choirId }: { choirId: string }) 
     onSuccess: () => {
       toast.success('Campaign created')
       setCampaignName('')
+      setCampaignDesc('')
       setCampaignGoal('')
       setCampaignMemberGoal('')
       setCampaignFamilyGoal('')
+      setCampaignStart('')
+      setCampaignEnd('')
       qc.invalidateQueries({ queryKey: ['contribution-admin-campaigns', choirId] })
     },
     onError: (err: Error) => toast.error('Could not create campaign', err.message),
@@ -132,7 +147,7 @@ export function ContributionCatalogAdminPanel({ choirId }: { choirId: string }) 
             ))}
           </ul>
         )}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
           <input
             value={newCode}
             onChange={(e) => setNewCode(e.target.value)}
@@ -143,6 +158,19 @@ export function ContributionCatalogAdminPanel({ choirId }: { choirId: string }) 
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Display name"
+            className="px-3 py-2 rounded-lg text-sm border border-border bg-surface"
+          />
+          <input
+            value={newDesc}
+            onChange={(e) => setNewDesc(e.target.value)}
+            placeholder="Description (optional)"
+            className="px-3 py-2 rounded-lg text-sm border border-border bg-surface"
+          />
+          <input
+            value={newSortOrder}
+            onChange={(e) => setNewSortOrder(e.target.value)}
+            placeholder="Sort order"
+            type="number"
             className="px-3 py-2 rounded-lg text-sm border border-border bg-surface"
           />
           <button
@@ -256,6 +284,26 @@ export function ContributionCatalogAdminPanel({ choirId }: { choirId: string }) 
           >
             Create campaign
           </button>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
+          <input
+            value={campaignDesc}
+            onChange={(e) => setCampaignDesc(e.target.value)}
+            placeholder="Campaign description (optional)"
+            className="px-3 py-2 rounded-lg text-sm border border-border bg-surface"
+          />
+          <input
+            type="date"
+            value={campaignStart}
+            onChange={(e) => setCampaignStart(e.target.value)}
+            className="px-3 py-2 rounded-lg text-sm border border-border bg-surface"
+          />
+          <input
+            type="date"
+            value={campaignEnd}
+            onChange={(e) => setCampaignEnd(e.target.value)}
+            className="px-3 py-2 rounded-lg text-sm border border-border bg-surface"
+          />
         </div>
       </Card>
     </div>

@@ -208,10 +208,28 @@ export function Member360Panel({
                     <p className="font-semibold">{attendance.voluntaryServiceCount ?? 0}</p>
                   </div>
                 </div>
-                {(attendance.records as unknown[] | undefined)?.length ? (
-                  <p className="text-xs text-text-muted mt-3">
-                    {(attendance.records as unknown[]).length} recent attendance records on file.
-                  </p>
+                {(attendance.records as Array<{
+                  id?: string
+                  date?: string
+                  status?: string
+                  eventTitle?: string
+                }>)?.length ? (
+                  <ul className="mt-3 space-y-2 border-t border-border pt-3">
+                    {(attendance.records as Array<{
+                      id?: string
+                      date?: string
+                      status?: string
+                      eventTitle?: string
+                    }>).slice(0, 8).map((rec, idx) => (
+                      <li key={rec.id ?? idx} className="flex justify-between text-xs">
+                        <span>
+                          {rec.eventTitle ?? 'Event'}
+                          {rec.date && <> · {formatDate(rec.date)}</>}
+                        </span>
+                        <span className="text-text-muted">{rec.status ?? '—'}</span>
+                      </li>
+                    ))}
+                  </ul>
                 ) : (
                   <p className="text-xs text-text-muted mt-3">No recent attendance records.</p>
                 )}

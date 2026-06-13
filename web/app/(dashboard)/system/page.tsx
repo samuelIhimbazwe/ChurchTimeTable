@@ -88,6 +88,7 @@ export default function SystemPage() {
               { label: 'User Management',    href: '/system/users',      icon: Users,    permission: 'admin.users.manage' },
               { label: 'Role Management',    href: '/system/roles',      icon: Shield,   permission: 'admin.roles.manage' },
               { label: 'Audit Log',          href: '/system/audit',      icon: Database, permission: 'admin.audit.view'   },
+              { label: 'Notification rules', href: '/system/notification-rules', icon: Activity, permission: 'admin.settings.manage' },
               { label: 'Sync Management',    href: '/system/sync',       icon: RefreshCw,permission: 'admin.sync.manage'  },
               { label: 'Deployment Center',  href: '/system/deployment', icon: Server,   permission: 'admin.settings.*'   },
             ].map((item) => (

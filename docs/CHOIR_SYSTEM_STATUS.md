@@ -134,11 +134,11 @@ Enforced in `FamilyAdminPanel` (`structure` variant) and `FamilyMetricsService` 
 
 | # | Module | Current status | Remaining gap |
 |---|--------|----------------|---------------|
-| **1** | **Membership** | Join, roster API, position assign/revoke, dissolution transfer | Member-initiated choir transfer N/A by design; roster deactivate deferred |
+| **1** | **Membership** | Join, roster API, position assign/revoke, dissolution transfer | Roster deactivate — **done**; member-initiated choir transfer N/A by design |
 | **2** | **Worship & Music** | Music, rehearsals, scheduling, service prep (leader + member read-only) | Minor UI polish only |
 | **6** | **Family Teams** | My family, payment, coordinator, families admin, privacy-safe structure view | — |
-| **9** | **Communications** | Targeted choir announcements (Phase 4) | Read receipts |
-| **11** | **Assets** | Uniform/equipment CRUD (Phase 4) | Maintenance logs UI |
+| **9** | **Communications** | Targeted choir announcements (Phase 4) | Read receipt stats on announcements page |
+| **11** | **Assets** | Uniform/equipment CRUD (Phase 4) | Maintenance logs UI — **done** |
 
 ---
 
@@ -205,4 +205,4 @@ Password: `Pilot@123` (church admin: `Admin@123`)
 
 Choir closure sprint is complete. Next major work per `docs/PROTOCOL_DISCOVERY.md`.
 
-**Deferred (not blocking protocol):** mobile rebuild, announcement read receipts, asset maintenance logs, roster deactivate API, `/system/users` placeholder.
+**Deferred (not blocking protocol):** mobile rebuild polish, roster deactivate API — **done**; announcement read receipts — **done**; asset maintenance logs UI — **done**; `/system/users` — **done**; notification rules admin — **done**.
