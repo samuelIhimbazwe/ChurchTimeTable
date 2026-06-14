@@ -135,7 +135,7 @@ export class MemberPortalController {
 
   @Get('choirs/:id/capabilities')
   @SkipPhoneEnforcement()
-  choirCapabilities(
+  getChoirCapabilities(
     @CurrentUser('sub') userId: string,
     @Param('id') id: string,
   ) {

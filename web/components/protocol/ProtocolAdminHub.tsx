@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { protocolApi } from '@/lib/api'
 import { ProtocolPositionHubShell, ProtocolHubQuickLink } from '@/components/protocol/ProtocolPositionHubShell'
 import { ProtocolCommitteePanel } from '@/components/protocol/ProtocolCommitteePanel'
+import { ProtocolMemberRosterPanel } from '@/components/protocol/ProtocolMemberRosterPanel'
 import { Card, StatTile, PermissionGate } from '@/components/shared'
 import {
   Users, ClipboardCheck, UserPlus, Shield, Settings2,
@@ -37,6 +38,8 @@ export function ProtocolAdminHub() {
       </div>
 
       <ProtocolCommitteePanel />
+
+      <ProtocolMemberRosterPanel />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <ProtocolHubQuickLink

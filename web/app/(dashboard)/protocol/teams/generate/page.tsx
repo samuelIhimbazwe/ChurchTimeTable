@@ -8,6 +8,8 @@ import { toast } from '@/components/shared/Toast'
 import { ApiError } from '@/lib/api/client'
 import { Card, CardHeader, CardTitle, Badge, PermissionGate, SkeletonCard } from '@/components/shared'
 import { formatDate, formatTime } from '@/lib/utils/format'
+import Link from 'next/link'
+import { Calendar } from 'lucide-react'
 
 export default function GenerateTeamPage() {
   const router = useRouter()
@@ -82,8 +84,14 @@ export default function GenerateTeamPage() {
         <div>
           <h2 className="font-display text-3xl text-text-primary">Build Protocol Team</h2>
           <p className="text-text-secondary text-sm mt-1">
-            Select a service, review member intelligence, then pick who serves
+            Select a published church service (MF-7), review member intelligence, then pick who serves
           </p>
+          <Link
+            href="/church/calendar"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-primary-600 hover:text-primary-800 mt-2"
+          >
+            <Calendar size={13} /> View church operations calendar →
+          </Link>
         </div>
 
         <Card padding="md">
@@ -112,6 +120,28 @@ export default function GenerateTeamPage() {
             </select>
           )}
         </Card>
+
+        {occurrenceId && selectedOccurrence && (
+          <Card padding="md" accent="default">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold text-text-muted uppercase tracking-wide">MF-7 occurrence</p>
+                <p className="text-sm font-semibold text-text-primary mt-1">{selectedOccurrence.title}</p>
+                <p className="text-xs text-text-muted mt-0.5">
+                  {formatDate(selectedOccurrence.startAt)} · {formatTime(selectedOccurrence.startAt)}
+                  {' · '}
+                  <Badge variant="default">{selectedOccurrence.status}</Badge>
+                </p>
+              </div>
+              <Link
+                href="/church/calendar"
+                className="text-xs font-semibold text-primary-600 hover:text-primary-800"
+              >
+                Church calendar →
+              </Link>
+            </div>
+          </Card>
+        )}
 
         {occurrenceId && (
           <Card padding="md">

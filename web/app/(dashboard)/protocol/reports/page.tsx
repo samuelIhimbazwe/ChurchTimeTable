@@ -4,14 +4,16 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { protocolApi } from '@/lib/api'
 import {
-  Card, PermissionGate, SkeletonCard, toast,
+  Card, CardHeader, CardTitle, CardDescription,
+  PermissionGate, SkeletonCard, SkeletonStatTile, StatTile, Badge, toast,
 } from '@/components/shared'
-import { FileText, Download } from 'lucide-react'
+import { FileText, Download, Activity, Heart } from 'lucide-react'
 import { formatDate } from '@/lib/utils/format'
 import {
   ProtocolTeamReportForm,
   teamReportOptionsFromDashboard,
 } from '@/components/protocol/ProtocolTeamReportForm'
+import { ProtocolOfficerSlaPanel } from '@/components/protocol/ProtocolOfficerSlaPanel'
 
 async function downloadBlob(fetcher: () => Promise<Blob>, filename: string) {
   try {
@@ -28,11 +30,23 @@ async function downloadBlob(fetcher: () => Promise<Blob>, filename: string) {
   }
 }
 
+function healthBadgeVariant(grade?: string) {
+  if (grade === 'A' || grade === 'B') return 'status-active' as const
+  if (grade === 'C') return 'status-pending' as const
+  return 'status-inactive' as const
+}
+
 export default function ProtocolReportsPage() {
   const [showForm, setShowForm] = useState(false)
   const now = new Date()
   const year = now.getFullYear()
   const month = now.getMonth() + 1
+
+  const { data: health, isLoading: loadingHealth } = useQuery({
+    queryKey: ['protocol-ministry-health'],
+    queryFn: protocolApi.getMinistryHealth,
+    retry: false,
+  })
 
   const { data: reports, isLoading } = useQuery({
     queryKey: ['protocol-reports'],
@@ -65,10 +79,89 @@ export default function ProtocolReportsPage() {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h2 className="font-display text-3xl text-text-primary">Protocol Reports</h2>
+          <p className="text-text-secondary text-sm mt-1">
+            Ministry health, team leader reports, and operational exports
+          </p>
+        </div>
+      </div>
+
+      <PermissionGate permission="protocol.report">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {loadingHealth ? (
+            Array.from({ length: 4 }).map((_, i) => <SkeletonStatTile key={i} />)
+          ) : health ? (
+            <>
+              <StatTile
+                label="Health score"
+                value={health.score}
+                suffix={` (${health.grade})`}
+                icon={Activity}
+                animate
+              />
+              <StatTile
+                label="Attendance avg"
+                value={health.attendanceRateAvg}
+                suffix="%"
+                icon={Heart}
+                animate
+              />
+              <StatTile
+                label="Draft teams"
+                value={health.draftTeams}
+                icon={FileText}
+                animate
+              />
+              <StatTile
+                label="Open queues"
+                value={
+                  health.pendingClaims +
+                  health.pendingReplacements
+                }
+                icon={FileText}
+                animate
+              />
+            </>
+          ) : null}
+        </div>
+
+        {health && (
+          <Card padding="md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                Ministry health
+                <Badge variant={healthBadgeVariant(health.grade)} dot>
+                  Grade {health.grade}
+                </Badge>
+              </CardTitle>
+              <CardDescription>
+                Attendance, backlog, and officer queue pressure combined into one score.
+              </CardDescription>
+            </CardHeader>
+            <button
+              type="button"
+              onClick={() =>
+                downloadBlob(
+                  () => protocolApi.exportHealthPackPdf() as unknown as Promise<Blob>,
+                  'protocol-health-pack.pdf',
+                )
+              }
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-gold-500 text-primary-900 rounded-lg hover:bg-gold-400 transition-colors"
+            >
+              <Download size={15} /> Download health pack PDF
+            </button>
+          </Card>
+        )}
+
+        <ProtocolOfficerSlaPanel />
+      </PermissionGate>
+
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-display text-3xl text-text-primary">Team Reports</h2>
-          <p className="text-text-secondary text-sm mt-1">Post-service team leader reports</p>
+          <h3 className="font-display text-xl text-text-primary">Team reports</h3>
+          <p className="text-text-secondary text-sm mt-1">Post-service team leader narratives</p>
         </div>
         <PermissionGate anyOf={['protocol.report', 'protocol.team.leader.execute', 'protocol.team.head', 'protocol.team.manage']}>
           <button

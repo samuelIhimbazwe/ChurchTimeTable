@@ -15,6 +15,14 @@ describe('Protocol reports (e2e)', () => {
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveProperty('teams');
 
+    const health = await request(ctx.app.getHttpServer())
+      .get('/api/v1/protocol/reports/health')
+      .set('Authorization', `Bearer ${ctx.adminToken}`);
+
+    expect(health.status).toBe(200);
+    expect(typeof health.body.data.score).toBe('number');
+    expect(health.body.data.grade).toBeDefined();
+
     await closeE2eApp(ctx.app);
   });
 });

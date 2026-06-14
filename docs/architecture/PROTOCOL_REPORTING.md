@@ -24,13 +24,13 @@ Requires `protocol.report`.
 
 ## Web dashboards
 
-- `/dashboard/protocol`
-- `/dashboard/protocol/teams`
-- `/dashboard/protocol/attendance`
-- `/dashboard/protocol/replacements`
-- `/dashboard/protocol/rankings`
-- `/dashboard/protocol/reports`
-- `/dashboard/protocol/members`
+- `/protocol` — member and officer dashboard (composed nav)
+- `/protocol/teams` — team list + publish queue
+- `/protocol/replacements` — replacement console
+- `/protocol/claims` — membership claims console
+- `/protocol/rankings` — monthly standings
+- `/protocol/reports` — team leader reports + CSV exports
+- `/portal/protocol` — member stats
 
 ## Mobile
 

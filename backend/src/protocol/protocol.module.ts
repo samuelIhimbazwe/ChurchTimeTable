@@ -3,6 +3,7 @@ import { AuditModule } from '../audit/audit.module';
 import { AuthModule } from '../auth/auth.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
+import { ReportsModule } from '../reports/reports.module';
 import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
 import { ProtocolController } from './protocol.controller';
 import { ProtocolTeamsService } from './protocol-teams.service';
@@ -22,6 +23,8 @@ import { ProtocolTeamLeaderAccessService } from './protocol-team-leader-access.s
 import { ProtocolBackupsService } from './protocol-backups.service';
 import { ProtocolTeamReportsService } from './protocol-team-reports.service';
 import { ProtocolNotificationsService } from './protocol-notifications.service';
+import { ProtocolOfficerSlaService } from './protocol-officer-sla.service';
+import { ProtocolDocumentsService } from './protocol-documents.service';
 
 @Module({
   imports: [
@@ -29,6 +32,7 @@ import { ProtocolNotificationsService } from './protocol-notifications.service';
     AuthModule,
     NotificationsModule,
     MemberPhoneEnforcementModule,
+    ReportsModule,
     PilotReadyModule,
   ],
   controllers: [ProtocolController],
@@ -50,6 +54,8 @@ import { ProtocolNotificationsService } from './protocol-notifications.service';
     ProtocolBackupsService,
     ProtocolTeamReportsService,
     ProtocolNotificationsService,
+    ProtocolOfficerSlaService,
+    ProtocolDocumentsService,
   ],
   exports: [ProtocolTeamsService, ProtocolDashboardService],
 })

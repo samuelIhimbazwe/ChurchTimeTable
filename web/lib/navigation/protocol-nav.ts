@@ -199,6 +199,7 @@ export function getComposedProtocolNav(
       { label: 'My protocol home', icon: LayoutDashboard, path: protocolMemberHome() },
 
       { label: 'My stats', icon: Trophy, path: '/portal/protocol' },
+      { label: 'Documents', icon: FileText, path: protocolPath('documents') },
       { label: 'Contributions', icon: DollarSign, path: '/portal/protocol/contributions' },
 
     ],

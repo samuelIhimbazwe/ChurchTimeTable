@@ -39,6 +39,10 @@ import { MemberMinistryScopeService } from '../member-portal/member-ministry-sco
     ProtocolMembershipService,
     MemberMinistryScopeService,
   ],
-  exports: [ChoirContextService, ChoirMembershipRulesService],
+  exports: [
+    ChoirContextService,
+    ChoirMembershipRulesService,
+    ChoirExecutiveDashboardService,
+  ],
 })
 export class ChoirsModule {}

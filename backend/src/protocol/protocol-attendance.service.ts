@@ -24,6 +24,8 @@ import {
 
   hasProtocolAttendanceManage,
 
+  hasProtocolManage,
+
   hasProtocolView,
 
 } from './protocol-access.util';
@@ -273,6 +275,37 @@ export class ProtocolAttendanceService {
 
   }
 
+  async memberHistory(actorUserId: string, memberId: string) {
+    const { permissions } = await this.actor(actorUserId);
+    const actorMember = await this.prisma.member.findUnique({
+      where: { userId: actorUserId },
+    });
+    const isSelf = actorMember?.id === memberId;
+    if (
+      !isSelf &&
+      !hasProtocolAttendanceManage(permissions) &&
+      !hasProtocolManage(permissions) &&
+      !hasProtocolView(permissions)
+    ) {
+      throw new ForbiddenException('Denied');
+    }
+
+    return this.prisma.protocolOccurrenceTeamMember.findMany({
+      where: { memberId },
+      include: {
+        attendance: true,
+        team: {
+          include: {
+            occurrence: {
+              select: { id: true, title: true, startAt: true, endAt: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    });
+  }
 }
 
 

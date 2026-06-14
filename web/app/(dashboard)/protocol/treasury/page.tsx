@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { contributionsApi, financeApi } from '@/lib/api'
 import { ProtocolPositionHubShell } from '@/components/protocol/ProtocolPositionHubShell'
 import { ProtocolContributionTreasuryPanel } from '@/components/protocol/ProtocolContributionTreasuryPanel'
+import { ProtocolTreasuryExportsCard } from '@/components/protocol/ProtocolTreasuryExportsCard'
 import { Card, StatTile, SkeletonStatTile } from '@/components/shared'
 import { DollarSign, ClipboardList, TrendingUp } from 'lucide-react'
 
@@ -62,6 +63,8 @@ export default function ProtocolTreasuryHubPage() {
           finance is separate under Church → Finance.
         </p>
       </Card>
+
+      <ProtocolTreasuryExportsCard />
 
       <ProtocolContributionTreasuryPanel />
     </ProtocolPositionHubShell>

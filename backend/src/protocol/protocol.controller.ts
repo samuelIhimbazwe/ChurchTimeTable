@@ -32,6 +32,8 @@ import { ServiceQuotaEngine } from './service-quota.engine';
 import { ProtocolSearchService } from './protocol-search.service';
 import { ProtocolTeamLeadersService } from './protocol-team-leaders.service';
 import { ProtocolTeamReportsService } from './protocol-team-reports.service';
+import { ProtocolOfficerSlaService } from './protocol-officer-sla.service';
+import { ProtocolDocumentsService } from './protocol-documents.service';
 import { ProtocolRankingCategory } from '@prisma/client';
 
 @Controller('protocol')
@@ -49,7 +51,15 @@ export class ProtocolController {
     private protocolSearch: ProtocolSearchService,
     private teamLeaders: ProtocolTeamLeadersService,
     private teamReports: ProtocolTeamReportsService,
+    private officerSla: ProtocolOfficerSlaService,
+    private documents: ProtocolDocumentsService,
   ) {}
+
+  @Get('documents')
+  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.PROTOCOL_MANAGE)
+  listDocuments(@CurrentUser('sub') userId: string) {
+    return this.documents.list(userId);
+  }
 
   @Get('dashboard/team-leader')
   @RequireAnyPermissions(
@@ -82,6 +92,17 @@ export class ProtocolController {
   )
   adminDashboard(@CurrentUser('sub') userId: string) {
     return this.dashboard.adminSummary(userId);
+  }
+
+  @Get('dashboard/officer-sla')
+  @RequireAnyPermissions(
+    PERMISSIONS.PROTOCOL_OVERSIGHT_SCOPE,
+    PERMISSIONS.PROTOCOL_MANAGE,
+    PERMISSIONS.PROTOCOL_REPORT,
+    PERMISSIONS.PROTOCOL_OPERATIONAL_MONITOR,
+  )
+  officerSlaDashboard(@CurrentUser('sub') userId: string) {
+    return this.officerSla.getOfficerSla(userId);
   }
 
   @Get('dashboard/me')
@@ -367,6 +388,15 @@ export class ProtocolController {
     return this.members.getProfile(userId, memberId);
   }
 
+  @Get('members/:memberId/attendance')
+  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.MEMBER_READ)
+  memberAttendance(
+    @CurrentUser('sub') userId: string,
+    @Param('memberId') memberId: string,
+  ) {
+    return this.attendance.memberHistory(userId, memberId);
+  }
+
   @Post('attendance')
   @RequireAnyPermissions(
     PERMISSIONS.PROTOCOL_ATTENDANCE_MANAGE,
@@ -497,6 +527,24 @@ export class ProtocolController {
     },
   ) {
     return this.quota.updateSettings(body);
+  }
+
+  @Get('reports/health')
+  @RequirePermissions(PERMISSIONS.PROTOCOL_REPORT)
+  healthReport(@CurrentUser('sub') userId: string) {
+    return this.reports.health(userId);
+  }
+
+  @Get('reports/health-pack.pdf')
+  @RequirePermissions(PERMISSIONS.PROTOCOL_REPORT)
+  async healthPackPdf(@CurrentUser('sub') userId: string, @Res() res: Response) {
+    const exported = await this.reports.exportHealthPackPdf(userId);
+    res.setHeader('Content-Type', exported.mimeType);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${exported.filename}"`,
+    );
+    res.send(exported.buffer);
   }
 
   @Get('reports/:type/export')

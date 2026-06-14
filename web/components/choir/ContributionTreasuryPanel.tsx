@@ -1,57 +1,29 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { contributionsApi, financeApi, familiesApi, type ContributionClaim } from '@/lib/api'
-import { toast } from '@/components/shared/Toast'
+import { useQuery } from '@tanstack/react-query'
+import { financeApi, familiesApi } from '@/lib/api'
 import { Card, Badge, PermissionGate } from '@/components/shared'
 import { SponsorContributionInboxPanel } from '@/components/choir/SponsorContributionInboxPanel'
+import { ContributionAdjustModal } from '@/components/shared/finance/ContributionAdjustModal'
 import { useResolvedChoirScope } from '@/lib/hooks'
+import {
+  normalizeContributionList,
+  type TreasuryContributionRow,
+} from '@/components/shared/finance/contribution-inbox.shared'
 import { formatCurrency } from '@/lib/utils/format'
 
-const ADJUST_CATEGORIES = [
-  { value: 'CORRECTION', label: 'Correction' },
-  { value: 'TRANSFER', label: 'Transfer' },
-  { value: 'REVERSAL', label: 'Reversal' },
-  { value: 'MISCLASSIFICATION', label: 'Misclassification' },
-  { value: 'OTHER', label: 'Other' },
+const CHOIR_TREASURY_KEYS = [
+  'finance-contributions-all',
+  'contribution-adjustments-recent',
+  'finance-contributions-choir-pending-family',
 ] as const
 
-type TreasuryRow = ContributionClaim & {
-  effectiveAmount?: number | null
-}
-
-function normalizeList(raw: unknown): TreasuryRow[] {
-  if (!raw || typeof raw !== 'object') return []
-  const obj = raw as Record<string, unknown>
-  const items = Array.isArray(obj.items) ? obj.items : Array.isArray(raw) ? raw : []
-  return items.map((row) => {
-    const r = row as Record<string, unknown>
-    return {
-      id: String(r.id ?? ''),
-      referenceNumber: r.referenceNumber != null ? String(r.referenceNumber) : undefined,
-      status: String(r.status ?? ''),
-      memberName: r.memberName != null ? String(r.memberName) : undefined,
-      familyId: r.familyId != null ? String(r.familyId) : undefined,
-      claimedAmount: Number(r.claimedAmount ?? r.amount ?? 0),
-      confirmedAmount: r.confirmedAmount != null ? Number(r.confirmedAmount) : null,
-      effectiveAmount: r.effectiveAmount != null ? Number(r.effectiveAmount) : null,
-      discrepancyAmount: r.discrepancyAmount != null ? Number(r.discrepancyAmount) : null,
-      discrepancyReason: r.discrepancyReason != null ? String(r.discrepancyReason) : null,
-      typeName: r.typeName != null ? String(r.typeName) : undefined,
-      paymentAt: r.paymentAt != null ? String(r.paymentAt) : null,
-      createdAt: r.createdAt != null ? String(r.createdAt) : undefined,
-    }
-  })
-}
+type TreasuryRow = TreasuryContributionRow
 
 export function ContributionTreasuryPanel({ compact = false }: { compact?: boolean }) {
   const { choirId } = useResolvedChoirScope()
-  const qc = useQueryClient()
   const [adjusting, setAdjusting] = useState<TreasuryRow | null>(null)
-  const [adjustAmount, setAdjustAmount] = useState('')
-  const [adjustCategory, setAdjustCategory] = useState<(typeof ADJUST_CATEGORIES)[number]['value']>('CORRECTION')
-  const [adjustReason, setAdjustReason] = useState('')
 
   const { data: pendingFamilyRaw, isLoading: loadingPendingFamily } = useQuery({
     queryKey: ['finance-contributions-choir-pending-family'],
@@ -87,8 +59,8 @@ export function ContributionTreasuryPanel({ compact = false }: { compact?: boole
     return map
   }, [familyRows])
 
-  const pendingFamily = normalizeList(pendingFamilyRaw)
-  const all = normalizeList(allRaw)
+  const pendingFamily = normalizeContributionList(pendingFamilyRaw)
+  const all = normalizeContributionList(allRaw)
   const discrepancies = all.filter(
     (c) =>
       (c.discrepancyAmount != null && c.discrepancyAmount !== 0) ||
@@ -96,28 +68,8 @@ export function ContributionTreasuryPanel({ compact = false }: { compact?: boole
   )
   const confirmed = all.filter((c) => c.status === 'CONFIRMED' || c.status === 'APPROVED')
 
-  const adjust = useMutation({
-    mutationFn: () =>
-      contributionsApi.adjust(adjusting!.id, {
-        adjustmentAmount: parseFloat(adjustAmount),
-        category: adjustCategory,
-        reason: adjustReason.trim(),
-      }),
-    onSuccess: () => {
-      toast.success('Contribution adjusted')
-      qc.invalidateQueries({ queryKey: ['finance-contributions-all'] })
-      qc.invalidateQueries({ queryKey: ['contribution-adjustments-recent'] })
-      qc.invalidateQueries({ queryKey: ['finance-contributions-choir-pending-family'] })
-      setAdjusting(null)
-    },
-    onError: (err: Error) => toast.error('Could not adjust', err.message),
-  })
-
   function openAdjust(row: TreasuryRow) {
     setAdjusting(row)
-    setAdjustAmount('')
-    setAdjustCategory('CORRECTION')
-    setAdjustReason('')
   }
 
   const adjustmentItems = (() => {
@@ -327,71 +279,11 @@ export function ContributionTreasuryPanel({ compact = false }: { compact?: boole
       </div>
 
       {adjusting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-          <Card padding="md" className="w-full max-w-md">
-            <p className="font-semibold text-lg">Manual adjustment</p>
-            <p className="text-sm text-text-secondary mt-1">
-              {adjusting.memberName} · effective{' '}
-              {formatCurrency(adjusting.effectiveAmount ?? adjusting.confirmedAmount ?? adjusting.claimedAmount)}
-            </p>
-            <div className="mt-4 space-y-3">
-              <div>
-                <label className="text-sm font-medium">Adjustment amount (RWF, +/-)</label>
-                <input
-                  type="number"
-                  step="1"
-                  value={adjustAmount}
-                  onChange={(e) => setAdjustAmount(e.target.value)}
-                  placeholder="e.g. -2000 or 500"
-                  className="mt-1 w-full px-3 py-2 rounded-lg text-sm border border-border bg-surface"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Category</label>
-                <select
-                  value={adjustCategory}
-                  onChange={(e) => setAdjustCategory(e.target.value as typeof adjustCategory)}
-                  className="mt-1 w-full px-3 py-2 rounded-lg text-sm border border-border bg-surface"
-                >
-                  {ADJUST_CATEGORIES.map((c) => (
-                    <option key={c.value} value={c.value}>{c.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Reason (required)</label>
-                <textarea
-                  rows={2}
-                  value={adjustReason}
-                  onChange={(e) => setAdjustReason(e.target.value)}
-                  className="mt-1 w-full px-3 py-2 rounded-lg text-sm border border-border bg-surface resize-none"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2 mt-5">
-              <button
-                type="button"
-                onClick={() => setAdjusting(null)}
-                className="px-4 py-2 text-sm border border-border rounded-lg"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={
-                  adjust.isPending ||
-                  !adjustAmount ||
-                  parseFloat(adjustAmount) === 0 ||
-                  adjustReason.trim().length < 3
-                }
-                onClick={() => adjust.mutate()}
-                className="px-4 py-2 text-sm font-semibold bg-primary-700 text-white rounded-lg disabled:opacity-50"
-              >
-                Save adjustment
-              </button>
-            </div>
-          </Card>
-        </div>
+        <ContributionAdjustModal
+          item={adjusting}
+          onClose={() => setAdjusting(null)}
+          invalidateQueryKeys={[...CHOIR_TREASURY_KEYS]}
+        />
       )}
     </>
   )

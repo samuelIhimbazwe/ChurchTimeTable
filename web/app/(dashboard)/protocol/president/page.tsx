@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { protocolApi } from '@/lib/api'
 import { ProtocolPositionHubShell, ProtocolHubQuickLink } from '@/components/protocol/ProtocolPositionHubShell'
-import { ProtocolLeaderOpsPanel } from '@/components/protocol/ProtocolLeaderOpsPanel'
+import { ProtocolPresidentCommandHome } from '@/components/protocol/ProtocolPresidentCommandHome'
 import { Shield, Trophy, ClipboardCheck, FileText, ArrowLeftRight, UserPlus, Settings2, KeyRound, DollarSign } from 'lucide-react'
 
 export default function ProtocolPresidentHubPage() {
@@ -18,7 +18,7 @@ export default function ProtocolPresidentHubPage() {
       roleKey="protocol_president"
       subtitle="Protocol leader and president are the same role — full ministry oversight and operations."
     >
-      <ProtocolLeaderOpsPanel />
+      <ProtocolPresidentCommandHome />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <ProtocolHubQuickLink

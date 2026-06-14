@@ -38,6 +38,44 @@ function mapSystemHealth(
   return 'healthy'
 }
 
+export type ImportPreviewSummary = {
+  total: number
+  valid: number
+  invalid: number
+  duplicates: number
+  conflicts: number
+  warnings: number
+}
+
+export type ImportJobRecord = {
+  id: string
+  type: string
+  status: string
+  fileName?: string
+  preview?: {
+    summary: ImportPreviewSummary
+    invalidRows?: Array<{ row: number; errors: string[] }>
+    conflictRows?: Array<{ row: number; reason: string }>
+  }
+  results?: {
+    appliedCount?: number
+    failedCount?: number
+    skippedCount?: number
+    failed?: Array<{ row: number; error: string }>
+  }
+  createdAt?: string
+  uploadedBy?: { email?: string }
+}
+
+export type ImportResultsPayload = {
+  id: string
+  type: string
+  status: string
+  preview?: ImportJobRecord['preview']
+  results?: ImportJobRecord['results']
+  errorMessage?: string
+}
+
 export const systemApi = {
   getSyncConflicts: () =>
     apiClient.get<never, unknown[]>('/sync/conflicts'),
@@ -84,6 +122,35 @@ export const systemApi = {
       '/pilot/import', form,
       { headers: { 'Content-Type': 'multipart/form-data' } })
   },
+
+  uploadImportPreview: (file: File, type: string) => {
+    const form = new FormData()
+    form.append('file', file)
+    form.append('type', type)
+    return apiClient.post<never, ImportJobRecord>('/imports', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+  },
+
+  listImports: () =>
+    apiClient.get<never, ImportJobRecord[]>('/imports'),
+
+  getImport: (id: string) =>
+    apiClient.get<never, ImportJobRecord>(`/imports/${id}`),
+
+  confirmImport: (
+    id: string,
+    conflictStrategy: 'SKIP' | 'REPLACE' | 'MERGE' | 'MANUAL_REVIEW' = 'SKIP',
+  ) =>
+    apiClient.post<never, ImportJobRecord>(`/imports/${id}/confirm`, {
+      conflictStrategy,
+    }),
+
+  cancelImport: (id: string) =>
+    apiClient.post<never, ImportJobRecord>(`/imports/${id}/cancel`, {}),
+
+  getImportResults: (id: string) =>
+    apiClient.get<never, ImportResultsPayload>(`/imports/${id}/results`),
 
   getAuditLog: async (params?: { page?: number; limit?: number }): Promise<Paginated<AuditLogEntry>> => {
     const raw = await apiClient.get<never, {

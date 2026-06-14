@@ -1,142 +1,123 @@
 # Protocol System — Vision vs Current State
 
-Last updated: June 2026 (Sprint 1 started)
+Last updated: June 2026 (closure waves P1–P7)
 
 ---
 
 ## Architecture
 
-Protocol is a **single ministry** using the same portal-first, role-composed pattern as choir:
+Protocol is a **single ministry** using the portal-first, role-composed pattern:
 
 ```
-Portal → /protocol (dashboard context gate)
-├── Member hub        — stats, upcoming services, personal rankings
-├── Officer hubs      — president, coordinator, secretary, treasury, team-leader
-├── Teams engine      — occurrence-based ProtocolOccurrenceTeam (auto-gen on publish)
-├── Attendance        — outcome model → performance stats → rankings
-├── Replacements      — self-found replacement workflow
+Portal → /portal/protocol
+Protocol dashboard → /protocol
+├── Member hub        — stats, invitations, replacement requests
+├── Officer hubs      — president, coordinator, secretary, treasury, team-leader, admin
+├── Teams engine      — ProtocolOccurrenceTeam per MF-7 occurrence
+├── Attendance        — outcomes → profiles → rankings
+├── Replacements      — self-found substitution workflow
 ├── Rankings          — monthly multi-category + badges
-├── Claims/Invites    — closed membership (no open self-join)
-└── Reports/Backups   — operational exports + backup pool
+├── Claims/Invites    — closed membership
+├── Treasury          — protocol unity contributions (scoped)
+└── Reports/Backups   — team reports + operational CSV exports
 ```
 
-**Onboarding (closed ministry):** See `docs/PROTOCOL_DISCOVERY.md` — invitations + membership claims only.
+**Onboarding:** [`PROTOCOL_DISCOVERY.md`](PROTOCOL_DISCOVERY.md) — invitations + claims only.
+
+**Officer spec:** [`architecture/PROTOCOL_COMMITTEE_SPEC.md`](architecture/PROTOCOL_COMMITTEE_SPEC.md)
 
 ---
 
-## Backend vs Frontend
+## Module map — status
 
-| Area | Backend | Web UI | Sprint 1 status |
-|------|---------|--------|-----------------|
-| Teams / assignment | **Functional** (e2e tested) | List + generate + detail | **P0 fixed** — occurrence team endpoint + adapters |
-| Attendance | **Functional** | Team detail page | **P0 fixed** — single-record API loop |
-| Replacements | **Functional** | Review page | **P0 fixed** — path/payload adapters |
-| Team status workflow | **Functional** | Team detail | **P1 added** — review/approve/publish/complete |
-| Rankings | **Functional** | Monthly list | Partial — no generate trigger |
-| Claims | **Functional** | Review + portal submit | **Functional** |
-| Invitations | **Functional** | — | **Missing UI** |
-| Officer hubs | Context ready | Quick-link shells | Scaffold |
-| Treasury | Permissions only | Links only | **Missing** |
-| Leader dashboard | `GET /dashboard` | Unused | **Missing** |
-
----
-
-## Sprint 1 — Completed (this session)
-
-1. **`GET /protocol/occurrences/:occurrenceId/team`** — backend lookup by occurrence
-2. **`web/lib/api/modules/protocol.ts`** — adapters for team, replacements; attendance batch → single POST loop; review uses `PATCH /replacements/:id` + `{ status }`
-3. **Team detail page** — fixed occurrence date field; status advance buttons
+| # | Module | Status | Gap |
+|---|--------|--------|-----|
+| 1 | Membership | ✅ | Claims + invitations UI |
+| 2 | Teams | 🟡 | Publish console shipped; build flow on generate page |
+| 3 | Attendance | ✅ | Team detail page |
+| 4 | Replacements | 🟡 | Split queue console |
+| 5 | Rankings | ✅ | Generate + categories |
+| 6 | Team leaders | ✅ | CRUD + assign on team detail |
+| 7 | Treasury | 🟡 | `ProtocolContributionTreasuryPanel` — scoped unity contributions |
+| 8 | Reports | 🟡 | Team reports + CSV; health pack planned (P4) |
+| 9 | Admin / settings | ✅ | Admin hub + engine settings |
+| 10 | Communications | 🟡 | Deep links for assignment, replacement, claim, invitation |
+| 11 | Portal | ✅ | Stats + contributions |
 
 ---
 
-## Sprint 1 — P1 completed
+## Closure waves (June 2026)
 
-| Item | Status |
-|------|--------|
-| Invitation management UI | `/protocol/invitations` — send + list; portal/member accept/decline |
-| Member replacement request | Form on `/protocol/member` and `/protocol/replacements` |
-| Team leader CRUD | Create/deactivate on `/protocol/team-leaders` |
-| Assign leader to team | Recommended assign on team detail page |
+### P1–P3 — Shipped
 
-## Sprint 3 — Protocol admin dashboard
+| Item | Path / component |
+|------|------------------|
+| Replacements console | `ProtocolReplacementsConsole` → `/protocol/replacements` |
+| Claims console | `ProtocolClaimsConsole` → `/protocol/claims` |
+| Publish queue | `ProtocolTeamPublishConsole` → `/protocol/teams` |
+| President command home | `ProtocolPresidentCommandHome` → `/protocol/president` |
+| Coordinator command home | `ProtocolCoordinatorCommandHome` → `/protocol/coordinator` |
+| Notification links | `protocol_claim_review`, `protocol_invitation` in `links.ts` |
+
+### P4 — Shipped
 
 | Item | Path / API |
 |------|------------|
-| Role model | **President ≡ Leader** (naming only). **Ministry admin** is a separate assignable committee role. |
-| President hub | `/protocol/president` — full ops (teams, rankings, replacements, settings) |
-| Admin hub | `/protocol/admin` — stats, role assign/revoke, invitations, claims, team leaders (read-only settings) |
-| Committee roles API | `GET/POST /governance/protocol/:scopeId`, `POST /governance/protocol/members`, `DELETE /governance/protocol/members/:id` |
-| Admin API | `GET /protocol/dashboard/admin` |
-| Engine settings | `/protocol/admin/settings` + `PATCH /protocol/settings` (edit requires `protocol.manage`) |
-| Landing | `PROTOCOL_LEADER` system account → `/protocol/president`; `protocol_admin` committee → `/protocol/admin` |
+| Officer SLA | `GET /protocol/dashboard/officer-sla` + `ProtocolOfficerSlaPanel` |
+| Ministry health | `GET /protocol/reports/health` |
+| Health pack PDF | `GET /protocol/reports/health-pack.pdf` |
+| Reports UI | Health tiles + export on `/protocol/reports` |
 
-**Pilot:** `protocol.leader@church.local` → president; `protocol.admin@church.local` → admin hub / `Pilot@123`
+### P5 — Shipped
 
-## Sprint 2 — Completed
+| Item | Path / API |
+|------|------------|
+| Secretary command home | `ProtocolSecretaryCommandHome` → `/protocol/secretary` |
+| Team reports register | `ProtocolSecretaryRegisterPanel` |
+| Member roster + 360 | `ProtocolMemberRosterPanel`, `GET /protocol/members/:id/attendance` |
+| Treasury exports | `ProtocolTreasuryExportsCard` + `/finance/export/*?ministryScope=PROTOCOL` |
 
-| Item | Status |
-|------|--------|
-| President/coordinator ops panel | `ProtocolLeaderOpsPanel` wired to `GET /protocol/dashboard` |
-| Rankings generate + categories | `/protocol/rankings` — generate button + 6 category tabs |
-| Team-head reports | `ProtocolTeamReportForm` on team-leader hub + reports page team picker |
-| Treasury scope | Deferred — hub links to `/church/finance` with explicit notice |
+### P6 — Shipped
 
-## Sprint 2 — Remaining
+| Item | Path / API |
+|------|------------|
+| Ministry documents | `GET /protocol/documents` + `ProtocolDocumentsShelf` → `/protocol/documents` |
+| Import Center | `/admin/import` — preview/confirm via `/imports` (`PROTOCOL_MEMBERS`) |
+| MF-7 calendar tie-in | Church calendar link + occurrence card on `/protocol/teams/generate` |
 
-| Priority | Item |
-|----------|------|
-| P3 | Dedicated protocol finance module (if needed later) |
-| P3 | In-app notifications for protocol events — deep links **done** |
+### P7 — Shipped
 
----
+| Item | Path |
+|------|------|
+| Pilot runbook | `docs/pilot/PILOT_RUNBOOK.md` — protocol web + mobile Sunday flow |
+| Mobile parity | `ProtocolScreen` assignment detail; `ProtocolReplacementScreen` |
+| Completion gate | `PROTOCOL_MODULE_COMPLETION.md` P6–P7 checked |
 
-## Build teams QA (coordinator)
-
-1. Re-seed: `npx prisma db seed` then `npx ts-node prisma/seed-pilot.ts`
-2. Log in as `protocol.coordinator@church.local` / `Pilot@123`
-3. **Build teams** → pick **Serivisi Protocol — Ukwezi 1** (pilot seeds a published team for team-head QA; pick a *different* occurrence to test build, or open the existing team)
-4. Select members (e.g. `member3`, `member4`) → **Build team**
-5. Team detail → advance **GENERATED → REVIEWED → APPROVED → PUBLISHED** if still draft
-
-Pilot seed now creates a **PUBLISHED** team for Ukwezi 1 with `protocol.teamhead@church.local` as assigned leader and protocol member profiles for the roster.
-
-## Team head (scoped dashboard)
-
-Team heads (`protocol.teamhead@church.local`) only see **services they lead**:
-
-- **Team leader hub** — next service, upcoming assignments, links to attendance
-- **Team replacements** — pending requests for their team only (approve/reject)
-- **No** access to all teams, build teams, backups, or coordinator ops in the sidebar
-
-Attendance and replacement review are enforced per-team on the API (not global).
-
-## 5-Step QA (after pilot seed)
-
-| Step | Actor | Action |
-|------|-------|--------|
-| 1 | Coordinator | `/protocol/teams/generate` for a published occurrence |
-| 2 | Coordinator | Team detail → advance status through REVIEWED → APPROVED → PUBLISHED |
-| 3 | Team leader | Mark attendance outcomes on team detail |
-| 4 | Member | Submit replacement request (when UI exists) or via API |
-| 5 | Coordinator | `/protocol/replacements` → approve/reject |
-
-**Pilot accounts:** Use protocol committee roles from `seed-pilot.ts`; password `Pilot@123`.
+**Deferred:** Dedicated protocol ERP module, legacy monthly team removal, AI summaries.
 
 ---
 
-## Key Files
+## Pilot QA
+
+Password: `Pilot@123`
+
+| Persona | Email | Focus |
+|---------|-------|-------|
+| President | `protocol.leader@church.local` | Command home, claims, rankings |
+| Coordinator | `protocol.coordinator@church.local` | Build teams, publish queue |
+| Team head | `protocol.teamhead@church.local` | Attendance, scoped replacements |
+| Treasurer | `protocol.treasurer@church.local` | Unity contribution inbox |
+
+See [`pilot/PROTOCOL_MODULE_COMPLETION.md`](pilot/PROTOCOL_MODULE_COMPLETION.md) for the full gate.
+
+---
+
+## Key files
 
 | Layer | Path |
 |-------|------|
-| API surface | `backend/src/protocol/protocol.controller.ts` |
-| Team engine | `backend/src/protocol/protocol-teams.service.ts` |
-| Frontend client | `web/lib/api/modules/protocol.ts` |
-| Team detail | `web/app/(dashboard)/protocol/teams/[occurrenceId]/page.tsx` |
-| Dashboard context | `backend/src/member-portal/protocol-dashboard-context.service.ts` |
+| API | `backend/src/protocol/protocol.controller.ts` |
+| Dashboard | `backend/src/protocol/protocol-dashboard.service.ts` |
+| Web client | `web/lib/api/modules/protocol.ts` |
+| Consoles | `web/components/protocol/Protocol*Console.tsx` |
 | Architecture | `docs/architecture/PROTOCOL_ENGINE.md` |
-
----
-
-## Next
-
-Settings admin UI, report exports, and notification surfacing.

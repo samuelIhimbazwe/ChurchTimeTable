@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { protocolApi } from '@/lib/api'
 import { ProtocolPositionHubShell, ProtocolHubQuickLink } from '@/components/protocol/ProtocolPositionHubShell'
-import { ProtocolLeaderOpsPanel } from '@/components/protocol/ProtocolLeaderOpsPanel'
+import { ProtocolCoordinatorCommandHome } from '@/components/protocol/ProtocolCoordinatorCommandHome'
 import { Shield, Calendar, ArrowLeftRight, Users, DatabaseBackup, UserPlus } from 'lucide-react'
 
 export default function ProtocolCoordinatorHubPage() {
@@ -16,7 +16,7 @@ export default function ProtocolCoordinatorHubPage() {
 
   return (
     <ProtocolPositionHubShell roleKey="protocol_coordinator">
-      <ProtocolLeaderOpsPanel />
+      <ProtocolCoordinatorCommandHome />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <ProtocolHubQuickLink

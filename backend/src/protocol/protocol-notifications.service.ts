@@ -18,7 +18,9 @@ export class ProtocolNotificationsService {
     }
     const team = await this.prisma.protocolOccurrenceTeam.findUniqueOrThrow({
       where: { id: teamId },
-      include: {
+      select: {
+        id: true,
+        occurrenceId: true,
         members: { include: { member: { select: { userId: true } } } },
         occurrence: { select: { title: true, startAt: true } },
       },
@@ -34,7 +36,7 @@ export class ProtocolNotificationsService {
           NotificationType.GENERAL,
           'Protocol assignment',
           `${team.occurrence.title} — ${when}`,
-          { kind: 'protocol_assignment', teamId },
+          { kind: 'protocol_assignment', teamId, occurrenceId: team.occurrenceId },
         );
       } catch (err) {
         if (process.env.CMMS_E2E !== '1') throw err;

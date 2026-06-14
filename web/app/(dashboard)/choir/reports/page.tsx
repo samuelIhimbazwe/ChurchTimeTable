@@ -1,20 +1,41 @@
 'use client'
 
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { reportsApi } from '@/lib/api'
+import { useResolvedChoirScope } from '@/lib/hooks'
 import {
   Card, CardHeader, CardTitle, CardDescription,
-  StatTile, PermissionGate, SkeletonStatTile, SkeletonCard,
+  StatTile, PermissionGate, SkeletonStatTile, SkeletonCard, Badge,
 } from '@/components/shared'
-import { FileText, Download } from 'lucide-react'
+import { Download, Activity, Heart, Users } from 'lucide-react'
 import { toast } from '@/components/shared/Toast'
 
-function num(data: Record<string, unknown> | undefined, ...keys: string[]) {
-  if (!data) return 0
-  for (const k of keys) {
-    if (data[k] != null) return Number(data[k])
-  }
-  return 0
+type SummaryMembership = {
+  total?: number
+  byStatus?: Array<{ status: string; count: number }>
+}
+
+type SummaryHealth = {
+  score?: number
+  grade?: string
+  participation?: {
+    memberCount?: number
+    membersAtRisk?: number
+    averageParticipation?: number
+    serviceRateAvg?: number
+  } | null
+  welfareActiveCases?: number | null
+  officerAttentionCount?: number | null
+}
+
+type ChoirSummary = {
+  membership?: SummaryMembership
+  leadership?: { activeAssignments?: number }
+  health?: SummaryHealth | null
+  welfare?: { summary?: { activeCases?: number; totalContributions?: number } } | null
+  music?: { totalSongs?: number; averageReadiness?: number } | null
+  rehearsals?: { averageReadiness?: number } | null
 }
 
 async function downloadBlob(fetcher: () => Promise<Blob>, filename: string) {
@@ -32,38 +53,69 @@ async function downloadBlob(fetcher: () => Promise<Blob>, filename: string) {
   }
 }
 
+function healthBadgeVariant(grade?: string) {
+  if (grade === 'A' || grade === 'B') return 'status-active' as const
+  if (grade === 'C') return 'status-pending' as const
+  return 'status-inactive' as const
+}
+
 export default function ChoirReportsPage() {
+  const { choirId } = useResolvedChoirScope()
+
   const { data: summary, isLoading } = useQuery({
-    queryKey: ['choir-reports-summary'],
-    queryFn:  reportsApi.getChoirSummary,
+    queryKey: ['choir-reports-summary', choirId],
+    queryFn: () => reportsApi.getChoirSummary(choirId),
+    enabled: !!choirId,
   })
 
-  const s = summary as Record<string, unknown> | undefined
+  const s = summary as ChoirSummary | undefined
+  const health = s?.health
+  const membership = s?.membership
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="font-display text-3xl text-text-primary">Choir Reports</h2>
-          <p className="text-text-secondary text-sm mt-1">Summary metrics and exports</p>
+          <p className="text-text-secondary text-sm mt-1">
+            Unified health score, module metrics, and export pack
+          </p>
         </div>
         <PermissionGate permission="report:export">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => downloadBlob(
-                () => reportsApi.exportChoirSummaryPdf() as unknown as Promise<Blob>,
-                'choir-summary.pdf',
-              )}
-              className="flex items-center gap-2 px-3 py-2 text-sm border border-border rounded-lg hover:bg-surface-raised transition-colors text-text-secondary"
+              onClick={() =>
+                downloadBlob(
+                  () =>
+                    reportsApi.exportChoirHealthPackPdf(choirId) as unknown as Promise<Blob>,
+                  'choir-health-pack.pdf',
+                )
+              }
+              className="flex items-center gap-2 px-3 py-2 text-sm font-semibold bg-gold-500 text-primary-900 rounded-lg hover:bg-gold-400 transition-colors"
             >
-              <Download size={15} /> PDF
+              <Download size={15} /> Health pack
             </button>
             <button
-              onClick={() => downloadBlob(
-                () => reportsApi.exportChoirSummaryCsv() as unknown as Promise<Blob>,
-                'choir-summary.csv',
-              )}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-semibold bg-gold-500 text-primary-900 rounded-lg hover:bg-gold-400 transition-colors"
+              onClick={() =>
+                downloadBlob(
+                  () =>
+                    reportsApi.exportChoirSummaryPdf(choirId) as unknown as Promise<Blob>,
+                  'choir-summary.pdf',
+                )
+              }
+              className="flex items-center gap-2 px-3 py-2 text-sm border border-border rounded-lg hover:bg-surface-raised transition-colors text-text-secondary"
+            >
+              <Download size={15} /> Summary PDF
+            </button>
+            <button
+              onClick={() =>
+                downloadBlob(
+                  () =>
+                    reportsApi.exportChoirSummaryCsv(choirId) as unknown as Promise<Blob>,
+                  'choir-summary.csv',
+                )
+              }
+              className="flex items-center gap-2 px-3 py-2 text-sm border border-border rounded-lg hover:bg-surface-raised transition-colors text-text-secondary"
             >
               <Download size={15} /> CSV
             </button>
@@ -76,33 +128,119 @@ export default function ChoirReportsPage() {
           Array.from({ length: 4 }).map((_, i) => <SkeletonStatTile key={i} />)
         ) : (
           <>
-            <StatTile label="Members"          value={num(s, 'totalMembers', 'memberCount')}           icon={FileText} animate />
-            <StatTile label="Attendance Rate"  value={num(s, 'attendanceRate', 'avgAttendanceRate')} suffix="%" icon={FileText} animate />
-            <StatTile label="Activities"       value={num(s, 'totalActivities', 'activityCount')}       icon={FileText} animate />
-            <StatTile label="Services"         value={num(s, 'totalServices', 'serviceCount')}          icon={FileText} animate />
+            <StatTile
+              label="Health score"
+              value={health?.score ?? 0}
+              suffix={health?.grade ? ` (${health.grade})` : ''}
+              icon={Activity}
+              animate
+            />
+            <StatTile
+              label="Members"
+              value={membership?.total ?? 0}
+              icon={Users}
+              animate
+            />
+            <StatTile
+              label="At risk"
+              value={health?.participation?.membersAtRisk ?? 0}
+              icon={Users}
+              animate
+            />
+            <StatTile
+              label="Welfare cases"
+              value={
+                health?.welfareActiveCases ??
+                s?.welfare?.summary?.activeCases ??
+                0
+              }
+              icon={Heart}
+              animate
+            />
           </>
         )}
       </div>
 
+      {health && (
+        <Card padding="md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              Choir health
+              <Badge variant={healthBadgeVariant(health.grade)} dot>
+                Grade {health.grade ?? '—'}
+              </Badge>
+            </CardTitle>
+            <CardDescription>
+              Participation, welfare load, and officer queue pressure combined into one score.
+            </CardDescription>
+          </CardHeader>
+          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            <div className="flex justify-between gap-4 border-b border-border pb-2">
+              <dt className="text-text-muted">Participation avg</dt>
+              <dd className="font-medium">
+                {health.participation?.averageParticipation ?? '—'}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-4 border-b border-border pb-2">
+              <dt className="text-text-muted">Service attendance avg</dt>
+              <dd className="font-medium">
+                {health.participation?.serviceRateAvg != null
+                  ? `${health.participation.serviceRateAvg}%`
+                  : '—'}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-4 border-b border-border pb-2">
+              <dt className="text-text-muted">Officer queues</dt>
+              <dd className="font-medium">
+                {health.officerAttentionCount ?? 'Restricted'}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-4 border-b border-border pb-2">
+              <dt className="text-text-muted">Leadership roles</dt>
+              <dd className="font-medium">{s?.leadership?.activeAssignments ?? '—'}</dd>
+            </div>
+          </dl>
+        </Card>
+      )}
+
       <Card padding="md">
         <CardHeader>
-          <CardTitle>Report Details</CardTitle>
-          <CardDescription>Raw summary from choir reports API</CardDescription>
+          <CardTitle>Module snapshot</CardTitle>
+          <CardDescription>Cross-module metrics for this choir instance</CardDescription>
         </CardHeader>
         {isLoading ? (
           <SkeletonCard rows={4} />
-        ) : !s || Object.keys(s).length === 0 ? (
+        ) : !s ? (
           <p className="text-text-muted text-sm">No report data available.</p>
         ) : (
           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {Object.entries(s).map(([key, val]) => (
-              <div key={key} className="flex justify-between gap-4 text-sm border-b border-border pb-2">
-                <dt className="text-text-muted capitalize">{key.replace(/([A-Z])/g, ' $1')}</dt>
-                <dd className="font-medium text-text-primary text-right truncate max-w-[50%]">
-                  {typeof val === 'object' ? JSON.stringify(val) : String(val ?? '—')}
-                </dd>
+            {membership?.byStatus?.map((row) => (
+              <div
+                key={row.status}
+                className="flex justify-between gap-4 text-sm border-b border-border pb-2"
+              >
+                <dt className="text-text-muted capitalize">{row.status.replace(/_/g, ' ')}</dt>
+                <dd className="font-medium text-text-primary">{row.count}</dd>
               </div>
             ))}
+            {s.music && (
+              <div className="flex justify-between gap-4 text-sm border-b border-border pb-2">
+                <dt className="text-text-muted">Songs in library</dt>
+                <dd className="font-medium">{s.music.totalSongs ?? '—'}</dd>
+              </div>
+            )}
+            {s.rehearsals && (
+              <div className="flex justify-between gap-4 text-sm border-b border-border pb-2">
+                <dt className="text-text-muted">Rehearsal readiness</dt>
+                <dd className="font-medium">{s.rehearsals.averageReadiness ?? '—'}%</dd>
+              </div>
+            )}
+            {s.welfare?.summary && (
+              <div className="flex justify-between gap-4 text-sm border-b border-border pb-2">
+                <dt className="text-text-muted">Welfare contributions</dt>
+                <dd className="font-medium">{s.welfare.summary.totalContributions ?? '—'}</dd>
+              </div>
+            )}
           </dl>
         )}
       </Card>

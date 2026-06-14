@@ -56,16 +56,20 @@ export function linkFromNotificationData(
       }
       return '/choir/join-requests'
     case 'protocol_assignment':
-      if (data.teamId) {
-        return `/protocol/teams/${String(data.teamId)}`
+      if (data.occurrenceId) {
+        return `/protocol/teams/${String(data.occurrenceId)}`
       }
-      return '/protocol/teams'
+      return '/portal/protocol'
     case 'protocol_replacement_approved':
     case 'protocol_replacement_request':
       if (data.requestId) {
         return `/protocol/replacements?requestId=${String(data.requestId)}`
       }
       return '/protocol/replacements'
+    case 'protocol_claim_review':
+      return '/protocol/claims'
+    case 'protocol_invitation':
+      return '/protocol/member'
     case 'contribution_family_approve':
     case 'contribution_approval_reminder':
       if (data.actionUrl && String(data.actionUrl).startsWith('/')) {

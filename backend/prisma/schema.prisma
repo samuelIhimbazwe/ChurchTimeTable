@@ -1056,6 +1056,7 @@ model ContributionRecord {
   createdAt                DateTime                 @default(now())
   updatedAt                DateTime                 @updatedAt
   member                   Member                   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  family                   Family?                  @relation(fields: [familyId], references: [id])
   memberDue                MemberDues?              @relation(fields: [memberDueId], references: [id])
   contributionTypeCatalog  ContributionTypeCatalog? @relation(fields: [contributionTypeCatalogId], references: [id])
   contributionCampaign     ContributionCampaign?    @relation(fields: [contributionCampaignId], references: [id])
@@ -1346,6 +1347,7 @@ model Family {
   members            FamilyMember[]
   leadershipHistory  FamilyLeadershipHistory[]
   pulseEntries       FamilyPulseEntry[]
+  contributionRecords ContributionRecord[]
 
   @@unique([choirId, familyCode])
   @@index([choirId])

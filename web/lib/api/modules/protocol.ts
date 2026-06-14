@@ -114,6 +114,48 @@ export const protocolApi = {
   getLeaderDashboard: () =>
     apiClient.get<never, Record<string, unknown>>('/protocol/dashboard'),
 
+  getOfficerSla: () =>
+    apiClient.get<
+      never,
+      {
+        generatedAt: string
+        officers: Array<{
+          id: string
+          label: string
+          queueCount: number
+          breachCount: number
+          staleCount: number
+          oldestHours: number | null
+          oldestLabel: string | null
+          status: 'ok' | 'attention' | 'breach'
+        }>
+        totals: {
+          breachCount: number
+          staleCount: number
+          attentionCount: number
+        }
+      }
+    >('/protocol/dashboard/officer-sla'),
+
+  getMinistryHealth: () =>
+    apiClient.get<
+      never,
+      {
+        score: number
+        grade: string
+        attendanceRateAvg: number
+        activeMembers: number
+        pendingClaims: number
+        pendingReplacements: number
+        draftTeams: number
+        officerAttentionCount: number | null
+        generatedAt: string
+      }
+    >('/protocol/reports/health'),
+
+  exportHealthPackPdf: () =>
+    apiClient.get('/protocol/reports/health-pack.pdf', { responseType: 'blob' }),
+
   getAdminDashboard: () =>
     apiClient.get<never, Record<string, unknown>>('/protocol/dashboard/admin'),
 
@@ -278,8 +320,34 @@ export const protocolApi = {
   listProtocolMembers: () =>
     apiClient.get<never, unknown[]>('/protocol/members'),
 
+  getProtocolMember: (memberId: string) =>
+    apiClient.get<never, Record<string, unknown>>(`/protocol/members/${memberId}`),
+
+  getProtocolMemberAttendance: (memberId: string) =>
+    apiClient.get<never, unknown[]>(`/protocol/members/${memberId}/attendance`),
+
+  getMyAttendanceHistory: () =>
+    apiClient.get<never, unknown[]>('/protocol/attendance/history'),
+
   getMyDashboard: () =>
     apiClient.get<never, Record<string, unknown>>('/protocol/dashboard/me'),
+
+  getDocuments: () =>
+    apiClient.get<never, {
+      ministry: { id: string; name: string; code?: string } | null
+      items: Array<{
+        id: string
+        title: string
+        category?: string
+        description?: string
+        fileName?: string
+        fileUrl?: string
+        mimeType?: string
+        createdAt: string
+        updatedAt?: string
+      }>
+      documentsDisabled?: boolean
+    }>('/protocol/documents'),
 
   createTeamLeader: (data: {
     memberId: string

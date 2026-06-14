@@ -24,6 +24,20 @@ export const financeApi = {
   getFinanceSummary: (params?: { ministryScope?: string }) =>
     apiClient.get<never, Record<string, unknown>>('/finance/summary', { params }),
 
+  exportMinistryCsv: (params?: {
+    ministryScope?: string
+    from?: string
+    to?: string
+  }) =>
+    apiClient.get('/finance/export/csv', { params, responseType: 'blob' }),
+
+  exportMinistryPdf: (params?: {
+    ministryScope?: string
+    from?: string
+    to?: string
+  }) =>
+    apiClient.get('/finance/export/pdf', { params, responseType: 'blob' }),
+
   getContributionSubmitOptions: () =>
     apiClient.get<never, Record<string, unknown>>('/finance/contributions/submit-options'),
 

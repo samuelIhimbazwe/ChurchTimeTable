@@ -48,6 +48,7 @@ import '../../features/ministry_finance/screens/ministry_finance_screen.dart';
 import '../../features/church_intelligence/screens/church_intelligence_screen.dart';
 import '../../features/operations/screens/operations_screen.dart';
 import '../../features/protocol/screens/protocol_screen.dart';
+import '../../features/protocol/screens/protocol_replacement_screen.dart';
 import '../../features/member_portal/screens/member_home_screen.dart';
 import '../../features/member_portal/screens/membership_center_screen.dart';
 import '../../features/member_portal/screens/broadcast_center_screen.dart';
@@ -79,6 +80,7 @@ class AppRouter {
   static const submitContribution = '/contributions/submit';
   static const protocolContribute = '/protocol/contribute';
   static const protocolTreasury = '/protocol/treasury';
+  static const protocolReplacement = '/protocol/replacement';
   static const members = '/members';
   static const memberProfile = '/members/profile';
   static const myProfile = '/my-profile';
@@ -132,6 +134,7 @@ class AppRouter {
     submitContribution,
     protocolContribute,
     protocolTreasury,
+    protocolReplacement,
     members,
     memberProfile,
     myProfile,
@@ -253,6 +256,8 @@ class AppRouter {
         return 'Protocol contribution';
       case protocolTreasury:
         return 'Protocol treasury';
+      case protocolReplacement:
+        return 'Protocol replacement';
       case members:
         return l10n.members_title;
       case memberProfile:
@@ -367,6 +372,11 @@ class AppRouter {
         return _page(
           const ProtocolTreasuryScreen(),
           routeName: protocolTreasury,
+        );
+      case protocolReplacement:
+        return _page(
+          const ProtocolReplacementScreen(),
+          routeName: protocolReplacement,
         );
       case members:
         return _page(const MembersScreen(), routeName: members);

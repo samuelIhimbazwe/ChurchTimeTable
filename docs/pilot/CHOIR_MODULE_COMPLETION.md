@@ -11,21 +11,21 @@
 
 | Criterion | Status | Notes |
 |-----------|--------|-------|
-| Choir operations fully inside CMMS | 🟡 | Core ops yes; welfare/music/uniform/equipment/meetings not built |
+| Choir operations fully inside CMMS | ✅ | Core ops, welfare, music, assets, meetings scaffold, executive layer |
 | Attendance operational | ✅ | Web + mobile; scoring, excuses, escalations |
-| Rehearsals operational | 🟡 | `REHEARSAL` event type exists; no dedicated rehearsal *module* (plans, songs practiced, notes) |
-| Song management operational | 🔴 | No song library schema or UI |
-| Welfare operational | 🔴 | No welfare case/fund domain |
-| Contributions operational | ✅ | Sprint 10.2 backend 🔒; 10.3.1–10.3.3 web UI |
+| Rehearsals operational | ✅ | Scheduling module, rehearsal analytics, service prep |
+| Song management operational | ✅ | Music library schema + UI |
+| Welfare operational | ✅ | Welfare cases, care desk, contributions link |
+| Contributions operational | ✅ | Sprint 10.2 backend 🔒; 10.3.x web UI + quick actions |
 | Leadership governance operational | ✅ | Families, leadership history, family workspace, executive stewardship |
-| Uniform tracking operational | 🔴 | Only `uniform` contribution *type* in catalog |
-| Communication operational | 🟡 | Notifications + FCM; limited audience targeting |
-| Meeting governance operational | 🔴 | No meetings/agenda/minutes domain |
-| Reporting operational | 🟡 | Contribution rankings/totals, family health, finance export; no unified choir health export |
-| Mobile / web parity acceptable | 🟡 | Parity on events, attendance, contributions (partial), families (basic); no executive stewardship on mobile |
-| Pilot church without external tools | 🟡 | Sunday workflow yes; welfare/music/uniform/meetings still external |
+| Uniform tracking operational | ✅ | Assets module + uniform contribution type |
+| Communication operational | ✅ | Targeted announcements + delivery stats |
+| Meeting governance operational | 🟡 | Meetings pages scaffold; full agenda/minutes depth optional |
+| Reporting operational | ✅ | Health score + export pack, contribution rankings, finance export |
+| Mobile / web parity acceptable | 🟡 | List–detail on key family offices; executive stewardship read-only on mobile |
+| Pilot church without external tools | 🟡 | Sunday workflow yes; deep meeting minutes still light |
 
-**Verdict today:** Strong **operations + contributions + families** foundation. **Not yet** at full 16-domain MVP — estimate **4–6 focused sprints** after 10.3.4 for remaining domains (see phases below).
+**Verdict today:** Choir **pilot-ready** for Elim-style operations. Protocol module **pilot-ready** — see [PROTOCOL_MODULE_COMPLETION.md](./PROTOCOL_MODULE_COMPLETION.md).
 
 ---
 
@@ -190,7 +190,7 @@ No meeting, agenda, minutes, or action-item entities.
 | Family rankings / health | ✅ |
 | Member personal dashboard | ✅ |
 | Finance CSV/PDF export | ✅ |
-| Unified “choir health score” + export pack | 🔴 |
+| Unified “choir health score” + export pack | ✅ |
 | Welfare analytics | 🔴 (blocked) |
 
 ---
@@ -231,7 +231,7 @@ Receipt upload on contributions only. No policy/constitution/minutes library wit
 
 1. **Finish Sprint 10.3.4** — catalog/campaign admin, leadership history viewer ([API_CONTRACT](./API_CONTRACT_CONTRIBUTIONS_v1.md)).
 2. **Mobile parity** — family workspace + executive stewardship (read-only minimum).
-3. **Pilot runbook** — map real church roles to pilot accounts; run `GO_LIVE_CHECKLIST`.
+3. **Pilot runbook** — map real church roles to pilot accounts; run [GO_LIVE_CHECKLIST.md](./GO_LIVE_CHECKLIST.md) (choir + protocol sections).
 4. **Spike welfare domain** — schema + workflow design doc before implementation (ministry-agnostic pattern).
 5. **Member lifecycle RFC** — enum migration plan for Visitor → Deceased without breaking ACTIVE/PENDING flows.
 

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/api/api_client.dart';
 import '../../../core/routing/app_router.dart';
 import '../protocol_cache.dart';
+import '../protocol_repository.dart';
 
 class ProtocolScreen extends StatefulWidget {
   const ProtocolScreen({super.key});
@@ -13,8 +13,8 @@ class ProtocolScreen extends StatefulWidget {
 
 class _ProtocolScreenState extends State<ProtocolScreen> {
   final _cache = ProtocolCache();
+  final _repo = ProtocolRepository();
   Map<String, dynamic>? _dashboard;
-  List<dynamic> _assignments = [];
   List<dynamic> _history = [];
   bool _loading = true;
 
@@ -27,25 +27,19 @@ class _ProtocolScreenState extends State<ProtocolScreen> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final client = ApiClient();
-      final dashRes = await client.get('/protocol/dashboard/me');
-      final historyRes = await client.get('/protocol/attendance/history');
-      final dash = dashRes.data['data'] as Map<String, dynamic>?;
-      final assignments =
-          (dash?['assignments'] as List<dynamic>?) ?? [];
-      final history = historyRes.data['data'] as List<dynamic>? ?? [];
+      final dash = await _repo.getDashboard();
+      final history = await _repo.getAttendanceHistory();
+      final assignments = (dash?['assignments'] as List<dynamic>?) ?? [];
       await _cache.saveDashboard(dash ?? {});
       await _cache.saveAssignments(assignments);
       setState(() {
         _dashboard = dash;
-        _assignments = assignments;
         _history = history;
         _loading = false;
       });
     } catch (_) {
       setState(() {
         _dashboard = null;
-        _assignments = [];
         _history = [];
         _loading = false;
       });
@@ -54,15 +48,49 @@ class _ProtocolScreenState extends State<ProtocolScreen> {
       if (cachedDash != null || cachedAssign != null) {
         setState(() {
           _dashboard = cachedDash;
-          _assignments = cachedAssign ?? [];
         });
       }
     }
   }
 
+  void _openAssignmentDetail(Map<String, dynamic> assignment) {
+    final team = assignment['team'] as Map<String, dynamic>?;
+    final occurrence = team?['occurrence'] as Map<String, dynamic>?;
+    final attendance = assignment['attendance'] as Map<String, dynamic>?;
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              occurrence?['title'] ?? 'Service',
+              style: Theme.of(ctx).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Text('Start: ${occurrence?['startAt'] ?? '—'}'),
+            Text('Team status: ${team?['status'] ?? '—'}'),
+            Text(
+              'Attendance: ${attendance?['outcome'] ?? 'Not recorded'}',
+            ),
+            if (attendance?['notes'] != null)
+              Text('Note: ${attendance!['notes']}'),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final profile = _dashboard?['profile'] as Map<String, dynamic>?;
+    final assignments =
+        (_dashboard?['assignments'] as List<dynamic>?) ?? [];
+    final quota = _dashboard?['quota'] as Map<String, dynamic>?;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Protocol'),
@@ -86,6 +114,10 @@ class _ProtocolScreenState extends State<ProtocolScreen> {
                   Text(
                     'Reliability: ${profile['reliabilityScore'] ?? 100}',
                   ),
+                  if (quota != null)
+                    Text(
+                      'Quota: ${quota['status'] ?? '—'} (${quota['officialServicesMonth'] ?? 0} official)',
+                    ),
                   const SizedBox(height: 16),
                 ],
                 ListTile(
@@ -106,22 +138,45 @@ class _ProtocolScreenState extends State<ProtocolScreen> {
                     AppRouter.protocolTreasury,
                   ),
                 ),
+                ListTile(
+                  leading: const Icon(Icons.swap_horiz_outlined),
+                  title: const Text('Request replacement'),
+                  subtitle: const Text('Cannot attend — nominate a cover'),
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    AppRouter.protocolReplacement,
+                  ),
+                ),
                 const Divider(),
                 Text(
                   'My assignments',
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
-                ..._assignments.map(
-                  (a) => ListTile(
-                    title: Text(
-                      '${a['team']?['occurrence']?['title'] ?? 'Service'}',
-                    ),
-                    subtitle: Text(
-                      a['attendance'] != null
-                          ? 'Recorded: ${a['attendance']['outcome']}'
-                          : 'Pending attendance',
-                    ),
+                if (assignments.isEmpty)
+                  const ListTile(
+                    title: Text('No published assignments'),
+                    subtitle: Text('Teams appear after coordinator publish'),
                   ),
+                ...assignments.map(
+                  (a) {
+                    final row = Map<String, dynamic>.from(a as Map);
+                    final team = row['team'] as Map<String, dynamic>?;
+                    final occurrence =
+                        team?['occurrence'] as Map<String, dynamic>?;
+                    final attendance = row['attendance'] as Map<String, dynamic>?;
+                    return ListTile(
+                      title: Text(
+                        '${occurrence?['title'] ?? 'Service'}',
+                      ),
+                      subtitle: Text(
+                        attendance != null
+                            ? 'Recorded: ${attendance['outcome']}'
+                            : 'Pending attendance',
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => _openAssignmentDetail(row),
+                    );
+                  },
                 ),
                 const Divider(),
                 Text(
@@ -129,13 +184,21 @@ class _ProtocolScreenState extends State<ProtocolScreen> {
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
                 ..._history.take(10).map(
-                  (h) => ListTile(
-                    dense: true,
-                    title: Text(
-                      '${h['team']?['occurrence']?['title'] ?? ''}',
-                    ),
-                    subtitle: Text('${h['attendance']?['outcome'] ?? '—'}'),
-                  ),
+                  (h) {
+                    final row = Map<String, dynamic>.from(h as Map);
+                    final team = row['team'] as Map<String, dynamic>?;
+                    final occurrence =
+                        team?['occurrence'] as Map<String, dynamic>?;
+                    final attendance =
+                        row['attendance'] as Map<String, dynamic>?;
+                    return ListTile(
+                      dense: true,
+                      title: Text(
+                        '${occurrence?['title'] ?? ''}',
+                      ),
+                      subtitle: Text('${attendance?['outcome'] ?? '—'}'),
+                    );
+                  },
                 ),
               ],
             ),

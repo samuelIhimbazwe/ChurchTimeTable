@@ -137,8 +137,9 @@ Enforced in `FamilyAdminPanel` (`structure` variant) and `FamilyMetricsService` 
 | **1** | **Membership** | Join, roster API, position assign/revoke, dissolution transfer | Roster deactivate — **done**; member-initiated choir transfer N/A by design |
 | **2** | **Worship & Music** | Music, rehearsals, scheduling, service prep (leader + member read-only) | Minor UI polish only |
 | **6** | **Family Teams** | My family, payment, coordinator, families admin, privacy-safe structure view | — |
-| **9** | **Communications** | Targeted choir announcements (Phase 4) | Read receipt stats on announcements page |
-| **11** | **Assets** | Uniform/equipment CRUD (Phase 4) | Maintenance logs UI — **done** |
+| **9** | **Communications** | Targeted choir announcements, delivery/read stats on announcements page | — |
+| **10** | **Reports** | Unified health score, module snapshot, health-pack PDF export | — |
+| **11** | **Assets** | Uniform/equipment CRUD, maintenance logs UI | — |
 
 ---
 
@@ -201,8 +202,8 @@ Password: `Pilot@123` (church admin: `Admin@123`)
 
 ---
 
-## Next: Protocol system
+## Choir system closure — complete (June 2026)
 
-Choir closure sprint is complete. Next major work per `docs/PROTOCOL_DISCOVERY.md`.
+All 11 modules and committee executive waves (C1–C4) are shipped for pilot. Remaining work is **Protocol** (see `docs/PROTOCOL_SYSTEM_STATUS.md`) and explicitly deferred items (C19 AI summaries, full mobile rebuild, member lifecycle RFC).
 
-**Deferred (not blocking protocol):** mobile rebuild polish, roster deactivate API — **done**; announcement read receipts — **done**; asset maintenance logs UI — **done**; `/system/users` — **done**; notification rules admin — **done**.
+**Deferred (not blocking protocol):** mobile rebuild polish; member lifecycle RFC (Visitor→Deceased enum expansion).

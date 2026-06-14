@@ -71,7 +71,11 @@ export class ProtocolMembersService {
       where: { userId: actorUserId },
     });
     const isSelf = actorMember?.id === memberId;
-    if (!isSelf && !hasProtocolManage(permissions)) {
+    if (
+      !isSelf &&
+      !hasProtocolManage(permissions) &&
+      !hasProtocolView(permissions)
+    ) {
       throw new ForbiddenException('Denied');
     }
 

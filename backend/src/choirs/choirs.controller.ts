@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import {
   ChoirJoinRequestStatus,
