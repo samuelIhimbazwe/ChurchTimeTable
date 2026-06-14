@@ -1,6 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
+import { useTranslations } from '@/lib/i18n'
 
 interface EmptyStateProps {
   icon?:       React.ElementType
@@ -17,6 +18,8 @@ export default function EmptyState({
   action,
   className,
 }: EmptyStateProps) {
+  const { tr } = useTranslations()
+
   return (
     <div className={cn(
       'flex flex-col items-center justify-center py-16 px-6 text-center',
@@ -27,16 +30,16 @@ export default function EmptyState({
           <Icon size={24} className="text-text-muted" />
         </div>
       )}
-      <p className="font-display text-xl text-text-primary">{title}</p>
+      <p className="font-display text-xl text-text-primary">{tr(title)}</p>
       {description && (
-        <p className="text-sm text-text-muted mt-2 max-w-xs">{description}</p>
+        <p className="text-sm text-text-muted mt-2 max-w-xs">{tr(description)}</p>
       )}
       {action && (
         <button
           onClick={action.onClick}
           className="mt-5 px-5 py-2.5 text-sm font-semibold bg-gold-500 text-primary-900 rounded-lg hover:bg-gold-400 transition-colors"
         >
-          {action.label}
+          {tr(action.label)}
         </button>
       )}
     </div>

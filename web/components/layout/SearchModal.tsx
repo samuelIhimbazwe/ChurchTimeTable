@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, X, Users, Calendar, Music, Home } from 'lucide-react'
 import { useSearch } from '@/lib/hooks'
+import { useTranslations } from '@/lib/i18n'
 
 const TYPE_ICON: Record<string, React.ElementType> = {
   member:     Users,
@@ -22,6 +23,7 @@ export default function SearchModal({ open, onClose }: SearchModalProps) {
   const router = useRouter()
   const { query, setQuery, clear, data: results, isLoading, isError } = useSearch()
   const inputRef = useRef<HTMLInputElement>(null)
+  const { shell: s } = useTranslations()
 
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 50)
@@ -58,7 +60,7 @@ export default function SearchModal({ open, onClose }: SearchModalProps) {
           <input
             ref={inputRef}
             type="text"
-            placeholder="Search members, services, choirs…"
+            placeholder={s.searchPlaceholder}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="flex-1 text-sm bg-transparent text-text-primary placeholder:text-text-muted focus:outline-none"
@@ -76,19 +78,19 @@ export default function SearchModal({ open, onClose }: SearchModalProps) {
         <div className="max-h-80 overflow-y-auto">
           {query.length < 2 ? (
             <div className="px-4 py-8 text-center">
-              <p className="text-text-muted text-sm">Type at least 2 characters to search…</p>
+              <p className="text-text-muted text-sm">{s.searchMinChars}</p>
             </div>
           ) : isLoading ? (
             <div className="px-4 py-8 text-center">
-              <p className="text-text-muted text-sm">Searching…</p>
+              <p className="text-text-muted text-sm">{s.searching}</p>
             </div>
           ) : isError ? (
             <div className="px-4 py-8 text-center">
-              <p className="text-text-muted text-sm">Search is unavailable right now. Check that you are signed in and the server is running.</p>
+              <p className="text-text-muted text-sm">{s.searchUnavailable}</p>
             </div>
           ) : (results?.length ?? 0) === 0 ? (
             <div className="px-4 py-8 text-center">
-              <p className="text-text-muted text-sm">No results for &ldquo;{query}&rdquo;</p>
+              <p className="text-text-muted text-sm">{s.searchNoResults} &ldquo;{query}&rdquo;</p>
             </div>
           ) : (
             <ul>
@@ -100,16 +102,13 @@ export default function SearchModal({ open, onClose }: SearchModalProps) {
                       onClick={() => handleSelect(r.link)}
                       className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-raised transition-colors text-left"
                     >
-                      <div className="flex items-center justify-center w-8 h-8 rounded-md bg-surface-overlay shrink-0">
-                        <Icon size={15} className="text-primary-500" />
-                      </div>
-                      <div className="flex-1 min-w-0">
+                      <Icon size={16} className="text-text-muted shrink-0" />
+                      <div className="min-w-0">
                         <p className="text-sm font-medium text-text-primary truncate">{r.title}</p>
                         {r.subtitle && (
                           <p className="text-xs text-text-muted truncate">{r.subtitle}</p>
                         )}
                       </div>
-                      <span className="text-xs text-text-muted capitalize shrink-0">{r.type}</span>
                     </button>
                   </li>
                 )
@@ -117,7 +116,6 @@ export default function SearchModal({ open, onClose }: SearchModalProps) {
             </ul>
           )}
         </div>
-
       </div>
     </div>
   )

@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useNotifications } from '@/lib/hooks'
 import { X, Bell, CheckCheck, Info, CheckCircle2, AlertTriangle, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { relativeTime } from '@/lib/utils/format'
 import type { ApiNotification } from '@/types'
+import { useTranslations } from '@/lib/i18n'
 
 const TYPE_ICON: Record<ApiNotification['type'], React.ElementType> = {
   info:    Info,
@@ -30,6 +30,7 @@ interface NotificationPanelProps {
 export default function NotificationPanel({ open, onClose }: NotificationPanelProps) {
   const router = useRouter()
   const { data: notifications, isLoading, markRead, markAllRead } = useNotifications()
+  const { shell: s, tr, relativeTime: relTime } = useTranslations()
 
   function openNotification(n: ApiNotification) {
     if (!n.read) markRead.mutate(n.id)
@@ -52,7 +53,7 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <div className="flex items-center gap-2">
             <Bell size={16} className="text-text-secondary" />
-            <span className="text-sm font-semibold text-text-primary">Notifications</span>
+            <span className="text-sm font-semibold text-text-primary">{tr('Notifications')}</span>
             {unread > 0 && (
               <span className="text-xs bg-danger text-white rounded-full px-1.5 py-0.5 font-semibold">
                 {unread}
@@ -66,7 +67,7 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
                 disabled={markAllRead.isPending}
                 className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-800 transition-colors"
               >
-                <CheckCheck size={13} /> Mark all read
+                <CheckCheck size={13} /> {s.markAllRead}
               </button>
             )}
             <button onClick={onClose} className="text-text-muted hover:text-text-primary transition-colors">
@@ -91,7 +92,7 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
           ) : (notifications?.length ?? 0) === 0 ? (
             <div className="text-center py-12">
               <Bell size={28} className="text-text-muted mx-auto mb-2" />
-              <p className="text-sm text-text-muted">You&apos;re all caught up</p>
+              <p className="text-sm text-text-muted">{tr("You're all caught up")}</p>
             </div>
           ) : (
             <ul className="divide-y divide-border">
@@ -118,7 +119,7 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
                         {n.title}
                       </p>
                       <p className="text-xs text-text-muted mt-0.5 line-clamp-2">{n.body}</p>
-                      <p className="text-xs text-text-muted mt-1">{relativeTime(n.createdAt)}</p>
+                      <p className="text-xs text-text-muted mt-1">{relTime(n.createdAt)}</p>
                     </div>
                     {!n.read && (
                       <div className="w-2 h-2 rounded-full bg-primary-500 shrink-0 mt-2" />
@@ -136,7 +137,7 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
               href="/notifications"
               className="text-xs font-semibold text-primary-600 hover:text-primary-800 transition-colors"
             >
-              View all notifications →
+              {tr('View all notifications')} →
             </Link>
           </div>
         )}

@@ -150,6 +150,75 @@ export const UI_LABELS: Record<string, LabelEntry> = {
   'Finance analytics': { en: 'Finance analytics', fr: 'Analyses financières', rw: 'Imibare y\'imari' },
   'Catalog & campaigns': { en: 'Catalog & campaigns', fr: 'Catalogue & campagnes', rw: 'Ibyiciro n\'ibikorwa' },
   Collapse: { en: 'Collapse', fr: 'Réduire', rw: 'Funga' },
+
+  /* Common page copy (auto-translated via tr() in shared components) */
+  'Loading…': { en: 'Loading…', fr: 'Chargement…', rw: 'Gutegura…' },
+  'No announcements yet': { en: 'No announcements yet', fr: 'Aucune annonce', rw: 'Nta matangazo' },
+  'No users found': { en: 'No users found', fr: 'Aucun utilisateur', rw: 'Nta bakoresha' },
+  'No notifications yet': { en: 'No notifications yet', fr: 'Aucune notification', rw: 'Nta makuru' },
+  "You're all caught up": { en: "You're all caught up", fr: 'Vous êtes à jour', rw: 'Warangije' },
+  'Could not load your dashboard': {
+    en: 'Could not load your dashboard',
+    fr: 'Impossible de charger le tableau de bord',
+    rw: 'Ntibyashoboye gutegura ikibaho',
+  },
+  'Nothing scheduled': { en: 'Nothing scheduled', fr: 'Rien de prévu', rw: 'Nta gahunda' },
+  'No ministries listed': { en: 'No ministries listed', fr: 'Aucun ministère', rw: 'Nta ministère' },
+  'No ministries listed yet': {
+    en: 'No ministries listed yet',
+    fr: 'Aucun ministère pour l’instant',
+    rw: 'Nta ministère biratangajwe',
+  },
+  'No events scheduled': { en: 'No events scheduled', fr: 'Aucun événement', rw: 'Nta birori' },
+  'No weekly activities scheduled': {
+    en: 'No weekly activities scheduled',
+    fr: 'Aucune activité hebdomadaire',
+    rw: 'Nta bikorwa by’icyumweru',
+  },
+  'Choir not found': { en: 'Choir not found', fr: 'Chorale introuvable', rw: 'Korali ntiboneka' },
+  'This choir may no longer be active.': {
+    en: 'This choir may no longer be active.',
+    fr: 'Cette chorale n’est peut-être plus active.',
+    rw: 'Iyi korali ishobora kutikora.',
+  },
+  'Music library': { en: 'Music library', fr: 'Bibliothèque musicale', rw: 'Ububiko bw\'indirimbo' },
+  'Could not load schedule': {
+    en: 'Could not load schedule',
+    fr: 'Impossible de charger l’emploi du temps',
+    rw: 'Ntibyashoboye gutegura gahunda',
+  },
+  'No attendance records': {
+    en: 'No attendance records',
+    fr: 'Aucun registre de présence',
+    rw: 'Nta makuru y’itabira',
+  },
+  'Limited access': { en: 'Limited access', fr: 'Accès limité', rw: 'Uburenganzira buke' },
+  'No conflicts in queue': {
+    en: 'No conflicts in queue',
+    fr: 'Aucun conflit en attente',
+    rw: 'Nta makimbirane',
+  },
+  'No audit data': { en: 'No audit data', fr: 'Aucune donnée d’audit', rw: 'Nta makuru y\'igenzura' },
+  'Permission audit report is empty.': {
+    en: 'Permission audit report is empty.',
+    fr: 'Le rapport d’audit des permissions est vide.',
+    rw: 'Raporo y’uburenganzira irimo ubusa.',
+  },
+  'Try a different search or create a user.': {
+    en: 'Try a different search or create a user.',
+    fr: 'Essayez une autre recherche ou créez un utilisateur.',
+    rw: 'Gerageza indi shakisha cyangwa fungura ukoresha.',
+  },
+  'View all notifications': {
+    en: 'View all notifications',
+    fr: 'Voir toutes les notifications',
+    rw: 'Reba amakuru yose',
+  },
+  'vs last period': {
+    en: 'vs last period',
+    fr: 'vs période précédente',
+    rw: 'vs igihe gishize',
+  },
 }
 
 export function translateLabel(text: string, locale: AppLocale): string {

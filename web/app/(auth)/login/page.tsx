@@ -1,27 +1,22 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Eye, EyeOff, Lock, Mail, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLogin } from '@/lib/hooks'
 import { ApiError, AuthError, ValidationError } from '@/lib/api'
-import { useTranslations } from '@/lib/i18n'
-
-const QUOTES = [
-  { text: 'Let everything be done decently and in order.', ref: '1 Cor 14:40' },
-  { text: 'Serve one another humbly in love.', ref: 'Gal 5:13' },
-  { text: 'Where two or three gather in my name, there am I.', ref: 'Matt 18:20' },
-  {
-    text: 'Each of you should use whatever gift you have received to serve others.',
-    ref: '1 Pet 4:10',
-  },
-]
-
-const QUOTE = QUOTES[new Date().getDay() % QUOTES.length]
+import { useTranslations, loginQuotes } from '@/lib/i18n'
+import { useUIStore } from '@/stores'
 
 export default function LoginPage() {
-  const { auth: t } = useTranslations()
+  const locale = useUIStore((s) => s.locale)
+  const { auth: t, common: c } = useTranslations()
+
+  const quote = useMemo(() => {
+    const quotes = loginQuotes[locale]
+    return quotes[new Date().getDay() % quotes.length]
+  }, [locale])
 
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
@@ -36,7 +31,7 @@ export default function LoginPage() {
     setFormError(null)
 
     if (!email.trim() || !password) {
-      setFormError('Please enter your email and password.')
+      setFormError(t.loginFieldsError)
       return
     }
 
@@ -45,23 +40,17 @@ export default function LoginPage() {
       {
         onError: (err) => {
           if (err instanceof AuthError) {
-            setFormError('Invalid email or password. Please try again.')
+            setFormError(t.invalidCredentials)
           } else if (err instanceof ValidationError) {
             setFormError(err.message)
           } else if (err instanceof ApiError && err.status === 0) {
-            setFormError(
-              'Unable to reach the server. Make sure the backend is running on http://localhost:3000.',
-            )
+            setFormError(t.serverUnreachable)
           } else if (err instanceof ApiError && (err.status >= 500 || err.status === 502 || err.status === 503)) {
-            setFormError(
-              'The server is temporarily unavailable. If you are on a shared demo link, ask the presenter to screen-share http://localhost:3001 instead.',
-            )
+            setFormError(t.serverUnavailable)
           } else if (err instanceof ApiError) {
             setFormError(err.message)
           } else {
-            setFormError(
-              'Unable to reach the server. Please check your connection.',
-            )
+            setFormError(t.connectionError)
           }
         },
       },
@@ -73,7 +62,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
 
-      {/* ── Left panel — branding ── */}
       <div className="hidden lg:flex lg:w-[44%] relative flex-col justify-between p-12 overflow-hidden bg-primary-900">
         <div
           className="absolute inset-0 opacity-[0.04]"
@@ -86,45 +74,39 @@ export default function LoginPage() {
         <div className="absolute top-[-80px] right-[-80px] w-96 h-96 rounded-full bg-primary-700 opacity-40 blur-3xl pointer-events-none" />
         <div className="absolute bottom-[-60px] left-[-60px] w-72 h-72 rounded-full bg-gold-700 opacity-20 blur-3xl pointer-events-none" />
 
-        {/* Logo */}
         <div className="relative flex items-center gap-3">
           <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gold-500 shadow-overlay">
             <span className="font-display font-bold text-primary-900 text-lg">C</span>
           </div>
           <div>
             <p className="font-display font-semibold text-lg text-white leading-tight">CMMS</p>
-            <p className="text-xs text-primary-300">Church Management System</p>
+            <p className="text-xs text-primary-300">{c.churchManagementSystem}</p>
           </div>
         </div>
 
-        {/* Quote */}
         <div className="relative space-y-4">
           <div className="w-10 h-0.5 bg-gold-500" />
           <blockquote>
             <p className="font-display italic text-3xl text-white leading-snug">
-              &ldquo;{QUOTE.text}&rdquo;
+              &ldquo;{quote.text}&rdquo;
             </p>
             <footer className="mt-4 text-primary-300 text-sm font-medium">
-              &mdash; {QUOTE.ref}
+              &mdash; {quote.ref}
             </footer>
           </blockquote>
         </div>
 
-        {/* Footer */}
         <div className="relative">
           <p className="text-primary-400 text-xs">
-            &copy; {new Date().getFullYear()} Church Management &amp;
-            Coordination System.
-            <br />All rights reserved.
+            &copy; {new Date().getFullYear()} {c.churchManagementSystem}.
+            <br />{c.allRightsReserved}
           </p>
         </div>
       </div>
 
-      {/* ── Right panel — form ── */}
       <div className="flex-1 flex items-center justify-center p-6 bg-surface-raised">
         <div className="w-full max-w-[420px] space-y-8">
 
-          {/* Mobile logo */}
           <div className="flex lg:hidden items-center gap-3 justify-center">
             <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary-900">
               <span className="font-display font-bold text-gold-500 text-base">C</span>
@@ -132,7 +114,6 @@ export default function LoginPage() {
             <span className="font-display font-semibold text-xl text-text-primary">CMMS</span>
           </div>
 
-          {/* Heading */}
           <div className="space-y-1">
             <h1 className="font-display text-3xl text-text-primary">
               {t.signInTitle}
@@ -142,7 +123,6 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Error banner */}
           {formError && (
             <div className="flex items-start gap-3 px-4 py-3 rounded-lg bg-danger-light border border-danger/20 text-danger text-sm animate-page-enter">
               <AlertCircle size={16} className="shrink-0 mt-0.5" />
@@ -150,16 +130,14 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleSubmit} noValidate className="space-y-5">
 
-            {/* Email */}
             <div className="space-y-1.5">
               <label
                 htmlFor="email"
                 className="block text-sm font-medium text-text-primary"
               >
-                Email address
+                {t.loginEmailLabel}
               </label>
               <div className="relative">
                 <Mail
@@ -172,7 +150,7 @@ export default function LoginPage() {
                   autoComplete="email"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setFormError(null) }}
-                  placeholder="you@church.local"
+                  placeholder={t.emailPlaceholder}
                   disabled={loading}
                   className={cn(
                     'w-full pl-9 pr-4 py-2.5 rounded-lg text-sm',
@@ -186,13 +164,12 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Password */}
             <div className="space-y-1.5">
               <label
                 htmlFor="password"
                 className="block text-sm font-medium text-text-primary"
               >
-                Password
+                {t.loginPasswordLabel}
               </label>
               <div className="relative">
                 <Lock
@@ -219,7 +196,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  aria-label={showPass ? 'Hide password' : 'Show password'}
+                  aria-label={showPass ? t.hidePassword : t.showPassword}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors"
                 >
                   {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -227,7 +204,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Remember + Forgot */}
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input
@@ -236,17 +212,16 @@ export default function LoginPage() {
                   onChange={(e) => setRemember(e.target.checked)}
                   className="w-4 h-4 rounded border-border text-primary-600 focus:ring-gold-500"
                 />
-                <span className="text-sm text-text-secondary">Remember me</span>
+                <span className="text-sm text-text-secondary">{t.rememberMe}</span>
               </label>
               <button
                 type="button"
                 className="text-sm font-medium text-primary-600 hover:text-primary-800 transition-colors"
               >
-                Forgot password?
+                {t.forgotPassword}
               </button>
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
@@ -263,19 +238,19 @@ export default function LoginPage() {
               {loading ? (
                 <>
                   <span className="w-4 h-4 rounded-full border-2 border-primary-900/30 border-t-primary-900 animate-spin" />
-                  Signing in&hellip;
+                  {t.signingIn}
                 </>
               ) : (
-                'Sign in'
+                t.signIn
               )}
             </button>
 
           </form>
 
           <p className="text-center text-sm text-text-muted">
-            Don&apos;t have an account?{' '}
+            {t.noAccountPrompt}{' '}
             <Link href="/register" className="font-semibold text-primary-600 hover:underline">
-              Create an account
+              {t.createAccountLink}
             </Link>
           </p>
 

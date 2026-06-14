@@ -43,6 +43,22 @@ type AuthUiStrings = {
   passwordMismatch: string
   phoneRequired: string
   nationalIdRequired: string
+  loginEmailLabel: string
+  loginPasswordLabel: string
+  rememberMe: string
+  forgotPassword: string
+  signingIn: string
+  noAccountPrompt: string
+  createAccountLink: string
+  showPassword: string
+  hidePassword: string
+  loginFieldsError: string
+  invalidCredentials: string
+  serverUnreachable: string
+  serverUnavailable: string
+  connectionError: string
+  emailPlaceholder: string
+  contactAdmin: string
 }
 
 export const authUi: Record<AppLocale, AuthUiStrings> = {
@@ -77,6 +93,24 @@ export const authUi: Record<AppLocale, AuthUiStrings> = {
     passwordMismatch: 'Passwords do not match.',
     phoneRequired: 'Phone number is required.',
     nationalIdRequired: 'National ID is required (16 digits).',
+    loginEmailLabel: 'Email address',
+    loginPasswordLabel: 'Password',
+    rememberMe: 'Remember me',
+    forgotPassword: 'Forgot password?',
+    signingIn: 'Signing in…',
+    noAccountPrompt: "Don't have an account?",
+    createAccountLink: 'Create an account',
+    showPassword: 'Show password',
+    hidePassword: 'Hide password',
+    loginFieldsError: 'Please enter your email and password.',
+    invalidCredentials: 'Invalid email or password. Please try again.',
+    serverUnreachable:
+      'Unable to reach the server. Make sure the backend is running on http://localhost:3000.',
+    serverUnavailable:
+      'The server is temporarily unavailable. If you are on a shared demo link, ask the presenter to screen-share http://localhost:3001 instead.',
+    connectionError: 'Unable to reach the server. Please check your connection.',
+    emailPlaceholder: 'you@church.local',
+    contactAdmin: "Don't have an account? Contact your church administrator.",
   },
   fr: {
     registerTitle: 'Créer votre compte',
@@ -109,6 +143,23 @@ export const authUi: Record<AppLocale, AuthUiStrings> = {
     passwordMismatch: 'Les mots de passe ne correspondent pas.',
     phoneRequired: 'Le numéro de téléphone est obligatoire.',
     nationalIdRequired: 'L’identité nationale est obligatoire (16 chiffres).',
+    loginEmailLabel: 'Adresse e-mail',
+    loginPasswordLabel: 'Mot de passe',
+    rememberMe: 'Se souvenir de moi',
+    forgotPassword: 'Mot de passe oublié ?',
+    signingIn: 'Connexion…',
+    noAccountPrompt: 'Pas encore de compte ?',
+    createAccountLink: 'Créer un compte',
+    showPassword: 'Afficher le mot de passe',
+    hidePassword: 'Masquer le mot de passe',
+    loginFieldsError: 'Veuillez saisir votre e-mail et mot de passe.',
+    invalidCredentials: 'E-mail ou mot de passe incorrect.',
+    serverUnreachable:
+      'Impossible de joindre le serveur. Vérifiez que le backend fonctionne.',
+    serverUnavailable: 'Le serveur est temporairement indisponible.',
+    connectionError: 'Impossible de joindre le serveur. Vérifiez votre connexion.',
+    emailPlaceholder: 'vous@eglise.local',
+    contactAdmin: 'Pas de compte ? Contactez l’administrateur de votre église.',
   },
   rw: {
     registerTitle: 'Fungura konti yawe',
@@ -141,9 +192,63 @@ export const authUi: Record<AppLocale, AuthUiStrings> = {
     passwordMismatch: 'Ijambo ry’ibanga ntirihura.',
     phoneRequired: 'Telefone irakenewe.',
     nationalIdRequired: 'Indangamuntu irakenewe (imibare 16).',
+    loginEmailLabel: 'Aderesi ya email',
+    loginPasswordLabel: 'Ijambo ry’ibanga',
+    rememberMe: 'Nyibuka',
+    forgotPassword: 'Wibagiwe ijambo ry’ibanga ?',
+    signingIn: 'Kwinjira…',
+    noAccountPrompt: 'Nta konti ufite ?',
+    createAccountLink: 'Fungura konti',
+    showPassword: 'Erekana ijambo ry’ibanga',
+    hidePassword: 'Hisha ijambo ry’ibanga',
+    loginFieldsError: 'Andika email n’ijambo ry’ibanga.',
+    invalidCredentials: 'Email cyangwa ijambo ry’ibanga sibyo.',
+    serverUnreachable: 'Seriveri ntishobora kugerwaho. Reba ko backend ikora.',
+    serverUnavailable: 'Seriveri ntiboneka by’agateganyo.',
+    connectionError: 'Seriveri ntishobora kugerwaho. Reba umurongo wawe.',
+    emailPlaceholder: 'wowe@itorero.local',
+    contactAdmin: 'Nta konti ? Vugana n’umuyobozi w’itorero.',
   },
 }
 
 export function isAppLocale(value: string): value is AppLocale {
   return APP_LOCALES.includes(value as AppLocale)
+}
+
+export type LoginQuote = { text: string; ref: string }
+
+export const loginQuotes: Record<AppLocale, LoginQuote[]> = {
+  en: [
+    { text: 'Let everything be done decently and in order.', ref: '1 Cor 14:40' },
+    { text: 'Serve one another humbly in love.', ref: 'Gal 5:13' },
+    { text: 'Where two or three gather in my name, there am I.', ref: 'Matt 18:20' },
+    {
+      text: 'Each of you should use whatever gift you have received to serve others.',
+      ref: '1 Pet 4:10',
+    },
+  ],
+  fr: [
+    { text: 'Que tout se fasse avec bienséance et avec ordre.', ref: '1 Co 14:40' },
+    { text: 'Servez-vous les uns les autres dans la charité.', ref: 'Gal 5:13' },
+    { text: 'Là où deux ou trois sont assemblés en mon nom, je suis au milieu d’eux.', ref: 'Mt 18:20' },
+    {
+      text: 'Comme de bons dispensateurs des graces variées de Dieu, que chacun de vous serve les autres.',
+      ref: '1 Pi 4:10',
+    },
+  ],
+  rw: [
+    { text: 'Ibintu byose bikorwe mu buryo bukwiye kandi mu mutekano.', ref: '1 Kor 14:40' },
+    { text: 'Nimukorane akorera abandi mu rukundo.', ref: 'Abagal 5:13' },
+    { text: 'Aho abantu babiri cyangwa batatu bahuriweko mu izina ryanjye, ndi hagati yabo.', ref: 'Mat 18:20' },
+    {
+      text: 'Umwe umwe akoreshe impano yahawe n’Imana mu gukorera abandi.',
+      ref: '1 Pet 4:10',
+    },
+  ],
+}
+
+export function localeToBcp47(locale: AppLocale): string {
+  if (locale === 'fr') return 'fr-FR'
+  if (locale === 'rw') return 'rw-RW'
+  return 'en-GB'
 }

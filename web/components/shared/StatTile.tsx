@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTranslations } from '@/lib/i18n'
 
 interface StatTileProps {
   label: string
@@ -57,6 +58,7 @@ export default function StatTile({
   className,
   accent = false,
 }: StatTileProps) {
+  const { tr } = useTranslations()
   const numericValue = typeof value === 'number' ? value : NaN
   const displayed    = useCountUp(isNaN(numericValue) ? 0 : numericValue, animate && !isNaN(numericValue))
 
@@ -84,7 +86,7 @@ export default function StatTile({
     >
       {/* Header row */}
       <div className="flex items-center justify-between">
-        <span className="text-xs sm:text-sm font-medium text-text-secondary leading-snug">{label}</span>
+        <span className="text-xs sm:text-sm font-medium text-text-secondary leading-snug">{tr(label)}</span>
         {Icon && (
           <div className={cn(
             'flex items-center justify-center w-9 h-9 rounded-md',
@@ -114,7 +116,7 @@ export default function StatTile({
         )}>
           <DeltaIcon size={13} />
           <span>
-            {deltaPositive ? '+' : ''}{delta}% {deltaLabel}
+            {deltaPositive ? '+' : ''}{delta}% {tr(deltaLabel)}
           </span>
         </div>
       )}

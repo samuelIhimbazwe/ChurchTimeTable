@@ -1,6 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
+import { useTranslations } from '@/lib/i18n'
 
 type MaxWidth = '3xl' | '4xl' | '5xl' | '6xl' | '7xl' | 'full'
 
@@ -37,6 +38,8 @@ type PageHeaderProps = {
 }
 
 export function PageHeader({ title, subtitle, meta, actions, className }: PageHeaderProps) {
+  const { tr } = useTranslations()
+
   return (
     <div
       className={cn(
@@ -45,9 +48,9 @@ export function PageHeader({ title, subtitle, meta, actions, className }: PageHe
       )}
     >
       <div className="min-w-0 space-y-1">
-        <h2 className="page-heading font-display text-text-primary">{title}</h2>
+        <h2 className="page-heading font-display text-text-primary">{tr(title)}</h2>
         {subtitle && (
-          <p className="text-sm text-text-secondary leading-relaxed">{subtitle}</p>
+          <p className="text-sm text-text-secondary leading-relaxed">{tr(subtitle)}</p>
         )}
         {meta && <div className="text-xs text-text-muted">{meta}</div>}
       </div>

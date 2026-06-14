@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from '@/lib/i18n'
+
 export type HubTab = { id: string; label: string }
 
 type Props = {
@@ -9,6 +11,8 @@ type Props = {
 }
 
 export function HubTabs({ tabs, active, onChange }: Props) {
+  const { tr } = useTranslations()
+
   return (
     <div className="flex gap-2 border-b border-border pb-3 overflow-x-auto -mx-1 px-1 scrollbar-none">
       {tabs.map((tab) => (
@@ -22,7 +26,7 @@ export function HubTabs({ tabs, active, onChange }: Props) {
               : 'text-text-secondary hover:bg-surface-raised'
           }`}
         >
-          {tab.label}
+          {tr(tab.label)}
         </button>
       ))}
     </div>
