@@ -11,7 +11,7 @@ services:
     region: frankfurt
     plan: free
     rootDir: backend
-    buildCommand: npm ci && npx prisma generate && npm run build && bash scripts/cloud-db-sync.sh && bash scripts/cloud-seed.sh
+    buildCommand: npm ci && bash scripts/cloud-db-sync.sh && npm run build && bash scripts/cloud-seed.sh
     startCommand: bash scripts/cloud-start.sh
     healthCheckPath: /api/v1/health
     envVars:
