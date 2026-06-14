@@ -11,11 +11,11 @@ import {
   SIGNUP_INTEREST_OPTIONS,
 } from '@/lib/auth/signup'
 import { useUIStore } from '@/stores'
-import { authUi } from '@/lib/i18n/auth-ui'
+import { useTranslations } from '@/lib/i18n'
 
 export default function RegisterPage() {
   const locale = useUIStore((s) => s.locale)
-  const t = authUi[locale]
+  const { auth: t } = useTranslations()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

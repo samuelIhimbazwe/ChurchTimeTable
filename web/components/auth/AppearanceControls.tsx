@@ -4,6 +4,7 @@ import { Sun, Moon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores/index'
 import { APP_LOCALES, LOCALE_SHORT, type AppLocale } from '@/lib/i18n/auth-ui'
+import { useSetAppLocale } from '@/lib/i18n/set-locale'
 
 interface AppearanceControlsProps {
   className?: string
@@ -14,7 +15,12 @@ export function AppearanceControls({ className, compact = false }: AppearanceCon
   const theme = useUIStore((s) => s.theme)
   const setTheme = useUIStore((s) => s.setTheme)
   const locale = useUIStore((s) => s.locale)
-  const setLocale = useUIStore((s) => s.setLocale)
+  const setAppLocale = useSetAppLocale()
+
+  function pickLocale(code: AppLocale) {
+    if (code === locale) return
+    setAppLocale(code)
+  }
 
   return (
     <div
@@ -34,12 +40,12 @@ export function AppearanceControls({ className, compact = false }: AppearanceCon
 
       <div className="h-5 w-px bg-border shrink-0" aria-hidden />
 
-      <div className="flex items-center gap-0.5 pr-0.5">
+      <div className="flex items-center gap-0.5 pr-0.5" role="group" aria-label="Language">
         {APP_LOCALES.map((code) => (
           <button
             key={code}
             type="button"
-            onClick={() => setLocale(code as AppLocale)}
+            onClick={() => pickLocale(code as AppLocale)}
             aria-label={`Language ${LOCALE_SHORT[code]}`}
             aria-pressed={locale === code}
             className={cn(

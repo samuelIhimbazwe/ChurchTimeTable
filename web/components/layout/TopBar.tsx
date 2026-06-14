@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores/index'
 import { useLogout } from '@/lib/hooks'
 import { AppearanceControls } from '@/components/auth/AppearanceControls'
+import { useTranslations } from '@/lib/i18n'
 
 interface TopBarProps {
   pageTitle:     string
@@ -39,6 +40,7 @@ export default function TopBar({
 }: TopBarProps) {
   const collapsed = useUIStore((s) => s.sidebarCollapsed)
   const [menuOpen, setMenuOpen] = useState(false)
+  const { tr } = useTranslations()
 
   const { mutate: logout, isPending: loggingOut } = useLogout()
 
@@ -85,7 +87,7 @@ export default function TopBar({
           )}
         >
           <Search size={15} />
-          <span className="hidden md:inline">Search</span>
+          <span className="hidden md:inline">{tr('Search')}</span>
           <kbd className="hidden md:inline text-xs bg-surface-overlay px-1.5 py-0.5 rounded border border-border font-mono">
             ⌘K
           </kbd>
@@ -151,7 +153,7 @@ export default function TopBar({
               <p className="text-sm font-medium text-text-primary leading-tight truncate max-w-[120px]">
                 {userName}
               </p>
-              <p className="text-xs text-text-muted leading-tight">{userRole}</p>
+              <p className="text-xs text-text-muted leading-tight">{tr(userRole)}</p>
             </div>
             <ChevronDown size={14} className="text-text-muted hidden md:block" />
           </button>
@@ -166,18 +168,18 @@ export default function TopBar({
               )}>
                 <div className="px-4 py-3 border-b border-border">
                   <p className="text-sm font-semibold text-text-primary truncate">{userName}</p>
-                  <p className="text-xs text-text-muted">{userRole}</p>
+                  <p className="text-xs text-text-muted">{tr(userRole)}</p>
                 </div>
                 <div className="py-1">
                   <a href="/portal/profile" className="flex items-center gap-3 px-4 py-2 text-sm text-text-secondary hover:bg-surface-raised hover:text-text-primary transition-colors">
-                    <User size={15} /> My Profile
+                    <User size={15} /> {tr('My Profile')}
                   </a>
                   <button
                     type="button"
                     onClick={() => { setMenuOpen(false); onPreferencesClick?.() }}
                     className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-secondary hover:bg-surface-raised hover:text-text-primary transition-colors"
                   >
-                    <Settings size={15} /> Preferences
+                    <Settings size={15} /> {tr('Preferences')}
                   </button>
                 </div>
                 <div className="py-1 border-t border-border">
@@ -187,7 +189,7 @@ export default function TopBar({
                     className="w-full flex items-center gap-3 px-4 py-2 text-sm text-danger hover:bg-danger-light transition-colors disabled:opacity-50"
                   >
                     <LogOut size={15} />
-                    {loggingOut ? 'Signing out…' : 'Sign out'}
+                    {loggingOut ? tr('Signing out…') : tr('Sign out')}
                   </button>
                 </div>
               </div>

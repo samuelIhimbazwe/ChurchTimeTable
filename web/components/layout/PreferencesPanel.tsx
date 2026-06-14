@@ -2,9 +2,9 @@
 
 import Link from 'next/link'
 import { X, Settings, Sun, Moon, PanelLeft, User, Languages } from 'lucide-react'
-import { useUIStore } from '@/stores/index'
 import { cn } from '@/lib/utils'
-import { APP_LOCALES, LOCALE_NAMES, type AppLocale } from '@/lib/i18n/auth-ui'
+import { useUIStore } from '@/stores/index'
+import { useSetAppLocale, useTranslations, APP_LOCALES, LOCALE_NAMES, type AppLocale } from '@/lib/i18n'
 
 interface PreferencesPanelProps {
   open:    boolean
@@ -15,9 +15,10 @@ export default function PreferencesPanel({ open, onClose }: PreferencesPanelProp
   const theme = useUIStore((s) => s.theme)
   const setTheme = useUIStore((s) => s.setTheme)
   const locale = useUIStore((s) => s.locale)
-  const setLocale = useUIStore((s) => s.setLocale)
+  const setAppLocale = useSetAppLocale()
   const sidebarCollapsed = useUIStore((s) => s.sidebarCollapsed)
   const toggleSidebar = useUIStore((s) => s.toggleSidebar)
+  const { tr } = useTranslations()
 
   if (!open) return null
 
@@ -29,7 +30,7 @@ export default function PreferencesPanel({ open, onClose }: PreferencesPanelProp
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <div className="flex items-center gap-2">
             <Settings size={16} className="text-text-secondary" />
-            <span className="text-sm font-semibold text-text-primary">Preferences</span>
+            <span className="text-sm font-semibold text-text-primary">{tr('Preferences')}</span>
           </div>
           <button onClick={onClose} className="text-text-muted hover:text-text-primary transition-colors">
             <X size={16} />
@@ -39,7 +40,7 @@ export default function PreferencesPanel({ open, onClose }: PreferencesPanelProp
         <div className="max-h-[70vh] overflow-y-auto p-4 space-y-5">
           <section>
             <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-3">
-              Appearance
+              {tr('Appearance')}
             </p>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -52,7 +53,7 @@ export default function PreferencesPanel({ open, onClose }: PreferencesPanelProp
                     : 'border-border text-text-secondary hover:bg-surface-raised',
                 )}
               >
-                <Sun size={16} /> Light
+                <Sun size={16} /> {tr('Light')}
               </button>
               <button
                 type="button"
@@ -64,21 +65,21 @@ export default function PreferencesPanel({ open, onClose }: PreferencesPanelProp
                     : 'border-border text-text-secondary hover:bg-surface-raised',
                 )}
               >
-                <Moon size={16} /> Dark
+                <Moon size={16} /> {tr('Dark')}
               </button>
             </div>
           </section>
 
           <section>
             <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-3">
-              Language
+              {tr('Language')}
             </p>
             <div className="grid grid-cols-1 xs:grid-cols-3 gap-2">
               {APP_LOCALES.map((code) => (
                 <button
                   key={code}
                   type="button"
-                  onClick={() => setLocale(code as AppLocale)}
+                  onClick={() => setAppLocale(code as AppLocale)}
                   className={cn(
                     'flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-lg border text-xs font-medium transition-colors',
                     locale === code
@@ -95,12 +96,12 @@ export default function PreferencesPanel({ open, onClose }: PreferencesPanelProp
 
           <section>
             <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-3">
-              Navigation
+              {tr('Navigation')}
             </p>
             <label className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg border border-border cursor-pointer hover:bg-surface-raised transition-colors">
               <span className="flex items-center gap-2 text-sm text-text-primary">
                 <PanelLeft size={16} className="text-text-muted" />
-                Collapsed sidebar
+                {tr('Collapsed sidebar')}
               </span>
               <input
                 type="checkbox"
@@ -110,13 +111,13 @@ export default function PreferencesPanel({ open, onClose }: PreferencesPanelProp
               />
             </label>
             <p className="text-xs text-text-muted mt-2 px-1">
-              On desktop, use a narrow icon-only sidebar. Saved on this device.
+              {tr('On desktop, use a narrow icon-only sidebar. Saved on this device.')}
             </p>
           </section>
 
           <section>
             <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-3">
-              Account
+              {tr('Account')}
             </p>
             <Link
               href="/portal/profile"
@@ -125,8 +126,8 @@ export default function PreferencesPanel({ open, onClose }: PreferencesPanelProp
             >
               <User size={16} className="text-primary-600 shrink-0" />
               <div>
-                <p className="text-sm font-medium text-text-primary">Edit profile</p>
-                <p className="text-xs text-text-muted">Name, email, phone, and photo</p>
+                <p className="text-sm font-medium text-text-primary">{tr('Edit profile')}</p>
+                <p className="text-xs text-text-muted">{tr('Name, email, phone, and photo')}</p>
               </div>
             </Link>
           </section>

@@ -39,6 +39,7 @@ interface MeResponse {
   roles: string[]
   permissions: string[]
   onboardingCompleted: boolean
+  preferredLanguage?: string
   member?: {
     id: string
     firstName: string
@@ -123,4 +124,9 @@ export const authApi = {
 
   completeOnboarding: () =>
     apiClient.patch<never, void>('/auth/onboarding-complete'),
+
+  updateLanguage: (preferredLanguage: string) =>
+    apiClient.post<never, { preferredLanguage: string }>('/users/language', {
+      preferredLanguage,
+    }),
 }

@@ -2,9 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useMemo } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore, useAuthStore } from '@/stores/index'
+import { translateNavSections, useTranslations } from '@/lib/i18n'
 import { getNavForContext, getPortalNavForUser } from '@/lib/navigation/role-nav'
 import { getComposedChoirNav } from '@/lib/navigation/choir-nav'
 import { getComposedProtocolNav } from '@/lib/navigation/protocol-nav'
@@ -31,6 +33,8 @@ export default function Sidebar({
   const isMobile  = variant === 'mobile'
   const collapsed = useUIStore((s) => s.sidebarCollapsed) && !isMobile
   const toggle    = useUIStore((s) => s.toggleSidebar)
+  const locale    = useUIStore((s) => s.locale)
+  const { tr }    = useTranslations()
   const authRole  = useAuthStore((s) => s.user?.role) ?? role
   const permissions = useAuthStore((s) => s.user?.permissions ?? EMPTY_PERMISSIONS)
   const { canAccessChoirArea, isChoirMember, isLoading: loadingChoirAccess, activeChoirMemberships } = useChoirAccess()
@@ -43,7 +47,7 @@ export default function Sidebar({
     ? activeChoirMemberships.find((m) => m.id === choirId)
     : undefined
 
-  const sections = (() => {
+  const rawSections = (() => {
     if (loadingChoirAccess || (inProtocolArea && loadingProtocolCtx)) {
       return getPortalNavForUser(authRole, { canAccessChoirArea: false, isChoirMember: false }, permissions)
     }
@@ -61,6 +65,11 @@ export default function Sidebar({
     }
     return getNavForContext(pathname, authRole, { canAccessChoirArea, isChoirMember }, permissions, activeChoirMemberships)
   })()
+
+  const sections = useMemo(
+    () => translateNavSections(rawSections, locale),
+    [rawSections, locale],
+  )
 
   return (
     <aside
@@ -85,7 +94,7 @@ export default function Sidebar({
             <p className="font-display font-semibold text-base text-text-inverse leading-tight truncate">
               CMMS
             </p>
-            <p className="text-xs text-primary-300 truncate">Church System</p>
+            <p className="text-xs text-primary-300 truncate">{tr('Church System')}</p>
           </div>
         )}
       </div>
@@ -158,7 +167,7 @@ export default function Sidebar({
             ? <ChevronRight size={16} />
             : (
               <span className="flex items-center gap-2 text-xs">
-                <ChevronLeft size={16} /> Collapse
+                <ChevronLeft size={16} /> {tr('Collapse')}
               </span>
             )
           }
