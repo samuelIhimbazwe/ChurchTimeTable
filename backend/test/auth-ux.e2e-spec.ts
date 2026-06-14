@@ -3,6 +3,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import * as bcrypt from 'bcrypt';
 import { bootstrapPilotE2eApp } from './pilot-ready-e2e.helper';
+import { buildRegisterPayload } from './helpers/register-payload.helper';
 
 describe('Auth UX (e2e)', () => {
   let app: INestApplication<App>;
@@ -30,16 +31,17 @@ describe('Auth UX (e2e)', () => {
     const stamp = Date.now();
     const res = await request(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({
-        email: `auth-ux-${stamp}@test.local`,
-        password: 'TestPass1',
-        firstName: 'Church',
-        lastName: 'Member',
-        phone: `078${String(stamp).slice(-7)}`,
-        churchRelationship: 'NEW_TO_CHURCH',
-        interests: ['CHOIR', 'YOUTH'],
-        preferredLanguage: 'en',
-      });
+      .send(
+        buildRegisterPayload({
+          email: `auth-ux-${stamp}@test.local`,
+          firstName: 'Church',
+          lastName: 'Member',
+          phone: `078${String(stamp).slice(-7)}`,
+          nationalId: `1${String(stamp).padStart(15, '0').slice(-15)}`,
+          churchRelationship: 'NEW_TO_CHURCH',
+          interests: ['CHOIR', 'YOUTH'],
+        }),
+      );
     expect(res.status).toBe(201);
     expect(res.body.data.accessToken).toBeDefined();
   });

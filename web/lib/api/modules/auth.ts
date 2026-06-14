@@ -10,7 +10,9 @@ export interface RegisterPayload {
   password: string
   firstName: string
   lastName: string
-  phone?: string
+  phone: string
+  nationalId: string
+  acceptedTerms: boolean
   churchRelationship?: string
   interests?: string[]
   relationshipNotes?: string

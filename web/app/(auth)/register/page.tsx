@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { AlertCircle, Lock, Mail, User } from 'lucide-react'
+import { AlertCircle, CreditCard, Lock, Mail, Phone, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useRegister } from '@/lib/hooks'
 import { ApiError, ConflictError, ValidationError } from '@/lib/api'
@@ -10,17 +10,24 @@ import {
   CHURCH_RELATIONSHIP_OPTIONS,
   SIGNUP_INTEREST_OPTIONS,
 } from '@/lib/auth/signup'
+import { useUIStore } from '@/stores'
+import { authUi } from '@/lib/i18n/auth-ui'
 
 export default function RegisterPage() {
+  const locale = useUIStore((s) => s.locale)
+  const t = authUi[locale]
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [phone, setPhone] = useState('')
+  const [nationalId, setNationalId] = useState('')
   const [churchRelationship, setChurchRelationship] = useState('NEW_TO_CHURCH')
   const [interests, setInterests] = useState<string[]>([])
   const [relationshipNotes, setRelationshipNotes] = useState('')
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
 
   const { mutate: register, isPending } = useRegister()
@@ -35,16 +42,31 @@ export default function RegisterPage() {
     e.preventDefault()
     setFormError(null)
 
-    if (!email.trim() || !password || !firstName.trim() || !lastName.trim()) {
-      setFormError('Please complete all required fields.')
+    if (
+      !email.trim() ||
+      !password ||
+      !firstName.trim() ||
+      !lastName.trim() ||
+      !phone.trim() ||
+      !nationalId.trim()
+    ) {
+      setFormError(t.requiredFields)
+      return
+    }
+    if (!acceptedTerms) {
+      setFormError(t.termsRequired)
+      return
+    }
+    if (!/^\d{16}$/.test(nationalId.trim())) {
+      setFormError(t.nationalIdRequired)
       return
     }
     if (password.length < 6) {
-      setFormError('Password must be at least 6 characters.')
+      setFormError(t.passwordMin)
       return
     }
     if (password !== confirmPassword) {
-      setFormError('Passwords do not match.')
+      setFormError(t.passwordMismatch)
       return
     }
 
@@ -54,10 +76,13 @@ export default function RegisterPage() {
         password,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        phone: phone.trim() || undefined,
+        phone: phone.trim(),
+        nationalId: nationalId.trim(),
+        acceptedTerms: true,
         churchRelationship,
         interests: interests.length ? interests : undefined,
         relationshipNotes: relationshipNotes.trim() || undefined,
+        preferredLanguage: locale,
       },
       {
         onError: (err) => {
@@ -97,10 +122,8 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-1">
-            <h1 className="font-display text-3xl text-text-primary">Create your account</h1>
-            <p className="text-text-secondary text-sm">
-              Register for church membership. A leader will approve your access to ministries.
-            </p>
+            <h1 className="font-display text-3xl text-text-primary">{t.registerTitle}</h1>
+            <p className="text-text-secondary text-sm">{t.registerSubtitle}</p>
           </div>
 
           {formError && (
@@ -114,7 +137,7 @@ export default function RegisterPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label htmlFor="firstName" className="block text-sm font-medium text-text-primary">
-                  First name *
+                  {t.firstName}
                 </label>
                 <div className="relative">
                   <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -124,12 +147,13 @@ export default function RegisterPage() {
                     onChange={(e) => setFirstName(e.target.value)}
                     className={cn(inputClass, 'pl-9')}
                     disabled={isPending}
+                    required
                   />
                 </div>
               </div>
               <div className="space-y-1.5">
                 <label htmlFor="lastName" className="block text-sm font-medium text-text-primary">
-                  Last name *
+                  {t.lastName}
                 </label>
                 <input
                   id="lastName"
@@ -137,13 +161,14 @@ export default function RegisterPage() {
                   onChange={(e) => setLastName(e.target.value)}
                   className={inputClass}
                   disabled={isPending}
+                  required
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
               <label htmlFor="email" className="block text-sm font-medium text-text-primary">
-                Email *
+                {t.email}
               </label>
               <div className="relative">
                 <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -156,29 +181,57 @@ export default function RegisterPage() {
                   placeholder="you@example.com"
                   className={cn(inputClass, 'pl-9')}
                   disabled={isPending}
+                  required
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
               <label htmlFor="phone" className="block text-sm font-medium text-text-primary">
-                Phone
+                {t.phone}
               </label>
-              <input
-                id="phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="Optional"
-                className={inputClass}
-                disabled={isPending}
-              />
+              <div className="relative">
+                <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                <input
+                  id="phone"
+                  type="tel"
+                  autoComplete="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="0781234567"
+                  className={cn(inputClass, 'pl-9')}
+                  disabled={isPending}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="nationalId" className="block text-sm font-medium text-text-primary">
+                {t.nationalId}
+              </label>
+              <div className="relative">
+                <CreditCard size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                <input
+                  id="nationalId"
+                  inputMode="numeric"
+                  pattern="\d{16}"
+                  maxLength={16}
+                  value={nationalId}
+                  onChange={(e) => setNationalId(e.target.value.replace(/\D/g, '').slice(0, 16))}
+                  placeholder="1199888877766655"
+                  className={cn(inputClass, 'pl-9')}
+                  disabled={isPending}
+                  required
+                />
+              </div>
+              <p className="text-xs text-text-muted">{t.nationalIdHint}</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label htmlFor="password" className="block text-sm font-medium text-text-primary">
-                  Password *
+                  {t.password}
                 </label>
                 <div className="relative">
                   <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -190,12 +243,13 @@ export default function RegisterPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     className={cn(inputClass, 'pl-9')}
                     disabled={isPending}
+                    required
                   />
                 </div>
               </div>
               <div className="space-y-1.5">
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-text-primary">
-                  Confirm password *
+                  {t.confirmPassword}
                 </label>
                 <input
                   id="confirmPassword"
@@ -205,13 +259,14 @@ export default function RegisterPage() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className={inputClass}
                   disabled={isPending}
+                  required
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
               <label htmlFor="churchRelationship" className="block text-sm font-medium text-text-primary">
-                Your connection to the church
+                {t.churchConnection}
               </label>
               <select
                 id="churchRelationship"
@@ -227,7 +282,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <p className="text-sm font-medium text-text-primary">Ministries you are interested in</p>
+              <p className="text-sm font-medium text-text-primary">{t.interests}</p>
               <div className="flex flex-wrap gap-2">
                 {SIGNUP_INTEREST_OPTIONS.map((opt) => (
                   <label
@@ -254,22 +309,37 @@ export default function RegisterPage() {
 
             <div className="space-y-1.5">
               <label htmlFor="notes" className="block text-sm font-medium text-text-primary">
-                Anything else we should know?
+                {t.notes}
               </label>
               <textarea
                 id="notes"
                 value={relationshipNotes}
                 onChange={(e) => setRelationshipNotes(e.target.value)}
                 rows={2}
-                placeholder="Optional"
+                placeholder={t.notesPlaceholder}
                 className={inputClass}
                 disabled={isPending}
               />
             </div>
 
-            <p className="text-xs text-text-muted">
-              After you register, church leaders will review your account before full ministry access is granted.
-            </p>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                disabled={isPending}
+                className="mt-0.5 w-4 h-4 rounded border-border text-primary-600 focus:ring-gold-500"
+                required
+              />
+              <span className="text-sm text-text-secondary">
+                {t.termsLabel}{' '}
+                <Link href="/terms" target="_blank" className="font-semibold text-primary-600 hover:underline">
+                  (read)
+                </Link>
+              </span>
+            </label>
+
+            <p className="text-xs text-text-muted">{t.approvalNote}</p>
 
             <button
               type="submit"
@@ -280,14 +350,14 @@ export default function RegisterPage() {
                 'disabled:opacity-60 disabled:cursor-not-allowed',
               )}
             >
-              {isPending ? 'Creating account…' : 'Create account'}
+              {isPending ? t.creatingAccount : t.createAccount}
             </button>
           </form>
 
           <p className="text-center text-sm text-text-muted">
-            Already have an account?{' '}
+            {t.alreadyHaveAccount}{' '}
             <Link href="/login" className="font-semibold text-primary-600 hover:underline">
-              Sign in
+              {t.signIn}
             </Link>
           </p>
         </div>
@@ -295,3 +365,4 @@ export default function RegisterPage() {
     </div>
   )
 }
+

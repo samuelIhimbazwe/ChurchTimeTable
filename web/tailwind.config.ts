@@ -10,8 +10,9 @@ const config: Config = {
   ],
   theme: {
     extend: {
-
-      /* ── COLORS ── */
+      screens: {
+        xs: '475px',
+      },
       colors: {
         primary: {
           50:  'var(--color-primary-50)',
@@ -166,6 +167,10 @@ const config: Config = {
         sidebar:          '240px',
         'sidebar-collapsed': '64px',
         topbar:           '64px',
+        'safe-top':         'env(safe-area-inset-top, 0px)',
+        'safe-bottom':      'env(safe-area-inset-bottom, 0px)',
+        'safe-left':        'env(safe-area-inset-left, 0px)',
+        'safe-right':       'env(safe-area-inset-right, 0px)',
       },
     },
   },

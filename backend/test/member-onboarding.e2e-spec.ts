@@ -3,6 +3,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { bootstrapPilotE2eApp } from './pilot-ready-e2e.helper';
 import { bootstrapMemberPortalE2e } from './helpers/member-portal-e2e.helper';
+import { buildRegisterPayload } from './helpers/register-payload.helper';
 
 describe('Member onboarding (UX-FINAL-1)', () => {
   let app: INestApplication<App>;
@@ -16,16 +17,17 @@ describe('Member onboarding (UX-FINAL-1)', () => {
     const stamp = Date.now();
     const register = await request(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({
-        email: `onboard-${stamp}@test.local`,
-        password: 'TestPass1',
-        firstName: 'New',
-        lastName: 'Member',
-        phone: `078${String(stamp).slice(-7)}`,
-        churchRelationship: 'NEW_TO_CHURCH',
-        interests: ['CHOIR', 'PROTOCOL'],
-        preferredLanguage: 'en',
-      });
+      .send(
+        buildRegisterPayload({
+          email: `onboard-${stamp}@test.local`,
+          firstName: 'New',
+          lastName: 'Member',
+          phone: `078${String(stamp).slice(-7)}`,
+          nationalId: `1${String(stamp).padStart(15, '0').slice(-15)}`,
+          churchRelationship: 'NEW_TO_CHURCH',
+          interests: ['CHOIR', 'PROTOCOL'],
+        }),
+      );
     expect(register.status).toBe(201);
     memberToken = register.body.data.accessToken;
 

@@ -100,13 +100,13 @@ export default function Shell({
 
       <main
         className={cn(
-          'pt-16 min-h-screen min-w-0 max-w-full',
+          'pt-[calc(4rem+env(safe-area-inset-top,0px))] min-h-[100dvh] min-w-0 max-w-full safe-x',
           'lg:transition-[margin-left] lg:duration-normal lg:ease-out',
           'lg:ml-[240px]',
           collapsed && 'lg:ml-16',
         )}
       >
-        <div className="p-3 sm:p-6 page-enter min-w-0 max-w-full">
+        <div className="p-3 xs:p-4 sm:p-6 page-enter min-w-0 max-w-full pb-safe-bottom">
           {children}
         </div>
       </main>

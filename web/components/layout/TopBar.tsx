@@ -3,11 +3,12 @@
 import { useState } from 'react'
 import {
   Bell, Search, HelpCircle, ChevronDown,
-  Sun, Moon, LogOut, User, Settings, Menu,
+  LogOut, User, Settings, Menu,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores/index'
 import { useLogout } from '@/lib/hooks'
+import { AppearanceControls } from '@/components/auth/AppearanceControls'
 
 interface TopBarProps {
   pageTitle:     string
@@ -37,8 +38,6 @@ export default function TopBar({
   helpOpen     = false,
 }: TopBarProps) {
   const collapsed = useUIStore((s) => s.sidebarCollapsed)
-  const theme     = useUIStore((s) => s.theme)
-  const setTheme  = useUIStore((s) => s.setTheme)
   const [menuOpen, setMenuOpen] = useState(false)
 
   const { mutate: logout, isPending: loggingOut } = useLogout()
@@ -49,8 +48,9 @@ export default function TopBar({
   return (
     <header
       className={cn(
-        'fixed top-0 right-0 z-30 h-16',
-        'flex items-center justify-between px-3 sm:px-6 gap-2 sm:gap-4 min-w-0',
+        'fixed top-0 right-0 z-30',
+        'h-[calc(4rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)]',
+        'flex items-center justify-between px-3 xs:px-4 sm:px-6 gap-1.5 sm:gap-4 min-w-0 safe-x',
         'bg-surface border-b border-border',
         'left-0',
         'lg:transition-[left] lg:duration-normal lg:ease-out',
@@ -62,7 +62,7 @@ export default function TopBar({
         <button
           onClick={onMenuClick}
           aria-label="Open menu"
-          className="lg:hidden p-2 -ml-1 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors shrink-0"
+          className="lg:hidden p-2 -ml-1 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors shrink-0 touch-target"
         >
           <Menu size={20} />
         </button>
@@ -99,13 +99,7 @@ export default function TopBar({
           <Search size={18} />
         </button>
 
-        <button
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          aria-label="Toggle theme"
-          className="hidden min-[400px]:block p-2 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors duration-fast"
-        >
-          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
+        <AppearanceControls compact className="hidden xs:flex" />
 
         <button
           onClick={onHelpClick}

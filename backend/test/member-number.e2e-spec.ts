@@ -5,6 +5,7 @@ import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
 import { ResponseInterceptor } from '../src/common/interceptors/response.interceptor';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { buildRegisterPayload } from './helpers/register-payload.helper';
 
 describe('Member number (e2e)', () => {
   let app: INestApplication<App>;
@@ -37,13 +38,7 @@ describe('Member number (e2e)', () => {
     const email = `member-number-${Date.now()}@test.local`;
     const register = await request(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({
-        email,
-        password: 'TestPass1',
-        firstName: 'Seq',
-        lastName: 'Member',
-        ministry: 'CHOIR',
-      })
+      .send(buildRegisterPayload({ email, firstName: 'Seq', lastName: 'Member' }))
       .expect(201);
 
     const token = register.body.data.accessToken;
@@ -74,13 +69,7 @@ describe('Member number (e2e)', () => {
       const email = `unique-${Date.now()}-${i}@test.local`;
       await request(app.getHttpServer())
         .post('/api/v1/auth/register')
-        .send({
-          email,
-          password: 'TestPass1',
-          firstName: 'Unique',
-          lastName: `User${i}`,
-          ministry: 'CHOIR',
-        })
+        .send(buildRegisterPayload({ email, firstName: 'Unique', lastName: `User${i}` }))
         .expect(201);
 
       const login = await request(app.getHttpServer())
@@ -101,13 +90,7 @@ describe('Member number (e2e)', () => {
     const email = `sync-protect-${Date.now()}@test.local`;
     const register = await request(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({
-        email,
-        password: 'TestPass1',
-        firstName: 'Sync',
-        lastName: 'Protect',
-        ministry: 'CHOIR',
-      })
+      .send(buildRegisterPayload({ email, firstName: 'Sync', lastName: 'Protect' }))
       .expect(201);
 
     const token = register.body.data.accessToken;

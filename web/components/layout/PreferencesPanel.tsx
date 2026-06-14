@@ -1,9 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { X, Settings, Sun, Moon, PanelLeft, User } from 'lucide-react'
+import { X, Settings, Sun, Moon, PanelLeft, User, Languages } from 'lucide-react'
 import { useUIStore } from '@/stores/index'
 import { cn } from '@/lib/utils'
+import { APP_LOCALES, LOCALE_NAMES, type AppLocale } from '@/lib/i18n/auth-ui'
 
 interface PreferencesPanelProps {
   open:    boolean
@@ -13,6 +14,8 @@ interface PreferencesPanelProps {
 export default function PreferencesPanel({ open, onClose }: PreferencesPanelProps) {
   const theme = useUIStore((s) => s.theme)
   const setTheme = useUIStore((s) => s.setTheme)
+  const locale = useUIStore((s) => s.locale)
+  const setLocale = useUIStore((s) => s.setLocale)
   const sidebarCollapsed = useUIStore((s) => s.sidebarCollapsed)
   const toggleSidebar = useUIStore((s) => s.toggleSidebar)
 
@@ -63,6 +66,30 @@ export default function PreferencesPanel({ open, onClose }: PreferencesPanelProp
               >
                 <Moon size={16} /> Dark
               </button>
+            </div>
+          </section>
+
+          <section>
+            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-3">
+              Language
+            </p>
+            <div className="grid grid-cols-1 xs:grid-cols-3 gap-2">
+              {APP_LOCALES.map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => setLocale(code as AppLocale)}
+                  className={cn(
+                    'flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-lg border text-xs font-medium transition-colors',
+                    locale === code
+                      ? 'border-primary-500 bg-surface-raised text-text-primary'
+                      : 'border-border text-text-secondary hover:bg-surface-raised',
+                  )}
+                >
+                  <Languages size={14} className="shrink-0" />
+                  {LOCALE_NAMES[code]}
+                </button>
+              ))}
             </div>
           </section>
 

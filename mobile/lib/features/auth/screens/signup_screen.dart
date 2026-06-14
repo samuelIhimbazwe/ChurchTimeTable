@@ -19,10 +19,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _lastName = TextEditingController();
   final _email = TextEditingController();
   final _phone = TextEditingController();
+  final _nationalId = TextEditingController();
   final _password = TextEditingController();
   final _confirmPassword = TextEditingController();
   String _churchRelationship = 'NEW_TO_CHURCH';
   final Set<String> _interests = {};
+  bool _acceptedTerms = false;
   int _step = 0;
   bool _showPassword = false;
 
@@ -32,6 +34,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     _lastName.dispose();
     _email.dispose();
     _phone.dispose();
+    _nationalId.dispose();
     _password.dispose();
     _confirmPassword.dispose();
     super.dispose();
@@ -39,6 +42,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (!_acceptedTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.onboarding_signup_terms_required)),
+      );
+      return;
+    }
     if (_password.text != _confirmPassword.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.onboarding_signup_password_mismatch)),
@@ -53,6 +62,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           firstName: _firstName.text.trim(),
           lastName: _lastName.text.trim(),
           phone: _phone.text.trim(),
+          nationalId: _nationalId.text.trim(),
+          acceptedTerms: true,
           churchRelationship: _churchRelationship,
           interests: _interests.toList(),
           preferredLanguage: locale,
@@ -109,6 +120,30 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   TextFormField(
                     controller: _phone,
                     decoration: InputDecoration(labelText: l10n.onboarding_signup_phone),
+                    keyboardType: TextInputType.phone,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return l10n.validation_required;
+                      if (!RegExp(r'^\+?[0-9]{9,15}$').hasMatch(v.trim())) {
+                        return l10n.validation_required;
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _nationalId,
+                    decoration: InputDecoration(
+                      labelText: l10n.onboarding_signup_national_id,
+                      helperText: l10n.onboarding_signup_national_id_hint,
+                    ),
+                    keyboardType: TextInputType.number,
+                    maxLength: 16,
+                    validator: (v) {
+                      if (v == null || !RegExp(r'^\d{16}$').hasMatch(v.trim())) {
+                        return l10n.validation_required;
+                      }
+                      return null;
+                    },
                   ),
                 ],
                 if (_step == 1) ...[
@@ -169,6 +204,16 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     validator: (v) => v != null && v.length >= 6 ? null : l10n.auth_password_min_length,
                   ),
                   const SizedBox(height: 12),
+                  CheckboxListTile(
+                    value: _acceptedTerms,
+                    onChanged: auth.loading
+                        ? null
+                        : (value) => setState(() => _acceptedTerms = value ?? false),
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    title: Text(l10n.onboarding_signup_terms_label),
+                  ),
+                  const SizedBox(height: 8),
                   Text(l10n.onboarding_signup_approval_note),
                 ],
                 const SizedBox(height: 24),

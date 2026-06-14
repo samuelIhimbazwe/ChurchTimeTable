@@ -1,5 +1,6 @@
 'use client'
 
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
@@ -7,7 +8,7 @@ import { churchScheduleApi } from '@/lib/api'
 import { PermissionGate, SkeletonCard } from '@/components/shared'
 import { ChurchScheduleSubmitForm } from '@/components/church/ChurchScheduleSubmitForm'
 
-export default function ChurchScheduleSubmitPage() {
+function ChurchScheduleSubmitContent() {
   const searchParams = useSearchParams()
   const editId = searchParams.get('id')
 
@@ -48,5 +49,13 @@ export default function ChurchScheduleSubmitPage() {
         )}
       </PermissionGate>
     </div>
+  )
+}
+
+export default function ChurchScheduleSubmitPage() {
+  return (
+    <Suspense fallback={<SkeletonCard rows={6} />}>
+      <ChurchScheduleSubmitContent />
+    </Suspense>
   )
 }

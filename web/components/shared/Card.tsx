@@ -59,9 +59,13 @@ export function CardHeader({
   action?: React.ReactNode
 }) {
   return (
-    <div className={cn('flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4', className)}>
+    <div className={cn('flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4', className)}>
       <div className="min-w-0">{children}</div>
-      {action && <div className="shrink-0 self-start sm:self-auto">{action}</div>}
+      {action && (
+        <div className="shrink-0 w-full sm:w-auto flex flex-wrap gap-2 sm:justify-end">
+          {action}
+        </div>
+      )}
     </div>
   )
 }
@@ -71,7 +75,7 @@ export function CardTitle({ children, className }: {
   className?: string
 }) {
   return (
-    <h3 className={cn('font-semibold text-xl text-text-primary', className)}>
+    <h3 className={cn('font-semibold text-lg sm:text-xl text-text-primary', className)}>
       {children}
     </h3>
   )

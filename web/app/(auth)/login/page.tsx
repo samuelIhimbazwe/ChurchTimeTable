@@ -6,6 +6,8 @@ import { Eye, EyeOff, Lock, Mail, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLogin } from '@/lib/hooks'
 import { ApiError, AuthError, ValidationError } from '@/lib/api'
+import { useUIStore } from '@/stores'
+import { authUi } from '@/lib/i18n/auth-ui'
 
 const QUOTES = [
   { text: 'Let everything be done decently and in order.', ref: '1 Cor 14:40' },
@@ -20,6 +22,9 @@ const QUOTES = [
 const QUOTE = QUOTES[new Date().getDay() % QUOTES.length]
 
 export default function LoginPage() {
+  const locale = useUIStore((s) => s.locale)
+  const t = authUi[locale]
+
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
@@ -132,10 +137,10 @@ export default function LoginPage() {
           {/* Heading */}
           <div className="space-y-1">
             <h1 className="font-display text-3xl text-text-primary">
-              Sign in to your account
+              {t.signInTitle}
             </h1>
             <p className="text-text-secondary text-sm">
-              Enter your credentials to access the system.
+              {t.signInSubtitle}
             </p>
           </div>
 

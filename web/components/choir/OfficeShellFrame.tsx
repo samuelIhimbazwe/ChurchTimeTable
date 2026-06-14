@@ -46,45 +46,62 @@ export function OfficeShellFrame({
 
   return (
     <div
-      className={`-mx-3 sm:-mx-6 -mt-3 sm:-mt-6 border-l-4 ${theme.accentBorder}`}
+      className={cn(
+        '-mx-3 xs:-mx-4 sm:-mx-6 -mt-3 sm:-mt-6 border-l-4 min-w-0',
+        theme.accentBorder,
+      )}
       data-office={themeKey}
     >
       <header className={theme.hero}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-5 pb-5">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="flex gap-4 min-w-0">
+        <div className="max-w-6xl mx-auto px-3 xs:px-4 sm:px-6 pt-4 sm:pt-5 pb-4 sm:pb-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+            <div className="flex gap-3 sm:gap-4 min-w-0">
               <div
-                className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${theme.iconWrap}`}
+                className={cn(
+                  'flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-2xl',
+                  theme.iconWrap,
+                )}
               >
-                <Icon size={28} className={theme.iconColor} aria-hidden />
+                <Icon size={24} className={theme.iconColor} aria-hidden />
               </div>
               <div className="min-w-0 space-y-1">
                 <p
-                  className={`text-[11px] font-bold uppercase tracking-[0.2em] ${theme.eyebrow}`}
+                  className={cn(
+                    'text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em]',
+                    theme.eyebrow,
+                  )}
                 >
                   {theme.officeKindLabel} · {choirName}
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className={`font-display text-3xl leading-tight ${theme.heroText}`}>
+                  <h1 className={cn('page-heading font-display leading-tight', theme.heroText)}>
                     {title}
                   </h1>
                   {roleBadge && (
                     <span
-                      className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${theme.badge}`}
+                      className={cn(
+                        'text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full',
+                        theme.badge,
+                      )}
                     >
                       {roleBadge}
                     </span>
                   )}
                 </div>
-                <p className={`text-sm max-w-2xl ${theme.heroMuted}`}>{subtitle}</p>
+                <p className={cn('text-sm max-w-2xl leading-relaxed', theme.heroMuted)}>
+                  {subtitle}
+                </p>
                 {meta && (
-                  <div className={`text-sm pt-0.5 ${theme.heroMuted}`}>{meta}</div>
+                  <div className={cn('text-sm pt-0.5', theme.heroMuted)}>{meta}</div>
                 )}
               </div>
             </div>
             <Link
               href="/portal"
-              className={`inline-flex items-center gap-1.5 text-sm font-semibold shrink-0 mt-1 ${theme.portalLink}`}
+              className={cn(
+                'inline-flex items-center gap-1.5 text-sm font-semibold shrink-0 self-start',
+                theme.portalLink,
+              )}
             >
               <ArrowLeft size={14} />
               Member portal
@@ -93,10 +110,10 @@ export function OfficeShellFrame({
         </div>
       </header>
 
-      <div className="sticky top-16 z-20 bg-surface border-b border-border shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2.5">
+      <div className="sticky top-[calc(4rem+env(safe-area-inset-top,0px))] z-20 bg-surface border-b border-border shadow-sm">
+        <div className="max-w-6xl mx-auto px-3 xs:px-4 sm:px-6 py-2">
           <nav
-            className="flex flex-wrap gap-1.5"
+            className="scroll-strip sm:flex-wrap sm:overflow-visible -mx-1 px-1"
             aria-label={navLabel}
           >
             {navItems.map((item) => (
@@ -105,7 +122,7 @@ export function OfficeShellFrame({
                 href={item.href}
                 aria-current={item.active ? 'page' : undefined}
                 className={cn(
-                  'px-3.5 py-2 text-sm font-semibold rounded-lg transition-colors',
+                  'shrink-0 px-3 sm:px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors whitespace-nowrap',
                   item.active
                     ? 'bg-primary-700 text-white shadow-sm'
                     : 'text-text-primary bg-surface-raised border border-border hover:border-primary-300 hover:bg-primary-50',
@@ -129,14 +146,22 @@ export function OfficeShellFrame({
       </div>
 
       <div className={theme.contentBg}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-10">
+        <div className="max-w-6xl mx-auto px-3 xs:px-4 sm:px-6 py-4 sm:py-6 pb-8 sm:pb-10">
           <div className={aside ? 'lg:grid lg:grid-cols-[1fr_240px] lg:gap-8' : undefined}>
-            <div className="min-w-0 space-y-5">
+            <div className="min-w-0 space-y-4 sm:space-y-5">
               {alerts}
               {children}
             </div>
             {aside && (
-              <aside className="hidden lg:block space-y-4 pt-1">{aside}</aside>
+              <>
+                <aside className="hidden lg:block space-y-4 pt-1">{aside}</aside>
+                <aside className="lg:hidden mt-6 space-y-3 border-t border-border pt-5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                    Quick links
+                  </p>
+                  {aside}
+                </aside>
+              </>
             )}
           </div>
         </div>

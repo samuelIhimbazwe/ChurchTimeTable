@@ -6,7 +6,7 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import { protocolApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import { ApiError } from '@/lib/api/client'
-import { Card, CardHeader, CardTitle, Badge, PermissionGate, SkeletonCard } from '@/components/shared'
+import { Card, CardHeader, CardTitle, Badge, PermissionGate, SkeletonCard, PageContainer, PageHeader, ResponsiveDataView, TableScroll } from '@/components/shared'
 import { formatDate, formatTime } from '@/lib/utils/format'
 import Link from 'next/link'
 import { Calendar } from 'lucide-react'
@@ -80,19 +80,20 @@ export default function GenerateTeamPage() {
         </div>
       }
     >
-      <div className="space-y-6 max-w-5xl mx-auto pb-8">
-        <div>
-          <h2 className="font-display text-3xl text-text-primary">Build Protocol Team</h2>
-          <p className="text-text-secondary text-sm mt-1">
-            Select a published church service (MF-7), review member intelligence, then pick who serves
-          </p>
-          <Link
-            href="/church/calendar"
-            className="inline-flex items-center gap-1 text-xs font-semibold text-primary-600 hover:text-primary-800 mt-2"
-          >
-            <Calendar size={13} /> View church operations calendar →
-          </Link>
-        </div>
+      <PageContainer>
+        <div className="space-y-6">
+        <PageHeader
+          title="Build Protocol Team"
+          subtitle="Select a published church service (MF-7), review member intelligence, then pick who serves"
+          actions={
+            <Link
+              href="/church/calendar"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-primary-600 hover:text-primary-800"
+            >
+              <Calendar size={13} /> Church calendar
+            </Link>
+          }
+        />
 
         <Card padding="md">
           <CardHeader>
@@ -161,47 +162,80 @@ export default function GenerateTeamPage() {
             ) : sortedRecs.length === 0 ? (
               <p className="text-sm text-text-muted">No protocol members available for recommendations.</p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-xs text-text-muted border-b border-border">
-                      <th className="py-2 pr-2 w-8" />
-                      <th className="py-2 pr-3">Member</th>
-                      <th className="py-2 pr-3">Choir</th>
-                      <th className="py-2 pr-3">Official/mo</th>
-                      <th className="py-2 pr-3">Attendance %</th>
-                      <th className="py-2 pr-3">Points</th>
-                      <th className="py-2 pr-3">Score</th>
-                      <th className="py-2">Quota</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {sortedRecs.map((row) => (
-                      <tr key={row.memberId} className="hover:bg-surface-raised">
-                        <td className="py-2 pr-2">
-                          <input
-                            type="checkbox"
-                            checked={selected.has(row.memberId)}
-                            onChange={() => toggleMember(row.memberId)}
-                            disabled={selectedOccurrence?.hasTeam}
-                          />
-                        </td>
-                        <td className="py-2 pr-3 font-medium">{row.displayName}</td>
-                        <td className="py-2 pr-3 text-text-secondary">{row.choirName ?? '—'}</td>
-                        <td className="py-2 pr-3">{row.officialServicesMonth}</td>
-                        <td className="py-2 pr-3">{Math.round(row.attendanceRate ?? 0)}%</td>
-                        <td className="py-2 pr-3">{row.attendancePoints ?? 0}</td>
-                        <td className="py-2 pr-3">{row.score}</td>
-                        <td className="py-2">
-                          <Badge variant={row.quotaStatus === 'AVAILABLE' ? 'status-present' : 'status-pending'}>
-                            {row.quotaStatus === 'AVAILABLE' ? 'Available' : 'Low priority'}
-                          </Badge>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <ResponsiveDataView
+                items={sortedRecs}
+                keyFn={(row) => row.memberId}
+                mobileRow={(row) => (
+                  <label
+                    key={row.memberId}
+                    className="flex items-start gap-3 p-3 rounded-lg border border-border bg-surface hover:bg-surface-raised cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selected.has(row.memberId)}
+                      onChange={() => toggleMember(row.memberId)}
+                      disabled={selectedOccurrence?.hasTeam}
+                      className="mt-1 shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-text-primary">{row.displayName}</p>
+                      <p className="text-xs text-text-muted mt-0.5">
+                        {row.choirName ?? 'No choir'} · Score {row.score}
+                      </p>
+                      <div className="flex flex-wrap gap-2 mt-2 text-xs text-text-secondary">
+                        <span>{Math.round(row.attendanceRate ?? 0)}% attendance</span>
+                        <span>{row.officialServicesMonth} official/mo</span>
+                        <Badge variant={row.quotaStatus === 'AVAILABLE' ? 'status-present' : 'status-pending'}>
+                          {row.quotaStatus === 'AVAILABLE' ? 'Available' : 'Low priority'}
+                        </Badge>
+                      </div>
+                    </div>
+                  </label>
+                )}
+                table={
+                  <TableScroll minWidth={640}>
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-xs text-text-muted border-b border-border">
+                          <th className="py-2 pr-2 w-8" />
+                          <th className="py-2 pr-3">Member</th>
+                          <th className="py-2 pr-3">Choir</th>
+                          <th className="py-2 pr-3">Official/mo</th>
+                          <th className="py-2 pr-3">Attendance %</th>
+                          <th className="py-2 pr-3">Points</th>
+                          <th className="py-2 pr-3">Score</th>
+                          <th className="py-2">Quota</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {sortedRecs.map((row) => (
+                          <tr key={row.memberId} className="hover:bg-surface-raised">
+                            <td className="py-2 pr-2">
+                              <input
+                                type="checkbox"
+                                checked={selected.has(row.memberId)}
+                                onChange={() => toggleMember(row.memberId)}
+                                disabled={selectedOccurrence?.hasTeam}
+                              />
+                            </td>
+                            <td className="py-2 pr-3 font-medium">{row.displayName}</td>
+                            <td className="py-2 pr-3 text-text-secondary">{row.choirName ?? '—'}</td>
+                            <td className="py-2 pr-3">{row.officialServicesMonth}</td>
+                            <td className="py-2 pr-3">{Math.round(row.attendanceRate ?? 0)}%</td>
+                            <td className="py-2 pr-3">{row.attendancePoints ?? 0}</td>
+                            <td className="py-2 pr-3">{row.score}</td>
+                            <td className="py-2">
+                              <Badge variant={row.quotaStatus === 'AVAILABLE' ? 'status-present' : 'status-pending'}>
+                                {row.quotaStatus === 'AVAILABLE' ? 'Available' : 'Low priority'}
+                              </Badge>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </TableScroll>
+                }
+              />
             )}
             <button
               type="button"
@@ -223,7 +257,8 @@ export default function GenerateTeamPage() {
             </button>
           </Card>
         )}
-      </div>
+        </div>
+      </PageContainer>
     </PermissionGate>
   )
 }

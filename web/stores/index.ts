@@ -1,12 +1,15 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { type AppLocale, isAppLocale } from '@/lib/i18n/auth-ui'
 
 /* ── UI Store ── */
 interface UIStore {
   sidebarCollapsed: boolean
   theme: 'light' | 'dark'
+  locale: AppLocale
   toggleSidebar: () => void
   setTheme: (theme: 'light' | 'dark') => void
+  setLocale: (locale: AppLocale) => void
 }
 
 export const useUIStore = create<UIStore>()(
@@ -14,11 +17,30 @@ export const useUIStore = create<UIStore>()(
     (set) => ({
       sidebarCollapsed: false,
       theme: 'light',
+      locale: 'rw',
       toggleSidebar: () =>
         set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setTheme: (theme) => set({ theme }),
+      setLocale: (locale) => set({ locale }),
     }),
-    { name: 'cmms-ui' },
+    {
+      name: 'cmms-ui',
+      partialize: (state) => ({
+        sidebarCollapsed: state.sidebarCollapsed,
+        theme: state.theme,
+        locale: state.locale,
+      }),
+      merge: (persisted, current) => {
+        const saved = persisted as Partial<UIStore> | undefined
+        const locale =
+          saved?.locale && isAppLocale(saved.locale) ? saved.locale : current.locale
+        return {
+          ...current,
+          ...saved,
+          locale,
+        }
+      },
+    },
   ),
 )
 

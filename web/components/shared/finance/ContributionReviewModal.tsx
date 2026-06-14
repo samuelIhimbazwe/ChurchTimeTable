@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { contributionsApi, type ContributionClaim } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
-import { Card } from '@/components/shared'
+import { SheetModal } from '@/components/shared/SheetModal'
 import { formatCurrency } from '@/lib/utils/format'
 
 type Props = {
@@ -68,74 +68,75 @@ export function ContributionReviewModal({
   })
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <Card padding="md" className="w-full max-w-md">
-        <p className="font-semibold text-lg">{title}</p>
-        <p className="text-sm text-text-secondary mt-1">
-          {item.memberName} · claimed {formatCurrency(item.claimedAmount)}
-        </p>
-        {canApprove ? (
-          <div className="mt-4 space-y-3">
-            <input
-              type="number"
-              value={confirmedAmount}
-              onChange={(e) => setConfirmedAmount(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg text-sm border border-border bg-surface"
-            />
-            {partial && (
-              <textarea
-                rows={2}
-                value={discrepancyReason}
-                onChange={(e) => setDiscrepancyReason(e.target.value)}
-                placeholder="Why different from claimed?"
-                className="w-full px-3 py-2 rounded-lg text-sm border border-border bg-surface resize-none"
-              />
-            )}
+    <SheetModal open onClose={onClose} title={title}>
+      <p className="text-sm text-text-secondary">
+        {item.memberName} · claimed {formatCurrency(item.claimedAmount)}
+      </p>
+      {canApprove ? (
+        <div className="mt-4 space-y-3">
+          <input
+            type="number"
+            value={confirmedAmount}
+            onChange={(e) => setConfirmedAmount(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-lg text-sm border border-border bg-surface min-w-0"
+          />
+          {partial && (
             <textarea
               rows={2}
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="Reject reason (optional)"
-              className="w-full px-3 py-2 rounded-lg text-sm border border-border bg-surface resize-none"
+              value={discrepancyReason}
+              onChange={(e) => setDiscrepancyReason(e.target.value)}
+              placeholder="Why different from claimed?"
+              className="w-full px-3 py-2.5 rounded-lg text-sm border border-border bg-surface resize-none min-w-0"
             />
-            <div className="flex gap-2">
+          )}
+          <textarea
+            rows={2}
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            placeholder="Reject reason (optional)"
+            className="w-full px-3 py-2.5 rounded-lg text-sm border border-border bg-surface resize-none min-w-0"
+          />
+          <div className="flex flex-col-reverse xs:flex-row gap-2">
+            <button
+              type="button"
+              onClick={() => approve.mutate()}
+              disabled={
+                approve.isPending ||
+                !confirmedAmount ||
+                (partial && discrepancyReason.trim().length < 3)
+              }
+              className="flex-1 px-4 py-2.5 text-sm font-semibold bg-primary-700 text-white rounded-lg disabled:opacity-60 touch-target"
+            >
+              {confirmLabel}
+            </button>
+            {rejectReason.trim().length >= 3 && (
               <button
                 type="button"
-                onClick={() => approve.mutate()}
-                disabled={
-                  approve.isPending ||
-                  !confirmedAmount ||
-                  (partial && discrepancyReason.trim().length < 3)
-                }
-                className="flex-1 px-4 py-2 text-sm font-semibold bg-primary-700 text-white rounded-lg disabled:opacity-60"
+                onClick={() => reject.mutate()}
+                disabled={reject.isPending}
+                className="px-4 py-2.5 text-sm font-semibold text-danger border border-danger/30 rounded-lg touch-target"
               >
-                {confirmLabel}
+                Reject
               </button>
-              {rejectReason.trim().length >= 3 && (
-                <button
-                  type="button"
-                  onClick={() => reject.mutate()}
-                  disabled={reject.isPending}
-                  className="px-4 py-2 text-sm font-semibold text-danger border border-danger/30 rounded-lg"
-                >
-                  Reject
-                </button>
-              )}
-              <button type="button" onClick={onClose} className="px-3 text-sm text-text-muted">
-                Cancel
-              </button>
-            </div>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-3 py-2.5 text-sm text-text-muted touch-target"
+            >
+              Cancel
+            </button>
           </div>
-        ) : (
-          <button
-            type="button"
-            onClick={onClose}
-            className="mt-4 text-sm text-primary-600 font-semibold"
-          >
-            Close
-          </button>
-        )}
-      </Card>
-    </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-4 text-sm text-primary-600 font-semibold touch-target"
+        >
+          Close
+        </button>
+      )}
+    </SheetModal>
   )
 }

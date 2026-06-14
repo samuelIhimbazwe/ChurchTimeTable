@@ -1,10 +1,14 @@
 import {
   IsArray,
+  IsBoolean,
   IsEmail,
   IsEnum,
+  IsNotEmpty,
   IsOptional,
   IsString,
+  Matches,
   MinLength,
+  Equals,
 } from 'class-validator';
 import { ChurchRelationshipType } from '@prisma/client';
 
@@ -29,14 +33,30 @@ export class RegisterDto {
   password: string;
 
   @IsString()
+  @IsNotEmpty()
   firstName: string;
 
   @IsString()
+  @IsNotEmpty()
   lastName: string;
 
-  @IsOptional()
   @IsString()
-  phone?: string;
+  @IsNotEmpty()
+  @Matches(/^\+?[0-9]{9,15}$/, {
+    message: 'Phone must be 9–15 digits (optional + prefix)',
+  })
+  phone: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^\d{16}$/, {
+    message: 'National ID must be 16 digits',
+  })
+  nationalId: string;
+
+  @IsBoolean()
+  @Equals(true, { message: 'You must accept the terms and conditions' })
+  acceptedTerms: boolean;
 
   @IsOptional()
   @IsEnum(ChurchRelationshipType)

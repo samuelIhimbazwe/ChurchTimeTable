@@ -54,6 +54,13 @@ export class AuthService {
       throw new AuthConflictException('EMAIL_ALREADY_REGISTERED');
     }
 
+    const nationalIdTaken = await this.prisma.member.findUnique({
+      where: { nationalId: dto.nationalId },
+    });
+    if (nationalIdTaken) {
+      throw new AuthConflictException('NATIONAL_ID_ALREADY_REGISTERED');
+    }
+
     const memberRole = await this.prisma.role.findUnique({
       where: { name: ROLES.MEMBER },
     });
@@ -69,11 +76,13 @@ export class AuthService {
           email: dto.email,
           passwordHash,
           preferredLanguage: dto.preferredLanguage ?? 'rw',
+          termsAcceptedAt: new Date(),
           member: {
             create: {
               firstName: dto.firstName,
               lastName: dto.lastName,
-              phone: dto.phone,
+              phone: dto.phone.trim(),
+              nationalId: dto.nationalId.trim(),
               ministry: 'BOTH',
               status: MemberStatus.NEW_MEMBER,
               onboardingCompleted: false,

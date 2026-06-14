@@ -31,7 +31,7 @@ export default function MobileDrawer({ open, onClose, role }: MobileDrawerProps)
 
       <div
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-[min(280px,85vw)] lg:hidden',
+          'fixed inset-y-0 left-0 z-50 w-[min(280px,88vw)] lg:hidden safe-top safe-bottom',
           'transition-transform duration-normal ease-out',
           open ? 'translate-x-0' : '-translate-x-full',
         )}

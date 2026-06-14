@@ -46,7 +46,11 @@ class AppLocalizations {
       'onboarding_signup_title': 'Kwiyandikisha mu murimo',
       'onboarding_signup_first_name': "Izina ry'ibanze",
       'onboarding_signup_last_name': "Izina ry'umuryango",
-      'onboarding_signup_phone': 'Telefone (si ngombwa)',
+      'onboarding_signup_phone': 'Telefone',
+      'onboarding_signup_national_id': 'Indangamuntu',
+      'onboarding_signup_national_id_hint': "Nomero y'indangamuntu (imibare 16)",
+      'onboarding_signup_terms_label': "Nemera amategeko n'amabwiriza",
+      'onboarding_signup_terms_required': 'Ugomba kwemera amategeko kugira ngo wiyandikishe',
       'onboarding_signup_ministry': 'Umurimo',
       'onboarding_signup_ministry_choir': 'Korali',
       'onboarding_signup_ministry_protocol': 'Protocol',
@@ -466,7 +470,11 @@ class AppLocalizations {
       'onboarding_signup_title': 'Ministry registration',
       'onboarding_signup_first_name': 'First name',
       'onboarding_signup_last_name': 'Last name',
-      'onboarding_signup_phone': 'Phone (optional)',
+      'onboarding_signup_phone': 'Phone',
+      'onboarding_signup_national_id': 'National ID',
+      'onboarding_signup_national_id_hint': '16-digit Rwanda national ID',
+      'onboarding_signup_terms_label': 'I agree to the terms and conditions',
+      'onboarding_signup_terms_required': 'You must accept the terms to register',
       'onboarding_signup_ministry': 'Ministry',
       'onboarding_signup_ministry_choir': 'Choir',
       'onboarding_signup_ministry_protocol': 'Protocol',
@@ -880,7 +888,11 @@ class AppLocalizations {
       'onboarding_signup_title': 'Inscription au ministère',
       'onboarding_signup_first_name': 'Prénom',
       'onboarding_signup_last_name': 'Nom',
-      'onboarding_signup_phone': 'Téléphone (facultatif)',
+      'onboarding_signup_phone': 'Téléphone',
+      'onboarding_signup_national_id': 'Identité nationale',
+      'onboarding_signup_national_id_hint': "Numéro d'identité rwandais (16 chiffres)",
+      'onboarding_signup_terms_label': "J'accepte les conditions d'utilisation",
+      'onboarding_signup_terms_required': 'Vous devez accepter les conditions',
       'onboarding_signup_ministry': 'Ministère',
       'onboarding_signup_ministry_choir': 'Chorale',
       'onboarding_signup_ministry_protocol': 'Protocol',
@@ -1380,6 +1392,10 @@ class AppLocalizations {
   String get onboarding_signup_first_name => _t('onboarding_signup_first_name');
   String get onboarding_signup_last_name => _t('onboarding_signup_last_name');
   String get onboarding_signup_phone => _t('onboarding_signup_phone');
+  String get onboarding_signup_national_id => _t('onboarding_signup_national_id');
+  String get onboarding_signup_national_id_hint => _t('onboarding_signup_national_id_hint');
+  String get onboarding_signup_terms_label => _t('onboarding_signup_terms_label');
+  String get onboarding_signup_terms_required => _t('onboarding_signup_terms_required');
   String get onboarding_signup_ministry => _t('onboarding_signup_ministry');
   String get onboarding_signup_ministry_choir => _t('onboarding_signup_ministry_choir');
   String get onboarding_signup_ministry_protocol => _t('onboarding_signup_ministry_protocol');

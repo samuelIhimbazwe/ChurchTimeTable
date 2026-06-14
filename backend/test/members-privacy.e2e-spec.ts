@@ -8,6 +8,7 @@ import { ROLES } from '../src/common/constants/roles';
 import { PrismaService } from '../src/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { MemberStatus } from '@prisma/client';
+import { buildRegisterPayload } from './helpers/register-payload.helper';
 
 describe('Member privacy (e2e)', () => {
   let app: INestApplication<App>;
@@ -36,13 +37,7 @@ describe('Member privacy (e2e)', () => {
     const email = `readonly-${Date.now()}@privacy.test`;
     const register = await request(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({
-        email,
-        password: 'TestPass1',
-        firstName: 'Read',
-        lastName: 'Only',
-        ministry: 'CHOIR',
-      });
+      .send(buildRegisterPayload({ email, firstName: 'Read', lastName: 'Only' }));
     readonlyToken = register.body.data.accessToken;
 
     const prisma = app.get(PrismaService);

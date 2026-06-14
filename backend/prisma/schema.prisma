@@ -560,6 +560,7 @@ model User {
   refreshTokenHash   String?
   refreshTokenExpiresAt DateTime?
   preferredLanguage  String     @default("rw")
+  termsAcceptedAt    DateTime?
   createdAt          DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   member       Member?
@@ -645,6 +646,7 @@ model Member {
   firstName       String
   lastName        String
   phone           String?
+  nationalId      String?       @unique
   ministry        MinistryScope @default(CHOIR)
   status              MemberStatus  @default(NEW_MEMBER)
   onboardingCompleted Boolean       @default(false)
