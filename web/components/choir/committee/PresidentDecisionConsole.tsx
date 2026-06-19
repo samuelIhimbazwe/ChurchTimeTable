@@ -10,13 +10,11 @@ import {
 } from '@/components/shared'
 import { SplitQueueConsole } from '@/components/shared/office/SplitQueueConsole'
 import { ChoirPositionGuide } from '@/components/choir/ChoirPositionGuide'
-import { SnoozeButton } from '@/components/workflow/SnoozeButton'
-import { FormField, Textarea, Select } from '@/components/shared/form'
 import {
   CHOIR_JOIN_REQUEST_TYPES,
   choirPositionLabel,
 } from '@/lib/constants/choir-positions'
-import { useResolvedChoirScope, useSnoozedQueue } from '@/lib/hooks'
+import { useResolvedChoirScope } from '@/lib/hooks'
 import { formatDate, relativeTime } from '@/lib/utils/format'
 import { CheckCircle2, MessageSquare, UserCircle, XCircle } from 'lucide-react'
 import { Applicant360Panel } from '@/components/choir/committee/Applicant360Panel'
@@ -69,12 +67,12 @@ export function PresidentDecisionConsole({
   const { choirId, choirLink } = useResolvedChoirScope()
   const requestIdParam = searchParams.get('requestId')
   const [mobileShowDetail, setMobileShowDetail] = useState(!!requestIdParam)
-  const seededUrlRef = useRef(false)
   const [reviewNotes, setReviewNotes] = useState('')
   const [assignedRoleId, setAssignedRoleId] = useState('')
   const [showNeedsInfoForm, setShowNeedsInfoForm] = useState(false)
   const [showRejectForm, setShowRejectForm] = useState(false)
   const [showApplicant360, setShowApplicant360] = useState(false)
+  const seededUrlRef = useRef(false)
 
   const { data: rawRequests, isLoading } = useQuery({
     queryKey: ['choir-join-requests', choirId, 'decisions'],
@@ -88,17 +86,12 @@ export function PresidentDecisionConsole({
     enabled: !!choirId,
   })
 
-  const pendingItems = useMemo(
+  const items = useMemo(
     () =>
       ((rawRequests ?? []) as JoinRequestRow[]).filter(
         (r) => r.status === 'PENDING' || r.status === 'NEEDS_INFO',
       ),
     [rawRequests],
-  )
-
-  const { visibleItems: items, bumpSnooze } = useSnoozedQueue(
-    pendingItems,
-    (r) => `president-join-${r.id}`,
   )
 
   const defaultMemberRole = positionRoles?.find((r) => r.name === 'choir_member')
@@ -200,18 +193,12 @@ export function PresidentDecisionConsole({
                 Applicant 360
               </button>
             </div>
-            <div className="flex flex-wrap items-start gap-2">
-              <Badge
-                variant={row.status === 'NEEDS_INFO' ? 'status-excused' : 'status-pending'}
-                dot
-              >
-                {row.status.replace('_', ' ')}
-              </Badge>
-              <SnoozeButton
-                entityKey={`president-join-${row.id}`}
-                onSnoozeChange={bumpSnooze}
-              />
-            </div>
+            <Badge
+              variant={row.status === 'NEEDS_INFO' ? 'status-excused' : 'status-pending'}
+              dot
+            >
+              {row.status.replace('_', ' ')}
+            </Badge>
           </div>
           {actingForPresident && (
             <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 mt-2">
@@ -271,19 +258,18 @@ export function PresidentDecisionConsole({
             <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-3">
               Position assignment
             </p>
-            <FormField label="Assign position (optional)">
-              <Select
-                value={assignedRoleId}
-                onChange={(e) => setAssignedRoleId(e.target.value)}
-              >
-                <option value="">Member only (no leadership position)</option>
-                {positionRoles?.map((role) => (
-                  <option key={role.id} value={role.id}>
-                    {choirPositionLabel(role.name)}
-                  </option>
-                ))}
-              </Select>
-            </FormField>
+            <select
+              value={assignedRoleId}
+              onChange={(e) => setAssignedRoleId(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg text-sm bg-surface border border-border"
+            >
+              <option value="">Member only (no leadership position)</option>
+              {positionRoles?.map((role) => (
+                <option key={role.id} value={role.id}>
+                  {choirPositionLabel(role.name)}
+                </option>
+              ))}
+            </select>
             {assignedRoleId && (
               <div className="mt-3">
                 <ChoirPositionGuide
@@ -338,14 +324,13 @@ export function PresidentDecisionConsole({
 
             {showNeedsInfoForm && (
               <div className="space-y-3 mt-4 border-t border-border pt-4">
-                <FormField label="Requirements for applicant" required>
-                  <Textarea
-                    rows={3}
-                    value={reviewNotes}
-                    onChange={(e) => setReviewNotes(e.target.value)}
-                    placeholder="Requirements, audition steps, or questions…"
-                  />
-                </FormField>
+                <textarea
+                  rows={3}
+                  value={reviewNotes}
+                  onChange={(e) => setReviewNotes(e.target.value)}
+                  placeholder="Requirements, audition steps, or questions…"
+                  className="w-full px-3 py-2.5 rounded-lg text-sm border border-border bg-surface resize-none"
+                />
                 <div className="flex gap-2">
                   <button
                     type="button"
@@ -386,14 +371,13 @@ export function PresidentDecisionConsole({
                     </button>
                   ))}
                 </div>
-                <FormField label="Rejection notes" hint="Optional — shown to the applicant.">
-                  <Textarea
-                    rows={3}
-                    value={reviewNotes}
-                    onChange={(e) => setReviewNotes(e.target.value)}
-                    placeholder="Optional review notes…"
-                  />
-                </FormField>
+                <textarea
+                  rows={3}
+                  value={reviewNotes}
+                  onChange={(e) => setReviewNotes(e.target.value)}
+                  placeholder="Optional review notes…"
+                  className="w-full px-3 py-2.5 rounded-lg text-sm border border-border bg-surface resize-none"
+                />
                 <div className="flex gap-2">
                   <button
                     type="button"
@@ -476,15 +460,9 @@ export function PresidentDecisionConsole({
           <>
             <div className="flex justify-between gap-2">
               <span className="text-sm font-semibold truncate">{memberName(item)}</span>
-              <div className="flex items-center gap-1 shrink-0">
-                <Badge variant="default" className="text-[10px]">
-                  {item.status === 'NEEDS_INFO' ? 'Needs info' : 'Pending'}
-                </Badge>
-                <SnoozeButton
-                  entityKey={`president-join-${item.id}`}
-                  onSnoozeChange={bumpSnooze}
-                />
-              </div>
+              <Badge variant="default" className="shrink-0 text-[10px]">
+                {item.status === 'NEEDS_INFO' ? 'Needs info' : 'Pending'}
+              </Badge>
             </div>
             <p className="text-xs text-text-muted mt-1">{requestTypeLabel(item.requestType)}</p>
             <p className="text-xs text-text-muted mt-0.5">

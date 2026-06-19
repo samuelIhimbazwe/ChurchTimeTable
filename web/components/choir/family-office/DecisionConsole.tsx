@@ -15,8 +15,6 @@ import { Card, Badge, SkeletonCard } from '@/components/shared'
 import { SplitQueueConsole } from '@/components/shared/office/SplitQueueConsole'
 import { FamilyPaymentInstructionsCard } from '@/components/choir/FamilyPaymentInstructionsCard'
 import { Member360Panel } from '@/components/choir/family-office/Member360Panel'
-import { SnoozeButton } from '@/components/workflow/SnoozeButton'
-import { useSnoozedQueue } from '@/lib/hooks'
 import { familyOfficePath, type FamilyOfficeKind } from '@/lib/choir/family-office'
 import { formatCurrency, formatDate, relativeTime } from '@/lib/utils/format'
 import {
@@ -67,13 +65,13 @@ export function DecisionConsole({
   const claimIdParam = searchParams.get('claimId')
   const [showMember360, setShowMember360] = useState(false)
   const [mobileShowDetail, setMobileShowDetail] = useState(!!claimIdParam)
-  const seededUrlRef = useRef(false)
   const [confirmedAmount, setConfirmedAmount] = useState('')
   const [discrepancyReason, setDiscrepancyReason] = useState('')
   const [rejectReason, setRejectReason] = useState('')
   const [showPartialForm, setShowPartialForm] = useState(false)
   const [showRejectForm, setShowRejectForm] = useState(false)
   const [showPaymentPanel, setShowPaymentPanel] = useState(false)
+  const seededUrlRef = useRef(false)
 
   const contributionsPath = familyOfficePath(choirId, officeKind, 'contributions')
 
@@ -92,10 +90,7 @@ export function DecisionConsole({
     queryFn: () => familiesApi.getById(familyId),
   })
 
-  const { visibleItems: items, bumpSnooze } = useSnoozedQueue(
-    inbox?.items ?? [],
-    (c) => `family-claim-${c.id}`,
-  )
+  const items = inbox?.items ?? []
 
   const selectedId = useMemo(() => {
     if (claimIdParam && items.some((i) => i.id === claimIdParam)) return claimIdParam
@@ -242,15 +237,9 @@ export function DecisionConsole({
             {selected.typeName ?? selected.campaignName ?? 'Contribution'}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="status-pending" dot>
-            Waiting for confirmation
-          </Badge>
-          <SnoozeButton
-            entityKey={`family-claim-${selected.id}`}
-            onSnoozeChange={bumpSnooze}
-          />
-        </div>
+        <Badge variant="status-pending" dot>
+          Waiting for confirmation
+        </Badge>
       </div>
       <dl className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4 text-sm">
         <div>
@@ -631,15 +620,9 @@ export function DecisionConsole({
               <span className="font-mono text-xs font-semibold text-text-primary">
                 {item.referenceNumber}
               </span>
-              <div className="flex items-center gap-1 shrink-0">
-                <span className="text-sm font-semibold">
-                  {formatCurrency(item.claimedAmount)}
-                </span>
-                <SnoozeButton
-                  entityKey={`family-claim-${item.id}`}
-                  onSnoozeChange={bumpSnooze}
-                />
-              </div>
+              <span className="text-sm font-semibold shrink-0">
+                {formatCurrency(item.claimedAmount)}
+              </span>
             </div>
             <p className="text-sm text-text-secondary mt-1 truncate">
               {item.memberNumber} {item.memberName}

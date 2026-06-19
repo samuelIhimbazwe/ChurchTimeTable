@@ -5,14 +5,12 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { contributionsApi, type ContributionClaim } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
-import { Badge, Card, HubTabs, SkeletonCard, EmptyState } from '@/components/shared'
+import { Badge, Card, HubTabs, SkeletonCard } from '@/components/shared'
 import { SplitQueueConsole } from '@/components/shared/office/SplitQueueConsole'
 import { ThreeWayMatchPanel } from '@/components/choir/committee/ThreeWayMatchPanel'
-import { SnoozeButton } from '@/components/workflow/SnoozeButton'
-import { FormField, Textarea } from '@/components/shared/form'
-import { useResolvedChoirScope, useSnoozedQueue } from '@/lib/hooks'
+import { useResolvedChoirScope } from '@/lib/hooks'
 import { formatCurrency, relativeTime } from '@/lib/utils/format'
-import { CheckCircle2, RotateCcw, XCircle, Wallet } from 'lucide-react'
+import { CheckCircle2, RotateCcw, XCircle } from 'lucide-react'
 
 const REJECT_TEMPLATES = [
   'Receipt does not match amount',
@@ -49,11 +47,11 @@ export function TreasurerVerificationConsole() {
 
   const claimIdParam = searchParams.get('claimId')
   const [mobileShowDetail, setMobileShowDetail] = useState(!!claimIdParam)
-  const seededUrlRef = useRef(false)
   const [showRejectForm, setShowRejectForm] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
   const [sponsorConfirmedAmount, setSponsorConfirmedAmount] = useState('')
   const [sponsorDiscrepancyReason, setSponsorDiscrepancyReason] = useState('')
+  const seededUrlRef = useRef(false)
 
   const { data: treasuryInbox, isLoading: loadingTreasury } = useQuery({
     queryKey: ['treasury-inbox', choirId],
@@ -69,13 +67,7 @@ export function TreasurerVerificationConsole() {
 
   const treasuryItems = treasuryInbox?.items ?? []
   const sponsorItems = sponsorInbox?.items ?? []
-  const rawItems = activeQueue === 'treasury' ? treasuryItems : sponsorItems
-
-  const { visibleItems: items, bumpSnooze } = useSnoozedQueue(
-    rawItems,
-    (c) => `${activeQueue}-verify-${c.id}`,
-  )
-
+  const items = activeQueue === 'treasury' ? treasuryItems : sponsorItems
   const isLoading = activeQueue === 'treasury' ? loadingTreasury : loadingSponsor
 
   const setQueue = (queue: QueueId) => {
@@ -212,15 +204,9 @@ export function TreasurerVerificationConsole() {
         <p className={`font-medium text-sm truncate ${active ? 'text-primary-700' : ''}`}>
           {row.memberName ?? 'Member'}
         </p>
-        <div className="flex items-center gap-1 shrink-0">
-          <span className="text-xs font-semibold">
-            {formatCurrency(row.confirmedAmount ?? row.claimedAmount, row.currency)}
-          </span>
-          <SnoozeButton
-            entityKey={`${activeQueue}-verify-${row.id}`}
-            onSnoozeChange={bumpSnooze}
-          />
-        </div>
+        <span className="text-xs font-semibold shrink-0">
+          {formatCurrency(row.confirmedAmount ?? row.claimedAmount, row.currency)}
+        </span>
       </div>
       <p className="text-xs text-text-muted truncate mt-0.5">
         {activeQueue === 'treasury'
@@ -244,15 +230,9 @@ export function TreasurerVerificationConsole() {
                 {row.referenceNumber ?? row.id.slice(0, 8)} · {row.typeName ?? 'Contribution'}
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="status-pending" dot>
-                Awaiting verify
-              </Badge>
-              <SnoozeButton
-                entityKey={`${activeQueue}-verify-${row.id}`}
-                onSnoozeChange={bumpSnooze}
-              />
-            </div>
+            <Badge variant="status-pending" dot>
+              Awaiting verify
+            </Badge>
           </div>
         </div>
 
@@ -293,14 +273,13 @@ export function TreasurerVerificationConsole() {
         ) : (
           <Card padding="md">
             <p className="font-semibold text-sm mb-2">Return to family head</p>
-            <FormField label="Reason" required hint="At least 3 characters.">
-              <Textarea
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                rows={3}
-                placeholder="Why this needs family review…"
-              />
-            </FormField>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              rows={3}
+              placeholder="Why this needs family review…"
+              className="w-full px-3 py-2 rounded-lg text-sm bg-surface border border-border"
+            />
             <div className="flex flex-wrap gap-2 mt-2">
               {REJECT_TEMPLATES.map((t) => (
                 <button
@@ -351,18 +330,10 @@ export function TreasurerVerificationConsole() {
     return (
       <div className="space-y-4 min-h-[420px]">
         <div className="rounded-xl border border-border bg-surface-raised px-4 py-3">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="font-semibold text-lg">{row.memberName ?? 'Sponsor'}</p>
-              <p className="text-xs text-text-muted mt-0.5">
-                Sponsor gift — no family approval step
-              </p>
-            </div>
-            <SnoozeButton
-              entityKey={`${activeQueue}-verify-${row.id}`}
-              onSnoozeChange={bumpSnooze}
-            />
-          </div>
+          <p className="font-semibold text-lg">{row.memberName ?? 'Sponsor'}</p>
+          <p className="text-xs text-text-muted mt-0.5">
+            Sponsor gift — no family approval step
+          </p>
         </div>
 
         <Card padding="md">
@@ -413,13 +384,12 @@ export function TreasurerVerificationConsole() {
           </div>
         ) : (
           <Card padding="md">
-            <FormField label="Rejection reason" required>
-              <Textarea
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                rows={3}
-              />
-            </FormField>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 rounded-lg text-sm bg-surface border border-border"
+            />
             <div className="flex gap-2 mt-3">
               <button
                 type="button"
@@ -487,20 +457,13 @@ export function TreasurerVerificationConsole() {
           activeQueue === 'treasury' ? renderTreasuryDetail(row) : renderSponsorDetail(row)
         }
         emptyState={
-          <EmptyState
-            icon={Wallet}
-            title={
-              activeQueue === 'treasury'
-                ? 'No claims awaiting verification'
-                : 'No pending sponsor gifts'
-            }
-            description={
-              activeQueue === 'treasury'
-                ? 'Family-approved umusanzu will appear here for treasurer verification.'
-                : 'Sponsor gift claims will appear here when submitted.'
-            }
-            className="py-10"
-          />
+          <Card padding="md">
+            <p className="text-sm text-text-muted text-center py-10">
+              {activeQueue === 'treasury'
+                ? 'No family-approved claims awaiting verification.'
+                : 'No pending sponsor gifts.'}
+            </p>
+          </Card>
         }
         isLoading={isLoading}
         loadingState={<SkeletonCard rows={8} />}
