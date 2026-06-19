@@ -3,7 +3,9 @@
 import { useCallback, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
 import { useUIStore, useAuthStore } from '@/stores'
-import { authUi, commonUi, localeToBcp47, shellUi, type AppLocale } from './auth-ui'
+import { authUi, isAppLocale, localeToBcp47, type AppLocale } from './auth-ui'
+import { shellUi } from './shell-ui'
+import { commonUi } from './common-ui'
 import { translateLabel } from './labels'
 import { translateRole } from './roles'
 import type { NavSection } from '@/lib/navigation/role-nav'
@@ -19,7 +21,8 @@ import { useProtocolDashboardContext } from '@/lib/hooks/useProtocolDashboardCon
 const EMPTY_PERMISSIONS: string[] = []
 
 export function useTranslations() {
-  const locale = useUIStore((s) => s.locale)
+  const storedLocale = useUIStore((s) => s.locale)
+  const locale: AppLocale = isAppLocale(storedLocale) ? storedLocale : 'en'
 
   const tr = useCallback(
     (text: string) => translateLabel(text, locale),
