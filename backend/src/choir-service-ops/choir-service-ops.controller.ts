@@ -297,6 +297,21 @@ export class ChoirServiceOpsController {
     return this.preparation.upsertPlan(userId, body);
   }
 
+  @Post('choir/member-service-preparation/:occurrenceId/acknowledge')
+  acknowledgeMemberPreparation(
+    @CurrentUser('sub') userId: string,
+    @Query('choirId') choirId: string,
+    @Param('occurrenceId') occurrenceId: string,
+    @Body() body: { itemKey: string },
+  ) {
+    return this.preparation.acknowledgeForMember(
+      userId,
+      choirId,
+      occurrenceId,
+      body.itemKey,
+    );
+  }
+
   @Get('choirs/dissolution-transfers')
   @RequireAnyPermissions(PERMISSIONS.CHURCH_GOVERNANCE_MANAGE, PERMISSIONS.CHOIR_OVERSIGHT)
   listDissolutions(@CurrentUser('sub') userId: string) {

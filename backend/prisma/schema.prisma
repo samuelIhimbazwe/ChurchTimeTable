@@ -598,6 +598,7 @@ model User {
   uxAnalyticsEvents                 UxAnalyticsEvent[]
   notificationDeliveryLogs        NotificationDeliveryLog[] @relation("NotificationDeliveryRecipient")
   prayerRequestsSubmitted           PrayerRequest[]           @relation("PrayerRequestSubmitter")
+  servicePreparationAcks            ServicePreparationAcknowledgment[]
 
   @@index([email])
 }
@@ -3452,12 +3453,28 @@ model ServicePreparationPlan {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
-  choir      Choir                    @relation(fields: [choirId], references: [id], onDelete: Cascade)
-  occurrence OperationOccurrence      @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
-  items      ServicePreparationItem[]
+  choir           Choir                              @relation(fields: [choirId], references: [id], onDelete: Cascade)
+  occurrence      OperationOccurrence                @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
+  items           ServicePreparationItem[]
+  acknowledgments ServicePreparationAcknowledgment[]
 
   @@unique([choirId, occurrenceId])
   @@index([occurrenceId])
+}
+
+model ServicePreparationAcknowledgment {
+  id        String   @id @default(uuid())
+  planId    String
+  userId    String
+  itemKey   String
+  createdAt DateTime @default(now())
+
+  plan ServicePreparationPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  user User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, userId, itemKey])
+  @@index([planId])
+  @@index([userId])
 }
 
 model ServicePreparationItem {

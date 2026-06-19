@@ -34,6 +34,7 @@ import { ProtocolTeamLeadersService } from './protocol-team-leaders.service';
 import { ProtocolTeamReportsService } from './protocol-team-reports.service';
 import { ProtocolOfficerSlaService } from './protocol-officer-sla.service';
 import { ProtocolDocumentsService } from './protocol-documents.service';
+import { ProtocolMemberRecognitionService } from './protocol-member-recognition.service';
 import { ProtocolRankingCategory } from '@prisma/client';
 
 @Controller('protocol')
@@ -53,6 +54,7 @@ export class ProtocolController {
     private teamReports: ProtocolTeamReportsService,
     private officerSla: ProtocolOfficerSlaService,
     private documents: ProtocolDocumentsService,
+    private recognition: ProtocolMemberRecognitionService,
   ) {}
 
   @Get('documents')
@@ -109,6 +111,16 @@ export class ProtocolController {
   @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.MEMBER_READ)
   memberDashboard(@CurrentUser('sub') userId: string) {
     return this.dashboard.memberSummary(userId);
+  }
+
+  @Get('recognition/me')
+  @RequireAnyPermissions(
+    PERMISSIONS.PROTOCOL_VIEW,
+    PERMISSIONS.MEMBER_READ,
+    PERMISSIONS.MEMBER_PORTAL_VIEW,
+  )
+  myRecognition(@CurrentUser('sub') userId: string) {
+    return this.recognition.getMyRecognition(userId);
   }
 
   @Get('my-statistics')

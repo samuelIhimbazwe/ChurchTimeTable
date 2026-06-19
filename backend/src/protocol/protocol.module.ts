@@ -5,6 +5,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
 import { ReportsModule } from '../reports/reports.module';
 import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
+import { FinanceModule } from '../finance/finance.module';
 import { ProtocolController } from './protocol.controller';
 import { ProtocolTeamsService } from './protocol-teams.service';
 import { ProtocolAssignmentEngine } from './protocol-assignment.engine';
@@ -25,6 +26,7 @@ import { ProtocolTeamReportsService } from './protocol-team-reports.service';
 import { ProtocolNotificationsService } from './protocol-notifications.service';
 import { ProtocolOfficerSlaService } from './protocol-officer-sla.service';
 import { ProtocolDocumentsService } from './protocol-documents.service';
+import { ProtocolMemberRecognitionService } from './protocol-member-recognition.service';
 
 @Module({
   imports: [
@@ -34,6 +36,7 @@ import { ProtocolDocumentsService } from './protocol-documents.service';
     MemberPhoneEnforcementModule,
     ReportsModule,
     PilotReadyModule,
+    FinanceModule,
   ],
   controllers: [ProtocolController],
   providers: [
@@ -56,6 +59,7 @@ import { ProtocolDocumentsService } from './protocol-documents.service';
     ProtocolNotificationsService,
     ProtocolOfficerSlaService,
     ProtocolDocumentsService,
+    ProtocolMemberRecognitionService,
   ],
   exports: [ProtocolTeamsService, ProtocolDashboardService],
 })

@@ -136,7 +136,57 @@ export class ServicePreparationService {
 
   async getPlanForMember(actorUserId: string, choirId: string, occurrenceId: string) {
     await this.assertActiveMember(actorUserId, choirId);
-    return this.loadPlan(choirId, occurrenceId);
+    const plan = await this.loadPlan(choirId, occurrenceId);
+    const planId = 'id' in plan ? plan.id : undefined;
+    const acks =
+      planId != null
+        ? await this.prisma.servicePreparationAcknowledgment.findMany({
+            where: { planId, userId: actorUserId },
+            select: { itemKey: true },
+          })
+        : [];
+    return {
+      ...plan,
+      myAcknowledgments: acks.map((a) => a.itemKey),
+    };
+  }
+
+  async acknowledgeForMember(
+    actorUserId: string,
+    choirId: string,
+    occurrenceId: string,
+    itemKey: string,
+  ) {
+    await this.assertActiveMember(actorUserId, choirId);
+    const key = itemKey?.trim();
+    if (!key) {
+      throw new ForbiddenException('itemKey required');
+    }
+
+    const plan = await this.prisma.servicePreparationPlan.findUnique({
+      where: { choirId_occurrenceId: { choirId, occurrenceId } },
+    });
+    if (!plan) {
+      throw new NotFoundException('No preparation plan published for this service');
+    }
+
+    await this.prisma.servicePreparationAcknowledgment.upsert({
+      where: {
+        planId_userId_itemKey: { planId: plan.id, userId: actorUserId, itemKey: key },
+      },
+      create: { planId: plan.id, userId: actorUserId, itemKey: key },
+      update: {},
+    });
+
+    await this.audit.log({
+      userId: actorUserId,
+      action: 'SERVICE_PREPARATION_ACKNOWLEDGED',
+      entity: 'ServicePreparationPlan',
+      entityId: plan.id,
+      newValue: { itemKey: key, occurrenceId },
+    });
+
+    return this.getPlanForMember(actorUserId, choirId, occurrenceId);
   }
 
   async upsertPlan(

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -15,6 +15,8 @@ import { Card, Badge, SkeletonCard } from '@/components/shared'
 import { SplitQueueConsole } from '@/components/shared/office/SplitQueueConsole'
 import { FamilyPaymentInstructionsCard } from '@/components/choir/FamilyPaymentInstructionsCard'
 import { Member360Panel } from '@/components/choir/family-office/Member360Panel'
+import { SnoozeButton } from '@/components/workflow/SnoozeButton'
+import { useSnoozedQueue } from '@/lib/hooks'
 import { familyOfficePath, type FamilyOfficeKind } from '@/lib/choir/family-office'
 import { formatCurrency, formatDate, relativeTime } from '@/lib/utils/format'
 import {
@@ -65,6 +67,7 @@ export function DecisionConsole({
   const claimIdParam = searchParams.get('claimId')
   const [showMember360, setShowMember360] = useState(false)
   const [mobileShowDetail, setMobileShowDetail] = useState(!!claimIdParam)
+  const seededUrlRef = useRef(false)
   const [confirmedAmount, setConfirmedAmount] = useState('')
   const [discrepancyReason, setDiscrepancyReason] = useState('')
   const [rejectReason, setRejectReason] = useState('')
@@ -89,7 +92,10 @@ export function DecisionConsole({
     queryFn: () => familiesApi.getById(familyId),
   })
 
-  const items = inbox?.items ?? []
+  const { visibleItems: items, bumpSnooze } = useSnoozedQueue(
+    inbox?.items ?? [],
+    (c) => `family-claim-${c.id}`,
+  )
 
   const selectedId = useMemo(() => {
     if (claimIdParam && items.some((i) => i.id === claimIdParam)) return claimIdParam
@@ -120,10 +126,17 @@ export function DecisionConsole({
   }, [selected?.id, selected?.claimedAmount])
 
   useEffect(() => {
-    if (items.length > 0 && !claimIdParam && selectedId) {
-      setSelectedId(selectedId)
+    if (claimIdParam) {
+      seededUrlRef.current = true
+      return
     }
-  }, [items.length, claimIdParam, selectedId, setSelectedId])
+    if (items.length === 0 || !selectedId || seededUrlRef.current) return
+    seededUrlRef.current = true
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('claimId', selectedId)
+    router.replace(`?${params.toString()}`, { scroll: false })
+    setMobileShowDetail(true)
+  }, [items.length, claimIdParam, selectedId, router, searchParams])
 
   const { data: timeline, isLoading: loadingTimeline } = useQuery({
     queryKey: ['contribution-timeline', selectedId],
@@ -229,9 +242,15 @@ export function DecisionConsole({
             {selected.typeName ?? selected.campaignName ?? 'Contribution'}
           </p>
         </div>
-        <Badge variant="status-pending" dot>
-          Waiting for confirmation
-        </Badge>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="status-pending" dot>
+            Waiting for confirmation
+          </Badge>
+          <SnoozeButton
+            entityKey={`family-claim-${selected.id}`}
+            onSnoozeChange={bumpSnooze}
+          />
+        </div>
       </div>
       <dl className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4 text-sm">
         <div>
@@ -612,9 +631,15 @@ export function DecisionConsole({
               <span className="font-mono text-xs font-semibold text-text-primary">
                 {item.referenceNumber}
               </span>
-              <span className="text-sm font-semibold shrink-0">
-                {formatCurrency(item.claimedAmount)}
-              </span>
+              <div className="flex items-center gap-1 shrink-0">
+                <span className="text-sm font-semibold">
+                  {formatCurrency(item.claimedAmount)}
+                </span>
+                <SnoozeButton
+                  entityKey={`family-claim-${item.id}`}
+                  onSnoozeChange={bumpSnooze}
+                />
+              </div>
             </div>
             <p className="text-sm text-text-secondary mt-1 truncate">
               {item.memberNumber} {item.memberName}

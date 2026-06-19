@@ -19,6 +19,8 @@ import { ChoirSearchService } from './choir-search.service';
 import { ChoirSchedulingNotificationsService } from './choir-scheduling-notifications.service';
 import { ChoirScheduleConflictService } from './choir-schedule-conflict.service';
 import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
+import { FinanceModule } from '../finance/finance.module';
+import { ChoirMemberRecognitionService } from './choir-member-recognition.service';
 
 @Module({
   imports: [
@@ -27,6 +29,7 @@ import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
     NotificationsModule,
     MemberPhoneEnforcementModule,
     PilotReadyModule,
+    FinanceModule,
   ],
   controllers: [ChoirSchedulingController],
   providers: [
@@ -44,6 +47,7 @@ import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
     ChoirSearchService,
     ChoirSchedulingNotificationsService,
     ChoirScheduleConflictService,
+    ChoirMemberRecognitionService,
   ],
   exports: [ChoirCalendarService, ChoirServiceAssignmentsService, ChoirScheduleConflictService],
 })

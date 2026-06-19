@@ -32,6 +32,7 @@ import { ChoirReportsService } from './choir-reports.service';
 import { ChoirCalendarService } from './choir-calendar.service';
 import { ChoirSearchService } from './choir-search.service';
 import { ChoirServiceRulesService } from './choir-service-rules.service';
+import { ChoirMemberRecognitionService } from './choir-member-recognition.service';
 
 @Controller('choir/scheduling')
 @UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
@@ -48,6 +49,7 @@ export class ChoirSchedulingController {
     private calendar: ChoirCalendarService,
     private search: ChoirSearchService,
     private rules: ChoirServiceRulesService,
+    private recognition: ChoirMemberRecognitionService,
   ) {}
 
   @Get('dashboard')
@@ -318,6 +320,20 @@ export class ChoirSchedulingController {
     @Query('choirId') choirId?: string,
   ) {
     return this.attendance.myHistory(userId, choirId);
+  }
+
+  @Get('recognition/me')
+  @RequireAnyPermissions(
+    PERMISSIONS.CHOIR_OPS_VIEW,
+    PERMISSIONS.MEMBER_READ,
+    PERMISSIONS.MEMBER_PORTAL_VIEW,
+    PERMISSIONS.CHOIR_REHEARSAL_VIEW,
+  )
+  myRecognition(
+    @CurrentUser('sub') userId: string,
+    @Query('choirId') choirId: string,
+  ) {
+    return this.recognition.getMyRecognition(userId, choirId);
   }
 
   @Post('rankings/generate')
