@@ -1,12 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { contributionsApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
-import { Card } from '@/components/shared'
+import { Card, EmptyState } from '@/components/shared'
+import { FormField, Input, Select, Textarea } from '@/components/shared/form'
 import { FamilyPaymentInstructionsCard } from '@/components/choir/FamilyPaymentInstructionsCard'
+import {
+  contributeClaimFormSchema,
+  type ContributeClaimFormValues,
+} from '@/lib/validation/schemas'
 import { formatCurrency } from '@/lib/utils/format'
+import { Wallet } from 'lucide-react'
 
 const CHANNELS = [
   { value: 'MOMO', label: 'Mobile Money (MoMo)' },
@@ -26,26 +34,33 @@ export function ProtocolContributeForm() {
     queryFn: () => contributionsApi.getProtocolSubmitContext(),
   })
 
-  const [typeId, setTypeId] = useState('')
-  const [customType, setCustomType] = useState('')
-  const [amount, setAmount] = useState('')
-  const [paymentAt, setPaymentAt] = useState(toLocalDatetimeInput())
-  const [channel, setChannel] = useState<'MOMO' | 'BANK' | 'OTHER'>('MOMO')
-  const [notes, setNotes] = useState('')
+  const form = useForm<ContributeClaimFormValues>({
+    resolver: zodResolver(contributeClaimFormSchema),
+    defaultValues: {
+      typeId: '',
+      customType: '',
+      amount: '',
+      paymentAt: toLocalDatetimeInput(),
+      channel: 'MOMO',
+      notes: '',
+    },
+  })
 
+  const typeId = form.watch('typeId')
   const selectedType = ctx?.types.find((t) => t.id === typeId)
   const isOther = selectedType?.code === 'other'
+  const { errors } = form.formState
 
   const submit = useMutation({
-    mutationFn: () =>
+    mutationFn: (data: ContributeClaimFormValues) =>
       contributionsApi.submitProtocolClaim({
-        contributionTypeCatalogId: typeId,
-        claimedAmount: parseFloat(amount),
-        paymentAt: new Date(paymentAt).toISOString(),
-        paymentChannel: channel,
+        contributionTypeCatalogId: data.typeId,
+        claimedAmount: parseFloat(data.amount),
+        paymentAt: new Date(data.paymentAt).toISOString(),
+        paymentChannel: data.channel,
         currency: 'RWF',
-        notes: notes.trim() || undefined,
-        customTypeLabel: isOther ? customType.trim() : undefined,
+        notes: data.notes?.trim() || undefined,
+        customTypeLabel: isOther ? data.customType?.trim() : undefined,
       }),
     onSuccess: () => {
       toast.success(
@@ -54,12 +69,25 @@ export function ProtocolContributeForm() {
       )
       qc.invalidateQueries({ queryKey: ['protocol-contribution-submit-context'] })
       qc.invalidateQueries({ queryKey: ['my-contributions'] })
-      setAmount('')
-      setNotes('')
-      setCustomType('')
+      form.reset({
+        typeId: '',
+        customType: '',
+        amount: '',
+        paymentAt: toLocalDatetimeInput(),
+        channel: 'MOMO',
+        notes: '',
+      })
     },
     onError: (err: Error) => toast.error('Could not submit', err.message),
   })
+
+  function onSubmit(data: ContributeClaimFormValues) {
+    if (isOther && (data.customType?.trim().length ?? 0) < 2) {
+      form.setError('customType', { message: 'Describe the contribution type' })
+      return
+    }
+    submit.mutate(data)
+  }
 
   if (isLoading) {
     return <Card padding="md"><p className="text-sm text-text-muted">Loading…</p></Card>
@@ -79,72 +107,60 @@ export function ProtocolContributeForm() {
         <p className="text-xs text-text-muted mb-4">
           Protocol members pay directly to the unity treasurer — there is no family approval step.
         </p>
-        <div className="space-y-3">
-          <select
-            value={typeId}
-            onChange={(e) => setTypeId(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border"
-          >
-            <option value="">Contribution type</option>
-            {ctx?.types.map((t) => (
-              <option key={t.id} value={t.id}>{t.name}</option>
-            ))}
-          </select>
+        <form className="space-y-3" onSubmit={form.handleSubmit(onSubmit)}>
+          <FormField label="Contribution type" required error={errors.typeId?.message}>
+            <Select {...form.register('typeId')} error={!!errors.typeId}>
+              <option value="">Select type…</option>
+              {ctx?.types.map((t) => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </Select>
+          </FormField>
+
           {isOther && (
-            <input
-              value={customType}
-              onChange={(e) => setCustomType(e.target.value)}
-              placeholder="Describe contribution type"
-              className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border"
-            />
+            <FormField label='Describe "Other"' required error={errors.customType?.message}>
+              <Input
+                {...form.register('customType')}
+                placeholder="Describe contribution type"
+                error={!!errors.customType}
+              />
+            </FormField>
           )}
-          <input
-            type="number"
-            min="1"
-            step="1"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="Amount (RWF)"
-            className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border"
-          />
-          <input
-            type="datetime-local"
-            value={paymentAt}
-            onChange={(e) => setPaymentAt(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border"
-          />
-          <select
-            value={channel}
-            onChange={(e) => setChannel(e.target.value as typeof channel)}
-            className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border"
-          >
-            {CHANNELS.map((c) => (
-              <option key={c.value} value={c.value}>{c.label}</option>
-            ))}
-          </select>
-          <textarea
-            rows={2}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Notes (optional)"
-            className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border resize-none"
-          />
+
+          <FormField label="Amount (RWF)" required error={errors.amount?.message}>
+            <Input
+              type="number"
+              min="1"
+              step="1"
+              {...form.register('amount')}
+              error={!!errors.amount}
+            />
+          </FormField>
+
+          <FormField label="Payment date & time" required error={errors.paymentAt?.message}>
+            <Input type="datetime-local" {...form.register('paymentAt')} error={!!errors.paymentAt} />
+          </FormField>
+
+          <FormField label="How you paid">
+            <Select {...form.register('channel')}>
+              {CHANNELS.map((c) => (
+                <option key={c.value} value={c.value}>{c.label}</option>
+              ))}
+            </Select>
+          </FormField>
+
+          <FormField label="Notes" hint="Optional">
+            <Textarea rows={2} {...form.register('notes')} placeholder="Notes (optional)" />
+          </FormField>
+
           <button
-            type="button"
-            disabled={submit.isPending || !typeId || !amount}
-            onClick={() => {
-              const parsedAmount = parseFloat(amount)
-              if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-                toast.error('Amount must be greater than zero')
-                return
-              }
-              submit.mutate()
-            }}
+            type="submit"
+            disabled={submit.isPending}
             className="w-full px-4 py-2.5 text-sm font-semibold bg-primary-700 text-white rounded-lg disabled:opacity-60"
           >
             {submit.isPending ? 'Submitting…' : 'Submit claim'}
           </button>
-        </div>
+        </form>
       </Card>
     </div>
   )
@@ -159,7 +175,17 @@ export function ProtocolMyContributionsList() {
   const items = (raw ?? []).filter((c) => !c.familyId && !c.choirId)
 
   if (isLoading) return <p className="text-sm text-text-muted">Loading history…</p>
-  if (items.length === 0) return <p className="text-sm text-text-muted">No contributions yet.</p>
+
+  if (items.length === 0) {
+    return (
+      <EmptyState
+        icon={Wallet}
+        title="No protocol contributions yet"
+        description="After you pay the unity treasurer, submit a claim here for confirmation."
+        className="py-8"
+      />
+    )
+  }
 
   return (
     <ul className="divide-y divide-border">

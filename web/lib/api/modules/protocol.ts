@@ -1,4 +1,5 @@
 import { apiClient } from '../client'
+import type { MemberRecognitionResponse } from './choirScheduling'
 import type {
   ProtocolOccurrenceTeam, ProtocolAttendanceOutcome,
   ProtocolReplacementRequest, ProtocolRankingEntry,
@@ -188,6 +189,9 @@ export const protocolApi = {
     const raw = await apiClient.get<never, Record<string, unknown>>('/protocol/dashboard/me')
     return adaptMyStats(raw)
   },
+
+  getMyRecognition: () =>
+    apiClient.get<never, MemberRecognitionResponse>('/protocol/recognition/me'),
 
   listTeams: (params?: { from?: string; to?: string }) =>
     apiClient.get<never, unknown[]>('/protocol/teams', { params }),

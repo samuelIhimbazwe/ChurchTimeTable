@@ -1,14 +1,18 @@
 'use client'
 
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { disciplineApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import { useAuthStore } from '@/stores'
 import { canFinalApprove } from '@/lib/roles'
 import {
-  Card, CardHeader, CardTitle, Badge, Avatar, PermissionGate, SkeletonCard,
+  Card, CardHeader, CardTitle, Badge, Avatar, PermissionGate, SkeletonCard, EmptyState,
 } from '@/components/shared'
+import { FormField, Textarea } from '@/components/shared/form'
+import { disciplineCaseFormSchema, type DisciplineCaseFormValues } from '@/lib/validation/schemas'
 import { AlertTriangle } from 'lucide-react'
 import { ChoirMemberPicker } from '@/components/choir/ChoirMemberPicker'
 import { formatDate } from '@/lib/utils/format'
@@ -28,8 +32,14 @@ export default function DisciplinePage() {
   const showAdvance = canFinalApprove(user?.role, user?.permissions)
 
   const [showCreate, setShowCreate] = useState(false)
-  const [memberId, setMemberId] = useState('')
-  const [description, setDescription] = useState('')
+
+  const form = useForm<DisciplineCaseFormValues>({
+    resolver: zodResolver(disciplineCaseFormSchema),
+    defaultValues: { memberId: '', description: '' },
+  })
+
+  const memberId = form.watch('memberId')
+  const { errors } = form.formState
 
   const { data: cases, isLoading } = useQuery({
     queryKey: ['discipline'],
@@ -37,12 +47,11 @@ export default function DisciplinePage() {
   })
 
   const createCase = useMutation({
-    mutationFn: () =>
-      disciplineApi.create({ memberId, description, ministry: 'CHOIR' }),
+    mutationFn: (data: DisciplineCaseFormValues) =>
+      disciplineApi.create({ memberId: data.memberId, description: data.description, ministry: 'CHOIR' }),
     onSuccess: () => {
       toast.success('Discipline case opened')
-      setMemberId('')
-      setDescription('')
+      form.reset()
       setShowCreate(false)
       qc.invalidateQueries({ queryKey: ['discipline'] })
     },
@@ -71,6 +80,7 @@ export default function DisciplinePage() {
         </div>
         <PermissionGate permission="discipline:manage">
           <button
+            type="button"
             onClick={() => setShowCreate((v) => !v)}
             className="px-4 py-2 text-sm font-semibold bg-gold-500 text-primary-900 rounded-lg hover:bg-gold-400 transition-colors"
           >
@@ -84,75 +94,77 @@ export default function DisciplinePage() {
           <CardHeader>
             <CardTitle>Open Discipline Case</CardTitle>
           </CardHeader>
-          <div className="space-y-3">
-            <ChoirMemberPicker value={memberId} onChange={(id) => setMemberId(id)} />
-            <textarea
-              placeholder="Description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold-500 resize-none"
-            />
+          <form
+            className="space-y-3"
+            onSubmit={form.handleSubmit((data) => createCase.mutate(data))}
+          >
+            <FormField label="Member" required error={errors.memberId?.message}>
+              <ChoirMemberPicker
+                value={memberId}
+                onChange={(id) => form.setValue('memberId', id, { shouldValidate: true })}
+              />
+            </FormField>
+            <FormField label="Description" required error={errors.description?.message}>
+              <Textarea
+                placeholder="Describe the situation and context…"
+                rows={3}
+                {...form.register('description')}
+                error={!!errors.description}
+              />
+            </FormField>
             <button
-              onClick={() => createCase.mutate()}
-              disabled={!memberId.trim() || !description.trim() || createCase.isPending}
+              type="submit"
+              disabled={createCase.isPending}
               className="px-4 py-2 text-sm font-semibold bg-primary-700 text-white rounded-lg hover:bg-primary-800 disabled:opacity-60"
             >
               {createCase.isPending ? 'Creating…' : 'Open Case'}
             </button>
-          </div>
+          </form>
         </Card>
       )}
 
       {isLoading ? (
         <SkeletonCard rows={3} />
       ) : (cases?.length ?? 0) === 0 ? (
-        <Card padding="md">
-          <div className="text-center py-12">
-            <AlertTriangle size={32} className="text-text-muted mx-auto mb-3" />
-            <p className="text-text-muted">No discipline cases.</p>
-          </div>
-        </Card>
+        <EmptyState
+          icon={AlertTriangle}
+          title="No discipline cases"
+          description="Cases are opened when pastoral follow-up is needed — hopefully this stays empty."
+          action={{ label: 'Open case', onClick: () => setShowCreate(true) }}
+          className="py-12"
+        />
       ) : (
         <div className="space-y-3">
           {cases?.map((c) => (
             <Card
               key={c.id}
-              accent={c.stage === 'STAGE_3' || c.stage === 'STAGE_4' || c.stage === 'STAGE_5' ? 'danger' : 'warning'}
               padding="md"
+              accent={c.resolvedAt ? undefined : 'warning'}
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <Avatar name={c.memberName} size="sm" />
-                  <div>
-                    <p className="text-sm font-semibold text-text-primary">{c.memberName}</p>
-                    <p className="text-xs text-text-secondary mt-1 line-clamp-2">
-                      {c.description}
-                    </p>
-                    <p className="text-xs text-text-muted mt-1">
-                      Opened {formatDate(c.openedAt)}
-                    </p>
+              <div className="flex items-start gap-4">
+                <Avatar name={c.memberName ?? 'M'} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-semibold text-text-primary">{c.memberName}</p>
+                    <Badge variant={STAGE_COLOR[c.stage]}>{c.stage.replace('_', ' ')}</Badge>
+                    {c.resolvedAt && <Badge variant="status-present">Resolved</Badge>}
                   </div>
+                  <p className="text-sm text-text-secondary mt-1">{c.description}</p>
+                  <p className="text-xs text-text-muted mt-2">
+                    Opened {formatDate(c.openedAt)}
+                    {c.resolvedAt && ` · Resolved ${formatDate(c.resolvedAt)}`}
+                  </p>
                 </div>
-                <div className="flex flex-col items-end gap-2 shrink-0">
-                  <Badge variant={STAGE_COLOR[c.stage]}>
-                    {c.stage.replace('_', ' ')}
-                  </Badge>
-                  {c.resolvedAt && (
-                    <Badge variant="status-present">Resolved</Badge>
-                  )}
-                  {showAdvance && !c.resolvedAt && (
-                    <PermissionGate permission="discipline:manage">
-                      <button
-                        onClick={() => advance.mutate(c.id)}
-                        disabled={advance.isPending}
-                        className="text-xs font-semibold text-primary-600 hover:text-primary-800"
-                      >
-                        Advance →
-                      </button>
-                    </PermissionGate>
-                  )}
-                </div>
+                {!c.resolvedAt && showAdvance && (
+                  <button
+                    type="button"
+                    onClick={() => advance.mutate(c.id)}
+                    disabled={advance.isPending}
+                    className="text-xs font-semibold text-primary-600 shrink-0"
+                  >
+                    Advance stage
+                  </button>
+                )}
               </div>
             </Card>
           ))}

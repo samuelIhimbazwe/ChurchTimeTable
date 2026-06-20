@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { X, CheckCircle2, AlertCircle, Info, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { create } from 'zustand'
@@ -13,6 +13,7 @@ interface Toast {
   title:    string
   message?: string
   duration?: number   // ms; 0 = persistent
+  undo?:    { label: string; onClick: () => void }
 }
 
 interface ToastStore {
@@ -44,6 +45,19 @@ export const toast = {
     useToastStore.getState().add({ type: 'warning', title, message, duration: 6000 }),
   info: (title: string, message?: string) =>
     useToastStore.getState().add({ type: 'info', title, message, duration: 4000 }),
+  withUndo: (
+    title: string,
+    undo: { label: string; onClick: () => void },
+    message?: string,
+    duration = 5000,
+  ) =>
+    useToastStore.getState().add({
+      type: 'success',
+      title,
+      message,
+      duration,
+      undo,
+    }),
 }
 
 const ICONS = {
@@ -63,6 +77,7 @@ const STYLES = {
 function ToastItem({ toast: t }: { toast: Toast }) {
   const remove = useToastStore((s) => s.remove)
   const Icon   = ICONS[t.type]
+  const live = t.type === 'error' ? 'assertive' : 'polite'
 
   useEffect(() => {
     if (!t.duration) return
@@ -71,16 +86,33 @@ function ToastItem({ toast: t }: { toast: Toast }) {
   }, [t.id, t.duration, remove])
 
   return (
-    <div className={cn(
-      'flex items-start gap-3 w-80 px-4 py-3 rounded-lg border shadow-overlay',
-      'animate-page-enter',
-      STYLES[t.type],
-    )}>
+    <div
+      role="status"
+      aria-live={live}
+      aria-atomic="true"
+      className={cn(
+        'flex items-start gap-3 w-80 px-4 py-3 rounded-lg border shadow-overlay',
+        'animate-page-enter',
+        STYLES[t.type],
+      )}
+    >
       <Icon size={18} className="shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold">{t.title}</p>
         {t.message && (
           <p className="text-xs mt-0.5 opacity-80">{t.message}</p>
+        )}
+        {t.undo && (
+          <button
+            type="button"
+            onClick={() => {
+              t.undo?.onClick()
+              remove(t.id)
+            }}
+            className="mt-2 text-xs font-bold underline underline-offset-2 hover:opacity-80"
+          >
+            {t.undo.label}
+          </button>
         )}
       </div>
       <button
@@ -95,14 +127,34 @@ function ToastItem({ toast: t }: { toast: Toast }) {
 
 export default function ToastContainer() {
   const toasts = useToastStore((s) => s.toasts)
+  const announcerRef = useRef<HTMLDivElement>(null)
+  const latest = toasts[toasts.length - 1]
+
+  useEffect(() => {
+    if (!latest || !announcerRef.current) return
+    announcerRef.current.textContent = latest.message
+      ? `${latest.title}. ${latest.message}`
+      : latest.title
+  }, [latest])
 
   return (
-    <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
-      {toasts.map((t) => (
-        <div key={t.id} className="pointer-events-auto">
-          <ToastItem toast={t} />
-        </div>
-      ))}
-    </div>
+    <>
+      <div
+        ref={announcerRef}
+        className="sr-only"
+        aria-live="polite"
+        aria-atomic="true"
+      />
+      <div
+        className="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none"
+        aria-label="Notifications"
+      >
+        {toasts.map((t) => (
+          <div key={t.id} className="pointer-events-auto">
+            <ToastItem toast={t} />
+          </div>
+        ))}
+      </div>
+    </>
   )
 }

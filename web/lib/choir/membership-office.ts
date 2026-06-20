@@ -14,6 +14,7 @@ export const MEMBERSHIP_OFFICE_NAV: MembershipNavItem[] = [
   { id: 'attendance', label: 'My attendance', segment: 'attendance' },
   { id: 'music', label: 'Music & prep', segment: 'music' },
   { id: 'announcements', label: 'Announcements', segment: 'announcements' },
+  { id: 'notifications', label: 'Inbox', segment: 'notifications' },
 ]
 
 export function membershipOfficePath(choirId: string, segment?: string): string {

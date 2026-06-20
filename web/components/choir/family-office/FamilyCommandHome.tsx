@@ -236,7 +236,7 @@ export function FamilyCommandHome({ officeKind }: Props) {
       </div>
 
       {(dashboard?.workflowAlerts?.length ?? 0) > 0 && (
-        <Card padding="sm" accent="warning">
+        <Card padding="sm" accent="warning" href={decisionsPath}>
           <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-1">
             Workflow alerts
           </p>
@@ -245,11 +245,15 @@ export function FamilyCommandHome({ officeKind }: Props) {
               <li key={alert}>{alert}</li>
             ))}
           </ul>
+          <p className="text-xs font-semibold text-primary-600 mt-2">Open decision console →</p>
         </Card>
       )}
 
       {myFamilyMetrics && (
-        <FamilyHealthScorePanel metrics={myFamilyMetrics} />
+        <FamilyHealthScorePanel
+          metrics={myFamilyMetrics}
+          href={`${contributionsPath}?ftab=progress`}
+        />
       )}
 
       {nextEvent && (

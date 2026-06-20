@@ -99,7 +99,17 @@ export class MemberPortalController {
 
   @Get('participation-schedule')
   @SkipPhoneEnforcement()
-  participationSchedule(@CurrentUser('sub') userId: string) {
+  participationSchedule(
+    @CurrentUser('sub') userId: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    if (from && to) {
+      return this.participationScheduleService.buildForUser(userId, {
+        from: new Date(from),
+        to: new Date(to),
+      });
+    }
     return this.participationScheduleService.buildForUser(userId);
   }
 

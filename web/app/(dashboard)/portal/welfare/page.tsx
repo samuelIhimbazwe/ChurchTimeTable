@@ -9,6 +9,7 @@ import {
 } from '@/components/shared'
 import { formatDate } from '@/lib/utils/format'
 import { Heart } from 'lucide-react'
+import { WelfarePrivacyNotice } from '@/components/governance/WelfarePrivacyNotice'
 
 export default function PortalWelfarePage() {
   const userId = useAuthStore((s) => s.user?.id)
@@ -33,6 +34,8 @@ export default function PortalWelfarePage() {
           Your welfare cases and support requests
         </p>
       </div>
+
+      <WelfarePrivacyNotice />
 
       <Card padding="none">
         <CardHeader className="px-5 pt-5">

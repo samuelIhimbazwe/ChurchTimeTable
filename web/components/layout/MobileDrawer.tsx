@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import Sidebar from './Sidebar'
 import { cn } from '@/lib/utils'
+import { useFocusTrap } from '@/lib/hooks/useFocusTrap'
 
 interface MobileDrawerProps {
   open:    boolean
@@ -12,6 +13,9 @@ interface MobileDrawerProps {
 }
 
 export default function MobileDrawer({ open, onClose, role }: MobileDrawerProps) {
+  const drawerRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(drawerRef, open)
+
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
@@ -30,6 +34,7 @@ export default function MobileDrawer({ open, onClose, role }: MobileDrawerProps)
       />
 
       <div
+        ref={drawerRef}
         className={cn(
           'fixed inset-y-0 left-0 z-50 w-[min(280px,88vw)] lg:hidden safe-top safe-bottom',
           'transition-transform duration-normal ease-out',

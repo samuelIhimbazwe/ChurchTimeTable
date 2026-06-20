@@ -69,6 +69,7 @@ export interface ServicePreparationPlan {
   pepTalkTiming?: PepTalkTiming | null
   occurrence?: { id: string; title: string; startAt: string; endAt: string }
   items: ServicePreparationItem[]
+  myAcknowledgments?: string[]
 }
 
 export const choirServiceOpsApi = {
@@ -159,6 +160,17 @@ export const choirServiceOpsApi = {
   getMemberPreparation: (choirId: string, occurrenceId: string) =>
     apiClient.get<never, ServicePreparationPlan>(
       `/choir/member-service-preparation/${occurrenceId}`,
+      { params: { choirId } },
+    ),
+
+  acknowledgeMemberPreparation: (
+    choirId: string,
+    occurrenceId: string,
+    itemKey: string,
+  ) =>
+    apiClient.post<never, ServicePreparationPlan>(
+      `/choir/member-service-preparation/${occurrenceId}/acknowledge`,
+      { itemKey },
       { params: { choirId } },
     ),
 

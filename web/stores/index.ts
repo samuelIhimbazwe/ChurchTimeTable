@@ -2,14 +2,22 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { type AppLocale, isAppLocale } from '@/lib/i18n/auth-ui'
 
+export type AppTheme = 'light' | 'dark' | 'high-contrast'
+export type FontScale = 'small' | 'default' | 'large' | 'xlarge'
+export type ReducedMotionPref = 'system' | 'reduce' | 'no-preference'
+
 /* ── UI Store ── */
 interface UIStore {
   sidebarCollapsed: boolean
-  theme: 'light' | 'dark'
+  theme: AppTheme
   locale: AppLocale
+  fontScale: FontScale
+  reducedMotion: ReducedMotionPref
   toggleSidebar: () => void
-  setTheme: (theme: 'light' | 'dark') => void
+  setTheme: (theme: AppTheme) => void
   setLocale: (locale: AppLocale) => void
+  setFontScale: (scale: FontScale) => void
+  setReducedMotion: (pref: ReducedMotionPref) => void
 }
 
 export const useUIStore = create<UIStore>()(
@@ -18,10 +26,14 @@ export const useUIStore = create<UIStore>()(
       sidebarCollapsed: false,
       theme: 'light',
       locale: 'rw',
+      fontScale: 'default',
+      reducedMotion: 'system',
       toggleSidebar: () =>
         set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setTheme: (theme) => set({ theme }),
       setLocale: (locale) => set({ locale }),
+      setFontScale: (fontScale) => set({ fontScale }),
+      setReducedMotion: (reducedMotion) => set({ reducedMotion }),
     }),
     {
       name: 'cmms-ui',
@@ -29,15 +41,21 @@ export const useUIStore = create<UIStore>()(
         sidebarCollapsed: state.sidebarCollapsed,
         theme: state.theme,
         locale: state.locale,
+        fontScale: state.fontScale,
+        reducedMotion: state.reducedMotion,
       }),
       merge: (persisted, current) => {
         const saved = persisted as Partial<UIStore> | undefined
         const locale =
           saved?.locale && isAppLocale(saved.locale) ? saved.locale : current.locale
+        const fontScale = saved?.fontScale ?? current.fontScale
+        const reducedMotion = saved?.reducedMotion ?? current.reducedMotion
         return {
           ...current,
           ...saved,
           locale,
+          fontScale,
+          reducedMotion,
         }
       },
     },

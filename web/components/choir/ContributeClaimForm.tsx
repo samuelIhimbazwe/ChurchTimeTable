@@ -1,12 +1,21 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { contributionsApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
-import { Card, Badge } from '@/components/shared'
+import { Card, Badge, EmptyState } from '@/components/shared'
+import { FormField, Input, Select, Textarea } from '@/components/shared/form'
 import { FamilyPaymentInstructionsCard } from '@/components/choir/FamilyPaymentInstructionsCard'
+import {
+  contributeClaimFormSchema,
+  type ContributeClaimFormValues,
+} from '@/lib/validation/schemas'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
+import { Wallet } from 'lucide-react'
+import { ContributionThankYou } from '@/components/member/ContributionThankYou'
 
 const CHANNELS = [
   { value: 'MOMO', label: 'Mobile Money (MoMo)' },
@@ -29,52 +38,83 @@ export function ContributeClaimForm({
   initialTypeId?: string
 }) {
   const qc = useQueryClient()
+  const [thankYou, setThankYou] = useState<{
+    amount: number
+    campaignName: string
+  } | null>(null)
   const { data: ctx, isLoading } = useQuery({
     queryKey: ['contribution-submit-context', choirId],
     queryFn: () => contributionsApi.getSubmitContext(choirId),
   })
 
-  const [typeId, setTypeId] = useState(initialTypeId ?? '')
+  const form = useForm<ContributeClaimFormValues>({
+    resolver: zodResolver(contributeClaimFormSchema),
+    defaultValues: {
+      typeId: initialTypeId ?? '',
+      customType: '',
+      amount: '',
+      paymentAt: toLocalDatetimeInput(),
+      channel: 'MOMO',
+      notes: '',
+    },
+  })
 
-  useEffect(() => {
-    if (initialTypeId) setTypeId(initialTypeId)
-  }, [initialTypeId])
-  const [customType, setCustomType] = useState('')
-  const [amount, setAmount] = useState('')
-  const [paymentAt, setPaymentAt] = useState(toLocalDatetimeInput())
-  const [channel, setChannel] = useState<'MOMO' | 'BANK' | 'OTHER'>('MOMO')
-  const [notes, setNotes] = useState('')
-
+  const typeId = form.watch('typeId')
   const selectedType = ctx?.types.find((t) => t.id === typeId)
   const isOther = selectedType?.code === 'other'
 
+  useEffect(() => {
+    if (initialTypeId) form.setValue('typeId', initialTypeId)
+  }, [initialTypeId, form])
+
   const submit = useMutation({
-    mutationFn: () =>
+    mutationFn: (data: ContributeClaimFormValues) =>
       contributionsApi.submitClaim({
-        contributionTypeCatalogId: typeId,
-        claimedAmount: parseFloat(amount),
-        paymentAt: new Date(paymentAt).toISOString(),
-        paymentChannel: channel,
+        contributionTypeCatalogId: data.typeId,
+        claimedAmount: parseFloat(data.amount),
+        paymentAt: new Date(data.paymentAt).toISOString(),
+        paymentChannel: data.channel,
         currency: 'RWF',
-        notes: notes.trim() || undefined,
-        customTypeLabel: isOther ? customType.trim() : undefined,
+        notes: data.notes?.trim() || undefined,
+        customTypeLabel: isOther ? data.customType?.trim() : undefined,
       }),
-    onSuccess: (data) => {
-      toast.success('Payment claim submitted', 'Your family head will review it.')
+    onSuccess: (data, variables) => {
+      const typeName =
+        ctx?.types.find((t) => t.id === variables.typeId)?.name ?? 'your campaign'
+      const amount = parseFloat(variables.amount)
+      setThankYou({
+        amount: Number.isFinite(amount) ? amount : 0,
+        campaignName: typeName,
+      })
       qc.invalidateQueries({ queryKey: ['contribution-submit-context'] })
       qc.invalidateQueries({ queryKey: ['my-contributions'] })
       qc.invalidateQueries({ queryKey: ['my-contributions-list'] })
       qc.invalidateQueries({ queryKey: ['member-contribution-totals'] })
       qc.invalidateQueries({ queryKey: ['family-contribution-inbox'] })
-      setAmount('')
-      setNotes('')
-      setCustomType('')
+      form.reset({
+        typeId: initialTypeId ?? '',
+        customType: '',
+        amount: '',
+        paymentAt: toLocalDatetimeInput(),
+        channel: 'MOMO',
+        notes: '',
+      })
       onSuccess?.(data)
     },
     onError: (err: Error) => {
       toast.error('Could not submit', err.message || 'Check your details and try again.')
     },
   })
+
+  const { errors } = form.formState
+
+  function onSubmit(data: ContributeClaimFormValues) {
+    if (isOther && (data.customType?.trim().length ?? 0) < 2) {
+      form.setError('customType', { message: 'Describe the contribution type' })
+      return
+    }
+    submit.mutate(data)
+  }
 
   if (isLoading) {
     return <Card padding="md"><p className="text-sm text-text-muted">Loading…</p></Card>
@@ -91,6 +131,13 @@ export function ContributeClaimForm({
   }
 
   return (
+  <>
+    <ContributionThankYou
+      open={thankYou != null}
+      onClose={() => setThankYou(null)}
+      amount={thankYou?.amount}
+      campaignName={thankYou?.campaignName}
+    />
     <div className="space-y-4">
       <FamilyPaymentInstructionsCard
         familyName={ctx.family.name}
@@ -103,98 +150,59 @@ export function ContributeClaimForm({
         <p className="text-xs text-text-muted mb-4">
           Step 1: Pay using the details above · Step 2: Fill this form · Step 3: Family head confirms
         </p>
-        <form
-          className="space-y-4"
-          onSubmit={(e) => {
-            e.preventDefault()
-            if (!typeId || !amount) return
-            const parsedAmount = parseFloat(amount)
-            if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-              toast.error('Amount must be greater than zero')
-              return
-            }
-            if (isOther && customType.trim().length < 2) {
-              toast.error('Describe the contribution type')
-              return
-            }
-            submit.mutate()
-          }}
-        >
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">Contribution type</label>
-            <select
-              value={typeId}
-              onChange={(e) => setTypeId(e.target.value)}
-              required
-              className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border"
+        <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+          <FormField label="Contribution type" required error={errors.typeId?.message}>
+            <Select
+              {...form.register('typeId')}
+              error={!!errors.typeId}
             >
               <option value="">Select type…</option>
               {ctx.types.map((t) => (
                 <option key={t.id} value={t.id}>{t.name}</option>
               ))}
-            </select>
-          </div>
+            </Select>
+          </FormField>
 
           {isOther && (
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Describe &quot;Other&quot;</label>
-              <input
-                value={customType}
-                onChange={(e) => setCustomType(e.target.value)}
+            <FormField label='Describe "Other"' required error={errors.customType?.message}>
+              <Input
+                {...form.register('customType')}
                 placeholder="e.g. Transport for concert"
-                required
-                className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border"
+                error={!!errors.customType}
               />
-            </div>
+            </FormField>
           )}
 
           <div className="grid sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Amount you paid (RWF)</label>
-              <input
+            <FormField label="Amount you paid (RWF)" required error={errors.amount?.message}>
+              <Input
                 type="number"
                 min="1"
                 step="1"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                required
-                className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border"
+                {...form.register('amount')}
+                error={!!errors.amount}
               />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Date & time you paid</label>
-              <input
+            </FormField>
+            <FormField label="Date & time you paid" required error={errors.paymentAt?.message}>
+              <Input
                 type="datetime-local"
-                value={paymentAt}
-                onChange={(e) => setPaymentAt(e.target.value)}
-                required
-                className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border"
+                {...form.register('paymentAt')}
+                error={!!errors.paymentAt}
               />
-            </div>
+            </FormField>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">How you paid</label>
-            <select
-              value={channel}
-              onChange={(e) => setChannel(e.target.value as typeof channel)}
-              className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border"
-            >
+          <FormField label="How you paid" error={errors.channel?.message}>
+            <Select {...form.register('channel')}>
               {CHANNELS.map((c) => (
                 <option key={c.value} value={c.value}>{c.label}</option>
               ))}
-            </select>
-          </div>
+            </Select>
+          </FormField>
 
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">Note (optional)</label>
-            <textarea
-              rows={2}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border resize-none"
-            />
-          </div>
+          <FormField label="Note" hint="Optional — reference number or context for your family head.">
+            <Textarea rows={2} {...form.register('notes')} />
+          </FormField>
 
           <button
             type="submit"
@@ -206,6 +214,7 @@ export function ContributeClaimForm({
         </form>
       </Card>
     </div>
+  </>
   )
 }
 
@@ -219,9 +228,13 @@ export function MyContributionsList() {
 
   if (!data?.length) {
     return (
-      <Card padding="md">
-        <p className="text-sm text-text-muted text-center py-4">No contribution claims yet.</p>
-      </Card>
+      <EmptyState
+        illustration="giving"
+        icon={Wallet}
+        title="No contribution claims yet"
+        description="After you pay, submit a claim so your family head can confirm it."
+        className="py-10"
+      />
     )
   }
 

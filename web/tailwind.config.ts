@@ -69,6 +69,12 @@ const config: Config = {
           muted:     'var(--color-text-muted)',
           inverse:   'var(--color-text-inverse)',
         },
+        accent: {
+          'member-soft': 'var(--color-accent-member-soft)',
+          'choir-soft': 'var(--color-accent-choir-soft)',
+          'protocol-soft': 'var(--color-accent-protocol-soft)',
+          'leader-soft': 'var(--color-accent-leader-soft)',
+        },
       },
 
       /* ── TYPOGRAPHY ── */

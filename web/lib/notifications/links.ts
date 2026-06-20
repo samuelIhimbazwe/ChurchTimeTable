@@ -46,6 +46,39 @@ export function linkFromNotificationData(
           : `/choir/${String(data.choirId)}/membership/announcements`
       }
       return undefined
+    case 'choir_assignment_pending_acceptance':
+    case 'choir_assignment_pending':
+      if (data.choirId) {
+        return `/choir/${String(data.choirId)}/membership/obligations`
+      }
+      return '/choir/scheduling'
+    case 'choir_assignment':
+    case 'choir_assignment_declined':
+      if (data.choirId && data.occurrenceId) {
+        return `/choir/${String(data.choirId)}/service-preparation/${String(data.occurrenceId)}`
+      }
+      if (data.choirId) {
+        return `/choir/${String(data.choirId)}/scheduling`
+      }
+      return '/choir/scheduling'
+    case 'choir_schedule_change':
+      if (data.choirId) {
+        return `/choir/${String(data.choirId)}/scheduling`
+      }
+      return '/choir/scheduling'
+    case 'choir_upcoming':
+      if (data.choirId && data.activityId) {
+        return `/choir/${String(data.choirId)}/attendance/${String(data.activityId)}`
+      }
+      if (data.choirId) {
+        return `/choir/${String(data.choirId)}/activities`
+      }
+      return '/choir/activities'
+    case 'choir_join_review':
+      if (data.choirId) {
+        return `/choir/${String(data.choirId)}/president/decisions`
+      }
+      return '/choir/join-requests'
     case 'choir_devotion':
       return '/portal/devotion'
     case 'choir_join_request_admin':

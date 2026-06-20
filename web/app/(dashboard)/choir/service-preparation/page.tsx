@@ -5,6 +5,7 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { choirServiceOpsApi } from '@/lib/api'
 import { useResolvedChoirScope } from '@/lib/hooks'
+import { ChoirOpsShell } from '@/components/choir/ChoirOpsShell'
 import { Card, Badge, SkeletonCard } from '@/components/shared'
 import { formatDate, formatTime } from '@/lib/utils/format'
 import { ClipboardList, ChevronRight } from 'lucide-react'
@@ -26,15 +27,18 @@ export default function ServicePreparationPage() {
     enabled: !!choirId,
   })
 
-  return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-8">
-      <div>
-        <h2 className="font-display text-3xl text-text-primary">Service preparation</h2>
-        <p className="text-text-secondary text-sm mt-1">
-          Per-service plan — songs, uniform, pep talk, announcements, and custom prep items
-        </p>
-      </div>
+  const needsPrep = (services ?? []).filter((s) => !s.hasPlan).length
 
+  return (
+    <ChoirOpsShell
+      title="Service preparation"
+      subtitle="Per-service plan — songs, uniform, pep talk, announcements, and custom items."
+      meta={
+        needsPrep > 0
+          ? `${needsPrep} service${needsPrep === 1 ? '' : 's'} need prep`
+          : `${services?.length ?? 0} service${(services?.length ?? 0) === 1 ? '' : 's'} this period`
+      }
+    >
       {isLoading ? (
         <SkeletonCard rows={5} />
       ) : (services?.length ?? 0) === 0 ? (
@@ -47,7 +51,7 @@ export default function ServicePreparationPage() {
           </div>
         </Card>
       ) : (
-        <ul className="divide-y divide-border rounded-lg border border-border bg-surface overflow-hidden">
+        <ul className="divide-y divide-border rounded-lg border border-border bg-surface overflow-hidden max-w-5xl">
           {services?.map((s) => (
             <li key={s.occurrenceId}>
               <Link
@@ -75,6 +79,6 @@ export default function ServicePreparationPage() {
           ))}
         </ul>
       )}
-    </div>
+    </ChoirOpsShell>
   )
 }

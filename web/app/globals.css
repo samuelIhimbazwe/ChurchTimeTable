@@ -40,6 +40,12 @@
     --color-info:          #1E5FA0;
     --color-info-light:    #E6EFF9;
 
+    /* === ROLE ACCENTS (soft tints — portal UX experiment) === */
+    --color-accent-member-soft: rgba(37, 99, 235, 0.08);
+    --color-accent-choir-soft: rgba(5, 150, 105, 0.08);
+    --color-accent-protocol-soft: rgba(8, 145, 178, 0.08);
+    --color-accent-leader-soft: rgba(184, 134, 11, 0.1);
+
     /* === SURFACES === */
     --color-surface:         #FFFFFF;
     --color-surface-raised:  #F8F9FC;
@@ -116,6 +122,8 @@
   }
 
   [data-theme="dark"] {
+    --color-accent-member-soft: rgba(59, 130, 246, 0.12);
+
     --color-surface:         #0F172A;
     --color-surface-raised:  #1E293B;
     --color-surface-overlay: #263448;
@@ -174,6 +182,79 @@
     --border:       215 28% 20%;
     --input:        215 28% 20%;
     --ring:         43 89% 38%;
+  }
+
+  [data-theme="high-contrast"] {
+    --color-surface:         #000000;
+    --color-surface-raised:  #0A0A0A;
+    --color-surface-overlay: #141414;
+    --color-border:          #FFFFFF;
+    --color-border-strong:   #FFFFFF;
+    --color-text-primary:    #FFFFFF;
+    --color-text-secondary:  #F5F5F5;
+    --color-text-muted:      #D4D4D4;
+    --color-primary-700:     #FFFF00;
+    --color-primary-600:     #FFFF66;
+    --color-gold-500:        #FFFF00;
+    --color-success:         #00FF88;
+    --color-warning:         #FFCC00;
+    --color-danger:          #FF4444;
+    --color-info:            #66CCFF;
+    --shadow-sm:  none;
+    --shadow-md:  0 0 0 2px #FFFFFF;
+    --shadow-lg:  0 0 0 3px #FFFF00;
+  }
+
+  html[data-font-scale="small"] { font-size: 14px; }
+  html[data-font-scale="default"] { font-size: 16px; }
+  html[data-font-scale="large"] { font-size: 18px; }
+  html[data-font-scale="xlarge"] { font-size: 20px; }
+
+  html[data-reduced-motion="true"] *,
+  html[data-reduced-motion="true"] *::before,
+  html[data-reduced-motion="true"] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  [data-season="christmas"] {
+    --season-accent: #2D5A27;
+    --season-accent-soft: rgba(45, 90, 39, 0.12);
+    --color-gold-500: #C41E3A;
+    --color-gold-400: #D4384D;
+  }
+
+  [data-season="advent"] {
+    --season-accent: #4A3728;
+    --season-accent-soft: rgba(74, 55, 40, 0.1);
+    --color-gold-500: #7B3F00;
+  }
+
+  [data-season="easter"] {
+    --season-accent: #6B4C9A;
+    --season-accent-soft: rgba(107, 76, 154, 0.1);
+    --color-gold-500: #D4A017;
+  }
+
+  .season-accent-ribbon[data-season="christmas"] {
+    background: linear-gradient(90deg, #1a3d1a, #2D5A27, #1a3d1a);
+    color: #f5f5dc;
+  }
+
+  .season-accent-ribbon[data-season="advent"] {
+    background: linear-gradient(90deg, #3d2817, #5c4033, #3d2817);
+    color: #f5ecd4;
+  }
+
+  .season-accent-ribbon[data-season="easter"] {
+    background: linear-gradient(90deg, #4a3566, #6B4C9A, #4a3566);
+    color: #faf5ff;
+  }
+
+  [data-season]:not([data-season="ordinary"]) [data-office="membership"] header {
+    box-shadow: inset 0 -3px 0 var(--season-accent-soft);
   }
 
   * {
@@ -423,6 +504,51 @@
   }
 }
 
+/* ── Data table (Linear / Stripe-inspired) ── */
+.data-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.data-table-sticky-head th {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--color-surface-raised);
+  box-shadow: 0 1px 0 var(--color-border);
+}
+
+.data-table-sticky-col {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background: var(--color-surface);
+}
+
+.data-table-sticky-col-head {
+  z-index: 30;
+  background: var(--color-surface-raised);
+}
+
+.data-table-zebra tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--color-surface-raised) 55%, transparent);
+}
+
+.data-table-zebra tbody tr:nth-child(even) .data-table-sticky-col {
+  background: color-mix(in srgb, var(--color-surface-raised) 85%, var(--color-surface));
+}
+
+.data-table tbody tr:hover .data-table-sticky-col,
+.data-table tbody tr:focus-visible .data-table-sticky-col {
+  background: color-mix(in srgb, var(--color-primary-50) 65%, var(--color-surface));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .data-table tbody tr {
+    transition: none;
+  }
+}
+
 @layer base {
   @keyframes pageEnter {
     from { opacity: 0; transform: translateY(8px); }
@@ -460,6 +586,23 @@
     0%,100% { opacity: 1; }
     50%      { opacity: 0.4; }
   }
+
+  @keyframes confetti-fall {
+    0% {
+      transform: translateY(-8vh) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(105vh) rotate(720deg);
+      opacity: 0;
+    }
+  }
+
+  .confetti-piece {
+    animation-name: confetti-fall;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+  }
 }
 
 @media print {
@@ -468,11 +611,14 @@
   }
 
   #family-meeting-pack,
-  #family-meeting-pack * {
+  #family-meeting-pack *,
+  [id^="print-sheet-"],
+  [id^="print-sheet-"] * {
     visibility: visible;
   }
 
-  #family-meeting-pack {
+  #family-meeting-pack,
+  [id^="print-sheet-"] {
     position: absolute;
     left: 0;
     top: 0;

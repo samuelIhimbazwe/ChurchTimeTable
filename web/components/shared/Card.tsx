@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
 interface CardProps {
@@ -8,10 +9,12 @@ interface CardProps {
   accent?: 'gold' | 'success' | 'warning' | 'danger' | 'info'
   elevated?: boolean
   padding?: 'none' | 'sm' | 'md' | 'lg'
+  href?: string
+  onClick?: () => void
+  id?: string
 }
 
 const ACCENT_CLASSES = {
-  /** Subtle highlight — clean surface, no gold wash */
   gold:    'border-l-[3px] border-l-primary-600 bg-surface-raised',
   success: 'border-l-4 border-l-success bg-success-light',
   warning: 'border-l-4 border-l-warning bg-warning-light',
@@ -32,23 +35,46 @@ export default function Card({
   accent,
   elevated = false,
   padding = 'md',
+  href,
+  onClick,
+  id,
 }: CardProps) {
-  return (
+  const interactive = !!href || !!onClick
+
+  const body = (
     <div
+      id={id}
+      role={onClick && !href ? 'button' : undefined}
+      tabIndex={onClick && !href ? 0 : undefined}
+      onKeyDown={onClick && !href ? (e) => e.key === 'Enter' && onClick() : undefined}
+      onClick={href ? undefined : onClick}
       className={cn(
         'bg-surface rounded-lg border border-border',
         elevated ? 'shadow-raised' : 'shadow-card',
         accent && ACCENT_CLASSES[accent],
         PADDING_CLASSES[padding],
+        interactive && 'cursor-pointer hover:shadow-raised hover:-translate-y-0.5 transition-all duration-fast',
         className,
       )}
     >
       {children}
     </div>
   )
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+      >
+        {body}
+      </Link>
+    )
+  }
+
+  return body
 }
 
-/* Convenience sub-components */
 export function CardHeader({
   children,
   className,

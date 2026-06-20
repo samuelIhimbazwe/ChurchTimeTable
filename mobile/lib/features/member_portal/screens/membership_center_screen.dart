@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/routing/app_router.dart';
 import '../providers/member_portal_providers.dart';
 
 class MembershipCenterScreen extends ConsumerWidget {
@@ -33,11 +34,22 @@ class MembershipCenterScreen extends ConsumerWidget {
                 Text('Choir memberships (${choirs.length})',
                     style: Theme.of(context).textTheme.titleSmall),
                 ...choirs.map(
-                  (c) => ListTile(
-                    title: Text(
-                      (c as Map)['choir']?['name']?.toString() ?? 'Choir',
-                    ),
-                  ),
+                  (c) {
+                    final map = c as Map;
+                    final choir = map['choir'] as Map?;
+                    final choirId = choir?['id']?.toString() ?? map['choirId']?.toString();
+                    return ListTile(
+                      title: Text(choir?['name']?.toString() ?? 'Choir'),
+                      subtitle: const Text('Assignments & service prep'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: choirId != null && choirId.isNotEmpty
+                          ? () => Navigator.of(context).pushNamed(
+                                AppRouter.choirAssignments,
+                                arguments: choirId,
+                              )
+                          : null,
+                    );
+                  },
                 ),
                 const Divider(),
                 Text('Protocol invitations (${invitations.length})',

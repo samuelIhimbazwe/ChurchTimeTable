@@ -6,11 +6,23 @@ import { cn } from '@/lib/utils'
 import Sidebar from './Sidebar'
 import TopBar from './TopBar'
 import MobileDrawer from './MobileDrawer'
-import SearchModal from './SearchModal'
+import { CommandPalette } from '@/components/navigation/CommandPalette'
+import { NavigationTracker } from '@/components/navigation/NavigationTracker'
+import { WorkspaceContextStrip } from '@/components/navigation/WorkspaceContextStrip'
+import { SkipToMain } from '@/components/accessibility/SkipToMain'
+import { ViewAsMemberBanner } from '@/components/governance/ViewAsMemberBanner'
 import HelpPanel from './HelpPanel'
 import PreferencesPanel from './PreferencesPanel'
 import NotificationPanel from './NotificationPanel'
 import { useNotifications } from '@/lib/hooks'
+import { UnifiedAttentionDrawer } from '@/components/dashboard/UnifiedAttentionDrawer'
+import { useAttentionItems } from '@/lib/dashboard/useAttentionItems'
+
+function isTypingTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false
+  const tag = target.tagName
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable
+}
 
 interface ShellProps {
   children:     React.ReactNode
@@ -35,8 +47,10 @@ export default function Shell({
   const [helpOpen,    setHelpOpen]    = useState(false)
   const [prefsOpen,   setPrefsOpen]   = useState(false)
   const [notifOpen,   setNotifOpen]   = useState(false)
+  const [attentionOpen, setAttentionOpen] = useState(false)
 
   const { data: notifications } = useNotifications()
+  const { urgentCount: attentionCount } = useAttentionItems()
   const unreadCount = notifications?.filter((n) => !n.read).length ?? 0
 
   useEffect(() => {
@@ -44,6 +58,13 @@ export default function Shell({
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
         setSearchOpen((prev) => !prev)
+        return
+      }
+      if (e.key === '?' && !isTypingTarget(e.target)) {
+        e.preventDefault()
+        setHelpOpen((prev) => !prev)
+        setNotifOpen(false)
+        setPrefsOpen(false)
       }
     }
     window.addEventListener('keydown', handleKey)
@@ -52,6 +73,7 @@ export default function Shell({
 
   return (
     <div data-theme={theme} className="min-h-screen bg-surface-raised overflow-x-hidden">
+      <SkipToMain />
 
       <div className="hidden lg:block">
         <Sidebar role={role} variant="desktop" />
@@ -72,14 +94,22 @@ export default function Shell({
         onSearchClick={() => { setHelpOpen(false); setPrefsOpen(false); setSearchOpen(true) }}
         onHelpClick={() => { setNotifOpen(false); setPrefsOpen(false); setHelpOpen((prev) => !prev) }}
         onPreferencesClick={() => { setNotifOpen(false); setHelpOpen(false); setPrefsOpen(true) }}
-        onNotifClick={() => { setHelpOpen(false); setPrefsOpen(false); setNotifOpen((prev) => !prev) }}
+        onNotifClick={() => { setHelpOpen(false); setPrefsOpen(false); setAttentionOpen(false); setNotifOpen((prev) => !prev) }}
+        onAttentionClick={() => { setHelpOpen(false); setPrefsOpen(false); setNotifOpen(false); setAttentionOpen((prev) => !prev) }}
+        attentionCount={attentionCount}
         notifOpen={notifOpen}
+        attentionOpen={attentionOpen}
         helpOpen={helpOpen}
       />
 
       <NotificationPanel
         open={notifOpen}
         onClose={() => setNotifOpen(false)}
+      />
+
+      <UnifiedAttentionDrawer
+        open={attentionOpen}
+        onClose={() => setAttentionOpen(false)}
       />
 
       <HelpPanel
@@ -93,12 +123,17 @@ export default function Shell({
         onClose={() => setPrefsOpen(false)}
       />
 
-      <SearchModal
+      <CommandPalette
         open={searchOpen}
         onClose={() => setSearchOpen(false)}
+        onOpenNotifications={() => setNotifOpen(true)}
       />
 
+      <NavigationTracker />
+
       <main
+        id="main-content"
+        tabIndex={-1}
         className={cn(
           'pt-[calc(4rem+env(safe-area-inset-top,0px))] min-h-[100dvh] min-w-0 max-w-full safe-x',
           'lg:transition-[margin-left] lg:duration-normal lg:ease-out',
@@ -107,6 +142,8 @@ export default function Shell({
         )}
       >
         <div className="p-3 xs:p-4 sm:p-6 page-enter min-w-0 max-w-full pb-safe-bottom">
+          <ViewAsMemberBanner className="mb-4 rounded-lg" />
+          <WorkspaceContextStrip />
           {children}
         </div>
       </main>

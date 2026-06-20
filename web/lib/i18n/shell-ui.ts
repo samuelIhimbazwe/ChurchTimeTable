@@ -36,7 +36,7 @@ export const shellUi: Record<AppLocale, ShellUiStrings> = {
     myProfileDesc: 'Update your details',
     dashboardDesc: 'Leadership overview',
     tipSearch:
-      'Press Ctrl+K or ⌘K to open search from anywhere.',
+      'Press Ctrl+K or ⌘K to search. Press ? for help and keyboard shortcuts.',
     tipMobileMenu: 'On mobile, tap the menu icon (top left) to open navigation.',
     tipBell: 'Check the bell icon for announcements and reminders.',
     tipContact:
@@ -64,7 +64,7 @@ export const shellUi: Record<AppLocale, ShellUiStrings> = {
     myProfileDesc: 'Mettre à jour vos informations',
     dashboardDesc: 'Vue d’ensemble direction',
     tipSearch:
-      'Appuyez sur Ctrl+K ou ⌘K pour ouvrir la recherche depuis n’importe où.',
+      'Ctrl+K ou ⌘K pour rechercher. ? pour l’aide et les raccourcis clavier.',
     tipMobileMenu:
       'Sur mobile, touchez l’icône menu (en haut à gauche) pour la navigation.',
     tipBell: 'Consultez la cloche pour les annonces et rappels.',
@@ -92,7 +92,7 @@ export const shellUi: Record<AppLocale, ShellUiStrings> = {
     memberPortalDesc: 'Ahabanza, gahunda n’amakorali',
     myProfileDesc: 'Hindura amakuru yawe',
     dashboardDesc: 'Incamake y’ubuyobozi',
-    tipSearch: 'Kanda Ctrl+K cyangwa ⌘K ushakire aho ari ho hose.',
+    tipSearch: 'Kanda Ctrl+K cyangwa ⌘K ushakire. Kanda ? kubufasha n\'amabwiriza ya keyboard.',
     tipMobileMenu: 'Kuri telefone, kanda akarango ka menu (hejuru ibumoso).',
     tipBell: 'Reba agaciro k’amatangazo n’ibibutsa.',
     tipContact:

@@ -80,21 +80,28 @@ export default function ChoirHubPage() {
 
       {/* Action items */}
       {leaderSummary?.actionItems?.map((a) => (
-        <Card key={a.id} accent={a.type === 'warning' ? 'warning' : a.type === 'danger' ? 'danger' : 'info'} padding="sm">
-          <div className="flex items-center gap-3">
-            <AlertTriangle size={16} className="text-warning shrink-0" />
-            <p className="text-sm text-text-primary flex-1">{a.text}</p>
-            {a.link && (
-              <Link href={a.link} className="text-xs font-semibold text-primary-600 hover:text-primary-800 shrink-0">
-                Review →
-              </Link>
-            )}
-          </div>
-        </Card>
+        a.link ? (
+          <Link key={a.id} href={a.link}>
+            <Card accent={a.type === 'warning' ? 'warning' : a.type === 'danger' ? 'danger' : 'info'} padding="sm">
+              <div className="flex items-center gap-3">
+                <AlertTriangle size={16} className="text-warning shrink-0" />
+                <p className="text-sm text-text-primary flex-1">{a.text}</p>
+                <span className="text-xs font-semibold text-primary-600 shrink-0">Review →</span>
+              </div>
+            </Card>
+          </Link>
+        ) : (
+          <Card key={a.id} accent={a.type === 'warning' ? 'warning' : a.type === 'danger' ? 'danger' : 'info'} padding="sm">
+            <div className="flex items-center gap-3">
+              <AlertTriangle size={16} className="text-warning shrink-0" />
+              <p className="text-sm text-text-primary flex-1">{a.text}</p>
+            </div>
+          </Card>
+        )
       ))}
 
       {/* Health dashboard */}
-      <Card padding="md">
+      <Card padding="md" href={choirLink('reports')}>
         <CardHeader>
           <CardTitle>Health Dashboard</CardTitle>
           <CardDescription>Scheduling metrics and alert counts</CardDescription>
@@ -110,6 +117,7 @@ export default function ChoirHubPage() {
                 suffix="%"
                 icon={CheckCircle2}
                 animate
+                href={choirLink('reports')}
               />
               <StatTile
                 label="Reliability"
@@ -117,30 +125,35 @@ export default function ChoirHubPage() {
                 suffix="%"
                 icon={CheckCircle2}
                 animate
+                href={choirLink('reports')}
               />
               <StatTile
                 label="Active Members"
                 value={healthNum(h, 'activeMembers', 'activeMemberCount')}
                 icon={Users}
                 animate
+                href={choirLink('members')}
               />
               <StatTile
                 label="Inactive Members"
                 value={healthNum(h, 'inactiveMembers', 'inactiveMemberCount')}
                 icon={Users}
                 animate
+                href={choirLink('members')}
               />
               <StatTile
                 label="Welfare Alerts"
                 value={healthNum(h, 'welfareAlerts', 'activeWelfare', 'activeWelfareCases')}
                 icon={Heart}
                 animate
+                href={choirLink('welfare')}
               />
               <StatTile
                 label="Discipline Alerts"
                 value={healthNum(h, 'disciplineAlerts', 'activeDiscipline', 'activeDisciplineCases')}
                 icon={Shield}
                 animate
+                href={choirLink('discipline')}
               />
             </>
           )}
@@ -153,10 +166,10 @@ export default function ChoirHubPage() {
           Array.from({ length: 4 }).map((_, i) => <SkeletonStatTile key={i} />)
         ) : (
           <>
-            <StatTile label="Total Members"     value={leaderSummary?.totalMembers ?? 0}    icon={Users}         animate delta={leaderSummary?.membersDelta} />
-            <StatTile label="Attendance Rate"   value={leaderSummary?.attendanceRate ?? 0}  suffix="%" icon={CheckCircle2} animate delta={leaderSummary?.attendanceDelta} />
-            <StatTile label="Pending Swaps"     value={leaderSummary?.pendingSwaps ?? 0}    icon={ArrowLeftRight} animate />
-            <StatTile label="This Week"         value={leaderSummary?.eventsThisWeek ?? 0}  icon={Calendar}      animate />
+            <StatTile label="Total Members"     value={leaderSummary?.totalMembers ?? 0}    icon={Users}         animate delta={leaderSummary?.membersDelta} href={choirLink('members')} />
+            <StatTile label="Attendance Rate"   value={leaderSummary?.attendanceRate ?? 0}  suffix="%" icon={CheckCircle2} animate delta={leaderSummary?.attendanceDelta} href={choirLink('reports')} />
+            <StatTile label="Pending Swaps"     value={leaderSummary?.pendingSwaps ?? 0}    icon={ArrowLeftRight} animate href={choirLink('scheduling')} />
+            <StatTile label="This Week"         value={leaderSummary?.eventsThisWeek ?? 0}  icon={Calendar}      animate href={choirLink('activities')} />
           </>
         )}
       </div>
@@ -180,23 +193,25 @@ export default function ChoirHubPage() {
           ) : (
             <ul className="divide-y divide-border">
               {activities?.items?.map((a) => (
-                <li key={a.id} className="flex items-center gap-4 px-5 py-3 hover:bg-surface-raised transition-colors">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-text-primary truncate">{a.title}</p>
-                    <p className="text-xs text-text-muted">
-                      {formatDate(a.date)}
-                      {a.startTime && ` · ${formatTime(a.startTime)}`}
-                    </p>
-                  </div>
-                  <Badge variant="default">{a.activityType}</Badge>
-                  <PermissionGate anyOf={['attendance:write']}>
-                    <Link
-                      href={choirLink('attendance', a.id)}
-                      className="text-xs font-semibold text-primary-600 hover:text-primary-800 shrink-0"
-                    >
-                      Attend
-                    </Link>
-                  </PermissionGate>
+                <li key={a.id}>
+                  <Link
+                    href={choirLink('attendance', a.id)}
+                    className="flex items-center gap-4 px-5 py-3 hover:bg-surface-raised transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-text-primary truncate">{a.title}</p>
+                      <p className="text-xs text-text-muted">
+                        {formatDate(a.date)}
+                        {a.startTime && ` · ${formatTime(a.startTime)}`}
+                      </p>
+                    </div>
+                    <Badge variant="default">{a.activityType}</Badge>
+                    <PermissionGate anyOf={['attendance:write']}>
+                      <span className="text-xs font-semibold text-primary-600 shrink-0">
+                        Attend →
+                      </span>
+                    </PermissionGate>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -204,10 +219,10 @@ export default function ChoirHubPage() {
         </Card>
 
         {/* Ministry health */}
-        <Card padding="md">
+        <Card padding="md" href={choirLink('reports')}>
           <CardHeader>
             <CardTitle>Ministry Health</CardTitle>
-            <CardDescription>Participation rates</CardDescription>
+            <CardDescription>Participation rates — tap for full reports</CardDescription>
           </CardHeader>
           <div className="space-y-4">
             {(leaderSummary?.ministryHealth ?? [

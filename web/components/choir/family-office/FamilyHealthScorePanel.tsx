@@ -6,6 +6,7 @@ import { Card, Badge } from '@/components/shared'
 type Props = {
   metrics: FamilyMetricsDetail
   compact?: boolean
+  href?: string
 }
 
 function weightLabel(value: number | null): string {
@@ -13,11 +14,11 @@ function weightLabel(value: number | null): string {
   return `${Math.round(value * 100)}%`
 }
 
-export function FamilyHealthScorePanel({ metrics, compact }: Props) {
+export function FamilyHealthScorePanel({ metrics, compact, href }: Props) {
   const breakdown = metrics.healthBreakdown
   if (!breakdown) {
     return (
-      <Card padding="md">
+      <Card padding="md" href={href}>
         <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-2">
           Family health
         </p>
@@ -54,7 +55,7 @@ export function FamilyHealthScorePanel({ metrics, compact }: Props) {
   ]
 
   return (
-    <Card padding="md">
+    <Card padding="md" href={href}>
       <div className="flex items-start justify-between gap-3 mb-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
@@ -101,6 +102,9 @@ export function FamilyHealthScorePanel({ metrics, compact }: Props) {
               {metrics.attendance.attendanceCount} attended · {metrics.attendance.missedCount}{' '}
               missed in the last 90 days
             </p>
+          )}
+          {href && (
+            <p className="text-xs font-semibold text-primary-600 mt-3">View team progress →</p>
           )}
         </>
       )}

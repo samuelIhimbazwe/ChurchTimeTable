@@ -4,10 +4,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { protocolApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
-import { Badge, Card, PermissionGate, SkeletonCard } from '@/components/shared'
+import { Badge, Card, PermissionGate, SkeletonCard, EmptyState } from '@/components/shared'
 import { SplitQueueConsole } from '@/components/shared/office/SplitQueueConsole'
+import { SnoozeButton } from '@/components/workflow/SnoozeButton'
+import { FormField, Textarea } from '@/components/shared/form'
+import { useSnoozedQueue } from '@/lib/hooks'
 import { formatDate } from '@/lib/utils/format'
-import { CheckCircle2, XCircle } from 'lucide-react'
+import { CheckCircle2, XCircle, UserCheck } from 'lucide-react'
 
 type ClaimRow = {
   id: string
@@ -54,22 +57,28 @@ export function ProtocolClaimsConsole({ filter = 'pending' }: { filter?: Filter 
   const allItems = useMemo(() => normalizeClaims((claims ?? []) as unknown[]), [claims])
 
   const items = useMemo(() => {
-    if (statusFilter === 'pending') {
-      return allItems.filter((c) => c.status === 'PENDING')
-    }
-    return allItems
+    const base =
+      statusFilter === 'pending'
+        ? allItems.filter((c) => c.status === 'PENDING')
+        : allItems
+    return base
   }, [allItems, statusFilter])
+
+  const { visibleItems: visibleItems, bumpSnooze } = useSnoozedQueue(
+    items,
+    (c) => `protocol-claim-${c.id}`,
+  )
 
   const [activeId, setActiveId] = useState<string | null>(null)
 
   useEffect(() => {
-    if (items.length > 0 && !items.some((i) => i.id === activeId)) {
-      setActiveId(items[0]?.id ?? null)
+    if (visibleItems.length > 0 && !visibleItems.some((i) => i.id === activeId)) {
+      setActiveId(visibleItems[0]?.id ?? null)
     }
-    if (items.length === 0) {
+    if (visibleItems.length === 0) {
       setActiveId(null)
     }
-  }, [items, activeId])
+  }, [visibleItems, activeId])
 
   const review = useMutation({
     mutationFn: ({ id, status, reviewNotes: notes }: { id: string; status: 'APPROVED' | 'REJECTED'; reviewNotes?: string }) =>
@@ -89,7 +98,6 @@ export function ProtocolClaimsConsole({ filter = 'pending' }: { filter?: Filter 
     setReviewNotes('')
   }, [])
 
-  const selected = items.find((c) => c.id === activeId) ?? null
   const pendingCount = allItems.filter((c) => c.status === 'PENDING').length
 
   return (
@@ -123,8 +131,8 @@ export function ProtocolClaimsConsole({ filter = 'pending' }: { filter?: Filter 
         title="Membership claims"
         subtitle="Members claiming existing protocol service — closed ministry onboarding"
         queueTitle="Queue"
-        queueCount={items.length}
-        items={items}
+        queueCount={visibleItems.length}
+        items={visibleItems}
         selectedId={activeId}
         onSelect={onSelect}
         getItemId={(item) => item.id}
@@ -133,9 +141,16 @@ export function ProtocolClaimsConsole({ filter = 'pending' }: { filter?: Filter 
         isLoading={isLoading}
         loadingState={<SkeletonCard rows={5} />}
         emptyState={
-          <Card padding="md">
-            <p className="text-sm text-text-muted text-center py-8">No protocol membership claims.</p>
-          </Card>
+          <EmptyState
+            icon={UserCheck}
+            title="No protocol membership claims"
+            description={
+              statusFilter === 'pending'
+                ? 'Pending claims from members joining protocol ministry will appear here.'
+                : 'No claims match this filter.'
+            }
+            className="py-10"
+          />
         }
         renderQueueRow={(row, active) => (
           <div className="flex justify-between gap-2 items-start">
@@ -147,15 +162,23 @@ export function ProtocolClaimsConsole({ filter = 'pending' }: { filter?: Filter 
                 <p className="text-xs text-text-muted mt-0.5 truncate">{row.reason}</p>
               )}
             </div>
-            <Badge
-              variant={
-                row.status === 'APPROVED' ? 'status-present' :
-                row.status === 'REJECTED' ? 'status-absent' : 'status-pending'
-              }
-              className="shrink-0"
-            >
-              {row.status}
-            </Badge>
+            <div className="flex items-center gap-1 shrink-0">
+              <Badge
+                variant={
+                  row.status === 'APPROVED' ? 'status-present' :
+                  row.status === 'REJECTED' ? 'status-absent' : 'status-pending'
+                }
+                className="shrink-0"
+              >
+                {row.status}
+              </Badge>
+              {row.status === 'PENDING' && (
+                <SnoozeButton
+                  entityKey={`protocol-claim-${row.id}`}
+                  onSnoozeChange={bumpSnooze}
+                />
+              )}
+            </div>
           </div>
         )}
         renderDetail={(row) =>
@@ -164,7 +187,15 @@ export function ProtocolClaimsConsole({ filter = 'pending' }: { filter?: Filter 
               <div className="space-y-4">
                 <div>
                   <p className="text-xs text-text-muted uppercase tracking-wide">Member</p>
-                  <p className="font-display text-xl font-bold mt-1">{row.memberName}</p>
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    <p className="font-display text-xl font-bold">{row.memberName}</p>
+                    {row.status === 'PENDING' && (
+                      <SnoozeButton
+                        entityKey={`protocol-claim-${row.id}`}
+                        onSnoozeChange={bumpSnooze}
+                      />
+                    )}
+                  </div>
                   {row.createdAt && (
                     <p className="text-sm text-text-muted mt-1">Submitted {formatDate(row.createdAt)}</p>
                   )}
@@ -184,16 +215,14 @@ export function ProtocolClaimsConsole({ filter = 'pending' }: { filter?: Filter 
                 <PermissionGate anyOf={['protocol.claim.review', 'protocol.manage']}>
                   {row.status === 'PENDING' && (
                     <div className="space-y-3 pt-2 border-t border-border">
-                      <label className="block text-xs font-semibold text-text-muted">
-                        Review notes (optional)
-                      </label>
-                      <textarea
-                        value={reviewNotes}
-                        onChange={(e) => setReviewNotes(e.target.value)}
-                        rows={2}
-                        className="w-full text-sm border border-border rounded-lg px-3 py-2 bg-surface"
-                        placeholder="Optional message to the member"
-                      />
+                      <FormField label="Review notes" hint="Optional message to the member.">
+                        <Textarea
+                          value={reviewNotes}
+                          onChange={(e) => setReviewNotes(e.target.value)}
+                          rows={2}
+                          placeholder="Optional message to the member"
+                        />
+                      </FormField>
                       <div className="flex gap-2">
                         <button
                           type="button"

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { contributionsApi, financeApi } from '@/lib/api'
 import { OfficeCommandHome } from '@/components/shared/office/OfficeCommandHome'
+import { LeadershipAttentionPanel } from '@/components/shared/office/LeadershipAttentionPanel'
 import { TreasuryPeriodCloseDrawer } from '@/components/choir/committee/TreasuryPeriodCloseDrawer'
 import { Card, SkeletonCard } from '@/components/shared'
 import { useResolvedChoirScope } from '@/lib/hooks'
@@ -117,6 +118,29 @@ export function TreasurerCommandHome() {
           },
         ]}
       />
+
+      <LeadershipAttentionPanel
+        items={[
+          ...(queueCount > 0
+            ? [{
+                id: 'verify',
+                label: `${queueCount} contribution(s) await verification`,
+                detail: oldest ? `Oldest in queue: ${oldest}` : undefined,
+                href: verifyHref,
+                tone: 'warning' as const,
+              }]
+            : []),
+          ...(!periodClose?.monthClosed && periodClose?.canClose
+            ? [{
+                id: 'close',
+                label: 'Month ready to close',
+                detail: `Checklist ${periodClose?.checklistComplete ?? 0}/${periodClose?.checklistTotal ?? 3} complete`,
+                href: verifyHref,
+              }]
+            : []),
+        ]}
+      />
+
       <TreasuryPeriodCloseDrawer
         open={periodCloseOpen}
         onClose={() => setPeriodCloseOpen(false)}

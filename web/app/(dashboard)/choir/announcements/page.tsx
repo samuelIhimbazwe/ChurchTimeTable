@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   choirOperationsApi,
@@ -10,8 +12,11 @@ import {
 import type { ChoirAnnouncementAudience } from '@/lib/api/modules/choir-operations'
 import { toast } from '@/components/shared/Toast'
 import {
-  Card, CardHeader, CardTitle, PermissionGate, SkeletonCard, Badge,
+  Card, CardHeader, CardTitle, PermissionGate, SkeletonCard, Badge, EmptyState,
 } from '@/components/shared'
+import { FormField, Input, Select, Textarea } from '@/components/shared/form'
+import { AnnouncementMemberPreview } from '@/components/choir/AnnouncementMemberPreview'
+import { announcementFormSchema, type AnnouncementFormValues } from '@/lib/validation/schemas'
 import { Megaphone } from 'lucide-react'
 import { formatDate, relativeTime } from '@/lib/utils/format'
 import { useResolvedChoirScope } from '@/lib/hooks'
@@ -35,10 +40,21 @@ export default function AnnouncementsPage() {
   const qc = useQueryClient()
   const { choirId } = useResolvedChoirScope()
   const [showForm, setShowForm] = useState(false)
-  const [title, setTitle] = useState('')
-  const [body, setBody] = useState('')
-  const [audience, setAudience] = useState<ChoirAnnouncementAudience>('ENTIRE_CHOIR')
-  const [audienceRef, setAudienceRef] = useState('')
+
+  const form = useForm<AnnouncementFormValues>({
+    resolver: zodResolver(announcementFormSchema),
+    defaultValues: {
+      title: '',
+      body: '',
+      audience: 'ENTIRE_CHOIR',
+      audienceRef: '',
+    },
+  })
+
+  const audience = form.watch('audience')
+  const titleValue = form.watch('title')
+  const bodyValue = form.watch('body')
+  const { errors } = form.formState
 
   const { data: announcements, isLoading } = useQuery({
     queryKey: ['choir-targeted-announcements', choirId],
@@ -71,22 +87,29 @@ export default function AnnouncementsPage() {
   const needsRef = AUDIENCE_OPTIONS.find((o) => o.value === audience)?.needsRef
 
   const create = useMutation({
-    mutationFn: () => {
+    mutationFn: (data: AnnouncementFormValues) => {
       if (!choirId) throw new Error('No choir context')
+      const needsRef =
+        data.audience === 'FAMILIES' ||
+        data.audience === 'VOICE_SECTION' ||
+        data.audience === 'CUSTOM_GROUP'
       return choirOperationsApi.createAnnouncement({
         choirId,
-        title,
-        body,
-        audience,
-        audienceRef: needsRef ? audienceRef : undefined,
+        title: data.title,
+        body: data.body,
+        audience: data.audience,
+        audienceRef: needsRef ? data.audienceRef : undefined,
         publish: true,
       })
     },
     onSuccess: () => {
       toast.success('Announcement published')
-      setTitle('')
-      setBody('')
-      setAudienceRef('')
+      form.reset({
+        title: '',
+        body: '',
+        audience: 'ENTIRE_CHOIR',
+        audienceRef: '',
+      })
       setShowForm(false)
       qc.invalidateQueries({ queryKey: ['choir-targeted-announcements'] })
     },
@@ -127,95 +150,108 @@ export default function AnnouncementsPage() {
           <CardHeader>
             <CardTitle>Create targeted announcement</CardTitle>
           </CardHeader>
-          <div className="space-y-3">
-            <input
-              type="text"
-              placeholder="Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold-500"
-            />
-            <textarea
-              placeholder="Message body"
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              rows={4}
-              className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold-500 resize-none"
-            />
-            <select
-              value={audience}
-              onChange={(e) => {
-                setAudience(e.target.value as ChoirAnnouncementAudience)
-                setAudienceRef('')
-              }}
-              className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border"
-            >
-              {AUDIENCE_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-            {needsRef && audience === 'FAMILIES' && (
-              <select
-                value={audienceRef}
-                onChange={(e) => setAudienceRef(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border"
+          <form
+            className="space-y-3"
+            onSubmit={form.handleSubmit((data) => create.mutate(data))}
+          >
+            <FormField label="Title" required error={errors.title?.message}>
+              <Input
+                placeholder="Title"
+                {...form.register('title')}
+                error={!!errors.title}
+              />
+            </FormField>
+            <FormField label="Message" required error={errors.body?.message}>
+              <Textarea
+                placeholder="Message body"
+                rows={4}
+                {...form.register('body')}
+                error={!!errors.body}
+              />
+            </FormField>
+            <FormField label="Audience" error={errors.audience?.message}>
+              <Select
+                value={audience}
+                onChange={(e) => {
+                  form.setValue('audience', e.target.value as ChoirAnnouncementAudience)
+                  form.setValue('audienceRef', '')
+                }}
               >
-                <option value="">Select family</option>
-                {families?.map((f) => (
-                  <option key={f.id} value={f.id}>{f.name}</option>
+                {AUDIENCE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
-              </select>
+              </Select>
+            </FormField>
+            {needsRef && audience === 'FAMILIES' && (
+              <FormField label="Family" required error={errors.audienceRef?.message}>
+                <Select
+                  {...form.register('audienceRef')}
+                  error={!!errors.audienceRef}
+                >
+                  <option value="">Select family</option>
+                  {families?.map((f) => (
+                    <option key={f.id} value={f.id}>{f.name}</option>
+                  ))}
+                </Select>
+              </FormField>
             )}
             {needsRef && audience === 'VOICE_SECTION' && (
-              <select
-                value={audienceRef}
-                onChange={(e) => setAudienceRef(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border"
-              >
-                <option value="">Select voice section</option>
-                {(voiceSections as Array<{ id: string; name: string }> | undefined)?.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
+              <FormField label="Voice section" required error={errors.audienceRef?.message}>
+                <Select
+                  {...form.register('audienceRef')}
+                  error={!!errors.audienceRef}
+                >
+                  <option value="">Select voice section</option>
+                  {(voiceSections as Array<{ id: string; name: string }> | undefined)?.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </Select>
+              </FormField>
             )}
             {needsRef && audience === 'CUSTOM_GROUP' && (
-              <input
-                placeholder="Family ID or comma-separated user IDs"
-                value={audienceRef}
-                onChange={(e) => setAudienceRef(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border"
-              />
+              <FormField label="Custom audience" required error={errors.audienceRef?.message}>
+                <Input
+                  placeholder="Family ID or comma-separated user IDs"
+                  {...form.register('audienceRef')}
+                  error={!!errors.audienceRef}
+                />
+              </FormField>
             )}
+            <AnnouncementMemberPreview
+              title={titleValue}
+              body={bodyValue}
+              audienceLabel={AUDIENCE_OPTIONS.find((o) => o.value === audience)?.label ?? 'Entire choir'}
+            />
             <div className="flex gap-2">
               <button
-                onClick={() => create.mutate()}
-                disabled={
-                  !title.trim() || !body.trim() || create.isPending || (needsRef && !audienceRef)
-                }
+                type="submit"
+                disabled={create.isPending}
                 className="px-4 py-2 text-sm font-semibold bg-primary-700 text-white rounded-lg hover:bg-primary-800 disabled:opacity-60"
               >
                 {create.isPending ? 'Publishing…' : 'Publish now'}
               </button>
               <button
+                type="button"
                 onClick={() => setShowForm(false)}
                 className="px-4 py-2 text-sm border border-border rounded-lg hover:bg-surface-raised"
               >
                 Cancel
               </button>
             </div>
-          </div>
+          </form>
         </Card>
       )}
 
       {isLoading ? (
         <SkeletonCard rows={4} />
       ) : (announcements?.length ?? 0) === 0 ? (
-        <Card padding="md">
-          <div className="text-center py-12">
-            <Megaphone size={32} className="text-text-muted mx-auto mb-3" />
-            <p className="text-text-muted">No choir announcements yet.</p>
-          </div>
-        </Card>
+        <EmptyState
+          icon={Megaphone}
+          title="No choir announcements yet"
+          description="Publish targeted updates to the entire choir, leadership, families, or voice sections."
+          action={{ label: 'New announcement', onClick: () => setShowForm(true) }}
+          className="py-12"
+        />
       ) : (
         <div className="space-y-3">
           {announcements?.map((a) => {

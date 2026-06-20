@@ -7,13 +7,14 @@ import {
   StatTile, Badge, Avatar, SkeletonCard,
 } from '@/components/shared'
 import {
-  Shield, Users, CheckCircle2, AlertTriangle,
+  Shield, CheckCircle2, AlertTriangle,
   ChevronRight,
 } from 'lucide-react'
 import { formatDate } from '@/lib/utils/format'
 import Link from 'next/link'
 import { ProtocolMyInvitationsCard } from '@/components/protocol/ProtocolMyInvitationsCard'
 import { ProtocolReplacementRequestForm } from '@/components/protocol/ProtocolReplacementRequestForm'
+import { ProtocolRecognitionStrip } from '@/components/protocol/ProtocolRecognitionStrip'
 
 export default function ProtocolMemberHomePage() {
   const { data: myStats } = useQuery({
@@ -44,6 +45,8 @@ export default function ProtocolMemberHomePage() {
 
       <ProtocolMyInvitationsCard />
 
+      <ProtocolRecognitionStrip />
+
       {pendingCount > 0 && (
         <Card accent="warning" padding="sm">
           <div className="flex items-center gap-3">
@@ -58,27 +61,13 @@ export default function ProtocolMemberHomePage() {
         </Card>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <StatTile label="Attendance Rate" value={myStats?.attendanceRate ?? 0} suffix="%" icon={CheckCircle2} animate />
         <StatTile label="Services"        value={myStats?.serviceCount   ?? 0}              icon={Shield}       animate />
-        <StatTile label="My Rank"         value={myStats?.rank ? `#${myStats.rank}` : '—'} icon={Users}        animate={false} />
         <StatTile label="Pending Replace" value={pendingCount}                              icon={AlertTriangle} animate />
       </div>
 
-      {(myStats?.badges?.length ?? 0) > 0 && (
-        <Card padding="md">
-          <CardHeader>
-            <CardTitle>My Badges</CardTitle>
-          </CardHeader>
-          <div className="flex flex-wrap gap-2">
-            {myStats?.badges?.map((b) => (
-              <Badge key={b} variant="role-choir-president">
-                {b.replace(/_/g, ' ')}
-              </Badge>
-            ))}
-          </div>
-        </Card>
-      )}
+      {/* Legacy gamification badges removed — private recognition strip above */}
 
       <ProtocolReplacementRequestForm />
 

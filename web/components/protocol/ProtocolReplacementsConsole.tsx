@@ -5,10 +5,12 @@ import { useSearchParams } from 'next/navigation'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { protocolApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
-import { Badge, Card, PermissionGate, SkeletonCard } from '@/components/shared'
+import { Badge, Card, PermissionGate, SkeletonCard, EmptyState } from '@/components/shared'
 import { SplitQueueConsole } from '@/components/shared/office/SplitQueueConsole'
+import { SnoozeButton } from '@/components/workflow/SnoozeButton'
+import { useSnoozedQueue } from '@/lib/hooks'
 import { formatDate } from '@/lib/utils/format'
-import { CheckCircle2, XCircle } from 'lucide-react'
+import { CheckCircle2, XCircle, Users } from 'lucide-react'
 import type { ProtocolReplacementRequest, ReplacementRequestStatus } from '@/types'
 
 const STATUS_BADGE: Record<ReplacementRequestStatus, 'status-pending' | 'status-present' | 'status-absent'> = {
@@ -31,13 +33,18 @@ export function ProtocolReplacementsConsole({ filter = 'pending' }: { filter?: F
     queryFn: () => protocolApi.getReplacements(),
   })
 
-  const items = useMemo(() => {
+  const filteredItems = useMemo(() => {
     const list = data ?? []
     if (statusFilter === 'pending') {
       return list.filter((r) => r.status === 'PENDING')
     }
     return list
   }, [data, statusFilter])
+
+  const { visibleItems: items, bumpSnooze } = useSnoozedQueue(
+    filteredItems,
+    (r) => `protocol-replacement-${r.id}`,
+  )
 
   const selectedId = useMemo(() => {
     if (requestIdParam && items.some((i) => i.id === requestIdParam)) {
@@ -67,7 +74,6 @@ export function ProtocolReplacementsConsole({ filter = 'pending' }: { filter?: F
     setActiveId(id)
   }, [])
 
-  const selected = items.find((r) => r.id === activeId) ?? null
   const pendingCount = (data ?? []).filter((r) => r.status === 'PENDING').length
 
   return (
@@ -112,11 +118,16 @@ export function ProtocolReplacementsConsole({ filter = 'pending' }: { filter?: F
         isLoading={isLoading}
         loadingState={<SkeletonCard rows={5} />}
         emptyState={
-          <Card padding="md">
-            <p className="text-sm text-text-muted text-center py-8">
-              {statusFilter === 'pending' ? 'No pending replacement requests.' : 'No replacement requests.'}
-            </p>
-          </Card>
+          <EmptyState
+            icon={Users}
+            title={
+              statusFilter === 'pending'
+                ? 'No pending replacement requests'
+                : 'No replacement requests'
+            }
+            description="Substitution requests before service day will appear in this queue."
+            className="py-10"
+          />
         }
         renderQueueRow={(row, active) => (
           <div className="flex justify-between gap-2 items-start">
@@ -126,9 +137,17 @@ export function ProtocolReplacementsConsole({ filter = 'pending' }: { filter?: F
               </p>
               <p className="text-xs text-text-muted mt-0.5 truncate">{row.occurrenceTitle}</p>
             </div>
-            <Badge variant={STATUS_BADGE[row.status]} className="shrink-0">
-              {row.status}
-            </Badge>
+            <div className="flex items-center gap-1 shrink-0">
+              <Badge variant={STATUS_BADGE[row.status]} className="shrink-0">
+                {row.status}
+              </Badge>
+              {row.status === 'PENDING' && (
+                <SnoozeButton
+                  entityKey={`protocol-replacement-${row.id}`}
+                  onSnoozeChange={bumpSnooze}
+                />
+              )}
+            </div>
           </div>
         )}
         renderDetail={(row) =>
@@ -137,7 +156,15 @@ export function ProtocolReplacementsConsole({ filter = 'pending' }: { filter?: F
               <div className="space-y-4">
                 <div>
                   <p className="text-xs text-text-muted uppercase tracking-wide">Requester</p>
-                  <p className="font-display text-xl font-bold mt-1">{row.requesterName}</p>
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    <p className="font-display text-xl font-bold">{row.requesterName}</p>
+                    {row.status === 'PENDING' && (
+                      <SnoozeButton
+                        entityKey={`protocol-replacement-${row.id}`}
+                        onSnoozeChange={bumpSnooze}
+                      />
+                    )}
+                  </div>
                   <p className="text-sm text-text-muted mt-1">{row.occurrenceTitle}</p>
                 </div>
                 <dl className="space-y-2 text-sm">

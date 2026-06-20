@@ -1,5 +1,27 @@
 import { apiClient } from '../client'
 
+export type MemberRecognitionBadge = {
+  kind: string
+  category: 'attendance' | 'contribution'
+  label: string
+  detail?: string | null
+}
+
+export type MemberRecognitionMilestone = {
+  kind: string
+  category: 'attendance' | 'contribution'
+  label: string
+  progressPct: number
+  hint: string
+}
+
+export type MemberRecognitionResponse = {
+  choirId: string
+  enabled?: boolean
+  earned: MemberRecognitionBadge[]
+  nextMilestones: MemberRecognitionMilestone[]
+}
+
 export const choirSchedulingApi = {
   getLeaderDashboard: (choirId?: string) =>
     apiClient.get<never, Record<string, unknown>>('/choir/scheduling/dashboard', {
@@ -44,4 +66,9 @@ export const choirSchedulingApi = {
 
   declineAssignment: (id: string, reason?: string) =>
     apiClient.post<never, Record<string, unknown>>(`/choir/scheduling/assignments/${id}/decline`, { reason }),
+
+  getMyRecognition: (choirId: string) =>
+    apiClient.get<never, MemberRecognitionResponse>('/choir/scheduling/recognition/me', {
+      params: { choirId },
+    }),
 }

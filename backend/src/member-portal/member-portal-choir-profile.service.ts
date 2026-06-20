@@ -20,12 +20,14 @@ export type ChoirPublicProfile = {
     platform?: string;
     description?: string;
   };
+  memberRecognitionEnabled?: boolean;
 };
 
 /** PATCH body — `featuredRelease: null` clears the override. */
 export type ChoirPublicProfileUpdate = {
   summary?: string;
   featuredRelease?: ChoirPublicProfile['featuredRelease'] | null;
+  memberRecognitionEnabled?: boolean;
 };
 
 export type UpdateChoirPublicProfileBody = {
@@ -121,6 +123,7 @@ export class MemberPortalChoirProfileService {
       publicSummary: profile.summary ?? choir.description,
       profileSummary: profile.summary ?? null,
       featuredReleaseOverride: profile.featuredRelease ?? null,
+      memberRecognitionEnabled: profile.memberRecognitionEnabled !== false,
       featuredRelease: featuredRelease?.url ? featuredRelease : null,
       joinStatus,
       sponsorStatus,
@@ -153,6 +156,9 @@ export class MemberPortalChoirProfileService {
           merged.featuredRelease = body.publicProfile.featuredRelease;
         }
       }
+      if (body.publicProfile.memberRecognitionEnabled !== undefined) {
+        merged.memberRecognitionEnabled = body.publicProfile.memberRecognitionEnabled;
+      }
     }
 
     return this.prisma.choir.update({
@@ -177,6 +183,10 @@ export class MemberPortalChoirProfileService {
     const fr = o.featuredRelease as Record<string, unknown> | undefined;
     return {
       summary: typeof o.summary === 'string' ? o.summary : undefined,
+      memberRecognitionEnabled:
+        typeof o.memberRecognitionEnabled === 'boolean'
+          ? o.memberRecognitionEnabled
+          : undefined,
       featuredRelease:
         fr && typeof fr.title === 'string' && typeof fr.url === 'string'
           ? {

@@ -67,24 +67,28 @@ export function ChoirAdminHub() {
           value={pendingJoins?.length ?? 0}
           icon={UserPlus}
           animate
+          href={choirLink('join-requests')}
         />
         <StatTile
           label="Active roster"
           value={roster?.total ?? '—'}
           icon={Users}
           animate
+          href={choirLink('members')}
         />
         <StatTile
           label="Service requests"
           value={serviceRequests?.length ?? 0}
           icon={ClipboardList}
           animate
+          href="/church/service-requests"
         />
         <StatTile
           label="Prep plans due"
           value={pendingPrep}
           icon={Calendar}
           animate
+          href={choirLink('service-preparation')}
         />
       </div>
 

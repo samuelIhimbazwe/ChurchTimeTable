@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { financeApi, memberPortalApi, contributionsApi, dashboardApi } from '@/lib/api'
@@ -13,7 +14,10 @@ import {
 } from '@/lib/choir/membership-office'
 import { hasMemberLeadershipOffice } from '@/lib/choir/member-leadership-offices'
 import { MemberAttentionStrip } from '@/components/choir/membership/MemberAttentionStrip'
+import { MemberRecognitionStrip } from '@/components/choir/membership/MemberRecognitionStrip'
 import { OfficeShellFrame } from '@/components/choir/OfficeShellFrame'
+import { MemberBottomTabBar } from '@/components/mobile/MemberBottomTabBar'
+import { SeasonalAccentRibbon } from '@/components/brand/SeasonalAccentRibbon'
 
 type Props = {
   choirId: string
@@ -197,10 +201,21 @@ export function MemberOfficeShell({ choirId, children }: Props) {
       meta={meta}
       navItems={navItems}
       navLabel="Membership office"
-      alerts={alerts}
+      alerts={
+        <>
+          <SeasonalAccentRibbon className="-mx-3 xs:-mx-4 sm:-mx-6 mb-3 rounded-none" />
+          {alerts}
+        </>
+      }
       aside={aside}
     >
+      <MemberRecognitionStrip choirId={choirId} />
       {children}
+      <MemberBottomTabBar
+        choirId={choirId}
+        activeSegment={activeSegment}
+        todoCount={obligationCount}
+      />
     </OfficeShellFrame>
   )
 }

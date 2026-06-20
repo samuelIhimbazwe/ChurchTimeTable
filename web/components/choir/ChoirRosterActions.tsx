@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { choirApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
+import { useContextConfirm } from '@/components/governance/useContextConfirm'
 import { choirPositionLabel } from '@/lib/constants/choir-positions'
 import type { ChoirMember } from '@/types'
 
@@ -17,6 +18,8 @@ export function ChoirRosterActions({ member, choirId }: Props) {
   const qc = useQueryClient()
   const [open, setOpen] = useState(false)
   const [assignRoleId, setAssignRoleId] = useState('')
+  const { confirm, dialog } = useContextConfirm()
+  const pendingDeactivate = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { data: roles } = useQuery({
     queryKey: ['choir-position-roles', choirId],
@@ -83,6 +86,8 @@ export function ChoirRosterActions({ member, choirId }: Props) {
   }
 
   return (
+    <>
+      {dialog}
     <div className="absolute right-0 top-full z-20 mt-1 w-64 rounded-lg border border-border bg-surface shadow-lg p-3 space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold text-text-primary truncate">{member.name}</p>
@@ -150,14 +155,40 @@ export function ChoirRosterActions({ member, choirId }: Props) {
 
       <button
         type="button"
-        onClick={() => {
-          if (
-            window.confirm(
-              `Remove ${member.name} from this choir? Committee seats will end today.`,
-            )
-          ) {
+        onClick={async () => {
+          const ok = await confirm({
+            title: 'Remove from choir?',
+            description: (
+              <>
+                Remove <strong className="text-text-primary">{member.name}</strong> from this
+                choir? Committee seats will end today.
+              </>
+            ),
+            confirmLabel: 'Remove member',
+            variant: 'danger',
+          })
+          if (!ok) return
+
+          if (pendingDeactivate.current) clearTimeout(pendingDeactivate.current)
+
+          toast.withUndo(
+            `Removing ${member.name}…`,
+            {
+              label: 'Undo',
+              onClick: () => {
+                if (pendingDeactivate.current) {
+                  clearTimeout(pendingDeactivate.current)
+                  pendingDeactivate.current = null
+                }
+              },
+            },
+            'You have 5 seconds to undo',
+          )
+
+          pendingDeactivate.current = setTimeout(() => {
+            pendingDeactivate.current = null
             deactivate.mutate()
-          }
+          }, 5000)
         }}
         disabled={deactivate.isPending}
         className="w-full mt-2 px-3 py-1.5 text-xs font-semibold text-danger border border-danger/30 rounded-lg hover:bg-danger/5 disabled:opacity-60"
@@ -165,5 +196,6 @@ export function ChoirRosterActions({ member, choirId }: Props) {
         {deactivate.isPending ? 'Removing…' : 'Remove from choir'}
       </button>
     </div>
+    </>
   )
 }

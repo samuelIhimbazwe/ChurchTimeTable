@@ -5,11 +5,12 @@ import {
 } from '@/lib/search/adaptSearchResponse'
 
 export interface SearchResult {
-  id:       string
-  type:     'member' | 'occurrence' | 'activity' | 'choir' | 'family'
-  title:    string
-  subtitle?: string
-  link:     string
+  id:         string
+  type:       'member' | 'occurrence' | 'activity' | 'choir' | 'family'
+  entityType: string
+  title:      string
+  subtitle?:  string
+  link:       string
 }
 
 export const searchApi = {

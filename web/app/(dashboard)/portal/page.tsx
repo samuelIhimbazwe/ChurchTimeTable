@@ -12,11 +12,19 @@ import {
 } from '@/components/shared'
 import { formatDate, formatTime } from '@/lib/utils/format'
 import {
-  MapPin, BookOpen, Megaphone, Music, Shield, Building2,
+  MapPin, Music, Shield, Building2,
   UserPlus, ExternalLink, Radio, Calendar, Sparkles, X,
-  ChevronRight, Video, VideoOff, HeartHandshake,
+  ChevronRight, Video, VideoOff,
 } from 'lucide-react'
-import { PrayerRequestForm } from '@/components/portal/PrayerRequestForm'
+import { RoleHeroBand } from '@/components/portal/home/RoleHeroBand'
+import { PortalChurchGivingGlance } from '@/components/portal/home/PortalChurchGivingGlance'
+import { PortalNextServiceGlance } from '@/components/portal/home/PortalNextServiceGlance'
+import { PortalVerseGlance } from '@/components/portal/home/PortalVerseGlance'
+import { PortalQuickActionsGrid } from '@/components/portal/home/PortalQuickActionsGrid'
+import { PortalAtAGlance } from '@/components/portal/home/PortalAtAGlance'
+import { RecentAnnouncementsList } from '@/components/portal/home/RecentAnnouncementsList'
+import { PortalPrayWithUsCard } from '@/components/portal/home/PortalPrayWithUsCard'
+import { useTranslations } from '@/lib/i18n'
 import {
   filterVisiblePortalChoirs,
   normalizePendingChoirJoinRequests,
@@ -29,6 +37,7 @@ import { ProtocolMyInvitationsCard } from '@/components/protocol/ProtocolMyInvit
 import { ChoirPortalJoinControls } from '@/components/portal/ChoirPortalJoinControls'
 import { ChoirJoinRequestForm } from '@/components/portal/ChoirJoinRequestForm'
 import { PortalMyWeekCard } from '@/components/portal/PortalMyWeekCard'
+import { CollapsibleSection } from '@/components/shared/CollapsibleSection'
 import type { MemberPortalServiceCard } from '@/lib/api/modules/memberPortal'
 
 function mapPreviewUrl(location: {
@@ -100,6 +109,7 @@ function ServiceCard({ service }: { service: MemberPortalServiceCard }) {
 
 export default function MemberPortalPage() {
   const qc = useQueryClient()
+  const { tr } = useTranslations()
   const { data, isLoading, error, refetch } = useMemberPortalHome()
   const { activeChoirMemberships } = useChoirAccess()
   const { data: myJoinRequests } = useQuery({
@@ -168,9 +178,16 @@ export default function MemberPortalPage() {
   if (isLoading) {
     return (
       <div className="space-y-6 max-w-5xl mx-auto">
-        <SkeletonCard rows={2} />
+        <SkeletonCard rows={3} />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} rows={1} />)}
+        </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} rows={2} />)}
+        </div>
+        <div className="grid lg:grid-cols-2 gap-6">
+          <SkeletonCard rows={5} />
+          <SkeletonCard rows={5} />
         </div>
         <SkeletonCard rows={5} />
       </div>
@@ -204,36 +221,109 @@ export default function MemberPortalPage() {
   const mapInfo = mapPreviewUrl(location)
   const showOnboarding = onboarding.showPrompt && !dismissedOnboarding
   const verse = spiritual.verseOfDay
+  const primaryChoirId = activeChoirMemberships[0]?.id
+  const ministryMemberCount = ministries.filter((m) => m.isMember).length
+  const weekCount = participation?.thisWeek?.length ?? 0
+  const conflictCount = participation?.conflicts?.length ?? 0
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto pb-8">
 
-      {/* Welcome */}
-      <section className="space-y-3">
-      <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-gold-700">
-            {welcome.churchName}
-          </p>
-          <h1 className="font-display italic text-4xl text-text-primary leading-tight mt-1">
-            Welcome, {welcome.firstName}.
-          </h1>
-          {welcome.welcomeMessage && (
-            <p className="text-text-secondary mt-2 text-sm max-w-2xl leading-relaxed">
-              {welcome.welcomeMessage}
-            </p>
-          )}
-      </div>
-        {welcome.pendingApproval && (
-          <Card accent="warning" padding="md">
-            <p className="text-sm text-text-primary">
-              Your registration is being reviewed by church leadership.
-              You can explore church information here; full ministry access unlocks after approval.
-            </p>
-          </Card>
-        )}
-      </section>
+      <RoleHeroBand
+        accent="member"
+        churchName={welcome.churchName}
+        title={`${tr('Welcome')}, ${welcome.firstName}.`}
+        subtitle={welcome.welcomeMessage}
+        trailing={
+          welcome.pendingApproval ? (
+            <Badge variant="status-pending" className="self-start">
+              {tr('Pending approval')}
+            </Badge>
+          ) : undefined
+        }
+      >
+        <PortalChurchGivingGlance />
+        <PortalNextServiceGlance
+          service={services.find((s) => s.nextOccurrence) ?? services[0] ?? null}
+        />
+        <PortalVerseGlance verse={verse} />
+      </RoleHeroBand>
 
-      {/* Onboarding */}
+      {welcome.pendingApproval && (
+        <Card accent="warning" padding="md">
+          <p className="text-sm text-text-primary">
+            Your registration is being reviewed by church leadership.
+            You can explore church information here; full ministry access unlocks after approval.
+          </p>
+        </Card>
+      )}
+
+      <PortalQuickActionsGrid
+        choirId={primaryChoirId}
+        hasChoirMembership={activeChoirMemberships.length > 0}
+        onPrayerRequest={() => setShowPrayerForm(true)}
+        pendingApproval={welcome.pendingApproval}
+      />
+
+      <PortalAtAGlance
+        weekCount={weekCount}
+        conflictCount={conflictCount}
+        announcementCount={announcements.length}
+        ministryMemberCount={ministryMemberCount}
+      />
+
+      {(liveBroadcast?.isLive || spiritual.livestream?.isLive) && (
+        <Card accent="danger" padding="md">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <Radio size={20} className="text-danger shrink-0 mt-1 animate-pulse" />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-danger">
+                  {tr('Live now')}
+                </p>
+                <p className="font-semibold text-text-primary mt-1">
+                  {(liveBroadcast ?? spiritual.livestream)?.title}
+                </p>
+              </div>
+            </div>
+            <a
+              href={(liveBroadcast ?? spiritual.livestream)?.youtubeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 flex items-center gap-1 px-3 py-2 text-xs font-semibold bg-danger text-white rounded-lg hover:opacity-90"
+            >
+              {tr('Watch')} <ExternalLink size={12} />
+            </a>
+          </div>
+        </Card>
+      )}
+
+      <div
+        className={
+          participation
+            ? 'grid lg:grid-cols-2 gap-6 items-start'
+            : 'max-w-xl mx-auto lg:mx-0 lg:max-w-none'
+        }
+      >
+        {participation && (
+          <PortalMyWeekCard
+            isDualMember={participation.isDualMember}
+            thisWeek={participation.thisWeek}
+            conflicts={participation.conflicts}
+          />
+        )}
+        <div className="space-y-4">
+          <RecentAnnouncementsList announcements={announcements} max={5} compact />
+          <PortalPrayWithUsCard
+            prayers={prayWithUs?.twoDayPrayers ?? []}
+            showPrayerForm={showPrayerForm}
+            onOpenPrayerForm={() => setShowPrayerForm(true)}
+            onClosePrayerForm={() => setShowPrayerForm(false)}
+            compact
+          />
+        </div>
+      </div>
+
       {showOnboarding && (
         <Card accent="gold" padding="md">
           <div className="flex items-start justify-between gap-4">
@@ -273,120 +363,18 @@ export default function MemberPortalPage() {
         </Card>
       )}
 
-      {/* Scripture + Pray with us */}
-      <div className="grid md:grid-cols-2 gap-4">
-        <Card accent="info" padding="md">
-          <div className="flex items-start gap-3">
-            <BookOpen size={20} className="text-info shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="text-xs font-semibold uppercase tracking-wide text-info">Scripture</p>
-              {verse ? (
-                <>
-                  <p className="text-sm text-text-primary mt-2 leading-relaxed line-clamp-4">
-                    {verse.verseText ?? verse.content ?? verse.title}
-                  </p>
-                  {verse.verseReference && (
-                    <p className="text-xs text-text-muted mt-2 font-medium">— {verse.verseReference}</p>
-                  )}
-                </>
-              ) : (
-                <p className="text-sm text-text-muted mt-2">Verse of the day will appear here.</p>
-              )}
-              <Link
-                href="/portal/devotion"
-                className="inline-flex items-center gap-1 mt-3 text-xs font-semibold text-primary-600"
-              >
-                Devotion center <ChevronRight size={12} />
-              </Link>
-            </div>
-          </div>
-        </Card>
-
-        <Card accent="gold" padding="md">
-          <div className="flex items-start gap-3">
-            <HeartHandshake size={20} className="text-gold-700 shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gold-700">
-                Pray with us
-              </p>
-              <div className="mt-2 space-y-2">
-                {(prayWithUs?.twoDayPrayers ?? []).slice(0, 2).map((p) => (
-                  <div key={p.id}>
-                    <p className="text-xs font-semibold text-gold-800">{p.dayLabel}</p>
-                    <p className="text-sm text-text-primary line-clamp-2">{p.content}</p>
-                  </div>
-                ))}
-                {(prayWithUs?.twoDayPrayers?.length ?? 0) === 0 && (
-                  <p className="text-sm text-text-muted">Two-day prayer guide coming soon.</p>
-                )}
-              </div>
-              <div className="mt-3 flex flex-wrap items-center gap-3">
-                <Link
-                  href="/portal/devotion"
-                  className="text-xs font-semibold text-primary-600 hover:text-primary-800"
-                >
-                  More devotion
-                </Link>
-                {!showPrayerForm ? (
-                  <button
-                    type="button"
-                    onClick={() => setShowPrayerForm(true)}
-                    className="text-xs font-semibold text-primary-600 hover:text-primary-800"
-                  >
-                    Prayer request (ibyifuzo)
-                  </button>
-                ) : null}
-              </div>
-            </div>
-          </div>
-          {showPrayerForm && (
-            <div className="mt-4 pt-4 border-t border-border">
-              <PrayerRequestForm compact initialOpen onSuccess={() => setShowPrayerForm(false)} />
-            </div>
-          )}
-        </Card>
-      </div>
-
-      {participation && (
-        <PortalMyWeekCard
-          isDualMember={participation.isDualMember}
-          thisWeek={participation.thisWeek}
-          conflicts={participation.conflicts}
-        />
-      )}
-
-      {(liveBroadcast?.isLive || spiritual.livestream?.isLive) && (
-        <Card accent="danger" padding="md">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-start gap-3">
-              <Radio size={20} className="text-danger shrink-0 mt-1 animate-pulse" />
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-danger">Live now</p>
-                <p className="font-semibold text-text-primary mt-1">
-                  {(liveBroadcast ?? spiritual.livestream)?.title}
-                </p>
-              </div>
-            </div>
-            <a
-              href={(liveBroadcast ?? spiritual.livestream)?.youtubeUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0 flex items-center gap-1 px-3 py-2 text-xs font-semibold bg-danger text-white rounded-lg hover:opacity-90"
-            >
-              Watch <ExternalLink size={12} />
-            </a>
-          </div>
-        </Card>
-      )}
-
       {/* Church location */}
       {(location.address || location.city || mapInfo.embed || mapInfo.link) && (
+        <CollapsibleSection
+          title={tr('Church location')}
+          description={tr('Find us for in-person worship and fellowship')}
+          defaultOpen={false}
+        >
         <Card padding="md">
           <CardHeader className="p-0 mb-4">
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 sr-only">
               <MapPin size={18} /> Church location
             </CardTitle>
-            <CardDescription>Find us for in-person worship and fellowship</CardDescription>
           </CardHeader>
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2 text-sm text-text-secondary">
@@ -415,6 +403,7 @@ export default function MemberPortalPage() {
             )}
           </div>
         </Card>
+        </CollapsibleSection>
       )}
 
       {/* Services */}
@@ -505,14 +494,15 @@ export default function MemberPortalPage() {
       </div>
 
       {/* Ministries */}
+      <CollapsibleSection
+        title={tr('Ministries')}
+        description={tr('Serve through church ministries')}
+        defaultOpen={false}
+      >
       <section className="space-y-4">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <h2 className="font-display text-2xl text-text-primary">Ministries</h2>
-            <p className="text-sm text-text-secondary mt-0.5">Serve through church ministries</p>
-          </div>
+        <div className="flex items-end justify-end gap-4">
           <Link href="/portal/ministries" className="text-xs font-semibold text-primary-600 hover:text-primary-800 flex items-center gap-1">
-            View all <ChevronRight size={14} />
+            {tr('View all')} <ChevronRight size={14} />
           </Link>
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
@@ -539,6 +529,7 @@ export default function MemberPortalPage() {
           ))}
         </div>
       </section>
+      </CollapsibleSection>
 
       {/* Choirs + Protocol */}
       <div className="grid lg:grid-cols-2 gap-6">
@@ -671,40 +662,6 @@ export default function MemberPortalPage() {
           )}
         </Card>
       </div>
-
-      {/* Announcements */}
-      <Card padding="none">
-        <CardHeader className="px-5 pt-5">
-          <CardTitle className="flex items-center gap-2">
-            <Megaphone size={18} /> Announcements
-          </CardTitle>
-          <CardDescription>Updates from our local church</CardDescription>
-        </CardHeader>
-        {announcements.length === 0 ? (
-          <p className="text-center text-text-muted text-sm py-8">No announcements right now.</p>
-        ) : (
-          <ul className="divide-y divide-border">
-            {announcements.map((a) => (
-              <li key={`${a.source}-${a.id}`} className="px-5 py-4">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-sm font-semibold text-text-primary">{a.title}</p>
-                  {a.pinned && <Badge variant="status-excused">Pinned</Badge>}
-                  <Badge variant="default">{a.source === 'church' ? 'Church' : 'Choir'}</Badge>
-                  </div>
-                <p className="text-sm text-text-secondary mt-1 line-clamp-3">{a.body}</p>
-                {a.publishedAt && (
-                  <p className="text-xs text-text-muted mt-2">{formatDate(a.publishedAt)}</p>
-                )}
-                </li>
-            ))}
-          </ul>
-        )}
-        <div className="px-5 py-3 border-t border-border">
-          <Link href="/announcements" className="text-xs font-semibold text-primary-600 hover:text-primary-800 flex items-center gap-1">
-            All announcements <ChevronRight size={14} />
-          </Link>
-        </div>
-      </Card>
     </div>
   )
 }

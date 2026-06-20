@@ -1,12 +1,20 @@
 'use client'
 
 import Link from 'next/link'
+import { useMemo, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useNotifications } from '@/lib/hooks'
+import { useFocusTrap } from '@/lib/hooks/useFocusTrap'
 import { X, Bell, CheckCheck, Info, CheckCircle2, AlertTriangle, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { ApiNotification } from '@/types'
 import { useTranslations } from '@/lib/i18n'
+import { NotificationInlineActions } from '@/components/notifications/NotificationInlineActions'
+import {
+  NOTIFICATION_CATEGORY_TABS,
+  filterNotificationsByCategory,
+  type NotificationCategory,
+} from '@/lib/notifications/categories'
 
 const TYPE_ICON: Record<ApiNotification['type'], React.ElementType> = {
   info:    Info,
@@ -29,8 +37,16 @@ interface NotificationPanelProps {
 
 export default function NotificationPanel({ open, onClose }: NotificationPanelProps) {
   const router = useRouter()
+  const panelRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(panelRef, open)
+  const [category, setCategory] = useState<NotificationCategory>('all')
   const { data: notifications, isLoading, markRead, markAllRead } = useNotifications()
   const { shell: s, tr, relativeTime: relTime } = useTranslations()
+
+  const filtered = useMemo(
+    () => filterNotificationsByCategory(notifications ?? [], category),
+    [notifications, category],
+  )
 
   function openNotification(n: ApiNotification) {
     if (!n.read) markRead.mutate(n.id)
@@ -48,7 +64,13 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
 
-      <div className="fixed top-16 left-3 right-3 sm:left-auto sm:right-4 z-50 w-auto sm:w-96 max-w-[calc(100vw-1.5rem)] bg-surface rounded-xl border border-border shadow-overlay animate-page-enter overflow-hidden">
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={tr('Notifications')}
+        className="fixed top-16 left-3 right-3 sm:left-auto sm:right-4 z-50 w-auto sm:w-96 max-w-[calc(100vw-1.5rem)] bg-surface rounded-xl border border-border shadow-overlay animate-page-enter overflow-hidden"
+      >
 
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <div className="flex items-center gap-2">
@@ -76,7 +98,25 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
           </div>
         </div>
 
-        <div className="max-h-[480px] overflow-y-auto">
+        <div className="px-3 py-2 border-b border-border flex gap-1 overflow-x-auto">
+          {NOTIFICATION_CATEGORY_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setCategory(tab.id)}
+              className={cn(
+                'px-2 py-1 text-[10px] font-semibold rounded-full border whitespace-nowrap transition-colors',
+                category === tab.id
+                  ? 'bg-primary-700 text-white border-primary-700'
+                  : 'border-border text-text-muted hover:bg-surface-raised',
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="max-h-[420px] overflow-y-auto">
           {isLoading ? (
             <div className="space-y-3 p-4">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -89,14 +129,14 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
                 </div>
               ))}
             </div>
-          ) : (notifications?.length ?? 0) === 0 ? (
+          ) : filtered.length === 0 ? (
             <div className="text-center py-12">
               <Bell size={28} className="text-text-muted mx-auto mb-2" />
               <p className="text-sm text-text-muted">{tr("You're all caught up")}</p>
             </div>
           ) : (
             <ul className="divide-y divide-border">
-              {notifications?.map((n) => {
+              {filtered.map((n) => {
                 const Icon  = TYPE_ICON[n.type]
                 const color = TYPE_COLOR[n.type]
                 return (
@@ -120,6 +160,11 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
                       </p>
                       <p className="text-xs text-text-muted mt-0.5 line-clamp-2">{n.body}</p>
                       <p className="text-xs text-text-muted mt-1">{relTime(n.createdAt)}</p>
+                      <NotificationInlineActions
+                        notification={n}
+                        compact
+                        onAction={() => !n.read && markRead.mutate(n.id)}
+                      />
                     </div>
                     {!n.read && (
                       <div className="w-2 h-2 rounded-full bg-primary-500 shrink-0 mt-2" />
@@ -135,6 +180,7 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
           <div className="px-4 py-2.5 border-t border-border text-center">
             <Link
               href="/notifications"
+              onClick={onClose}
               className="text-xs font-semibold text-primary-600 hover:text-primary-800 transition-colors"
             >
               {tr('View all notifications')} →

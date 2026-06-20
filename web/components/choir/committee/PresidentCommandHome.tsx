@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { choirApi, choirSchedulingApi, financeApi } from '@/lib/api'
 import { OfficeCommandHome } from '@/components/shared/office/OfficeCommandHome'
+import { LeadershipAttentionPanel } from '@/components/shared/office/LeadershipAttentionPanel'
 import { OfficerSlaPanel } from '@/components/choir/committee/OfficerSlaPanel'
 import { ChoirExecutivePulsePanel } from '@/components/choir/committee/ChoirExecutivePulsePanel'
 import { Card, SkeletonCard } from '@/components/shared'
@@ -148,15 +149,23 @@ export function PresidentCommandHome() {
             tone: pendingCount > 0 ? 'warning' : 'success',
           },
           {
-            id: 'health',
-            label: 'Choir health',
+            id: 'attendance',
+            label: 'Service attendance',
             primary: attendance > 0 ? `${attendance}%` : '—',
+            secondary: 'Choir-wide worship attendance trend',
+            cta: 'Attendance reports →',
+            href: choirLink('reports'),
+          },
+          {
+            id: 'health',
+            label: 'Giving on track',
+            primary: campaignPct > 0 ? `${campaignPct}%` : '—',
             secondary:
               campaignPct > 0
-                ? `Giving campaign ${campaignPct}% · Treasurer verifies money`
-                : 'Attendance trend · finance summary read-only',
-            cta: 'View reports →',
-            href: choirLink('reports'),
+                ? `Campaign participation · treasurer verifies`
+                : 'Stewardship summary read-only',
+            cta: 'View stewardship →',
+            href: choirLink('stewardship'),
           },
           {
             id: 'sla',
@@ -167,6 +176,29 @@ export function PresidentCommandHome() {
             onClick: slaAttention > 0 ? handleScrollToSla : handleExportPack,
             tone: slaTone,
           },
+        ]}
+      />
+
+      <LeadershipAttentionPanel
+        items={[
+          ...(pendingCount > 0
+            ? [{
+                id: 'joins',
+                label: `${pendingCount} join request(s) need review`,
+                detail: oldest ? `Oldest pending ${oldest}` : undefined,
+                href: decisionsHref,
+                tone: 'warning' as const,
+              }]
+            : []),
+          ...(slaBreaches > 0
+            ? [{
+                id: 'sla',
+                label: `${slaBreaches} officer SLA breach(es)`,
+                detail: 'Care and treasurer queues need follow-up',
+                href: choirLink('care/desk'),
+                tone: 'warning' as const,
+              }]
+            : []),
         ]}
       />
 

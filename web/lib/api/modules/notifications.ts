@@ -20,6 +20,7 @@ function toNotification(row: Record<string, unknown>): ApiNotification {
     type:      mapNotificationType(row.type),
     read:      Boolean(row.read),
     link:      linkFromNotificationData(data),
+    data:      data ?? undefined,
     createdAt: String(row.createdAt ?? new Date().toISOString()),
   }
 }

@@ -3,13 +3,17 @@
 import { useState } from 'react'
 import {
   Bell, Search, HelpCircle, ChevronDown,
-  LogOut, User, Settings, Menu,
+  LogOut, User, Settings, Menu, Inbox,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores/index'
 import { useLogout } from '@/lib/hooks'
 import { AppearanceControls } from '@/components/auth/AppearanceControls'
 import { useTranslations } from '@/lib/i18n'
+import { BackButton } from '@/components/shared/BackButton'
+import { isSovereignOfficePath } from '@/lib/choir/office-themes'
+import { shouldShowBackButton } from '@/lib/navigation/back-target'
+import { usePathname } from 'next/navigation'
 
 interface TopBarProps {
   pageTitle:     string
@@ -21,7 +25,10 @@ interface TopBarProps {
   onHelpClick?:  () => void
   onPreferencesClick?: () => void
   onNotifClick?: () => void
+  onAttentionClick?: () => void
   notifOpen?:    boolean
+  attentionOpen?: boolean
+  attentionCount?: number
   helpOpen?:     boolean
 }
 
@@ -35,12 +42,18 @@ export default function TopBar({
   onHelpClick,
   onPreferencesClick,
   onNotifClick,
+  onAttentionClick,
   notifOpen    = false,
+  attentionOpen = false,
+  attentionCount = 0,
   helpOpen     = false,
 }: TopBarProps) {
   const collapsed = useUIStore((s) => s.sidebarCollapsed)
   const [menuOpen, setMenuOpen] = useState(false)
   const { tr } = useTranslations()
+  const pathname = usePathname()
+  const showTopBarBack =
+    shouldShowBackButton(pathname) && !isSovereignOfficePath(pathname)
 
   const { mutate: logout, isPending: loggingOut } = useLogout()
 
@@ -68,6 +81,8 @@ export default function TopBar({
         >
           <Menu size={20} />
         </button>
+
+        {showTopBarBack && <BackButton variant="icon" />}
 
         <h1 className="font-body font-semibold text-base sm:text-xl text-text-primary truncate min-w-0">
           {pageTitle}
@@ -102,6 +117,27 @@ export default function TopBar({
         </button>
 
         <AppearanceControls compact className="hidden xs:flex" />
+
+        {onAttentionClick && (
+          <button
+            onClick={onAttentionClick}
+            aria-label={`Attention inbox${attentionCount ? `, ${attentionCount} items` : ''}`}
+            aria-expanded={attentionOpen}
+            className={cn(
+              'relative p-2 rounded-md transition-colors duration-fast',
+              attentionOpen
+                ? 'bg-surface-overlay text-text-primary'
+                : 'text-text-muted hover:text-text-primary hover:bg-surface-raised',
+            )}
+          >
+            <Inbox size={18} />
+            {attentionCount > 0 && (
+              <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-warning text-[10px] font-bold text-white flex items-center justify-center">
+                {attentionCount > 9 ? '9+' : attentionCount}
+              </span>
+            )}
+          </button>
+        )}
 
         <button
           onClick={onHelpClick}

@@ -1,22 +1,34 @@
 'use client'
 
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { choirApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import {
-  Card, CardHeader, CardTitle, PermissionGate, SkeletonCard, Badge,
+  Card, CardHeader, CardTitle, PermissionGate, SkeletonCard, Badge, EmptyState,
 } from '@/components/shared'
+import { FormField, Input, Textarea } from '@/components/shared/form'
+import { meetingFormSchema, type MeetingFormValues } from '@/lib/validation/schemas'
 import { CalendarDays } from 'lucide-react'
 import { formatDate } from '@/lib/utils/format'
 
 export default function MeetingsPage() {
   const qc = useQueryClient()
   const [showForm, setShowForm] = useState(false)
-  const [title, setTitle] = useState('')
-  const [scheduledAt, setScheduledAt] = useState('')
-  const [location, setLocation] = useState('')
-  const [agenda, setAgenda] = useState('')
+
+  const form = useForm<MeetingFormValues>({
+    resolver: zodResolver(meetingFormSchema),
+    defaultValues: {
+      title: '',
+      scheduledAt: '',
+      location: '',
+      agenda: '',
+    },
+  })
+
+  const { errors } = form.formState
 
   const { data: meetings, isLoading } = useQuery({
     queryKey: ['choir-meetings'],
@@ -24,19 +36,16 @@ export default function MeetingsPage() {
   })
 
   const create = useMutation({
-    mutationFn: () =>
+    mutationFn: (data: MeetingFormValues) =>
       choirApi.createMeeting({
-        title,
-        scheduledAt: new Date(scheduledAt).toISOString(),
-        location: location || undefined,
-        agenda: agenda || undefined,
+        title: data.title,
+        scheduledAt: new Date(data.scheduledAt).toISOString(),
+        location: data.location?.trim() || undefined,
+        agenda: data.agenda?.trim() || undefined,
       }),
     onSuccess: () => {
       toast.success('Meeting scheduled')
-      setTitle('')
-      setScheduledAt('')
-      setLocation('')
-      setAgenda('')
+      form.reset()
       setShowForm(false)
       qc.invalidateQueries({ queryKey: ['choir-meetings'] })
     },
@@ -54,6 +63,7 @@ export default function MeetingsPage() {
         </div>
         <PermissionGate anyOf={['choir.meetings.manage', 'choir.events.manage']}>
           <button
+            type="button"
             onClick={() => setShowForm((v) => !v)}
             className="px-4 py-2 text-sm font-semibold bg-gold-500 text-primary-900 rounded-lg hover:bg-gold-400 transition-colors"
           >
@@ -67,54 +77,51 @@ export default function MeetingsPage() {
           <CardHeader>
             <CardTitle>New Meeting</CardTitle>
           </CardHeader>
-          <div className="space-y-3">
-            <input
-              type="text"
-              placeholder="Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold-500"
-            />
-            <input
-              type="datetime-local"
-              value={scheduledAt}
-              onChange={(e) => setScheduledAt(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold-500"
-            />
-            <input
-              type="text"
-              placeholder="Location (optional)"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold-500"
-            />
-            <textarea
-              placeholder="Agenda (optional)"
-              value={agenda}
-              onChange={(e) => setAgenda(e.target.value)}
-              rows={3}
-              className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold-500 resize-none"
-            />
+          <form
+            className="space-y-3"
+            onSubmit={form.handleSubmit((data) => create.mutate(data))}
+          >
+            <FormField label="Title" required error={errors.title?.message}>
+              <Input
+                placeholder="Title"
+                {...form.register('title')}
+                error={!!errors.title}
+              />
+            </FormField>
+            <FormField label="Date & time" required error={errors.scheduledAt?.message}>
+              <Input
+                type="datetime-local"
+                {...form.register('scheduledAt')}
+                error={!!errors.scheduledAt}
+              />
+            </FormField>
+            <FormField label="Location" hint="Optional">
+              <Input placeholder="Location" {...form.register('location')} />
+            </FormField>
+            <FormField label="Agenda" hint="Optional">
+              <Textarea placeholder="Agenda" rows={3} {...form.register('agenda')} />
+            </FormField>
             <button
-              onClick={() => create.mutate()}
-              disabled={!title.trim() || !scheduledAt || create.isPending}
+              type="submit"
+              disabled={create.isPending}
               className="px-4 py-2 text-sm font-semibold bg-primary-700 text-white rounded-lg hover:bg-primary-800 disabled:opacity-60"
             >
               {create.isPending ? 'Saving…' : 'Schedule'}
             </button>
-          </div>
+          </form>
         </Card>
       )}
 
       {isLoading ? (
         <SkeletonCard rows={4} />
       ) : list.length === 0 ? (
-        <Card padding="md">
-          <div className="text-center py-12">
-            <CalendarDays size={32} className="text-text-muted mx-auto mb-3" />
-            <p className="text-text-muted">No meetings scheduled.</p>
-          </div>
-        </Card>
+        <EmptyState
+          icon={CalendarDays}
+          title="No meetings scheduled"
+          description="Schedule committee or general meetings so members know when to gather."
+          action={{ label: 'Schedule meeting', onClick: () => setShowForm(true) }}
+          className="py-12"
+        />
       ) : (
         <div className="space-y-3">
           {list.map((m, i) => (

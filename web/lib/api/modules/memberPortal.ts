@@ -460,11 +460,13 @@ export const memberPortalApi = {
 
     apiClient.get<never, MemberPortalHome>('/member-portal/home'),
 
-  getParticipationSchedule: () =>
-    apiClient.get<
+  getParticipationSchedule: (from?: string, to?: string) => {
+    const params = from && to ? { from, to } : undefined
+    return apiClient.get<
       never,
       NonNullable<MemberPortalHome['participation']>
-    >('/member-portal/participation-schedule'),
+    >('/member-portal/participation-schedule', { params })
+  },
 
   getMembershipCenter: () =>
     apiClient.get<
@@ -602,6 +604,7 @@ export const memberPortalApi = {
       showMemberCountPublic?: boolean
       publicProfile?: {
         summary?: string
+        memberRecognitionEnabled?: boolean
         featuredRelease?: {
           title: string
           url: string

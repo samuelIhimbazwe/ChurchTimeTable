@@ -118,14 +118,14 @@ export function ChoirExecutiveHubContent({ deputyMode = false }: Props) {
               Array.from({ length: 4 }).map((_, i) => <SkeletonStatTile key={i} />)
             ) : (
               <>
-                <StatTile label="Attendance rate" value={num(h?.attendanceRate ?? h?.avgAttendanceRate)} suffix="%" icon={Calendar} animate />
-                <StatTile label="Pending joins" value={pendingJoins} icon={UserPlus} animate />
-                <StatTile label="Active discipline" value={activeDiscipline} icon={Shield} animate />
-                <StatTile label="Open welfare" value={openWelfare} icon={Heart} animate />
+                <StatTile label="Attendance rate" value={num(h?.attendanceRate ?? h?.avgAttendanceRate)} suffix="%" icon={Calendar} animate href={legacyOrScopedChoirPath(choirId, 'reports')} />
+                <StatTile label="Pending joins" value={pendingJoins} icon={UserPlus} animate href={legacyOrScopedChoirPath(choirId, 'president/decisions')} />
+                <StatTile label="Active discipline" value={activeDiscipline} icon={Shield} animate href={legacyOrScopedChoirPath(choirId, 'discipline')} />
+                <StatTile label="Open welfare" value={openWelfare} icon={Heart} animate href={legacyOrScopedChoirPath(choirId, 'welfare')} />
               </>
             )}
           </div>
-          <Card padding="md">
+          <Card padding="md" href={legacyOrScopedChoirPath(choirId, 'stewardship')}>
             <p className="font-semibold mb-3">Family contributions (effective)</p>
             <ContributionAmountDisplay
               confirmed={familyConfirmedTotal}
@@ -139,10 +139,10 @@ export function ChoirExecutiveHubContent({ deputyMode = false }: Props) {
               Stewardship dashboard →
             </Link>
           </Card>
-          <Card padding="md">
+          <Card padding="md" href={legacyOrScopedChoirPath(choirId, 'activities')}>
             <div className="flex justify-between mb-3">
               <p className="font-semibold">Upcoming activities</p>
-              <Link href={legacyOrScopedChoirPath(choirId, 'activities')} className="text-xs font-semibold text-primary-600">All →</Link>
+              <span className="text-xs font-semibold text-primary-600">All →</span>
             </div>
             <ul className="space-y-2">
               {(activities?.items ?? []).slice(0, 4).map((a) => (

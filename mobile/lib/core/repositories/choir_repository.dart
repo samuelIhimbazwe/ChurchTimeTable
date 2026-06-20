@@ -250,4 +250,83 @@ class ChoirRepository {
   Future<List<Map<String, dynamic>>> fetchUserChoirs() async {
     return _listFromEnvelope(await _dio.get('/choirs'));
   }
+
+  // --- Scheduling (officer) ---
+
+  Future<List<Map<String, dynamic>>> fetchPendingAcceptance(String choirId) async {
+    return _listFromEnvelope(
+      await _dio.get(
+        '/choir/scheduling/assignments/pending-acceptance',
+        queryParameters: {'choirId': choirId},
+      ),
+    );
+  }
+
+  Future<void> acceptChoirAssignment(String assignmentId, {String? notes}) async {
+    await _dio.post(
+      '/choir/scheduling/assignments/$assignmentId/accept',
+      data: {if (notes != null) 'notes': notes},
+    );
+  }
+
+  Future<void> declineChoirAssignment(String assignmentId, {String? reason}) async {
+    await _dio.post(
+      '/choir/scheduling/assignments/$assignmentId/decline',
+      data: {if (reason != null) 'reason': reason},
+    );
+  }
+
+  // --- Service preparation (member) ---
+
+  Future<List<Map<String, dynamic>>> fetchMemberServicePrep(
+    String choirId, {
+    String? from,
+    String? to,
+  }) async {
+    return _listFromEnvelope(
+      await _dio.get(
+        '/choir/member-service-preparation',
+        queryParameters: {
+          'choirId': choirId,
+          if (from != null) 'from': from,
+          if (to != null) 'to': to,
+        },
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> fetchMemberServicePrepDetail(
+    String choirId,
+    String occurrenceId, {
+    bool offlineFallback = true,
+  }) async {
+    final key = 'choir_prep_${choirId}_$occurrenceId';
+    try {
+      final data = await _unwrap(
+        await _dio.get(
+          '/choir/member-service-preparation/$occurrenceId',
+          queryParameters: {'choirId': choirId},
+        ),
+      );
+      await _offline.cacheJson(key, data);
+      return data;
+    } catch (e) {
+      if (!offlineFallback) rethrow;
+      return await _offline.readJson(key) ?? {};
+    }
+  }
+
+  Future<Map<String, dynamic>> acknowledgeServicePrep(
+    String choirId,
+    String occurrenceId,
+    String itemKey,
+  ) async {
+    return _unwrap(
+      await _dio.post(
+        '/choir/member-service-preparation/$occurrenceId/acknowledge',
+        queryParameters: {'choirId': choirId},
+        data: {'itemKey': itemKey},
+      ),
+    );
+  }
 }

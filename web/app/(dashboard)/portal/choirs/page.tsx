@@ -21,12 +21,14 @@ import { ChoirDashboardEntryButton } from '@/components/choir/ChoirDashboardEntr
 import { ChoirAccessNotice } from '@/components/portal/ChoirAccessNotice'
 import { ChoirPortalJoinControls } from '@/components/portal/ChoirPortalJoinControls'
 import { ChoirJoinRequestForm } from '@/components/portal/ChoirJoinRequestForm'
+import { joinRequestFormSchema } from '@/lib/validation/schemas'
 
 function PortalChoirsContent() {
   const qc = useQueryClient()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [message, setMessage] = useState('')
   const [requestType, setRequestType] = useState('PERMANENT_MEMBER')
+  const [requestTypeError, setRequestTypeError] = useState<string | undefined>()
 
   const { data: choirs, isLoading: loadingChoirs } = useQuery({
     queryKey: ['member-portal', 'public-choirs'],
@@ -181,18 +183,28 @@ function PortalChoirsContent() {
                   <ChoirJoinRequestForm
                     className="mt-4 pt-4 border-t border-border"
                     requestType={requestType}
-                    onRequestTypeChange={setRequestType}
+                    onRequestTypeChange={(v) => {
+                      setRequestType(v)
+                      setRequestTypeError(undefined)
+                    }}
                     message={message}
                     onMessageChange={setMessage}
+                    requestTypeError={requestTypeError}
                     submitting={join.isPending}
                     onCancel={() => setSelectedId(null)}
-                    onSubmit={() =>
+                    onSubmit={() => {
+                      const parsed = joinRequestFormSchema.safeParse({ requestType, message })
+                      if (!parsed.success) {
+                        const typeErr = parsed.error.flatten().fieldErrors.requestType?.[0]
+                        setRequestTypeError(typeErr)
+                        return
+                      }
                       join.mutate({
                         choirId: choir.id,
                         msg: message || undefined,
                         type: requestType,
                       })
-                    }
+                    }}
                   />
                 )}
               </Card>

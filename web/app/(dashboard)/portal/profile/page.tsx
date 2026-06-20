@@ -1,13 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useAuthStore } from '@/stores'
 import { membersApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import {
   Card, Avatar, Badge, StatTile, SkeletonStatTile, SkeletonCard,
 } from '@/components/shared'
+import { FormField, Input } from '@/components/shared/form'
+import { profileFormSchema, type ProfileFormValues } from '@/lib/validation/schemas'
 import { formatDate, scoreBandLabel } from '@/lib/utils/format'
 import type { MinistryScope, ScoreBand } from '@/types'
 import { Camera, Save, Users, Building2, CheckCircle2, Star } from 'lucide-react'
@@ -21,10 +25,14 @@ const MINISTRY_BADGE: Record<MinistryScope, 'ministry-choir' | 'ministry-protoco
 
 export default function ProfilePage() {
   const user = useAuthStore((s) => s.user)
-  const [form, setForm] = useState({
-    name:  user?.name  ?? '',
-    email: user?.email ?? '',
-    phone: '',
+
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileFormSchema),
+    defaultValues: {
+      name: user?.name ?? '',
+      email: user?.email ?? '',
+      phone: '',
+    },
   })
 
   const { data: profileCenter, isLoading } = useQuery({
@@ -34,7 +42,7 @@ export default function ProfilePage() {
   })
 
   const save = useMutation({
-    mutationFn: () => membersApi.updateProfile(user!.id, form),
+    mutationFn: (data: ProfileFormValues) => membersApi.updateProfile(user!.id, data),
     onSuccess:  () => toast.success('Profile updated'),
     onError:    () => toast.error('Update failed'),
   })
@@ -48,6 +56,18 @@ export default function ProfilePage() {
 
   const familyRoles = (leadership?.familyRoles ?? []) as Array<Record<string, unknown>>
   const choirRoles  = (leadership?.choirCommitteeRoles ?? []) as Array<Record<string, unknown>>
+
+  useEffect(() => {
+    if (!profileCenter) return
+    const m = profileCenter.member as Record<string, unknown> | undefined
+    form.reset({
+      name: String(m?.fullName ?? user?.name ?? ''),
+      email: String(m?.email ?? user?.email ?? ''),
+      phone: String(m?.phone ?? ''),
+    })
+  }, [profileCenter, user?.name, user?.email, form])
+
+  const { errors } = form.formState
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
@@ -221,24 +241,26 @@ export default function ProfilePage() {
 
         {/* Edit form */}
         <form
-          onSubmit={(e) => { e.preventDefault(); save.mutate() }}
+          onSubmit={form.handleSubmit((data) => save.mutate(data))}
           className="space-y-4"
         >
-          {[
-            { label: 'Full name',     key: 'name',  type: 'text' },
-            { label: 'Email address', key: 'email', type: 'email' },
-            { label: 'Phone number',  key: 'phone', type: 'tel' },
-          ].map(({ label, key, type }) => (
-            <div key={key} className="space-y-1.5">
-              <label className="text-sm font-medium text-text-primary">{label}</label>
-              <input
-                type={type}
-                value={form[key as keyof typeof form]}
-                onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold-500"
-              />
-            </div>
-          ))}
+          <FormField label="Full name" required error={errors.name?.message}>
+            <Input
+              type="text"
+              {...form.register('name')}
+              error={!!errors.name}
+            />
+          </FormField>
+          <FormField label="Email address" required error={errors.email?.message}>
+            <Input
+              type="email"
+              {...form.register('email')}
+              error={!!errors.email}
+            />
+          </FormField>
+          <FormField label="Phone number" error={errors.phone?.message}>
+            <Input type="tel" {...form.register('phone')} />
+          </FormField>
 
           <div className="flex justify-end pt-2">
             <button

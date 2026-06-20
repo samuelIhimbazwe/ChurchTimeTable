@@ -4,11 +4,13 @@ import {
   Shield,
   UserCircle,
   UserCog,
+  LayoutDashboard,
 } from 'lucide-react'
 import type { FamilyOfficeKind } from '@/lib/choir/family-office'
 
 export type OfficeThemeKey =
   | 'membership'
+  | 'operations'
   | 'family-leadership'
   | 'family-deputy'
   | 'family-coordination'
@@ -43,6 +45,23 @@ export const OFFICE_THEMES: Record<OfficeThemeKey, OfficeTheme> = {
     iconWrap: 'bg-primary-50 border border-primary-100 shadow-sm',
     icon: UserCircle,
     iconColor: 'text-primary-700',
+    navActive: 'bg-primary-700 text-white shadow-md',
+    navInactive: 'text-text-secondary hover:bg-surface-raised',
+    contentBg: 'bg-surface',
+    badge: 'bg-surface-raised text-text-secondary border border-border',
+    portalLink: 'text-primary-700 hover:text-primary-900',
+  },
+  operations: {
+    key: 'operations',
+    officeKindLabel: 'Choir operations',
+    accentBorder: 'border-l-gold-600',
+    hero: 'bg-surface border-b border-border',
+    heroText: 'text-text-primary',
+    heroMuted: 'text-text-secondary',
+    eyebrow: 'text-gold-700',
+    iconWrap: 'bg-gold-50 border border-gold-100 shadow-sm',
+    icon: LayoutDashboard,
+    iconColor: 'text-gold-800',
     navActive: 'bg-primary-700 text-white shadow-md',
     navInactive: 'text-text-secondary hover:bg-surface-raised',
     contentBg: 'bg-surface',
@@ -114,5 +133,9 @@ export function isSovereignOfficePath(pathname: string): boolean {
     || pathname.includes('/family-leadership')
     || pathname.includes('/family-deputy')
     || pathname.includes('/family-coordination')
+    || /\/choir\/[^/]+\/(members|scheduling|service-preparation|activities)(\/|$)/.test(pathname)
+    || /\/choir\/[^/]+\/attendance\//.test(pathname)
+    || /\/choir\/(members|scheduling|service-preparation|activities)(\/|$)/.test(pathname)
+    || /\/choir\/attendance\//.test(pathname)
   )
 }

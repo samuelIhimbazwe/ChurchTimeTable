@@ -1,17 +1,19 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { choirServiceOpsApi, musicApi } from '@/lib/api'
 import type { ServicePreparationItem, ServicePreparationItemType, PepTalkTiming } from '@/lib/api/modules/choirServiceOps'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { toast } from '@/components/shared/Toast'
-import { Card, PermissionGate, SkeletonCard } from '@/components/shared'
+import { Card, PageBreadcrumbs, PermissionGate, SkeletonCard } from '@/components/shared'
+import { ChoirOpsShell } from '@/components/choir/ChoirOpsShell'
 import { useOptionalChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
 import { formatDate, formatTime } from '@/lib/utils/format'
-import { ArrowLeft } from 'lucide-react'
+import { MemberServicePrepChecklist } from '@/components/choir/MemberServicePrepChecklist'
+import { ServicePrepReadinessRing } from '@/components/choir/ServicePrepReadinessRing'
+import { computeServicePrepReadiness } from '@/lib/choir/service-prep-readiness'
 
 const ITEM_TYPES: Array<{ value: ServicePreparationItemType; label: string }> = [
   { value: 'SERVICE_SONG', label: 'Service song' },
@@ -92,22 +94,40 @@ export default function ServicePreparationDetailPage() {
     setItems((prev) => prev.filter((_, i) => i !== index))
   }
 
-  if (isLoading) return <SkeletonCard rows={8} />
+  if (isLoading) {
+    return (
+      <ChoirOpsShell title="Service plan" subtitle="Loading preparation…">
+        <SkeletonCard rows={8} />
+      </ChoirOpsShell>
+    )
+  }
+
+  const leaderReadiness = plan ? computeServicePrepReadiness(plan) : 0
+  const serviceTitle = plan?.occurrence?.title ?? 'Service'
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto pb-8">
-      <Link href={choirLink('service-preparation')} className="inline-flex items-center gap-1 text-sm text-primary-600 font-semibold">
-        <ArrowLeft size={14} /> All services
-      </Link>
-
-      <div>
-        <h2 className="font-display text-2xl text-text-primary">
-          {plan?.occurrence?.title ?? 'Service preparation'}
-        </h2>
-        {plan?.occurrence && (
-          <p className="text-sm text-text-muted mt-1">
-            {formatDate(plan.occurrence.startAt)} · {formatTime(plan.occurrence.startAt)}
-          </p>
+    <ChoirOpsShell
+      title={serviceTitle}
+      subtitle={
+        plan?.occurrence
+          ? `${formatDate(plan.occurrence.startAt)} · ${formatTime(plan.occurrence.startAt)}`
+          : 'Service preparation plan'
+      }
+      meta={leaderReadiness > 0 ? `${leaderReadiness}% ready` : undefined}
+      breadcrumbs={
+        <PageBreadcrumbs
+          items={[
+            { label: 'Service prep', href: choirLink('service-preparation') },
+            { label: serviceTitle },
+            { label: 'Service plan' },
+          ]}
+        />
+      }
+    >
+      <div className="space-y-6 max-w-3xl">
+      <div className="flex flex-wrap items-start justify-end gap-4">
+        {plan && (plan.uniformNotes || plan.pepTalkTitle || (plan.items?.length ?? 0) > 0) && (
+          <ServicePrepReadinessRing pct={leaderReadiness} />
         )}
       </div>
 
@@ -115,7 +135,8 @@ export default function ServicePreparationDetailPage() {
         anyOf={['choir.ops.manage', 'choir.operations.manage']}
         fallback={
           plan && (plan.uniformNotes || plan.pepTalkTitle || (plan.items?.length ?? 0) > 0) ? (
-            <Card padding="md" className="space-y-4">
+            <>
+              <Card padding="md" className="space-y-4">
               {plan.uniformNotes && (
                 <div>
                   <p className="text-sm font-semibold">Uniform</p>
@@ -153,7 +174,15 @@ export default function ServicePreparationDetailPage() {
                   </ul>
                 </div>
               )}
-            </Card>
+              </Card>
+              {choirId && occurrenceId && plan && (
+                <MemberServicePrepChecklist
+                  choirId={choirId}
+                  occurrenceId={occurrenceId}
+                  plan={plan}
+                />
+              )}
+            </>
           ) : (
             <Card padding="md">
               <p className="text-sm text-text-muted text-center py-6">
@@ -263,6 +292,7 @@ export default function ServicePreparationDetailPage() {
         </Card>
       </PermissionGate>
 
-    </div>
+      </div>
+    </ChoirOpsShell>
   )
 }

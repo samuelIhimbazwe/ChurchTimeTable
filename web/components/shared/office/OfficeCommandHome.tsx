@@ -19,10 +19,16 @@ type Props = {
   title: string
   subtitle?: string
   widgets: OfficeCommandWidget[]
+  maxWidgets?: number
 }
 
-export function OfficeCommandHome({ title, subtitle, widgets }: Props) {
-  const visible = widgets.slice(0, 3)
+export function OfficeCommandHome({
+  title,
+  subtitle,
+  widgets,
+  maxWidgets = 4,
+}: Props) {
+  const visible = widgets.slice(0, maxWidgets)
 
   return (
     <div className="space-y-4">
@@ -30,7 +36,13 @@ export function OfficeCommandHome({ title, subtitle, widgets }: Props) {
         <h2 className="font-display text-2xl text-text-primary">{title}</h2>
         {subtitle && <p className="text-sm text-text-muted mt-1">{subtitle}</p>}
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div
+        className={
+          visible.length >= 4
+            ? 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4'
+            : 'grid grid-cols-1 md:grid-cols-3 gap-4'
+        }
+      >
         {visible.map((widget) => {
           const card = (
             <Card

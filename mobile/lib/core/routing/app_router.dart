@@ -21,6 +21,7 @@ import '../../features/sync/screens/sync_status_screen.dart';
 import '../../features/notifications/screens/notifications_screen.dart';
 import '../../features/assignments/screens/leader_assignment_screen.dart';
 import '../../features/choir/screens/choir_rotation_screen.dart';
+import '../../features/choir/screens/choir_assignments_screen.dart';
 import '../../features/finance/screens/budget_screen.dart';
 import '../../features/finance/screens/my_contributions_screen.dart';
 import '../../features/finance/screens/submit_contribution_screen.dart';
@@ -75,6 +76,7 @@ class AppRouter {
   static const notifications = '/notifications';
   static const assignments = '/assignments';
   static const choirRotation = '/choir-rotation';
+  static const choirAssignments = '/choir/assignments';
   static const budgets = '/budgets';
   static const myContributions = '/my-contributions';
   static const submitContribution = '/contributions/submit';
@@ -129,6 +131,7 @@ class AppRouter {
     notifications,
     assignments,
     choirRotation,
+    choirAssignments,
     budgets,
     myContributions,
     submitContribution,
@@ -354,6 +357,15 @@ class AppRouter {
         return _page(const LeaderAssignmentScreen(), routeName: assignments);
       case choirRotation:
         return _page(const ChoirRotationScreen(), routeName: choirRotation);
+      case choirAssignments:
+        final choirId = routeSettings.arguments as String?;
+        if (choirId == null || choirId.isEmpty) {
+          return _page(const MemberHomeScreen(), routeName: memberPortalHome);
+        }
+        return _page(
+          ChoirAssignmentsScreen(choirId: choirId),
+          routeName: choirAssignments,
+        );
       case budgets:
         return _page(const BudgetScreen(), routeName: budgets);
       case myContributions:

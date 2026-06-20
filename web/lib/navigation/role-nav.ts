@@ -15,6 +15,7 @@ import {
   Upload,
   Server,
   Activity,
+  RefreshCw,
   Building2,
   Megaphone,
   Scale,
@@ -204,6 +205,9 @@ const CHURCH_ADMIN_TOOLS: NavSection = {
     { label: 'Approvals',     icon: ClipboardCheck, path: '/admin/approvals' },
     { label: 'Admin Tools',   icon: Settings2,      path: '/admin' },
     { label: 'Import/Export', icon: Upload,         path: '/admin/import' },
+    { label: 'System Status', icon: Activity,       path: '/system/status' },
+    { label: 'Sync',          icon: RefreshCw,      path: '/system/sync' },
+    { label: 'Deployment',    icon: Server,         path: '/system/deployment' },
   ],
 }
 
@@ -248,7 +252,10 @@ const SYSTEM_PLATFORM: NavSection[] = [
   {
     section: 'Platform',
     items: [
+      { label: 'System Status', icon: Activity,    path: '/system/status' },
       { label: 'Deployment',  icon: Server,    path: '/system/deployment' },
+      { label: 'Sync',        icon: RefreshCw, path: '/system/sync' },
+      { label: 'Notifications', icon: Megaphone, path: '/system/notification-rules' },
       { label: 'Users',       icon: UserCog,   path: '/system/users' },
       { label: 'Roles',       icon: KeyRound,  path: '/system/roles' },
       { label: 'Audit Log',   icon: FileText,  path: '/system/audit' },

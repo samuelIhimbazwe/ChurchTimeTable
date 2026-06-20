@@ -78,7 +78,7 @@ export class ChoirMembersService {
     }
 
     const page = Math.max(1, Number(query.page) || 1);
-    const limit = Math.min(Math.max(Number(query.limit) || 50, 1), 100);
+    const limit = Math.min(Math.max(Number(query.limit) || 50, 1), 500);
     const skip = (page - 1) * limit;
 
     const where: Prisma.ChoirMembershipWhereInput = {
@@ -148,6 +148,25 @@ export class ChoirMembersService {
         })
       : [];
 
+    const familyRows = memberIds.length
+      ? await this.prisma.familyMember.findMany({
+          where: { memberId: { in: memberIds } },
+          include: { family: { select: { id: true, familyName: true, choirId: true } } },
+        })
+      : [];
+
+    const familyByMember = new Map<
+      string,
+      { familyId: string; familyName: string }
+    >();
+    for (const row of familyRows) {
+      if (row.family.choirId && row.family.choirId !== choirId) continue;
+      familyByMember.set(row.memberId, {
+        familyId: row.family.id,
+        familyName: row.family.familyName,
+      });
+    }
+
     const positionsByMember = new Map<
       string,
       Array<{ roleId: string; roleName: string }>
@@ -166,11 +185,14 @@ export class ChoirMembersService {
         const score = Math.round(profile?.overallParticipationScore ?? 0);
         const attendanceRate = Math.round(profile?.serviceAttendanceRate ?? 0);
         const name = `${member.firstName} ${member.lastName}`.trim();
+        const family = familyByMember.get(member.id);
 
         return {
           id: row.id,
           memberId: member.id,
           name,
+          familyId: family?.familyId,
+          familyName: family?.familyName,
           voicePart:
             member.profile?.voicePart && member.profile.voicePart !== 'UNSPECIFIED'
               ? member.profile.voicePart.replace(/_/g, ' ')

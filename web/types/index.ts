@@ -219,6 +219,8 @@ export interface ChoirMember {
   id:            string
   memberId:      string
   name:          string
+  familyId?:     string
+  familyName?:   string
   voicePart?:    string
   attendanceRate: number
   score:         number
@@ -318,6 +320,7 @@ export interface ApiNotification {
   type:      'info' | 'success' | 'warning' | 'error'
   read:      boolean
   link?:     string
+  data?:     Record<string, unknown>
   createdAt: string
 }
 

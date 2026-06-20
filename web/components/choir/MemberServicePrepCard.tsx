@@ -6,8 +6,13 @@ import { useQuery } from '@tanstack/react-query'
 import { choirServiceOpsApi } from '@/lib/api'
 import { Card, Badge, SkeletonCard } from '@/components/shared'
 import { choirPath } from '@/lib/choir/paths'
+import { membershipOfficePath } from '@/lib/choir/membership-office'
 import { formatDate, formatTime } from '@/lib/utils/format'
 import { ClipboardList, ChevronRight } from 'lucide-react'
+import { ServicePrepReadinessRing } from '@/components/choir/ServicePrepReadinessRing'
+import { computeServicePrepReadiness } from '@/lib/choir/service-prep-readiness'
+import { AddToCalendarButton } from '@/components/member/AddToCalendarButton'
+import { ShareLinkButton } from '@/components/member/ShareLinkButton'
 
 function upcomingRange() {
   const now = new Date()
@@ -32,41 +37,73 @@ export function MemberServicePrepCard({ choirId }: { choirId: string }) {
 
   return (
     <Card padding="md">
-      <p className="font-semibold mb-3 flex items-center gap-2">
-        <ClipboardList size={16} /> Upcoming service prep
-      </p>
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <p className="font-semibold flex items-center gap-2">
+          <ClipboardList size={16} /> Upcoming service prep
+        </p>
+        <Link
+          href={membershipOfficePath(choirId, 'music')}
+          className="text-xs font-semibold text-primary-600 hover:text-primary-800"
+        >
+          All prep →
+        </Link>
+      </div>
       <ul className="divide-y divide-border">
-        {upcoming.map((s) => (
-          <li key={s.occurrenceId}>
-            <Link
-              href={choirPath(choirId, `service-preparation/${s.occurrenceId}`)}
-              className="flex items-center justify-between gap-3 py-2.5 hover:text-primary-600 transition-colors"
-            >
-              <div className="min-w-0">
-                <p className="text-sm font-medium truncate">{s.occurrence.title}</p>
-                <p className="text-xs text-text-muted mt-0.5">
-                  {formatDate(s.occurrence.startAt)} · {formatTime(s.occurrence.startAt)}
-                </p>
-                {s.planSummary?.uniformNotes && (
-                  <p className="text-xs text-text-secondary mt-1 truncate">
-                    Uniform: {s.planSummary.uniformNotes}
+        {upcoming.map((s) => {
+          const summary = s.planSummary
+          const readiness = summary
+            ? computeServicePrepReadiness({
+                choirId,
+                occurrenceId: s.occurrenceId,
+                uniformNotes: summary.uniformNotes,
+                pepTalkTitle: summary.pepTalkTitle,
+                items: [],
+              })
+            : 0
+          return (
+            <li key={s.occurrenceId} className="py-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <Link
+                  href={choirPath(choirId, `service-preparation/${s.occurrenceId}`)}
+                  className="min-w-0 flex-1 hover:text-primary-600 transition-colors"
+                >
+                  <p className="text-sm font-medium truncate">{s.occurrence.title}</p>
+                  <p className="text-xs text-text-muted mt-0.5">
+                    {formatDate(s.occurrence.startAt)} · {formatTime(s.occurrence.startAt)}
                   </p>
-                )}
-                {s.planSummary?.pepTalkTitle && (
-                  <p className="text-xs text-text-secondary truncate">
-                    Pep talk: {s.planSummary.pepTalkTitle}
-                  </p>
-                )}
+                  {summary?.uniformNotes && (
+                    <p className="text-xs text-text-secondary mt-1 truncate">
+                      Uniform: {summary.uniformNotes}
+                    </p>
+                  )}
+                </Link>
+                <div className="flex items-center gap-2 shrink-0">
+                  {s.hasPlan ? (
+                    <ServicePrepReadinessRing pct={readiness} size="sm" label="" />
+                  ) : (
+                    <Badge variant="status-pending">Pending</Badge>
+                  )}
+                  <ChevronRight size={14} className="text-text-muted" />
+                </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <Badge variant={s.hasPlan ? 'status-active' : 'status-pending'}>
-                  {s.hasPlan ? 'Ready' : 'Pending'}
-                </Badge>
-                <ChevronRight size={14} className="text-text-muted" />
+              <div className="flex flex-wrap gap-3 mt-1.5 pl-0.5">
+                <AddToCalendarButton
+                  title={s.occurrence.title}
+                  startAt={s.occurrence.startAt}
+                  description={summary?.uniformNotes ?? undefined}
+                />
+                <ShareLinkButton
+                  title={s.occurrence.title}
+                  url={
+                    typeof window !== 'undefined'
+                      ? `${window.location.origin}${choirPath(choirId, `service-preparation/${s.occurrenceId}`)}`
+                      : choirPath(choirId, `service-preparation/${s.occurrenceId}`)
+                  }
+                />
               </div>
-            </Link>
-          </li>
-        ))}
+            </li>
+          )
+        })}
       </ul>
     </Card>
   )

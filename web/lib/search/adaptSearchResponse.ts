@@ -114,6 +114,7 @@ function push(
   out.push({
     id: `${type}-${id}`,
     type: DISPLAY_TYPE[type] ?? 'activity',
+    entityType: type,
     title,
     subtitle,
     link: linkFor(type, id, title),

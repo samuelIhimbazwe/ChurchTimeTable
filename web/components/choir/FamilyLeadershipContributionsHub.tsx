@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -12,7 +12,7 @@ import {
 import type { FamilyMemberProgressRow } from '@/lib/api/modules/finance'
 import { toast } from '@/components/shared/Toast'
 import { HubTabs } from '@/components/shared/HubTabs'
-import { Card, Badge, SkeletonCard } from '@/components/shared'
+import { Card, Badge, SkeletonCard, DataTable, type DataTableColumn } from '@/components/shared'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
 import { goalProgressBarClass } from '@/lib/contribution/member-display'
 import {
@@ -395,6 +395,184 @@ export function FamilyLeadershipContributionsHub({
 
   const highlightedMemberId = memberIdParam ?? undefined
 
+  const openPendingClaim = useCallback(
+    (item: ContributionClaim) => {
+      setReviewing(item)
+      setTab('pending', { claimId: item.id })
+    },
+    [setTab],
+  )
+
+  const openLedgerRow = useCallback(
+    (row: FamilyLedgerRow) => {
+      setLedgerRow(row)
+      setTab('ledger', { ledgerId: row.id })
+    },
+    [setTab],
+  )
+
+  const pendingColumns = useMemo<DataTableColumn<ContributionClaim>[]>(
+    () => [
+      {
+        id: 'ref',
+        header: 'Ref #',
+        accessorFn: (item) => item.referenceNumber,
+        sortable: true,
+        sticky: true,
+        cell: ({ row: item }) => (
+          <span className="font-medium font-mono text-xs">{item.referenceNumber}</span>
+        ),
+      },
+      {
+        id: 'member',
+        header: 'Member',
+        accessorFn: (item) => item.memberName,
+        sortable: true,
+        cell: ({ row: item }) => (
+          <span>
+            {item.memberNumber} {item.memberName}
+          </span>
+        ),
+      },
+      {
+        id: 'claimed',
+        header: 'Claimed',
+        accessorFn: (item) => item.claimedAmount,
+        sortable: true,
+        align: 'right',
+        cell: ({ row: item }) => formatCurrency(item.claimedAmount),
+      },
+      {
+        id: 'date',
+        header: 'Date',
+        accessorFn: (item) => item.paymentAt ?? '',
+        sortable: true,
+        cell: ({ row: item }) => (
+          <span className="text-text-muted">
+            {item.paymentAt ? formatDate(item.paymentAt) : '—'}
+          </span>
+        ),
+      },
+      {
+        id: 'status',
+        header: 'Status',
+        cell: () => (
+          <Badge variant="status-pending" dot>
+            Waiting
+          </Badge>
+        ),
+      },
+    ],
+    [],
+  )
+
+  const progressColumns = useMemo<DataTableColumn<FamilyMemberProgressRow>[]>(
+    () => [
+      {
+        id: 'memberNumber',
+        header: 'Member #',
+        accessorFn: (row) => row.memberNumber ?? '',
+        sortable: true,
+        sticky: true,
+      },
+      {
+        id: 'name',
+        header: 'Name',
+        accessorFn: (row) => row.memberName,
+        sortable: true,
+      },
+      {
+        id: 'goal',
+        header: 'Goal',
+        accessorFn: (row) => row.memberGoalAmount ?? -1,
+        sortable: true,
+        align: 'right',
+        cell: ({ row }) =>
+          row.memberGoalAmount != null ? formatCurrency(row.memberGoalAmount) : '—',
+      },
+      {
+        id: 'confirmed',
+        header: 'Confirmed',
+        accessorFn: (row) => row.confirmedEffective,
+        sortable: true,
+        align: 'right',
+        cell: ({ row }) => (
+          <span className="text-success font-medium">{formatCurrency(row.confirmedEffective)}</span>
+        ),
+      },
+      {
+        id: 'remaining',
+        header: 'Remaining',
+        accessorFn: (row) => row.remaining ?? -1,
+        sortable: true,
+        align: 'right',
+        cell: ({ row }) => (row.remaining != null ? formatCurrency(row.remaining) : '—'),
+      },
+    ],
+    [],
+  )
+
+  const ledgerColumns = useMemo<DataTableColumn<FamilyLedgerRow>[]>(
+    () => [
+      {
+        id: 'member',
+        header: 'Member',
+        accessorFn: (row) => row.memberName,
+        sortable: true,
+        sticky: true,
+        cell: ({ row }) => (
+          <span>
+            {row.memberNumber} {row.memberName}
+          </span>
+        ),
+      },
+      {
+        id: 'claimed',
+        header: 'Claimed',
+        accessorFn: (row) => row.claimedAmount,
+        sortable: true,
+        align: 'right',
+        cell: ({ row }) => formatCurrency(row.claimedAmount),
+      },
+      {
+        id: 'confirmed',
+        header: 'Confirmed',
+        accessorFn: (row) => row.confirmedAmount ?? -1,
+        sortable: true,
+        align: 'right',
+        cell: ({ row }) =>
+          row.confirmedAmount != null ? formatCurrency(row.confirmedAmount) : '—',
+      },
+      {
+        id: 'status',
+        header: 'Status',
+        cell: ({ row }) => (
+          <Badge variant={ledgerStatusVariant(row.displayStatus)} dot>
+            {ledgerStatusLabel(row.displayStatus)}
+          </Badge>
+        ),
+      },
+      {
+        id: 'verified',
+        header: 'Verified by',
+        accessorFn: (row) => row.familyApprovedByName ?? '',
+        cell: ({ row }) => (
+          <span className="text-text-muted text-xs">{row.familyApprovedByName ?? '—'}</span>
+        ),
+      },
+      {
+        id: 'thankYou',
+        header: 'Thank-you',
+        cell: ({ row }) => (
+          <Badge variant={thankYouVariant(row.thankYouDeliveryStatus)}>
+            {thankYouLabel(row.thankYouDeliveryStatus)}
+          </Badge>
+        ),
+      },
+    ],
+    [],
+  )
+
   const canApprove = dashboard?.canApprove ?? false
   const isViewOnly = dashboard?.isViewOnly ?? true
   const campaign = dashboard?.campaign
@@ -508,76 +686,46 @@ export function FamilyLeadershipContributionsHub({
               <p className="text-sm text-text-muted text-center py-4">No pending claims.</p>
             </Card>
           ) : (
-            <>
-              <ul className="md:hidden space-y-2">
-                {inbox!.items.map((item) => (
-                  <li key={item.id}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setReviewing(item)
-                        setTab('pending', { claimId: item.id })
-                      }}
-                      className="w-full text-left"
-                    >
-                      <Card padding="md" className="hover:bg-surface-raised transition-colors">
-                        <div className="flex justify-between gap-3">
-                          <div>
-                            <p className="font-mono text-xs font-semibold">{item.referenceNumber}</p>
-                            <p className="text-sm mt-1">
-                              {item.memberNumber} {item.memberName}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-semibold">{formatCurrency(item.claimedAmount)}</p>
-                            <Badge variant="status-pending" className="mt-1">
-                              Waiting
-                            </Badge>
-                          </div>
-                        </div>
-                      </Card>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              <Card padding="none" className="hidden md:block overflow-x-auto">
-              <table className="w-full text-sm min-w-[560px]">
-                <thead>
-                  <tr className="border-b border-border bg-surface-raised text-left text-xs text-text-muted">
-                    <th className="px-4 py-3">Ref #</th>
-                    <th className="px-4 py-3">Member</th>
-                    <th className="px-4 py-3 text-right">Claimed</th>
-                    <th className="px-4 py-3">Date</th>
-                    <th className="px-4 py-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {inbox!.items.map((item) => (
-                    <tr
-                      key={item.id}
-                      onClick={() => {
-                        setReviewing(item)
-                        setTab('pending', { claimId: item.id })
-                      }}
-                      className="border-b border-border cursor-pointer hover:bg-primary-50/40"
-                    >
-                      <td className="px-4 py-3 font-medium">{item.referenceNumber}</td>
-                      <td className="px-4 py-3">
-                        {item.memberNumber} {item.memberName}
-                      </td>
-                      <td className="px-4 py-3 text-right">{formatCurrency(item.claimedAmount)}</td>
-                      <td className="px-4 py-3 text-text-muted">
-                        {item.paymentAt ? formatDate(item.paymentAt) : '—'}
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge variant="status-pending" dot>Waiting</Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Card>
-            </>
+            <DataTable
+              aria-label="Pending contribution claims"
+              columns={pendingColumns}
+              data={inbox!.items}
+              getRowId={(item) => item.id}
+              onRowClick={openPendingClaim}
+              minWidth={560}
+              density="comfortable"
+              pagination={{ pageSize: 15 }}
+              resultCount={inbox!.items.length}
+              resultLabel="claims"
+              emptyState={
+                <p className="text-sm text-text-muted text-center py-4">No pending claims.</p>
+              }
+              mobileRow={(item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => openPendingClaim(item)}
+                  className="w-full text-left"
+                >
+                  <Card padding="md" className="hover:bg-surface-raised transition-colors">
+                    <div className="flex justify-between gap-3">
+                      <div>
+                        <p className="font-mono text-xs font-semibold">{item.referenceNumber}</p>
+                        <p className="text-sm mt-1">
+                          {item.memberNumber} {item.memberName}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">{formatCurrency(item.claimedAmount)}</p>
+                        <Badge variant="status-pending" className="mt-1">
+                          Waiting
+                        </Badge>
+                      </div>
+                    </div>
+                  </Card>
+                </button>
+              )}
+            />
           )}
         </div>
       )}
@@ -608,73 +756,46 @@ export function FamilyLeadershipContributionsHub({
                   </p>
                 </Card>
               </div>
-              <ul className="md:hidden space-y-2">
-                {progress.items.map((row) => (
-                  <li key={row.memberId}>
-                    <button
-                      type="button"
-                      onClick={() => setMobileProgressRow(row)}
-                      className="w-full text-left"
-                    >
-                      <Card padding="md" className="hover:bg-surface-raised transition-colors">
-                        <div className="flex justify-between gap-3">
-                          <div>
-                            <p className="font-semibold text-sm">{row.memberName}</p>
-                            <p className="text-xs text-text-muted">{row.memberNumber ?? '—'}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm font-semibold text-success">
-                              {formatCurrency(row.confirmedEffective)}
-                            </p>
-                            <p className="text-xs text-text-muted">
-                              {row.progressPct != null ? `${row.progressPct}%` : '—'}
-                            </p>
-                          </div>
+              <DataTable
+                aria-label="Member contribution progress"
+                columns={progressColumns}
+                data={progress.items}
+                getRowId={(row) => row.memberId}
+                rowClassName={(row) =>
+                  highlightedMemberId === row.memberId
+                    ? 'bg-primary-50/70 ring-1 ring-inset ring-primary-200'
+                    : undefined
+                }
+                minWidth={640}
+                pagination
+                resultCount={progress.items.length}
+                resultLabel="members"
+                mobileRow={(row) => (
+                  <button
+                    key={row.memberId}
+                    type="button"
+                    onClick={() => setMobileProgressRow(row)}
+                    className="w-full text-left"
+                  >
+                    <Card padding="md" className="hover:bg-surface-raised transition-colors">
+                      <div className="flex justify-between gap-3">
+                        <div>
+                          <p className="font-semibold text-sm">{row.memberName}</p>
+                          <p className="text-xs text-text-muted">{row.memberNumber ?? '—'}</p>
                         </div>
-                      </Card>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              <Card padding="none" className="hidden md:block overflow-x-auto">
-                <table className="w-full text-sm min-w-[640px]">
-                  <thead>
-                    <tr className="border-b border-border bg-surface-raised text-left text-xs text-text-muted">
-                      <th className="px-4 py-3">Member #</th>
-                      <th className="px-4 py-3">Name</th>
-                      <th className="px-4 py-3 text-right">Goal</th>
-                      <th className="px-4 py-3 text-right">Confirmed</th>
-                      <th className="px-4 py-3 text-right">Remaining</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {progress.items.map((row) => (
-                      <tr
-                        key={row.memberId}
-                        className={`border-b border-border ${
-                          highlightedMemberId === row.memberId
-                            ? 'bg-primary-50/70 ring-1 ring-inset ring-primary-200'
-                            : ''
-                        }`}
-                      >
-                        <td className="px-4 py-3">{row.memberNumber ?? '—'}</td>
-                        <td className="px-4 py-3">{row.memberName}</td>
-                        <td className="px-4 py-3 text-right">
-                          {row.memberGoalAmount != null
-                            ? formatCurrency(row.memberGoalAmount)
-                            : '—'}
-                        </td>
-                        <td className="px-4 py-3 text-right text-success font-medium">
-                          {formatCurrency(row.confirmedEffective)}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          {row.remaining != null ? formatCurrency(row.remaining) : '—'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </Card>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-success">
+                            {formatCurrency(row.confirmedEffective)}
+                          </p>
+                          <p className="text-xs text-text-muted">
+                            {row.progressPct != null ? `${row.progressPct}%` : '—'}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                  </button>
+                )}
+              />
             </>
           ) : null}
         </div>
@@ -690,87 +811,44 @@ export function FamilyLeadershipContributionsHub({
               <p className="text-sm text-text-muted text-center py-4">No records yet.</p>
             </Card>
           ) : (
-            <>
-              <ul className="md:hidden space-y-2">
-                {ledger!.items.map((row) => (
-                  <li key={row.id}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setLedgerRow(row)
-                        setTab('ledger', { ledgerId: row.id })
-                      }}
-                      className="w-full text-left"
-                    >
-                      <Card padding="md" className="hover:bg-surface-raised transition-colors">
-                        <div className="flex justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-semibold">
-                              {row.memberNumber} {row.memberName}
-                            </p>
-                            <p className="text-xs text-text-muted mt-0.5">
-                              {formatCurrency(row.confirmedAmount ?? row.claimedAmount)}
-                            </p>
-                          </div>
-                          <Badge variant={ledgerStatusVariant(row.displayStatus)}>
-                            {ledgerStatusLabel(row.displayStatus)}
-                          </Badge>
-                        </div>
-                      </Card>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              <Card padding="none" className="hidden md:block overflow-x-auto">
-              <table className="w-full text-sm min-w-[720px]">
-                <thead>
-                  <tr className="border-b border-border bg-surface-raised text-left text-xs text-text-muted">
-                    <th className="px-4 py-3">Member</th>
-                    <th className="px-4 py-3 text-right">Claimed</th>
-                    <th className="px-4 py-3 text-right">Confirmed</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Verified by</th>
-                    <th className="px-4 py-3">Thank-you</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ledger!.items.map((row) => (
-                    <tr
-                      key={row.id}
-                      onClick={() => {
-                        setLedgerRow(row)
-                        setTab('ledger', { ledgerId: row.id })
-                      }}
-                      className="border-b border-border cursor-pointer hover:bg-primary-50/40"
-                    >
-                      <td className="px-4 py-3">
-                        {row.memberNumber} {row.memberName}
-                      </td>
-                      <td className="px-4 py-3 text-right">{formatCurrency(row.claimedAmount)}</td>
-                      <td className="px-4 py-3 text-right">
-                        {row.confirmedAmount != null
-                          ? formatCurrency(row.confirmedAmount)
-                          : '—'}
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge variant={ledgerStatusVariant(row.displayStatus)} dot>
-                          {ledgerStatusLabel(row.displayStatus)}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-text-muted text-xs">
-                        {row.familyApprovedByName ?? '—'}
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge variant={thankYouVariant(row.thankYouDeliveryStatus)}>
-                          {thankYouLabel(row.thankYouDeliveryStatus)}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Card>
-            </>
+            <DataTable
+              aria-label="Family contribution ledger"
+              columns={ledgerColumns}
+              data={ledger!.items}
+              getRowId={(row) => row.id}
+              onRowClick={openLedgerRow}
+              minWidth={720}
+              pagination={{ pageSize: 20 }}
+              resultCount={ledger!.items.length}
+              resultLabel="records"
+              emptyState={
+                <p className="text-sm text-text-muted text-center py-4">No records yet.</p>
+              }
+              mobileRow={(row) => (
+                <button
+                  key={row.id}
+                  type="button"
+                  onClick={() => openLedgerRow(row)}
+                  className="w-full text-left"
+                >
+                  <Card padding="md" className="hover:bg-surface-raised transition-colors">
+                    <div className="flex justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold">
+                          {row.memberNumber} {row.memberName}
+                        </p>
+                        <p className="text-xs text-text-muted mt-0.5">
+                          {formatCurrency(row.confirmedAmount ?? row.claimedAmount)}
+                        </p>
+                      </div>
+                      <Badge variant={ledgerStatusVariant(row.displayStatus)}>
+                        {ledgerStatusLabel(row.displayStatus)}
+                      </Badge>
+                    </div>
+                  </Card>
+                </button>
+              )}
+            />
           )}
         </div>
       )}

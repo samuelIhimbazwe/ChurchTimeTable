@@ -36,19 +36,28 @@ export class MemberPortalParticipationScheduleService {
     private protocolMembership: ProtocolMembershipService,
   ) {}
 
-  async buildForUser(userId: string, withinDays = 7): Promise<ParticipationScheduleSummary> {
+  async buildForUser(
+    userId: string,
+    options?: { withinDays?: number; from?: Date; to?: Date },
+  ): Promise<ParticipationScheduleSummary> {
     const member = await this.prisma.member.findUniqueOrThrow({
       where: { userId },
     });
     const now = new Date();
-    const weekEnd = new Date(now);
-    weekEnd.setDate(weekEnd.getDate() + withinDays);
+    const rangeStart = options?.from ?? now;
+    const rangeEnd =
+      options?.to ??
+      (() => {
+        const weekEnd = new Date(now);
+        weekEnd.setDate(weekEnd.getDate() + (options?.withinDays ?? 7));
+        return weekEnd;
+      })();
 
     const [hasChoir, hasProtocol, choirItems, protocolItems] = await Promise.all([
       this.ministryScope.hasActiveChoirMembership(member.id),
       this.protocolMembership.isProtocolMember(member.id),
-      this.loadChoirItems(userId, now, weekEnd),
-      this.loadProtocolItems(member.id, now, weekEnd),
+      this.loadChoirItems(userId, rangeStart, rangeEnd),
+      this.loadProtocolItems(member.id, rangeStart, rangeEnd),
     ]);
 
     const thisWeek = [...choirItems, ...protocolItems].sort(
@@ -86,7 +95,7 @@ export class MemberPortalParticipationScheduleService {
         activityType: { in: ['SERVICE', 'REHEARSAL', 'SPECIAL_REHEARSAL', 'PRAYER'] },
       },
       orderBy: { startAt: 'asc' },
-      take: 30,
+      take: 120,
     });
 
     return activities.map((a) => ({
@@ -126,7 +135,7 @@ export class MemberPortalParticipationScheduleService {
         },
       },
       orderBy: { team: { occurrence: { startAt: 'asc' } } },
-      take: 20,
+      take: 80,
     });
 
     return rows.map((row) => {

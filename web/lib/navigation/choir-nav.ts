@@ -2,6 +2,7 @@ import {
   LayoutDashboard, Calendar, Users, Music, Home,
   Heart, BookOpen, DollarSign, FileText, Settings2,
   UserPlus, KeyRound, Crown, UserCog, Mic2, Scale, Shield,
+  ClipboardList,
 } from 'lucide-react'
 import type { NavItem, NavSection } from '@/lib/navigation/role-nav'
 import { choirMemberHome, choirPath } from '@/lib/choir/paths'
@@ -151,6 +152,7 @@ export function getComposedChoirNav(
       { label: 'My giving', icon: DollarSign, path: choirPath(choirId, 'membership/giving') },
       { label: 'My family', icon: Users, path: choirPath(choirId, 'membership/family') },
       { label: 'Music library', icon: Music, path: choirPath(choirId, 'music') },
+      { label: 'Scheduling', icon: Calendar, path: choirPath(choirId, 'scheduling') },
       { label: 'Activities', icon: Calendar, path: choirPath(choirId, 'activities') },
     ],
   })
@@ -210,8 +212,26 @@ export function getComposedChoirNav(
         positions.some((p) => ELEVATED_COMMITTEE_ROLE_KEYS.has(p.roleKey))
         && permissions.some((p) => ['member:read', 'choir.ops.view'].includes(p))
       )
+    const canMarkAttendance = permissions.some((p) =>
+      ['member:manage', 'choir.ops.manage', 'choir.oversight', 'attendance.mark'].includes(p),
+    )
+    const canViewSchedule =
+      canViewRoster
+      || permissions.some((p) => ['choir.ops.view', 'member:read'].includes(p))
+
+    if (canViewSchedule) {
+      opsItems.push({ label: 'Scheduling', icon: Calendar, path: choirPath(choirId, 'scheduling') })
+      opsItems.push({
+        label: 'Service prep',
+        icon: ClipboardList,
+        path: choirPath(choirId, 'service-preparation'),
+      })
+    }
     if (canViewRoster) {
       opsItems.push({ label: 'Roster', icon: Users, path: choirPath(choirId, 'members') })
+    }
+    if (canMarkAttendance || canViewSchedule) {
+      opsItems.push({ label: 'Activities', icon: Calendar, path: choirPath(choirId, 'activities') })
     }
     if (permissions.some((p) => ['choir.ops.manage', 'choir.oversight'].includes(p))) {
       opsItems.push({ label: 'Overview', icon: LayoutDashboard, path: choirPath(choirId) })

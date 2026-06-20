@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/utils'
 import { useTranslations } from '@/lib/i18n'
+import { BackButton } from './BackButton'
 
 type MaxWidth = '3xl' | '4xl' | '5xl' | '6xl' | '7xl' | 'full'
 
@@ -35,18 +36,33 @@ type PageHeaderProps = {
   meta?: React.ReactNode
   actions?: React.ReactNode
   className?: string
+  showBack?: boolean
+  backHref?: string
+  backLabel?: string
 }
 
-export function PageHeader({ title, subtitle, meta, actions, className }: PageHeaderProps) {
+export function PageHeader({
+  title,
+  subtitle,
+  meta,
+  actions,
+  className,
+  showBack = false,
+  backHref,
+  backLabel,
+}: PageHeaderProps) {
   const { tr } = useTranslations()
 
   return (
-    <div
-      className={cn(
-        'flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4',
-        className,
+    <div className={cn('space-y-3', className)}>
+      {showBack && (
+        <BackButton variant="compact" href={backHref} label={backLabel} />
       )}
-    >
+      <div
+        className={cn(
+          'flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4',
+        )}
+      >
       <div className="min-w-0 space-y-1">
         <h2 className="page-heading font-display text-text-primary">{tr(title)}</h2>
         {subtitle && (
@@ -59,6 +75,7 @@ export function PageHeader({ title, subtitle, meta, actions, className }: PageHe
           {actions}
         </div>
       )}
+      </div>
     </div>
   )
 }

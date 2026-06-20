@@ -1,14 +1,18 @@
 'use client'
 
 import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores'
 import { dashboardApi, membersApi } from '@/lib/api'
+import { membershipOfficePath } from '@/lib/choir/membership-office'
 import { Card, StatTile, SkeletonCard, SkeletonStatTile } from '@/components/shared'
 import { formatDate } from '@/lib/utils/format'
 import { CheckCircle2, Calendar } from 'lucide-react'
 
 export default function MembershipAttendancePage() {
+  const params = useParams()
+  const choirId = String(params.choirId ?? '')
   const user = useAuthStore((s) => s.user)
 
   const { data: summary, isLoading: loadingSummary } = useQuery({
@@ -53,12 +57,14 @@ export default function MembershipAttendancePage() {
               suffix="%"
               icon={CheckCircle2}
               animate
+              href={membershipOfficePath(choirId, 'attendance')}
             />
             <StatTile
               label="Events recorded"
               value={records.length}
               icon={Calendar}
               animate
+              href={membershipOfficePath(choirId, 'attendance')}
             />
           </>
         )}

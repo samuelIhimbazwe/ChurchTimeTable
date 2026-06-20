@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { BackButton } from '@/components/shared/BackButton'
 import type { OfficeThemeKey } from '@/lib/choir/office-themes'
 import { OFFICE_THEMES } from '@/lib/choir/office-themes'
 
@@ -54,6 +55,9 @@ export function OfficeShellFrame({
     >
       <header className={theme.hero}>
         <div className="max-w-6xl mx-auto px-3 xs:px-4 sm:px-6 pt-4 sm:pt-5 pb-4 sm:pb-5">
+          <div className="mb-3">
+            <BackButton variant="compact" />
+          </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
             <div className="flex gap-3 sm:gap-4 min-w-0">
               <div

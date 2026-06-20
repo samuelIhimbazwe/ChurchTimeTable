@@ -1,25 +1,52 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
+import Link from 'next/link'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   contributionsApi,
   dashboardApi,
   financeApi,
   memberPortalApi,
+  choirServiceOpsApi,
 } from '@/lib/api'
 import { buildMemberObligations } from '@/lib/choir/member-obligations'
 import { membershipOfficePath } from '@/lib/choir/membership-office'
 import { SkeletonCard } from '@/components/shared'
-import { OfficeNavCard } from '@/components/choir/OfficeNavCard'
-import { goalProgressBarClass } from '@/lib/contribution/member-display'
-import { formatCurrency, formatDate, formatTime } from '@/lib/utils/format'
-import { CheckCircle2, Calendar, ChevronRight } from 'lucide-react'
+import { formatDate, formatTime } from '@/lib/utils/format'
+import { choirOperationsApi } from '@/lib/api/modules/choir-operations'
+import { RecentAnnouncementsList } from '@/components/portal/home/RecentAnnouncementsList'
+import { ChoirMembershipWelcome } from '@/components/choir/membership/ChoirMembershipWelcome'
+import { ChoirOnboardingChecklist } from '@/components/choir/membership/ChoirOnboardingChecklist'
+import { WeekTimeline } from '@/components/dashboard/WeekTimeline'
+import { ProgressRing } from '@/components/dashboard/ProgressRing'
+import { Card } from '@/components/shared'
+import { ChoirAtAGlance } from '@/components/choir/membership/ChoirAtAGlance'
+import { ChoirQuickActions } from '@/components/choir/membership/ChoirQuickActions'
+import { ChoirMonthMiniCalendar } from '@/components/choir/membership/ChoirMonthMiniCalendar'
+import { MemberServicePrepCard } from '@/components/choir/MemberServicePrepCard'
+import { WhatsNextCard } from '@/components/member/WhatsNextCard'
+import { PullToRefresh } from '@/components/member/PullToRefresh'
+import { AddToCalendarButton } from '@/components/member/AddToCalendarButton'
+import { ShareLinkButton } from '@/components/member/ShareLinkButton'
+import { NextServiceCountdown } from '@/components/calendar/NextServiceCountdown'
+import { CelebrationMoment } from '@/components/member/CelebrationMoment'
+import { useCelebrationSeen } from '@/lib/hooks/useCelebrationSeen'
 
 type Props = {
   choirId: string
 }
 
+function upcomingPrepRange() {
+  const now = new Date()
+  const to = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59)
+  return { from: now.toISOString(), to: to.toISOString() }
+}
+
 export function MemberWeekHome({ choirId }: Props) {
+  const prepRange = useMemo(() => upcomingPrepRange(), [])
+  const qc = useQueryClient()
+
   const { data: totals, isLoading: loadingTotals } = useQuery({
     queryKey: ['member-contribution-totals'],
     queryFn: () => financeApi.getMyContributionTotals(),
@@ -40,17 +67,30 @@ export function MemberWeekHome({ choirId }: Props) {
     queryFn: () => dashboardApi.getMemberSummary(),
   })
 
-  const { data: submitCtx } = useQuery({
-    queryKey: ['contribution-submit-context', choirId],
-    queryFn: () => contributionsApi.getSubmitContext(choirId),
+  const { data: choirAnnouncements } = useQuery({
+    queryKey: ['choir-announcements', choirId, 'home'],
+    queryFn: () => choirOperationsApi.listAnnouncements(choirId),
+    enabled: !!choirId,
+  })
+
+  const { data: prepServices } = useQuery({
+    queryKey: ['member-service-preparation', choirId, prepRange],
+    queryFn: () => choirServiceOpsApi.listMemberPreparation(choirId, prepRange),
+    enabled: !!choirId,
   })
 
   const loading = loadingTotals || loadingList || loadingHome || loadingSummary
 
-  const nextEventRaw = [
-    ...(home?.participation?.thisWeek?.filter((e) => e.ministry === 'CHOIR') ?? []),
-    ...(summary?.upcomingSchedule?.filter((s) => s.source === 'CHOIR') ?? []),
-  ][0] as { title?: string; startAt?: string; date?: string; startTime?: string } | undefined
+  const choirWeekItems = useMemo(() => {
+    const fromHome = home?.participation?.thisWeek?.filter((e) => e.ministry === 'CHOIR') ?? []
+    const fromSummary =
+      summary?.upcomingSchedule?.filter((s) => s.source === 'CHOIR') ?? []
+    return [...fromHome, ...fromSummary]
+  }, [home, summary])
+
+  const nextEventRaw = choirWeekItems[0] as
+    | { title?: string; startAt?: string; date?: string; startTime?: string }
+    | undefined
 
   const nextEvent = nextEventRaw
     ? {
@@ -74,10 +114,60 @@ export function MemberWeekHome({ choirId }: Props) {
   })
 
   const primaryGoal = totals?.byCampaign?.[0]
-  const topObligation = obligations[0]
-  const obligationsPath = membershipOfficePath(choirId, 'obligations')
-  const givingPath = membershipOfficePath(choirId, 'giving')
-  const attendancePath = membershipOfficePath(choirId, 'attendance')
+  const upcomingPrepCount = prepServices?.length ?? 0
+  const givingPct =
+    primaryGoal?.progressPct != null
+      ? Math.min(100, Math.round(primaryGoal.progressPct))
+      : 0
+
+  const goalCelebration = useCelebrationSeen(
+    `giving-goal-100-${choirId}-${primaryGoal?.campaignId ?? primaryGoal?.name ?? 'default'}`,
+  )
+  const showGoalCelebration =
+    givingPct >= 100 && primaryGoal != null && goalCelebration.shouldCelebrate
+
+  const weekTimeline = useMemo(
+    () =>
+      choirWeekItems.map((e, i) => {
+        const raw = e as { id?: string; title?: string; startAt?: string; date?: string; location?: string }
+        return {
+          id: raw.id ?? `week-${i}`,
+          title: String(raw.title ?? 'Choir event'),
+          startAt: String(raw.startAt ?? raw.date ?? new Date().toISOString()),
+          location: raw.location ?? null,
+          href: membershipOfficePath(choirId, 'attendance'),
+          kind: 'rehearsal' as const,
+        }
+      }),
+    [choirWeekItems, choirId],
+  )
+
+  const whatsNext = obligations[0]
+    ? {
+        title: obligations[0].title,
+        subtitle: obligations[0].subtitle,
+        href: obligations[0].href,
+        urgency: 'high' as const,
+      }
+    : nextEvent
+      ? {
+          title: nextEvent.title,
+          subtitle: nextEvent.when,
+          href: nextEvent.href,
+          urgency: 'default' as const,
+        }
+      : null
+
+  const nextTimeline = weekTimeline[0]
+
+  async function handleRefresh() {
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ['member-contribution-totals'] }),
+      qc.invalidateQueries({ queryKey: ['member-portal-home'] }),
+      qc.invalidateQueries({ queryKey: ['dashboard-member-summary'] }),
+      qc.invalidateQueries({ queryKey: ['member-service-preparation', choirId] }),
+    ])
+  }
 
   if (loading) {
     return (
@@ -88,89 +178,105 @@ export function MemberWeekHome({ choirId }: Props) {
   }
 
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <div className="space-y-5">
-      <div>
-        <h2 className="font-display text-xl text-text-primary">My week</h2>
-        <p className="text-sm text-text-muted mt-0.5">This week at a glance</p>
+      <ChoirMembershipWelcome choirId={choirId} />
+      <ChoirOnboardingChecklist choirId={choirId} />
+
+      {showGoalCelebration && (
+        <CelebrationMoment
+          show
+          accent="success"
+          title="Giving goal reached!"
+          message={`You've met your target for ${primaryGoal?.name ?? 'this campaign'}. Thank you for your faithfulness.`}
+          onDismiss={goalCelebration.markSeen}
+        />
+      )}
+
+      {whatsNext && (
+        <WhatsNextCard
+          title={whatsNext.title}
+          subtitle={whatsNext.subtitle}
+          href={whatsNext.href}
+          urgency={whatsNext.urgency}
+          cta={obligations.length > 0 ? 'Do it' : 'View'}
+        />
+      )}
+
+      {weekTimeline.length > 0 && (
+        <NextServiceCountdown
+          events={weekTimeline.map((e) => ({
+            title: e.title,
+            startAt: e.startAt,
+            href: e.href,
+          }))}
+        />
+      )}
+
+      {nextTimeline && (
+        <div className="flex flex-wrap gap-3">
+          <AddToCalendarButton
+            title={nextTimeline.title}
+            startAt={nextTimeline.startAt}
+            location={nextTimeline.location ?? undefined}
+          />
+          <ShareLinkButton
+            title={nextTimeline.title}
+            url={typeof window !== 'undefined' ? `${window.location.origin}${membershipOfficePath(choirId, 'attendance')}` : membershipOfficePath(choirId, 'attendance')}
+          />
+        </div>
+      )}
+
+      <ChoirAtAGlance
+        choirId={choirId}
+        weekEventCount={choirWeekItems.length}
+        todoCount={obligations.length}
+        upcomingPrepCount={upcomingPrepCount}
+        givingProgressPct={
+          primaryGoal?.progressPct != null
+            ? Math.min(100, Math.round(primaryGoal.progressPct))
+            : null
+        }
+      />
+
+      <ChoirQuickActions choirId={choirId} todoCount={obligations.length} />
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <WeekTimeline items={weekTimeline} className="md:col-span-2" />
+        <Card padding="md" className="flex flex-col items-center justify-center gap-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-text-muted w-full text-left">
+            Giving goal
+          </p>
+          <ProgressRing value={givingPct} label={primaryGoal?.name ?? 'Campaign'} />
+          <Link
+            href={membershipOfficePath(choirId, 'giving')}
+            className="text-xs font-semibold text-primary-600 hover:text-primary-800"
+          >
+            View giving →
+          </Link>
+        </Card>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-4">
-        <OfficeNavCard
-          href={obligationsPath}
-          accent={obligations.length > 0 ? 'warning' : undefined}
-        >
-          <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">To do</p>
-          {obligations.length > 0 ? (
-            <>
-              <p className="text-sm font-medium text-text-primary mt-2">
-                {obligations.length === 1
-                  ? '1 thing needs your attention'
-                  : `${obligations.length} things need your attention`}
-              </p>
-              {topObligation && (
-                <p className="text-xs text-text-muted mt-1 truncate">
-                  {topObligation.title} · {topObligation.subtitle}
-                </p>
-              )}
-              <p className="text-xs font-semibold text-primary-600 mt-3 inline-flex items-center gap-1">
-                Open to-do <ChevronRight size={12} />
-              </p>
-            </>
-          ) : (
-            <>
-              <CheckCircle2 size={28} className="text-success mt-3" />
-              <p className="text-sm font-medium text-text-primary mt-2">You&apos;re all caught up</p>
-            </>
-          )}
-        </OfficeNavCard>
+      <ChoirMonthMiniCalendar choirId={choirId} />
 
-        <OfficeNavCard href={givingPath}>
-          <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
-            Giving status
-          </p>
-          {primaryGoal ? (
-            <>
-              <p className="font-semibold text-text-primary mt-2 truncate">
-                {primaryGoal.typeName ?? primaryGoal.name ?? 'Active campaign'}
-              </p>
-              <p className="text-sm text-text-secondary mt-1">
-                {formatCurrency(primaryGoal.confirmedEffective)} /{' '}
-                {formatCurrency(primaryGoal.memberGoalAmount ?? 0)}
-              </p>
-              <div className="mt-3 h-2 rounded-full bg-surface-overlay overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${goalProgressBarClass(primaryGoal.progressPct ?? 0)}`}
-                  style={{ width: `${Math.min(100, primaryGoal.progressPct ?? 0)}%` }}
-                />
-              </div>
-              {(submitCtx?.family?.payment?.momoNumber || submitCtx?.family?.name) && (
-                <p className="text-xs text-text-muted mt-2 truncate">
-                  Pay to {submitCtx?.family?.name}
-                  {submitCtx?.family?.payment?.momoNumber
-                    ? ` · MoMo ${submitCtx.family.payment.momoNumber}`
-                    : ''}
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="text-sm text-text-muted mt-3">No active giving campaign.</p>
-          )}
-        </OfficeNavCard>
+      <MemberServicePrepCard choirId={choirId} />
 
-        <OfficeNavCard href={nextEvent ? attendancePath : attendancePath}>
-          <p className="text-xs font-semibold uppercase tracking-wide text-text-muted flex items-center gap-1">
-            <Calendar size={14} /> Next event
-          </p>
-          {nextEvent ? (
-            <>
-              <p className="font-semibold text-text-primary mt-2 truncate">{nextEvent.title}</p>
-              <p className="text-sm text-text-muted mt-1">{nextEvent.when}</p>
-            </>
-          ) : (
-            <p className="text-sm text-text-muted mt-3">No choir events this week.</p>
-          )}
-        </OfficeNavCard>
-      </div>
+      {(choirAnnouncements?.length ?? 0) > 0 && (
+        <RecentAnnouncementsList
+          announcements={(choirAnnouncements ?? []).map((a) => ({
+            id: a.id,
+            title: a.title,
+            body: a.body,
+            publishedAt: a.publishedAt ?? null,
+            source: 'choir',
+          }))}
+          max={3}
+          compact
+          allHref={membershipOfficePath(choirId, 'announcements')}
+          itemHref={() => membershipOfficePath(choirId, 'announcements')}
+        />
+      )}
     </div>
+    </PullToRefresh>
   )
 }

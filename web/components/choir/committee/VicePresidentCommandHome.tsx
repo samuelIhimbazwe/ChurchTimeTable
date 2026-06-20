@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { choirApi, choirSchedulingApi, financeApi, memberPortalApi } from '@/lib/api'
 import { OfficeCommandHome } from '@/components/shared/office/OfficeCommandHome'
+import { LeadershipAttentionPanel } from '@/components/shared/office/LeadershipAttentionPanel'
 import { Card, SkeletonCard } from '@/components/shared'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { relativeTime } from '@/lib/utils/format'
@@ -151,6 +152,28 @@ export function VicePresidentCommandHome() {
             cta: 'Governance hub →',
             href: choirLink('vice-president'),
           },
+        ]}
+      />
+
+      <LeadershipAttentionPanel
+        items={[
+          ...(pendingCount > 0 && canDecide
+            ? [{
+                id: 'joins',
+                label: `${pendingCount} join request(s) delegated to you`,
+                detail: oldest ? `Oldest pending ${oldest}` : undefined,
+                href: decisionsHref,
+                tone: 'warning' as const,
+              }]
+            : []),
+          ...(pendingCount > 0 && !canDecide
+            ? [{
+                id: 'joins-readonly',
+                label: `${pendingCount} join request(s) awaiting president`,
+                detail: 'Enable delegation to act on these',
+                href: decisionsHref,
+              }]
+            : []),
         ]}
       />
 

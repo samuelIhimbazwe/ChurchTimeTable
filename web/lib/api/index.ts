@@ -40,4 +40,6 @@ export type {
   LoginPayload, RegisterPayload, LoginResponse, AuthUser,
 } from './modules/auth'
 export type { ContributionClaim } from './modules/contributions'
+export type { ImportJobRecord, DataQualityMetrics } from './modules/system'
+export type { MinistrySettings } from './modules/ministries'
 export type { SongAsset, SongAssetType } from './modules/music'
