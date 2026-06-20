@@ -123,24 +123,28 @@ export default function BudgetHubPage() {
                   value={num(analytics?.contributionsMtd ?? analytics?.totalContributions)}
                   icon={DollarSign}
                   animate
+                  href={choirLink('finance')}
                 />
                 <StatTile
                   label="Pending queue"
                   value={queueItems.length}
                   icon={ClipboardCheck}
                   animate
+                  href={choirLink('budget/verify')}
                 />
                 <StatTile
                   label="Active budgets"
                   value={budgets.length}
                   icon={Wallet}
                   animate
+                  href={choirLink('budget')}
                 />
                 <StatTile
                   label="Campaigns"
                   value={campaigns.length}
                   icon={TrendingUp}
                   animate
+                  href={choirLink('stewardship/admin')}
                 />
               </>
             )}

@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { setupApi } from '@/lib/api'
+import { ChurchSetupWizard } from '@/components/admin/ChurchSetupWizard'
 import {
   Card, CardHeader, CardTitle, CardDescription,
   StatTile, SkeletonStatTile, SkeletonCard,
@@ -17,6 +18,8 @@ function num(v: unknown, fallback = 0): number {
 }
 
 export default function DeploymentPage() {
+  const qc = useQueryClient()
+
   const { data: setup, isLoading: setupLoading } = useQuery({
     queryKey: ['setup'],
     queryFn:  setupApi.getSetup,
@@ -35,6 +38,18 @@ export default function DeploymentPage() {
   const { data: reminders, isLoading: remLoading } = useQuery({
     queryKey: ['reminders-dashboard'],
     queryFn:  setupApi.getRemindersDashboard,
+  })
+
+  const { data: goLive } = useQuery({
+    queryKey: ['go-live-report'],
+    queryFn: setupApi.getGoLiveReport,
+  })
+
+  const runReminders = useMutation({
+    mutationFn: setupApi.runReminders,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['reminders-dashboard'] })
+    },
   })
 
   const wizardComplete = num(status?.completedSteps ?? status?.progress)
@@ -69,6 +84,8 @@ export default function DeploymentPage() {
           </>
         )}
       </div>
+
+      <ChurchSetupWizard />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card padding="md">
@@ -124,8 +141,41 @@ export default function DeploymentPage() {
 
       <Card padding="md">
         <CardHeader>
-          <CardTitle>Reminders Dashboard</CardTitle>
-          <CardDescription>Outstanding deployment reminders</CardDescription>
+          <CardTitle>Go-live report</CardTitle>
+          <CardDescription>Pre-launch checklist summary</CardDescription>
+        </CardHeader>
+        <div className="space-y-2 text-sm">
+          {goLive && Object.keys(goLive).length > 0 ? (
+            Object.entries(goLive).slice(0, 12).map(([key, val]) => (
+              <div key={key} className="flex justify-between gap-3">
+                <span className="text-text-secondary capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
+                <span className="font-medium text-text-primary truncate max-w-[50%] text-right">
+                  {typeof val === 'object' ? JSON.stringify(val) : String(val)}
+                </span>
+              </div>
+            ))
+          ) : (
+            <p className="text-text-muted">No go-live report data yet.</p>
+          )}
+        </div>
+      </Card>
+
+      <Card padding="md">
+        <CardHeader>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <CardTitle>Reminders Dashboard</CardTitle>
+              <CardDescription>Outstanding deployment reminders</CardDescription>
+            </div>
+            <button
+              type="button"
+              onClick={() => runReminders.mutate()}
+              disabled={runReminders.isPending}
+              className="text-xs font-semibold text-primary-600 hover:text-primary-800 disabled:opacity-60"
+            >
+              {runReminders.isPending ? 'Running…' : 'Run now'}
+            </button>
+          </div>
         </CardHeader>
         {remLoading ? (
           <SkeletonCard rows={4} />

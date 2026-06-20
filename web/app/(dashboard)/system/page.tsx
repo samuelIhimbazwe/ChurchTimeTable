@@ -85,6 +85,7 @@ export default function SystemPage() {
           </CardHeader>
           <div className="space-y-2">
             {[
+              { label: 'System Status',      href: '/system/status',     icon: Activity,   permission: 'admin.settings.manage' },
               { label: 'User Management',    href: '/system/users',      icon: Users,    permission: 'admin.users.manage' },
               { label: 'Role Management',    href: '/system/roles',      icon: Shield,   permission: 'admin.roles.manage' },
               { label: 'Audit Log',          href: '/system/audit',      icon: Database, permission: 'admin.audit.view'   },

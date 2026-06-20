@@ -8,7 +8,7 @@ import {
 } from '@/components/shared'
 import {
   Users, AlertTriangle, Database,
-  Upload, CheckCircle2, XCircle, Settings2, Server,
+  Upload, CheckCircle2, XCircle, Settings2, Server, Activity,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -108,10 +108,11 @@ export default function AdminDashboardPage() {
             {[
               { label: 'Approvals Queue',          count: summary?.pendingMembers,  href: '/admin/approvals',        icon: CheckCircle2, urgent: (summary?.pendingMembers ?? 0) > 0 },
               { label: 'Pending Member Approvals', count: summary?.pendingMembers,  href: '/members?status=PENDING', icon: Users,        urgent: (summary?.pendingMembers ?? 0) > 0 },
+              { label: 'System Status',            count: null,                      href: '/system/status',          icon: Activity,     urgent: false },
               { label: 'Deployment Center',        count: null,                      href: '/system/deployment',      icon: Server,       urgent: false },
               { label: 'Pilot Import / Export',    count: null,                      href: '/admin/import',           icon: Upload,       urgent: false },
               { label: 'Ministry Configuration',   count: null,                      href: '/ministries',             icon: Settings2,    urgent: false },
-              { label: 'Sync Conflicts',           count: summary?.syncConflicts,    href: '/admin/sync',             icon: Database,     urgent: (summary?.syncConflicts ?? 0) > 0 },
+              { label: 'Sync Conflicts',           count: summary?.syncConflicts,    href: '/system/sync',             icon: Database,     urgent: (summary?.syncConflicts ?? 0) > 0 },
             ].map((item) => (
               <Link
                 key={item.label}

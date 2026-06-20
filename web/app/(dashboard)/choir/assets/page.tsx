@@ -4,8 +4,9 @@ import { useQuery } from '@tanstack/react-query'
 import { assetsApi } from '@/lib/api'
 import {
   Card, CardHeader, CardTitle, CardDescription,
-  StatTile, Badge, SkeletonStatTile, SkeletonCard,
+  StatTile, Badge, SkeletonStatTile, SkeletonCard, EmptyState,
 } from '@/components/shared'
+import { useResolvedChoirScope } from '@/lib/hooks'
 import { Package, Shirt, Wrench } from 'lucide-react'
 import { ChoirAssetsManagePanel } from '@/components/choir/ChoirAssetsManagePanel'
 
@@ -27,6 +28,7 @@ function items(data: Record<string, unknown> | undefined, ...keys: string[]) {
 }
 
 export default function AssetsPage() {
+  const { choirLink } = useResolvedChoirScope()
   const { data: equipment, isLoading: eqLoading } = useQuery({
     queryKey: ['choir-equipment'],
     queryFn:  assetsApi.getChoirEquipment,
@@ -57,9 +59,9 @@ export default function AssetsPage() {
           Array.from({ length: 3 }).map((_, i) => <SkeletonStatTile key={i} />)
         ) : (
           <>
-            <StatTile label="Equipment Items" value={num(eq, 'total', 'totalItems', 'count')} icon={Wrench} animate />
-            <StatTile label="Uniforms"        value={num(un, 'total', 'totalItems', 'count')} icon={Shirt} animate />
-            <StatTile label="All Assets"      value={allAssets?.total ?? allAssets?.items?.length ?? 0} icon={Package} animate />
+            <StatTile label="Equipment Items" value={num(eq, 'total', 'totalItems', 'count')} icon={Wrench} animate href={choirLink('assets')} />
+            <StatTile label="Uniforms"        value={num(un, 'total', 'totalItems', 'count')} icon={Shirt} animate href={choirLink('assets')} />
+            <StatTile label="All Assets"      value={allAssets?.total ?? allAssets?.items?.length ?? 0} icon={Package} animate href={choirLink('records')} />
           </>
         )}
       </div>
@@ -73,7 +75,12 @@ export default function AssetsPage() {
           {eqLoading ? (
             <SkeletonCard rows={3} />
           ) : items(eq, 'items', 'equipment', 'recent').length === 0 ? (
-            <p className="text-center text-text-muted py-8 text-sm">No equipment listed.</p>
+            <EmptyState
+              icon={Wrench}
+              title="No equipment listed"
+              description="Add equipment in the management panel below."
+              className="py-8"
+            />
           ) : (
             <AssetList items={items(eq, 'items', 'equipment', 'recent')} />
           )}
@@ -87,7 +94,12 @@ export default function AssetsPage() {
           {unLoading ? (
             <SkeletonCard rows={3} />
           ) : items(un, 'items', 'uniforms', 'recent').length === 0 ? (
-            <p className="text-center text-text-muted py-8 text-sm">No uniforms listed.</p>
+            <EmptyState
+              icon={Shirt}
+              title="No uniforms listed"
+              description="Create uniform types and issue items in the panel below."
+              className="py-8"
+            />
           ) : (
             <AssetList items={items(un, 'items', 'uniforms', 'recent')} />
           )}
@@ -104,7 +116,12 @@ export default function AssetsPage() {
         {allLoading ? (
           <SkeletonCard rows={4} />
         ) : (allAssets?.items?.length ?? 0) === 0 ? (
-          <p className="text-center text-text-muted py-8 text-sm">No assets found.</p>
+          <EmptyState
+            icon={Package}
+            title="No assets in registry"
+            description="Register church-wide assets in the management panel."
+            className="py-8"
+          />
         ) : (
           <ul className="divide-y divide-border">
             {allAssets?.items?.map((a) => (

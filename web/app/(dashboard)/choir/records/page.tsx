@@ -108,23 +108,24 @@ export default function RecordsHubPage() {
         <>
         <RecordsCommandHome />
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Card padding="md">
+          <Card padding="md" href={choirLink('assets')}>
             <p className="text-xs text-text-muted">Equipment</p>
             <p className="font-display text-2xl text-primary-700">
               {Number((equipment as Record<string, unknown>)?.totalAssets ?? (equipment as Record<string, unknown>)?.total ?? 0)}
             </p>
           </Card>
-          <Card padding="md">
+          <Card padding="md" href={choirLink('assets')}>
             <p className="text-xs text-text-muted">Uniform assignments</p>
             <p className="font-display text-2xl text-primary-700">
               {Number((uniforms as Record<string, unknown>)?.activeAssignments ?? 0)}
             </p>
           </Card>
-          <Card padding="md">
+          <Card padding="md" onClick={() => setTab('audit')}>
             <p className="text-xs text-text-muted">Recent choir actions</p>
             <p className="font-display text-2xl text-primary-700">{choirAudit.length}</p>
+            <p className="text-xs font-semibold text-primary-600 mt-1">View audit log →</p>
           </Card>
-          <Card padding="md">
+          <Card padding="md" href={choirLink('activities')}>
             <p className="text-xs text-text-muted flex items-center gap-1"><Activity size={12} /> Activities</p>
             <p className="font-display text-2xl text-primary-700">
               {activities?.total ?? activities?.items?.length ?? '—'}
@@ -163,7 +164,7 @@ export default function RecordsHubPage() {
           )})}
         </div>
         {choirAudit.length > 0 && (
-          <Card padding="md">
+          <Card padding="md" onClick={() => setTab('audit')}>
             <p className="text-sm font-semibold mb-3">Recent choir operations</p>
             <ul className="divide-y divide-border text-sm">
               {choirAudit.slice(0, 5).map((entry) => (
@@ -173,6 +174,7 @@ export default function RecordsHubPage() {
                 </li>
               ))}
             </ul>
+            <p className="text-xs font-semibold text-primary-600 mt-3">Full audit log →</p>
           </Card>
         )}
         </>

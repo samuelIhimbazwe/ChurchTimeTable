@@ -163,25 +163,28 @@ export default function MusicDirectorHubPage() {
               {rehearsalItems.slice(0, 8).map((a) => (
                 <Card key={a.id} padding="md">
                   <div className="flex flex-wrap justify-between gap-3 items-center">
-                    <div>
-                      <p className="font-semibold text-sm">{a.title}</p>
+                    <Link href={choirLink('attendance', a.id)} className="flex-1 min-w-0 group">
+                      <p className="font-semibold text-sm group-hover:text-primary-700">{a.title}</p>
                       <p className="text-xs text-text-muted mt-1">
                         {formatDate(a.date)}
                         {a.startTime ? ` · ${formatTime(a.startTime)}` : ''}
                       </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2 shrink-0">
-                      <PermissionGate anyOf={['choir.rehearsal.manage', 'choir.music.manage']}>
+                    </Link>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <PermissionGate anyOf={['choir.music.manage']}>
                         <button
                           type="button"
                           onClick={() => setPlanEvent({ id: a.id, title: a.title })}
-                          className="text-xs font-semibold text-primary-600 hover:underline"
+                          className="px-3 py-1.5 text-xs font-semibold border border-border rounded-lg hover:bg-surface-raised"
                         >
                           Plan songs
                         </button>
                       </PermissionGate>
-                      <Link href={choirLink('attendance', a.id)} className="text-xs font-semibold text-primary-600">
-                        Attendance →
+                      <Link
+                        href={choirLink('attendance', a.id)}
+                        className="text-xs font-semibold text-primary-600 hover:text-primary-800"
+                      >
+                        Open rehearsal →
                       </Link>
                     </div>
                   </div>

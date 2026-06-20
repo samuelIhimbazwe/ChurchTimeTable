@@ -7,7 +7,7 @@ import {
   StatTile, PermissionGate, SkeletonStatTile, SkeletonCard,
 } from '@/components/shared'
 import { DollarSign, TrendingUp, Users, PieChart } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils/format'
+import { useResolvedChoirScope } from '@/lib/hooks'
 
 function num(data: Record<string, unknown> | undefined, ...keys: string[]) {
   if (!data) return 0
@@ -18,6 +18,7 @@ function num(data: Record<string, unknown> | undefined, ...keys: string[]) {
 }
 
 export default function FinancePage() {
+  const { choirLink } = useResolvedChoirScope()
   const { data: analytics, isLoading } = useQuery({
     queryKey: ['finance-stewardship', 'CHOIR'],
     queryFn:  () => financeApi.getStewardshipAnalytics('CHOIR'),
@@ -48,18 +49,21 @@ export default function FinancePage() {
                 prefix="RWF "
                 icon={DollarSign}
                 animate
+                href={choirLink('stewardship')}
               />
               <StatTile
                 label="Pending"
                 value={num(a, 'pendingCount', 'pending', 'pendingContributions')}
                 icon={TrendingUp}
                 animate
+                href={choirLink('budget/verify')}
               />
               <StatTile
                 label="Contributors"
                 value={num(a, 'contributorCount', 'contributors', 'activeContributors')}
                 icon={Users}
                 animate
+                href={choirLink('members')}
               />
               <StatTile
                 label="Collection Rate"
@@ -67,15 +71,16 @@ export default function FinancePage() {
                 suffix="%"
                 icon={PieChart}
                 animate
+                href={choirLink('stewardship')}
               />
             </>
           )}
         </div>
 
-        <Card padding="md">
+        <Card padding="md" href={choirLink('stewardship')}>
           <CardHeader>
             <CardTitle>Stewardship Summary</CardTitle>
-            <CardDescription>Choir ministry financial overview</CardDescription>
+            <CardDescription>Choir ministry financial overview — tap for full stewardship</CardDescription>
           </CardHeader>
           {isLoading ? (
             <SkeletonCard rows={4} />

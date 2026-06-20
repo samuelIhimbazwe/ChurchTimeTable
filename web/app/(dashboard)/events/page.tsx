@@ -8,30 +8,28 @@ import { memberPortalApi } from '@/lib/api/modules/memberPortal'
 import {
   Card, Badge, SkeletonCard, EmptyState,
 } from '@/components/shared'
+import { MonthCalendarGrid, CalendarLegend, type CalendarDayEvent } from '@/components/calendar'
+import {
+  classifyChurchCalendarEvent,
+  CALENDAR_EVENT_COLORS,
+} from '@/lib/calendar/event-types'
+import { groupByDayKey, monthBoundsFromOffset } from '@/lib/calendar/month-utils'
 import { formatDate, formatTime } from '@/lib/utils/format'
-import { Calendar, ChevronLeft, ChevronRight, Music, Shield, Clock } from 'lucide-react'
-
-function monthBounds(offset: number) {
-  const now = new Date()
-  const year  = now.getFullYear()
-  const month = now.getMonth() + offset
-  const start = new Date(year, month, 1)
-  const end   = new Date(year, month + 1, 0, 23, 59, 59)
-  return { start, end, label: start.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) }
-}
+import { useTranslations } from '@/lib/i18n'
+import { Calendar, Clock, Music, Shield } from 'lucide-react'
 
 const DAY_ORDER = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 export default function EventsPage() {
+  const { tr } = useTranslations()
   const [offset, setOffset] = useState(0)
-  const { start, end, label } = useMemo(() => monthBounds(offset), [offset])
+  const [selectedDay, setSelectedDay] = useState<string | null>(null)
+  const { start, end } = useMemo(() => monthBoundsFromOffset(offset), [offset])
 
   const { data, isLoading } = useQuery({
     queryKey: ['calendar', start.toISOString(), end.toISOString()],
-    queryFn:  () => occurrencesApi.getCalendar(
-      start.toISOString(),
-      end.toISOString(),
-    ),
+    queryFn: () =>
+      occurrencesApi.getCalendar(start.toISOString(), end.toISOString()),
   })
 
   const { data: weeklyActivities, isLoading: loadingWeekly } = useQuery({
@@ -52,10 +50,40 @@ export default function EventsPage() {
       kind: 'choir',
     })),
   ]
-  const events = rawEvents.sort((a, b) =>
-    new Date(String(a.startAt ?? a.date ?? '')).getTime()
-    - new Date(String(b.startAt ?? b.date ?? '')).getTime(),
+
+  const calendarEvents: CalendarDayEvent[] = useMemo(
+    () =>
+      rawEvents.map((event, i) => {
+        const kind = classifyChurchCalendarEvent(event)
+        return {
+          id: String(event.id ?? i),
+          title: String(event.title ?? 'Event'),
+          startAt: String(event.startAt ?? event.date ?? ''),
+          kind,
+        }
+      }),
+    [rawEvents],
   )
+
+  const eventsByDay = useMemo(
+    () => groupByDayKey(calendarEvents, (e) => e.startAt),
+    [calendarEvents],
+  )
+
+  const legendKinds = useMemo(
+    () => Array.from(new Set(calendarEvents.map((e) => e.kind))),
+    [calendarEvents],
+  )
+
+  const events = [...rawEvents].sort(
+    (a, b) =>
+      new Date(String(a.startAt ?? a.date ?? '')).getTime()
+      - new Date(String(b.startAt ?? b.date ?? '')).getTime(),
+  )
+
+  const filteredEvents = selectedDay
+    ? events.filter((e) => String(e.startAt ?? e.date ?? '').slice(0, 10) === selectedDay)
+    : events
 
   const byDay = DAY_ORDER.map((dayName, dayOfWeek) => ({
     dayName,
@@ -70,59 +98,71 @@ export default function EventsPage() {
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto pb-8">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="font-display text-3xl text-text-primary">Events</h2>
-          <p className="text-text-secondary text-sm mt-1">
-            Church calendar and weekly activities
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setOffset((o) => o - 1)}
-            className="p-1.5 rounded border border-border hover:bg-surface-raised transition-colors"
-            aria-label="Previous month"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <span className="text-sm font-semibold text-text-primary min-w-32 text-center">
-            {label}
-          </span>
-          <button
-            onClick={() => setOffset((o) => o + 1)}
-            className="p-1.5 rounded border border-border hover:bg-surface-raised transition-colors"
-            aria-label="Next month"
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
+      <div>
+        <h2 className="font-display text-3xl text-text-primary">{tr('Events')}</h2>
+        <p className="text-text-secondary text-sm mt-1">
+          {tr('Church calendar and weekly activities')}
+        </p>
       </div>
 
       <section className="space-y-4">
+        <Card padding="md">
+          {pageLoading ? (
+            <SkeletonCard rows={8} />
+          ) : (
+            <>
+              <MonthCalendarGrid
+                monthOffset={offset}
+                onMonthOffsetChange={setOffset}
+                eventsByDay={eventsByDay}
+                selectedDay={selectedDay}
+                onSelectDay={(day) =>
+                  setSelectedDay((prev) => (prev === day ? null : day))
+                }
+              />
+              {legendKinds.length > 0 && (
+                <CalendarLegend kinds={legendKinds} className="mt-4 pt-4 border-t border-border" />
+              )}
+            </>
+          )}
+        </Card>
+
         <div>
-          <h3 className="font-display text-xl text-text-primary">Calendar events</h3>
-          <p className="text-sm text-text-secondary mt-0.5">Services, concerts, and special gatherings</p>
+          <h3 className="font-display text-xl text-text-primary">
+            {selectedDay
+              ? tr('Events on') + ` ${formatDate(selectedDay)}`
+              : tr('Calendar events')}
+          </h3>
+          <p className="text-sm text-text-secondary mt-0.5">
+            {selectedDay
+              ? tr('Tap another day or clear selection to see the full month.')
+              : tr('Services, concerts, and special gatherings')}
+          </p>
         </div>
+
         <Card padding="none">
           {pageLoading ? (
             <SkeletonCard rows={8} />
-          ) : events.length === 0 ? (
+          ) : filteredEvents.length === 0 ? (
             <EmptyState
               icon={Calendar}
-              title="No events this month"
-              description="Church services and activities will appear on the calendar."
+              title={tr('No events this month')}
+              description={tr('Church services and activities will appear on the calendar.')}
             />
           ) : (
             <ul className="divide-y divide-border">
-              {events.map((event, i) => {
+              {filteredEvents.map((event, i) => {
                 const startAt = String(event.startAt ?? event.date ?? '')
+                const kind = classifyChurchCalendarEvent(event)
                 const Icon = event.kind === 'choir' ? Music : Shield
                 return (
                   <li
                     key={String(event.id ?? i)}
                     className="flex items-start gap-4 px-5 py-4 hover:bg-surface-raised transition-colors"
                   >
-                    <div className="w-10 h-10 rounded-lg bg-surface-overlay flex items-center justify-center shrink-0">
+                    <div
+                      className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${CALENDAR_EVENT_COLORS[kind].bg}`}
+                    >
                       <Icon size={18} className="text-primary-600" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -131,7 +171,7 @@ export default function EventsPage() {
                           {String(event.title ?? 'Event')}
                         </p>
                         <Badge variant={event.kind === 'choir' ? 'ministry-choir' : 'ministry-protocol'}>
-                          {event.kind === 'choir' ? 'Choir' : String(event.type ?? 'Service').replace(/_/g, ' ')}
+                          {tr(CALENDAR_EVENT_COLORS[kind].label)}
                         </Badge>
                         {event.status != null && (
                           <Badge variant="default">{String(event.status)}</Badge>
@@ -154,14 +194,16 @@ export default function EventsPage() {
       <section className="space-y-4">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <h3 className="font-display text-xl text-text-primary">Weekly activities</h3>
-            <p className="text-sm text-text-secondary mt-0.5">Regular church and ministry schedule</p>
+            <h3 className="font-display text-xl text-text-primary">{tr('Weekly activities')}</h3>
+            <p className="text-sm text-text-secondary mt-0.5">
+              {tr('Regular church and ministry schedule')}
+            </p>
           </div>
           <Link
             href="/portal/activities"
             className="text-xs font-semibold text-primary-600 hover:text-primary-800 shrink-0"
           >
-            Full schedule
+            {tr('Full schedule')}
           </Link>
         </div>
         {pageLoading ? (
@@ -169,8 +211,8 @@ export default function EventsPage() {
         ) : byDay.length === 0 ? (
           <EmptyState
             icon={Clock}
-            title="No weekly activities"
-            description="Regular activities will appear here when configured."
+            title={tr('No weekly activities')}
+            description={tr('Regular activities will appear here when configured.')}
           />
         ) : (
           <div className="space-y-4">

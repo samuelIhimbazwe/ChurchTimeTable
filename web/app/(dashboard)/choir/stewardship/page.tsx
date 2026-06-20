@@ -50,9 +50,9 @@ export default function StewardshipPage() {
             Array.from({ length: 3 }).map((_, i) => <SkeletonStatTile key={i} />)
           ) : (
             <>
-              <StatTile label="Confirmed (MTD)" value={total} prefix="RWF " icon={DollarSign} animate />
-              <StatTile label="Awaiting family head" value={pending} icon={TrendingUp} animate />
-              <StatTile label="Confirmed records" value={confirmedCount} icon={Users} animate />
+              <StatTile label="Confirmed (MTD)" value={total} prefix="RWF " icon={DollarSign} animate href={choirLink('finance')} />
+              <StatTile label="Awaiting family head" value={pending} icon={TrendingUp} animate href={choirLink('budget/verify')} />
+              <StatTile label="Confirmed records" value={confirmedCount} icon={Users} animate href={choirLink('stewardship/admin')} />
             </>
           )}
         </div>

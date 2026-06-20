@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { choirApi } from '@/lib/api'
@@ -219,9 +220,14 @@ export default function JoinRequestsPage() {
                   key={r.id}
                   padding="md"
                   accent={r.status === 'PENDING' ? 'warning' : undefined}
+                  onClick={() => {
+                    if (!isReviewable) return
+                    setExpandedId(isOpen ? null : r.id)
+                    setReviewNotes('')
+                  }}
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3 min-w-0">
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
                       <Avatar name={memberName(r as JoinRequestRow)} size="sm" />
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-text-primary">
@@ -244,7 +250,8 @@ export default function JoinRequestsPage() {
                         {isReviewable && (
                           <button
                             type="button"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation()
                               setExpandedId(isOpen ? null : r.id)
                               setReviewNotes('')
                             }}
@@ -258,7 +265,10 @@ export default function JoinRequestsPage() {
                   </div>
 
                   {isOpen && isReviewable && (
-                    <div className="mt-4 pt-4 border-t border-border space-y-4">
+                    <div
+                      className="mt-4 pt-4 border-t border-border space-y-4"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <textarea
                         value={reviewNotes}
                         onChange={(e) => setReviewNotes(e.target.value)}
@@ -324,9 +334,10 @@ export default function JoinRequestsPage() {
                 key={r.id}
                 padding="md"
                 accent={r.status === 'PENDING' ? 'warning' : undefined}
+                onClick={() => setExpandedId(isOpen ? null : r.id)}
               >
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3 min-w-0">
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
                     <Avatar name={memberName(r)} size="sm" />
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-text-primary">
@@ -354,115 +365,137 @@ export default function JoinRequestsPage() {
                   <div className="flex flex-col items-end gap-2 shrink-0">
                     <Badge variant={STATUS_BADGE[r.status]}>{r.status}</Badge>
                     <PermissionGate anyOf={['choir.join.review', 'member:manage']}>
-                      {isReviewable && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setExpandedId(isOpen ? null : r.id)
-                            setReviewNotes('')
-                            setAssignedRoleId(defaultMemberRole?.id ?? '')
-                          }}
-                          className="text-xs font-semibold text-primary-600 hover:text-primary-800"
-                        >
-                          {isOpen ? 'Close' : 'Review'}
-                        </button>
-                      )}
+                      {isReviewable ? (
+                        <>
+                          <Link
+                            href={`${choirLink('president/decisions')}?requestId=${r.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-xs font-semibold text-primary-600 hover:text-primary-800"
+                          >
+                            Open decision console →
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setExpandedId(isOpen ? null : r.id)
+                              setReviewNotes('')
+                              setAssignedRoleId(defaultMemberRole?.id ?? '')
+                            }}
+                            className="text-xs font-semibold text-text-muted hover:text-text-primary"
+                          >
+                            {isOpen ? 'Close' : 'Review here'}
+                          </button>
+                        </>
+                      ) : null}
                     </PermissionGate>
+                    {!isReviewable && (
+                      <span className="text-xs font-semibold text-primary-600">
+                        {isOpen ? 'Close' : 'View details'}
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                {isOpen && isReviewable && (
-                  <div className="mt-4 pt-4 border-t border-border space-y-4">
-                    <div>
-                      <label className="text-xs font-semibold text-text-primary">
-                        Assign choir position
-                      </label>
-                      <p className="text-xs text-text-muted mb-2">
-                        Choose the role this member will hold (access follows the position template).
-                      </p>
-                      <select
-                        value={assignedRoleId}
-                        onChange={(e) => setAssignedRoleId(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg text-sm bg-surface border border-border"
-                      >
-                        <option value="">Member only (no leadership position)</option>
-                        {positionRoles?.map((role) => (
-                          <option key={role.id} value={role.id}>
-                            {choirPositionLabel(role.name)}
-                          </option>
-                        ))}
-                      </select>
-                      {assignedRoleId && (
-                        <div className="mt-3">
-                          <ChoirPositionGuide
-                            roleKey={
-                              positionRoles?.find((r) => r.id === assignedRoleId)?.name ?? ''
-                            }
+                {isOpen && (
+                  <div
+                    className="mt-4 pt-4 border-t border-border space-y-4"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {isReviewable && (
+                      <>
+                        <div>
+                          <label className="text-xs font-semibold text-text-primary">
+                            Assign choir position
+                          </label>
+                          <p className="text-xs text-text-muted mb-2">
+                            Choose the role this member will hold (access follows the position template).
+                          </p>
+                          <select
+                            value={assignedRoleId}
+                            onChange={(e) => setAssignedRoleId(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg text-sm bg-surface border border-border"
+                          >
+                            <option value="">Member only (no leadership position)</option>
+                            {positionRoles?.map((role) => (
+                              <option key={role.id} value={role.id}>
+                                {choirPositionLabel(role.name)}
+                              </option>
+                            ))}
+                          </select>
+                          {assignedRoleId && (
+                            <div className="mt-3">
+                              <ChoirPositionGuide
+                                roleKey={
+                                  positionRoles?.find((role) => role.id === assignedRoleId)?.name ?? ''
+                                }
+                              />
+                            </div>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold text-text-primary">
+                            Review notes
+                          </label>
+                          <p className="text-xs text-text-muted mb-2">
+                            Required when sending requirements to a new applicant (Needs info).
+                          </p>
+                          <textarea
+                            value={reviewNotes}
+                            onChange={(e) => setReviewNotes(e.target.value)}
+                            rows={3}
+                            placeholder="Requirements, audition steps, or questions for the applicant…"
+                            className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold-500"
                           />
                         </div>
-                      )}
-                    </div>
 
-                    <div>
-                      <label className="text-xs font-semibold text-text-primary">
-                        Review notes
-                      </label>
-                      <p className="text-xs text-text-muted mb-2">
-                        Required when sending requirements to a new applicant (Needs info).
-                      </p>
-                      <textarea
-                        value={reviewNotes}
-                        onChange={(e) => setReviewNotes(e.target.value)}
-                        rows={3}
-                        placeholder="Requirements, audition steps, or questions for the applicant…"
-                        className="w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold-500"
-                      />
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          review.mutate({
-                            id: r.id,
-                            status: 'APPROVED',
-                            roleId: assignedRoleId || undefined,
-                          })
-                        }
-                        disabled={review.isPending}
-                        className="flex items-center gap-1 px-3 py-2 text-xs font-semibold bg-success/10 text-success rounded-lg hover:bg-success/20"
-                      >
-                        <CheckCircle2 size={13} /> Approve
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          review.mutate({
-                            id: r.id,
-                            status: 'NEEDS_INFO',
-                            note: reviewNotes,
-                          })
-                        }
-                        disabled={review.isPending || !reviewNotes.trim()}
-                        className="flex items-center gap-1 px-3 py-2 text-xs font-semibold bg-info/10 text-info rounded-lg hover:bg-info/20 disabled:opacity-50"
-                      >
-                        <MessageSquare size={13} /> Send requirements
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          review.mutate({
-                            id: r.id,
-                            status: 'REJECTED',
-                            note: reviewNotes || undefined,
-                          })
-                        }
-                        disabled={review.isPending}
-                        className="flex items-center gap-1 px-3 py-2 text-xs font-semibold bg-danger/10 text-danger rounded-lg hover:bg-danger/20"
-                      >
-                        <XCircle size={13} /> Reject
-                      </button>
-                    </div>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              review.mutate({
+                                id: r.id,
+                                status: 'APPROVED',
+                                roleId: assignedRoleId || undefined,
+                              })
+                            }
+                            disabled={review.isPending}
+                            className="flex items-center gap-1 px-3 py-2 text-xs font-semibold bg-success/10 text-success rounded-lg hover:bg-success/20"
+                          >
+                            <CheckCircle2 size={13} /> Approve
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              review.mutate({
+                                id: r.id,
+                                status: 'NEEDS_INFO',
+                                note: reviewNotes,
+                              })
+                            }
+                            disabled={review.isPending || !reviewNotes.trim()}
+                            className="flex items-center gap-1 px-3 py-2 text-xs font-semibold bg-info/10 text-info rounded-lg hover:bg-info/20 disabled:opacity-50"
+                          >
+                            <MessageSquare size={13} /> Send requirements
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              review.mutate({
+                                id: r.id,
+                                status: 'REJECTED',
+                                note: reviewNotes || undefined,
+                              })
+                            }
+                            disabled={review.isPending}
+                            className="flex items-center gap-1 px-3 py-2 text-xs font-semibold bg-danger/10 text-danger rounded-lg hover:bg-danger/20"
+                          >
+                            <XCircle size={13} /> Reject
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
               </Card>

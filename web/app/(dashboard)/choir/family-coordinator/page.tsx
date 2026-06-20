@@ -65,7 +65,11 @@ export default function FamilyCoordinatorHubPage() {
           ) : (
             <ul className="divide-y divide-border rounded-lg border border-border bg-surface overflow-hidden">
               {families?.map((f, i) => (
-                <li key={f.id} className="px-4 py-3 flex items-center gap-4">
+                <li key={f.id}>
+                  <Link
+                    href={choirLink('families')}
+                    className="px-4 py-3 flex items-center gap-4 hover:bg-surface-raised transition-colors"
+                  >
                   <span className="font-display font-bold text-xl text-text-muted w-8 text-right shrink-0">
                     {f.rank ?? i + 1}
                   </span>
@@ -85,6 +89,7 @@ export default function FamilyCoordinatorHubPage() {
                       className="mt-1"
                     />
                   </div>
+                  </Link>
                 </li>
               ))}
             </ul>

@@ -9,6 +9,7 @@ import {
   StatTile, SkeletonStatTile, SkeletonCard,
 } from '@/components/shared'
 import { Users, Calendar, Activity, DollarSign } from 'lucide-react'
+import { MinistryFeatureFlags } from '@/components/ministries/MinistryFeatureFlags'
 
 function num(v: unknown, fallback = 0): number {
   const n = Number(v)
@@ -66,6 +67,8 @@ export default function MinistryDashboardPage() {
           </Link>
         ))}
       </div>
+
+      <MinistryFeatureFlags ministryId={id} />
 
       <Card padding="md">
         <CardHeader>

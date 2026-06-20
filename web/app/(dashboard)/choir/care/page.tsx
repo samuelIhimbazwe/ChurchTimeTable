@@ -184,38 +184,30 @@ export default function CareHubPage() {
             <CareCommandHome />
           </PermissionGate>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Card padding="md">
+          <Card padding="md" onClick={() => setTab('discipline')}>
             <Shield size={20} className="text-warning mb-2" />
             <p className="text-2xl font-display font-bold">{activeDiscipline.length}</p>
             <p className="text-sm text-text-muted">Active discipline cases</p>
-            <button type="button" onClick={() => setTab('discipline')} className="text-xs font-semibold text-primary-600 mt-2">
-              Manage →
-            </button>
+            <p className="text-xs font-semibold text-primary-600 mt-2">Manage →</p>
           </Card>
-          <Card padding="md">
+          <Card padding="md" onClick={() => setTab('welfare')}>
             <Heart size={20} className="text-danger mb-2" />
             <p className="text-2xl font-display font-bold">{openWelfare.length}</p>
             <p className="text-sm text-text-muted">Open welfare cases</p>
-            <button type="button" onClick={() => setTab('welfare')} className="text-xs font-semibold text-primary-600 mt-2">
-              Manage →
-            </button>
+            <p className="text-xs font-semibold text-primary-600 mt-2">Manage →</p>
           </Card>
-          <Card padding="md">
+          <Card padding="md" onClick={() => setTab('rules')}>
             <FileText size={20} className="text-primary-600 mb-2" />
             <p className="text-2xl font-display font-bold">{ruleDocs?.length ?? 0}</p>
             <p className="text-sm text-text-muted">Published rule documents</p>
-            <button type="button" onClick={() => setTab('rules')} className="text-xs font-semibold text-primary-600 mt-2">
-              View rules →
-            </button>
+            <p className="text-xs font-semibold text-primary-600 mt-2">View rules →</p>
           </Card>
-          <Card padding="md" className="sm:col-span-2 lg:col-span-3">
+          <Card padding="md" className="sm:col-span-2 lg:col-span-3" href={choirLink('activities')}>
             <div className="flex items-center justify-between mb-3">
               <p className="font-semibold text-text-primary flex items-center gap-2">
                 <Calendar size={16} /> Upcoming activities (attendance)
               </p>
-              <Link href={choirLink('activities')} className="text-xs font-semibold text-primary-600">
-                Full schedule →
-              </Link>
+              <span className="text-xs font-semibold text-primary-600">Full schedule →</span>
             </div>
             <ul className="space-y-2">
               {(activities?.items ?? []).slice(0, 4).map((a) => (
@@ -283,7 +275,13 @@ export default function CareHubPage() {
           {loadingDocs ? (
             <SkeletonCard rows={3} />
           ) : (ruleDocs?.length ?? 0) === 0 ? (
-            <EmptyState icon={FileText} title="No rule documents yet" description="Add choir rules above or upload via Documents." />
+            <EmptyState
+              icon={FileText}
+              title="No rule documents yet"
+              description="Add choir rules above or upload via Documents."
+              actionHref={choirLink('documents')}
+              actionLabel="Open documents"
+            />
           ) : (
             <ul className="space-y-3">
               {ruleDocs?.map((doc) => (

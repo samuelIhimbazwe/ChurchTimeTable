@@ -9,6 +9,17 @@ export interface Ministry {
   memberCount?: number
 }
 
+export interface MinistrySettings {
+  ministryId: string
+  allowDevotions?: boolean
+  allowAnnouncements?: boolean
+  allowDocuments?: boolean
+  allowMeetings?: boolean
+  allowAssets?: boolean
+  allowOperationalUnits?: boolean
+  allowReporting?: boolean
+}
+
 export const ministriesApi = {
   getAll: () =>
     apiClient.get<never, Ministry[]>('/ministries'),
@@ -30,4 +41,10 @@ export const ministriesApi = {
 
   getFinanceSummary: (id: string) =>
     apiClient.get<never, Record<string, unknown>>(`/ministries/${id}/finance/summary`),
+
+  getSettings: (id: string) =>
+    apiClient.get<never, MinistrySettings>(`/ministries/${id}/settings`),
+
+  updateSettings: (id: string, data: Partial<MinistrySettings>) =>
+    apiClient.patch<never, MinistrySettings>(`/ministries/${id}/settings`, data),
 }

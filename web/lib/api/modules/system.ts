@@ -17,6 +17,18 @@ export interface PilotReadiness {
   ready:  boolean
 }
 
+export interface DataQualityMetrics {
+  missingPhoneNumbers: number
+  missingPhoneSample: Array<{ id: string; name: string }>
+  duplicateMembers: Array<{ phone: string; members: string[] }>
+  missingLeadership: Array<{ id: string; name: string; code?: string }>
+  inactiveMinistries: Array<{ id: string; name: string }>
+  inactiveUnits: Array<{ id: string; name: string; code?: string }>
+  invalidAssignments: number
+  orphanRecords: { activeMembersWithoutChoir: number }
+  totals: { members: number; activeMembers: number }
+}
+
 export interface AuditLogEntry {
   id:        string
   action:    string
@@ -55,6 +67,7 @@ export type ImportJobRecord = {
   preview?: {
     summary: ImportPreviewSummary
     invalidRows?: Array<{ row: number; errors: string[] }>
+    duplicateRows?: Array<{ row: number; reason: string; data?: Record<string, string> }>
     conflictRows?: Array<{ row: number; reason: string }>
   }
   results?: {
@@ -113,6 +126,9 @@ export const systemApi = {
       ready:  Boolean(raw.ready ?? raw.isReady ?? raw.pilotReady ?? false),
     }
   },
+
+  getDataQuality: () =>
+    apiClient.get<never, DataQualityMetrics>('/system/data-quality'),
 
   runImport: (file: File, type: string) => {
     const form = new FormData()

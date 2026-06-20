@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { choirSchedulingApi, documentsApi, assetsApi } from '@/lib/api'
-import { useResolvedChoirId } from '@/lib/hooks'
+import { useResolvedChoirScope } from '@/lib/hooks'
 import { useAuthStore } from '@/stores/index'
 import {
   Card, StatTile, SkeletonStatTile,
@@ -29,7 +29,7 @@ export default function AdvisorHubPage() {
   const permissions = useAuthStore((s) => s.user?.permissions ?? [])
   const hasAnyPermission = useAuthStore((s) => s.hasAnyPermission)
 
-  const choirId = useResolvedChoirId()
+  const { choirId, choirLink } = useResolvedChoirScope()
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.location.hash === '#snapshot') {
@@ -106,24 +106,25 @@ export default function AdvisorHubPage() {
                     suffix="%"
                     icon={Calendar}
                     animate
+                    href={choirLink('reports')}
                   />
                 )}
                 {hasAnyPermission(['discipline:read_all', 'discipline.review']) && (
-                  <StatTile label="Open swaps" value={num(h?.pendingSwaps)} icon={Shield} animate />
+                  <StatTile label="Open swaps" value={num(h?.pendingSwaps)} icon={Shield} animate href={choirLink('scheduling')} />
                 )}
                 {hasAnyPermission(['choir.finance.view', 'ministry.finance.view']) && (
-                  <StatTile label="Reliability" value={num(h?.reliability ?? h?.reliabilityScore)} suffix="%" icon={DollarSign} animate />
+                  <StatTile label="Reliability" value={num(h?.reliability ?? h?.reliabilityScore)} suffix="%" icon={DollarSign} animate href={choirLink('finance')} />
                 )}
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 {hasAnyPermission(['choir.records.view', 'choir.document.manage']) && (
-                  <Card padding="md">
+                  <Card padding="md" href={choirLink('documents')}>
                     <p className="text-xs text-text-muted">Documents on file</p>
                     <p className="font-display text-2xl text-primary-700">{documents?.length ?? 0}</p>
                   </Card>
                 )}
                 {hasAnyPermission(['choir.equipment.manage', 'choir.ops.view', 'asset:view']) && (
-                  <Card padding="md">
+                  <Card padding="md" href={choirLink('assets')}>
                     <p className="text-xs text-text-muted">Equipment items</p>
                     <p className="font-display text-2xl text-primary-700">
                       {num(eq?.totalAssets ?? eq?.total)}

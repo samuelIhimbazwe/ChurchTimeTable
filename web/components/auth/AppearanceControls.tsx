@@ -31,11 +31,11 @@ export function AppearanceControls({ className, compact = false }: AppearanceCon
     >
       <button
         type="button"
-        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        onClick={() => setTheme(theme === 'dark' || theme === 'high-contrast' ? 'light' : 'dark')}
         aria-label="Toggle theme"
         className="p-2 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors"
       >
-        {theme === 'dark' ? <Sun size={compact ? 16 : 18} /> : <Moon size={compact ? 16 : 18} />}
+        {theme === 'dark' || theme === 'high-contrast' ? <Sun size={compact ? 16 : 18} /> : <Moon size={compact ? 16 : 18} />}
       </button>
 
       <div className="h-5 w-px bg-border shrink-0" aria-hidden />

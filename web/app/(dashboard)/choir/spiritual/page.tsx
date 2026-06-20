@@ -132,7 +132,11 @@ export default function SpiritualHubPage() {
           {loadingInbox ? (
             <SkeletonCard rows={4} />
           ) : (inbox?.length ?? 0) === 0 ? (
-            <EmptyState icon={HeartHandshake} title="No pending prayer requests" />
+            <EmptyState
+              icon={HeartHandshake}
+              title="No pending prayer requests"
+              description="When members submit ibyifuzo, they appear here for coordination."
+            />
           ) : (
             <ul className="space-y-3">
               {inbox?.map((req) => (

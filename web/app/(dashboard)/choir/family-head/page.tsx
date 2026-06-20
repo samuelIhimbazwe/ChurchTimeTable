@@ -81,7 +81,7 @@ export default function FamilyHeadHubPage() {
             </Card>
           ) : (
             <>
-              <Card padding="md" accent="gold">
+              <Card padding="md" accent="gold" href={choirLink('family-leadership/team')}>
                 <p className="font-semibold text-lg">{myFamilyMeta?.familyName ?? familyDetail?.name}</p>
                 <p className="text-sm text-text-muted mt-1">
                   Your role: {myFamilyMeta?.role?.replace(/_/g, ' ') ?? 'Family head'}
@@ -96,6 +96,7 @@ export default function FamilyHeadHubPage() {
                   value={myFamilyMetrics?.participation?.activeMembers ?? familyDetail?.memberCount ?? '—'}
                   icon={Users}
                   animate
+                  href={choirLink('family-leadership/team')}
                 />
                 <StatTile
                   label="Attendance rate"
@@ -103,8 +104,9 @@ export default function FamilyHeadHubPage() {
                   suffix={myFamilyMetrics ? '%' : ''}
                   icon={CheckCircle2}
                   animate
+                  href={choirLink('family-leadership/participation')}
                 />
-                <Card padding="md">
+                <Card padding="md" href={choirLink('family-leadership/contributions')}>
                   <p className="text-xs text-text-muted mb-1">Family umusanzu</p>
                   {myFamilyMetrics?.contributions ? (
                     <ContributionAmountDisplay
@@ -215,7 +217,7 @@ export default function FamilyHeadHubPage() {
           ) : (
             <ul className="space-y-3">
               {(activities?.items ?? []).slice(0, 6).map((a) => (
-                <Card key={a.id} padding="md">
+                <Card key={a.id} padding="md" href={choirLink('attendance', a.id)}>
                   <div className="flex justify-between gap-3 items-center">
                     <div>
                       <p className="font-semibold text-sm">{a.title}</p>
@@ -224,11 +226,7 @@ export default function FamilyHeadHubPage() {
                         {a.startTime ? ` · ${formatTime(a.startTime)}` : ''}
                       </p>
                     </div>
-                    <PermissionGate anyOf={['attendance.mark', 'attendance:write']}>
-                      <Link href={choirLink('attendance', a.id)} className="text-xs font-semibold text-primary-600 shrink-0">
-                        Mark team →
-                      </Link>
-                    </PermissionGate>
+                    <span className="text-xs font-semibold text-primary-600 shrink-0">Mark team →</span>
                   </div>
                 </Card>
               ))}

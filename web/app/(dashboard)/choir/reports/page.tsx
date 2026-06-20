@@ -60,7 +60,7 @@ function healthBadgeVariant(grade?: string) {
 }
 
 export default function ChoirReportsPage() {
-  const { choirId } = useResolvedChoirScope()
+  const { choirId, choirLink } = useResolvedChoirScope()
 
   const { data: summary, isLoading } = useQuery({
     queryKey: ['choir-reports-summary', choirId],
@@ -134,18 +134,21 @@ export default function ChoirReportsPage() {
               suffix={health?.grade ? ` (${health.grade})` : ''}
               icon={Activity}
               animate
+              href={choirLink('analytics')}
             />
             <StatTile
               label="Members"
               value={membership?.total ?? 0}
               icon={Users}
               animate
+              href={choirLink('members')}
             />
             <StatTile
               label="At risk"
               value={health?.participation?.membersAtRisk ?? 0}
               icon={Users}
               animate
+              href={choirLink('analytics')}
             />
             <StatTile
               label="Welfare cases"
@@ -156,13 +159,14 @@ export default function ChoirReportsPage() {
               }
               icon={Heart}
               animate
+              href={choirLink('welfare')}
             />
           </>
         )}
       </div>
 
       {health && (
-        <Card padding="md">
+        <Card padding="md" href={choirLink('analytics')}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               Choir health

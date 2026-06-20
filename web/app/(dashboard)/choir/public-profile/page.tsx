@@ -31,6 +31,7 @@ export default function ChoirPublicProfilePage() {
   const [releaseUrl, setReleaseUrl] = useState('')
   const [releasePlatform, setReleasePlatform] = useState('youtube')
   const [releaseDescription, setReleaseDescription] = useState('')
+  const [memberRecognitionEnabled, setMemberRecognitionEnabled] = useState(true)
 
   const { choirId, choirName } = useResolvedChoirScope()
 
@@ -50,6 +51,9 @@ export default function ChoirPublicProfilePage() {
     setReleaseUrl(override?.url ?? '')
     setReleasePlatform(override?.platform ?? 'youtube')
     setReleaseDescription(override?.description ?? '')
+    setMemberRecognitionEnabled(
+      (profile as { memberRecognitionEnabled?: boolean }).memberRecognitionEnabled !== false,
+    )
   }, [
     profile?.id,
     profile?.profileSummary,
@@ -67,6 +71,7 @@ export default function ChoirPublicProfilePage() {
         showMemberCountPublic: showMemberCount,
         publicProfile: {
           summary: trimmedSummary || undefined,
+          memberRecognitionEnabled,
           featuredRelease: highlightRelease
             ? {
                 title: releaseTitle.trim(),
@@ -176,6 +181,26 @@ export default function ChoirPublicProfilePage() {
                 Currently {profile.memberCount} active members
               </span>
             )}
+          </span>
+        </label>
+      </Card>
+
+      <Card padding="md">
+        <CardHeader className="p-0 mb-4">
+          <CardTitle>Member recognition</CardTitle>
+          <CardDescription>
+            Private attendance and giving badges on the membership home — not a public leaderboard
+          </CardDescription>
+        </CardHeader>
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={memberRecognitionEnabled}
+            onChange={(e) => setMemberRecognitionEnabled(e.target.checked)}
+            className="mt-1 rounded border-border"
+          />
+          <span className="text-sm text-text-secondary">
+            Show private recognition strip to choir members
           </span>
         </label>
       </Card>

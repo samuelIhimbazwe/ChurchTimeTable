@@ -1,10 +1,13 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { systemApi, type ImportJobRecord } from '@/lib/api'
+import { systemApi } from '@/lib/api'
+import type { ImportJobRecord } from '@/lib/api/modules/system'
 import { toast } from '@/components/shared/Toast'
-import { Card, CardHeader, CardTitle, CardDescription, Badge } from '@/components/shared'
+import { Card, CardHeader, CardTitle, CardDescription, Badge, EmptyState, PermissionGate } from '@/components/shared'
+import { ImportColumnMapping } from '@/components/admin/ImportColumnMapping'
+import { readCsvHeaders, detectColumnsFromPreviewRows } from '@/lib/import/import-column-specs'
 import { Upload, FileText, CheckCircle2, History } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -23,16 +26,28 @@ const CONFLICT_STRATEGIES = [
   { value: 'SKIP', label: 'Skip conflicts' },
   { value: 'REPLACE', label: 'Replace existing' },
   { value: 'MERGE', label: 'Merge rows' },
+  { value: 'MANUAL_REVIEW', label: 'Manual review (skip conflicts)' },
 ] as const
 
 export default function ImportPage() {
   const [file, setFile] = useState<File | null>(null)
   const [type, setType] = useState<string>('MEMBERS')
-  const [strategy, setStrategy] = useState<'SKIP' | 'REPLACE' | 'MERGE'>('SKIP')
+  const [strategy, setStrategy] = useState<'SKIP' | 'REPLACE' | 'MERGE' | 'MANUAL_REVIEW'>('SKIP')
   const [loading, setLoading] = useState(false)
   const [previewJob, setPreviewJob] = useState<ImportJobRecord | null>(null)
   const [showHistory, setShowHistory] = useState(false)
+  const [fileColumns, setFileColumns] = useState<string[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!file || !file.name.toLowerCase().endsWith('.csv')) {
+      setFileColumns([])
+      return
+    }
+    readCsvHeaders(file)
+      .then(setFileColumns)
+      .catch(() => setFileColumns([]))
+  }, [file])
 
   const { data: history, refetch: refetchHistory } = useQuery({
     queryKey: ['import-history'],
@@ -75,7 +90,27 @@ export default function ImportPage() {
   const isPreviewing = previewJob?.status === 'PREVIEWING'
   const isDone = previewJob?.status === 'COMPLETED'
 
+  const detectedColumns =
+    fileColumns.length > 0
+      ? fileColumns
+      : detectColumnsFromPreviewRows([
+          ...(previewJob?.preview?.invalidRows ?? []),
+          ...(previewJob?.preview?.duplicateRows ?? []),
+          ...(previewJob?.preview?.conflictRows ?? []),
+        ])
+
   return (
+    <PermissionGate
+      anyOf={['pilot.import.manage', 'admin.users.manage']}
+      fallback={
+        <EmptyState
+          icon={Upload}
+          title="Import access required"
+          description="You need import or user-management permissions to use the import center."
+          className="py-16"
+        />
+      }
+    >
     <div className="space-y-6 max-w-2xl mx-auto">
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -95,7 +130,7 @@ export default function ImportPage() {
       </div>
 
       {type === 'PROTOCOL_MEMBERS' && (
-        <Card padding="md" accent="default">
+        <Card padding="md" accent="info">
           <p className="text-sm text-text-secondary">
             Protocol member import adds active members to the <strong>PROTOCOL_TEAM</strong> operational unit.
             Rows need <code className="text-xs">email</code> or <code className="text-xs">memberNumber</code>.
@@ -178,6 +213,8 @@ export default function ImportPage() {
         </div>
       </Card>
 
+      <ImportColumnMapping importType={type} fileColumns={detectedColumns} />
+
       {summary && (
         <Card padding="md" accent={summary.invalid > 0 ? 'warning' : 'success'}>
           <CardHeader>
@@ -186,7 +223,7 @@ export default function ImportPage() {
               Job {previewJob?.id?.slice(0, 8)} · {previewJob?.fileName}
             </CardDescription>
           </CardHeader>
-          <div className="grid grid-cols-3 gap-3 text-center text-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-sm">
             <div>
               <p className="text-2xl font-bold text-text-primary">{summary.valid}</p>
               <p className="text-xs text-text-muted">Valid</p>
@@ -196,10 +233,36 @@ export default function ImportPage() {
               <p className="text-xs text-text-muted">Invalid</p>
             </div>
             <div>
+              <p className="text-2xl font-bold text-text-secondary">{summary.duplicates}</p>
+              <p className="text-xs text-text-muted">Duplicates</p>
+            </div>
+            <div>
               <p className="text-2xl font-bold text-text-primary">{summary.conflicts}</p>
               <p className="text-xs text-text-muted">Conflicts</p>
             </div>
           </div>
+
+          {previewJob?.preview?.duplicateRows?.length ? (
+            <div className="mt-4 space-y-1">
+              <p className="text-xs font-semibold text-text-secondary">Duplicate rows (sample)</p>
+              {previewJob.preview.duplicateRows.slice(0, 5).map((row) => (
+                <p key={row.row} className="text-xs text-text-secondary">
+                  Row {row.row}: {row.reason}
+                </p>
+              ))}
+            </div>
+          ) : null}
+
+          {previewJob?.preview?.conflictRows?.length ? (
+            <div className="mt-4 space-y-1">
+              <p className="text-xs font-semibold text-text-secondary">Conflicts (sample)</p>
+              {previewJob.preview.conflictRows.slice(0, 5).map((row) => (
+                <p key={row.row} className="text-xs text-text-secondary">
+                  Row {row.row}: {row.reason}
+                </p>
+              ))}
+            </div>
+          ) : null}
 
           {previewJob?.preview?.invalidRows?.length ? (
             <div className="mt-4 space-y-1">
@@ -252,7 +315,12 @@ export default function ImportPage() {
             <CardTitle>Import history</CardTitle>
           </CardHeader>
           {(history?.length ?? 0) === 0 ? (
-            <p className="text-sm text-text-muted">No imports yet.</p>
+            <EmptyState
+              icon={History}
+              title="No imports yet"
+              description="Uploaded files will appear here after you run a preview."
+              className="py-8"
+            />
           ) : (
             <ul className="divide-y divide-border">
               {history?.map((job) => (
@@ -271,5 +339,6 @@ export default function ImportPage() {
         </Card>
       )}
     </div>
+    </PermissionGate>
   )
 }
