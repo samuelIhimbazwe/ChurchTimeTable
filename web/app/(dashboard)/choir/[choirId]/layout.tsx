@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { useParams, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useChoirDashboardContext } from '@/lib/hooks/useChoirDashboardContext'
+import { useContributionAuthRefresh } from '@/lib/hooks/useContributionAuthRefresh'
 import { useChoirSponsorDashboardContext } from '@/lib/hooks/useChoirSponsorDashboardContext'
 import { ChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
 import { ChoirSponsorDashboardCtx } from '@/components/choir/ChoirSponsorDashboardProvider'
@@ -23,6 +24,8 @@ export default function ChoirScopedLayout({ children }: { children: React.ReactN
     isLoading: loadingMember,
     isError: memberError,
   } = useChoirDashboardContext(choirId)
+
+  useContributionAuthRefresh(choirId)
 
   const memberDenied =
     memberError || (memberContext != null && memberContext.canAccess === false)

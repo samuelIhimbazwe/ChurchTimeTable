@@ -9,6 +9,8 @@ import { PermissionsResolver } from '../auth/permissions.resolver';
 import { PERMISSIONS, ROLES } from '../common/constants/roles';
 import { hasEffectivePermission } from '../common/governance/governance-permissions.util';
 import { PrismaService } from '../prisma/prisma.service';
+import { ContributionCapabilityResolverService } from '../common/choir/contribution-capability-resolver.service';
+import { can as capabilityCan } from '../common/choir/capability-can.util';
 import type {
   ContributionActorContext,
   ContributionActorRoleSnapshot,
@@ -53,6 +55,7 @@ export class ContributionScopeService {
   constructor(
     private prisma: PrismaService,
     private permissionsResolver: PermissionsResolver,
+    private contributionCapabilities: ContributionCapabilityResolverService,
   ) {}
 
   async resolveActor(userId: string): Promise<ContributionActorContext> {
@@ -346,17 +349,75 @@ export class ContributionScopeService {
     return membership?.role === FamilyMemberRole.HEAD;
   }
 
-  assertCanSubmit(ctx: ContributionActorContext): void {
-    if (!this.canSubmit(ctx)) {
+  async assertCanSubmit(
+    ctx: ContributionActorContext,
+    choirId: string,
+  ): Promise<void> {
+    const auth = await this.contributionCapabilities.resolveGrantsToCapabilities(
+      ctx.userId,
+      choirId,
+    );
+    if (!capabilityCan(auth, 'choir.contribution.submit@self')) {
       if (this.isChurchAdminAccountOnly(ctx)) {
-        throw new ForbiddenException('Church admin account cannot access ministry contributions');
+        throw new ForbiddenException(
+          'Church admin account cannot access ministry contributions',
+        );
       }
       throw new ForbiddenException('Cannot submit contributions');
     }
   }
 
-  assertCanViewAll(ctx: ContributionActorContext): void {
-    if (!this.canViewAll(ctx)) {
+  async assertCanViewChoirContributionsAny(
+    ctx: ContributionActorContext,
+  ): Promise<void> {
+    const memberships = await this.prisma.choirMembership.findMany({
+      where: { userId: ctx.userId, isActive: true },
+      select: { choirId: true },
+    });
+    for (const membership of memberships) {
+      const auth =
+        await this.contributionCapabilities.resolveGrantsToCapabilities(
+          ctx.userId,
+          membership.choirId,
+        );
+      if (capabilityCan(auth, 'choir.contribution.view@choir')) {
+        return;
+      }
+    }
+    this.denyHiddenFeature();
+  }
+
+  async resolveChoirIdForFamily(familyId: string): Promise<string> {
+    const family = await this.prisma.family.findUnique({
+      where: { id: familyId },
+      select: { choirId: true },
+    });
+    if (!family?.choirId) {
+      throw new NotFoundException('Family choir not found');
+    }
+    return family.choirId;
+  }
+
+  async resolveChoirIdForRecord(record: {
+    choirId?: string | null;
+    familyId?: string | null;
+  }): Promise<string> {
+    if (record.choirId) return record.choirId;
+    if (record.familyId) {
+      return this.resolveChoirIdForFamily(record.familyId);
+    }
+    throw new NotFoundException('Choir context not found for contribution');
+  }
+
+  async assertCanViewAll(
+    ctx: ContributionActorContext,
+    choirId: string,
+  ): Promise<void> {
+    const auth = await this.contributionCapabilities.resolveGrantsToCapabilities(
+      ctx.userId,
+      choirId,
+    );
+    if (!capabilityCan(auth, 'choir.contribution.view@choir')) {
       this.denyHiddenFeature();
     }
   }
@@ -403,15 +464,68 @@ export class ContributionScopeService {
     }
   }
 
-  assertCanApproveFamily(
+  async assertCanApproveFamily(
     ctx: ContributionActorContext,
     familyId: string,
-  ): void {
-    if (!this.canApproveFamily(ctx, familyId)) {
-      throw new ForbiddenException('Cannot approve contributions for this family');
+    choirId: string,
+  ): Promise<void> {
+    const auth = await this.contributionCapabilities.resolveGrantsToCapabilities(
+      ctx.userId,
+      choirId,
+    );
+    if (!capabilityCan(auth, 'choir.contribution.approve@family', familyId)) {
+      throw new ForbiddenException(
+        'Cannot approve contributions for this family',
+      );
     }
   }
 
+  async assertCanRejectFamily(
+    ctx: ContributionActorContext,
+    familyId: string,
+    choirId: string,
+  ): Promise<void> {
+    await this.assertCanApproveFamily(ctx, familyId, choirId);
+  }
+
+  async assertCanVerifyTreasury(
+    ctx: ContributionActorContext,
+    choirId: string,
+  ): Promise<void> {
+    const auth = await this.contributionCapabilities.resolveGrantsToCapabilities(
+      ctx.userId,
+      choirId,
+    );
+    if (!capabilityCan(auth, 'choir.contribution.verify@choir')) {
+      throw new ForbiddenException('Treasurer verification required');
+    }
+  }
+
+  async assertCanAdjust(
+    ctx: ContributionActorContext,
+    record: { familyId: string | null; status: string },
+    choirId: string,
+  ): Promise<void> {
+    if (record.status !== 'CONFIRMED') {
+      throw new ForbiddenException('Cannot adjust this contribution');
+    }
+    const auth = await this.contributionCapabilities.resolveGrantsToCapabilities(
+      ctx.userId,
+      choirId,
+    );
+    if (capabilityCan(auth, 'choir.contribution.adjust@choir')) {
+      return;
+    }
+    if (
+      record.familyId &&
+      capabilityCan(auth, 'choir.contribution.adjust@family', record.familyId)
+    ) {
+      return;
+    }
+    throw new ForbiddenException('Cannot adjust this contribution');
+  }
+
+  /** @deprecated Prefer assertCanVerifyTreasury with capability resolver */
   canVerifyTreasury(ctx: ContributionActorContext): boolean {
     if (this.isChurchAdminAccountOnly(ctx)) return false;
     return (
@@ -419,42 +533,6 @@ export class ContributionScopeService {
       hasEffectivePermission(ctx.permissions, PERMISSIONS.CHOIR_FINANCE_APPROVE) ||
       hasEffectivePermission(ctx.permissions, PERMISSIONS.CHOIR_FINANCE_MANAGE)
     );
-  }
-
-  assertCanVerifyTreasury(ctx: ContributionActorContext): void {
-    if (!this.canVerifyTreasury(ctx)) {
-      throw new ForbiddenException('Treasurer verification required');
-    }
-  }
-
-  assertCanRejectFamily(
-    ctx: ContributionActorContext,
-    familyId: string,
-  ): void {
-    this.assertCanApproveFamily(ctx, familyId);
-  }
-
-  /** Head may only adjust within own family; executives may adjust any. */
-  assertCanAdjust(
-    ctx: ContributionActorContext,
-    record: { familyId: string | null; status: string },
-  ): void {
-    if (!this.canAdjustRecord(ctx, record)) {
-      throw new ForbiddenException('Cannot adjust this contribution');
-    }
-
-    const hasGlobalAdjust =
-      hasEffectivePermission(ctx.permissions, PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST) ||
-      hasEffectivePermission(ctx.permissions, PERMISSIONS.PROTOCOL_CONTRIBUTION_ADJUST) ||
-      hasEffectivePermission(ctx.permissions, PERMISSIONS.PROTOCOL_FINANCE_MANAGE);
-    if (hasGlobalAdjust) return;
-
-    const membership = record.familyId
-      ? this.getFamilyMembership(ctx, record.familyId)
-      : undefined;
-    if (membership?.role === FamilyMemberRole.HEAD) return;
-
-    throw new ForbiddenException('Cannot adjust contributions outside your family');
   }
 
   resolveFamilyApproverRole(

@@ -9,6 +9,7 @@ import { useUIStore, useAuthStore } from '@/stores/index'
 import { translateNavSections, useTranslations } from '@/lib/i18n'
 import { getNavForContext, getPortalNavForUser } from '@/lib/navigation/role-nav'
 import { getComposedChoirNav } from '@/lib/navigation/choir-nav'
+import { composeContributionAwareNav } from '@/lib/navigation/contribution-nav'
 import { getComposedProtocolNav } from '@/lib/navigation/protocol-nav'
 import { parseChoirIdFromPath } from '@/lib/choir/paths'
 import { isProtocolDashboardPath } from '@/lib/protocol/paths'
@@ -39,8 +40,12 @@ export default function Sidebar({
   const permissions = useAuthStore((s) => s.user?.permissions ?? EMPTY_PERMISSIONS)
   const { canAccessChoirArea, isChoirMember, isLoading: loadingChoirAccess, activeChoirMemberships } = useChoirAccess()
   const choirId = parseChoirIdFromPath(pathname)
+  const contextChoirId =
+    choirId
+    ?? (pathname.startsWith('/choir') ? activeChoirMemberships[0]?.id : undefined)
   const inProtocolArea = isProtocolDashboardPath(pathname)
-  const { data: choirCtx } = useChoirDashboardContext(choirId)
+  const { data: choirCtx } = useChoirDashboardContext(contextChoirId)
+  const contributionAuth = choirCtx?.contributionAuth
   const { data: protocolCtx, isLoading: loadingProtocolCtx } = useProtocolDashboardContext(inProtocolArea)
 
   const membershipForPath = choirId
@@ -58,6 +63,7 @@ export default function Sidebar({
         choirCtx?.permissions ?? permissions,
         choirCtx?.familyOffices ?? [],
         choirCtx?.positions ?? [],
+        contributionAuth,
       )
     }
     if (inProtocolArea && protocolCtx?.canAccess) {
@@ -66,9 +72,15 @@ export default function Sidebar({
     return getNavForContext(pathname, authRole, { canAccessChoirArea, isChoirMember }, permissions, activeChoirMemberships)
   })()
 
+  const contributionAwareSections = composeContributionAwareNav(
+    rawSections,
+    contextChoirId ?? choirId,
+    contributionAuth,
+  )
+
   const sections = useMemo(
-    () => translateNavSections(rawSections, locale),
-    [rawSections, locale],
+    () => translateNavSections(contributionAwareSections, locale),
+    [contributionAwareSections, locale],
   )
 
   return (

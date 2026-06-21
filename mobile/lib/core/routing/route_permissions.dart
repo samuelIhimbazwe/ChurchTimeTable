@@ -97,6 +97,22 @@ bool canAccessRoute(
     return hasOperationalLeaderDashboard(permissions);
   }
 
+  if (routeName == AppRouter.finance) {
+    final caps = _contributionCapabilities(profile);
+    if (canAccessFinanceNavWithCapabilities(permissions, caps)) {
+      return profile == null ||
+          canAccessRouteWithPhoneEnforcement(routeName, profile);
+    }
+  }
+
+  if (routeName == AppRouter.budgets) {
+    final caps = _contributionCapabilities(profile);
+    if (canAccessBudgetNavWithCapabilities(permissions, caps)) {
+      return profile == null ||
+          canAccessRouteWithPhoneEnforcement(routeName, profile);
+    }
+  }
+
   final required = requiredPermissionsForRoute(routeName);
   if (required == null) {
     if (profile != null &&
@@ -123,4 +139,17 @@ String dashboardRouteForPermissions(List<String> permissions) {
     return AppRouter.leaderDashboard;
   }
   return AppRouter.memberDashboard;
+}
+
+List<Map<String, dynamic>>? _contributionCapabilities(
+  Map<String, dynamic>? profile,
+) {
+  final auth = profile?['contributionAuth'];
+  if (auth is! Map) return null;
+  final caps = auth['capabilities'];
+  if (caps is! List) return null;
+  return caps
+      .whereType<Map>()
+      .map((e) => e.map((k, v) => MapEntry(k.toString(), v)))
+      .toList();
 }

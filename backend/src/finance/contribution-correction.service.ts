@@ -35,10 +35,11 @@ export class ContributionCorrectionService {
       actorUserId,
       contributionId,
     );
-    this.scope.assertCanAdjust(record.ctx, {
+    const choirId = await this.scope.resolveChoirIdForRecord(record.row);
+    await this.scope.assertCanAdjust(record.ctx, {
       familyId: record.row.familyId,
       status: record.row.status,
-    });
+    }, choirId);
 
     const newFamily = await this.prisma.family.findUnique({
       where: { id: dto.newFamilyId },
@@ -95,10 +96,11 @@ export class ContributionCorrectionService {
       actorUserId,
       contributionId,
     );
-    this.scope.assertCanAdjust(record.ctx, {
+    const choirId = await this.scope.resolveChoirIdForRecord(record.row);
+    await this.scope.assertCanAdjust(record.ctx, {
       familyId: record.row.familyId,
       status: record.row.status,
-    });
+    }, choirId);
 
     const catalog = await this.prisma.contributionTypeCatalog.findUnique({
       where: { id: dto.contributionTypeCatalogId },
@@ -161,10 +163,11 @@ export class ContributionCorrectionService {
       actorUserId,
       contributionId,
     );
-    this.scope.assertCanAdjust(record.ctx, {
+    const choirId = await this.scope.resolveChoirIdForRecord(record.row);
+    await this.scope.assertCanAdjust(record.ctx, {
       familyId: record.row.familyId,
       status: record.row.status,
-    });
+    }, choirId);
 
     const newCampaignId = dto.contributionCampaignId ?? null;
     if (record.row.contributionCampaignId === newCampaignId) {

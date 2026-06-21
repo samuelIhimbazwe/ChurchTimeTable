@@ -3,13 +3,22 @@
 import Link from 'next/link'
 import { ChoirPositionHubShell } from '@/components/choir/ChoirPositionHubShell'
 import { TreasurerVerificationConsole } from '@/components/choir/committee/TreasurerVerificationConsole'
+import { CapabilityGate } from '@/components/shared'
 import { useResolvedChoirScope } from '@/lib/hooks'
 
 export default function BudgetVerifyPage() {
   const { choirLink } = useResolvedChoirScope()
 
   return (
-    <ChoirPositionHubShell
+    <CapabilityGate
+      uiCapability="contribution-treasury-verify"
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <p className="text-text-muted">Treasurer verification access required.</p>
+        </div>
+      }
+    >
+      <ChoirPositionHubShell
       roleKey="treasurer"
       subtitle="Three-way match family-approved claims, post to the ledger, and confirm sponsor gifts."
       tabs={[]}
@@ -24,5 +33,6 @@ export default function BudgetVerifyPage() {
       </Link>
       <TreasurerVerificationConsole />
     </ChoirPositionHubShell>
+    </CapabilityGate>
   )
 }

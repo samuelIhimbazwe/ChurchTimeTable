@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -8,11 +8,13 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { PermissionsResolver } from './permissions.resolver';
 import { MemberNumberModule } from '../members/member-number.module';
 import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
+import { ContributionCapabilityModule } from '../common/choir/contribution-capability.module';
 
 @Module({
   imports: [
     MemberNumberModule,
     MemberPhoneEnforcementModule,
+    forwardRef(() => ContributionCapabilityModule),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -27,6 +29,6 @@ import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enfo
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, PermissionsResolver],
-  exports: [AuthService, JwtModule, PermissionsResolver],
+  exports: [AuthService, JwtModule, PermissionsResolver, ContributionCapabilityModule],
 })
 export class AuthModule {}

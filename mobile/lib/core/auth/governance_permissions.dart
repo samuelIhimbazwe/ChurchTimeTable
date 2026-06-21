@@ -126,6 +126,53 @@ bool canAccessFinanceNav(List<String> permissions) {
   return hasAnyEffectivePermission(permissions, financeAccessPermissions);
 }
 
+/// Choir contribution capabilities from unified auth (when present on profile).
+const contributionViewChoir = 'choir.contribution.view@choir';
+const contributionVerifyChoir = 'choir.contribution.verify@choir';
+const contributionSubmitSelf = 'choir.contribution.submit@self';
+const contributionBudgetManage = 'choir.budget.manage@choir';
+
+bool hasContributionCapability(
+  List<Map<String, dynamic>>? capabilities,
+  String capabilityId, {
+  String? scopeId,
+}) {
+  if (capabilities == null || capabilities.isEmpty) return false;
+  for (final cap in capabilities) {
+    final id = cap['id']?.toString();
+    if (id != capabilityId) continue;
+    final capScopeId = cap['scopeId']?.toString();
+    if (capabilityId.endsWith('@family') || capabilityId.endsWith('@sponsor')) {
+      if (scopeId != null && capScopeId == scopeId) return true;
+      continue;
+    }
+    return true;
+  }
+  return false;
+}
+
+bool canAccessFinanceNavWithCapabilities(
+  List<String> permissions,
+  List<Map<String, dynamic>>? capabilities,
+) {
+  if (hasContributionCapability(capabilities, contributionViewChoir) ||
+      hasContributionCapability(capabilities, contributionVerifyChoir)) {
+    return true;
+  }
+  return canAccessFinanceNav(permissions);
+}
+
+bool canAccessBudgetNavWithCapabilities(
+  List<String> permissions,
+  List<Map<String, dynamic>>? capabilities,
+) {
+  if (hasContributionCapability(capabilities, contributionBudgetManage) ||
+      hasContributionCapability(capabilities, contributionVerifyChoir)) {
+    return true;
+  }
+  return hasEffectivePermission(permissions, 'choir.finance.manage');
+}
+
 String? resolveOperationalDashboardRole(List<String> permissions) {
   if (hasProtocolOversight(permissions)) return 'president';
   if (hasProtocolCoordination(permissions)) return 'coordinator';

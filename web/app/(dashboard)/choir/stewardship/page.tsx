@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { financeApi } from '@/lib/api'
 import {
-  StatTile, PermissionGate, SkeletonStatTile,
+  StatTile, CapabilityGate, SkeletonStatTile,
 } from '@/components/shared'
 import { StewardshipDashboard } from '@/components/choir/ContributionTreasuryPanel'
 import { useResolvedChoirScope } from '@/lib/hooks'
@@ -22,7 +22,7 @@ export default function StewardshipPage() {
   const total = Number(analytics?.contributionsMtd ?? analytics?.totalContributions ?? 0)
 
   return (
-    <PermissionGate permission="choir.contribution.view.all" fallback={
+    <CapabilityGate uiCapability="contribution-stewardship" fallback={
       <div className="flex items-center justify-center h-64">
         <p className="text-text-muted">You do not have access to stewardship data.</p>
       </div>
@@ -35,14 +35,14 @@ export default function StewardshipPage() {
               Contribution workflow, discrepancy follow-up, and family rankings
             </p>
           </div>
-          <PermissionGate anyOf={['choir.contribution.type.manage', 'choir.contribution.campaign.manage']}>
+          <CapabilityGate uiCapability="contribution-catalog">
             <Link
               href={choirLink('stewardship/admin')}
               className="text-sm font-semibold text-primary-600 hover:underline"
             >
               Catalog & campaigns →
             </Link>
-          </PermissionGate>
+          </CapabilityGate>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -59,6 +59,6 @@ export default function StewardshipPage() {
 
         <StewardshipDashboard />
       </div>
-    </PermissionGate>
+    </CapabilityGate>
   )
 }

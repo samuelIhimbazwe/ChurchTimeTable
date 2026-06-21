@@ -8,6 +8,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { PermissionsResolver } from '../auth/permissions.resolver';
 import { ROLES } from '../common/constants/roles';
 import { ChoirMembershipRulesService } from './choir-membership-rules.service';
+import { ContributionCapabilityResolverService } from '../common/choir/contribution-capability-resolver.service';
+import type { ResolvedAuth } from '../common/choir/capability.types';
 import {
   inferCommitteeRoleKeys,
   isChoirScopedDashboardPermission,
@@ -87,6 +89,7 @@ export type ChoirDashboardContext = {
     outOfOffice: boolean;
     joinReview: boolean;
   };
+  contributionAuth: ResolvedAuth;
 };
 
 @Injectable()
@@ -95,6 +98,7 @@ export class ChoirDashboardContextService {
     private prisma: PrismaService,
     private permissions: PermissionsResolver,
     private choirRules: ChoirMembershipRulesService,
+    private contributionCapabilities: ContributionCapabilityResolverService,
   ) {}
 
   async getContext(userId: string, choirId: string): Promise<ChoirDashboardContext> {
@@ -256,6 +260,12 @@ export class ChoirDashboardContextService {
       }
     }
 
+    const contributionAuth =
+      await this.contributionCapabilities.resolveGrantsToCapabilities(
+        userId,
+        choirId,
+      );
+
     return {
       choir: {
         id: choir.id,
@@ -276,6 +286,7 @@ export class ChoirDashboardContextService {
         outOfOffice: choir.presidentOutOfOffice,
         joinReview: choir.presidentDelegationJoinReview,
       },
+      contributionAuth,
     };
   }
 }

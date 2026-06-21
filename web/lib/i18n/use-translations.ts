@@ -124,6 +124,7 @@ export function usePageTitle(fallback = 'CMMS'): string {
         choirCtx?.permissions ?? permissions,
         choirCtx?.familyOffices ?? [],
         choirCtx?.positions ?? [],
+        choirCtx?.contributionAuth,
       )
     } else if (inProtocolArea && protocolCtx?.canAccess) {
       sections = getComposedProtocolNav(protocolCtx.ministry.name, protocolCtx.permissions)

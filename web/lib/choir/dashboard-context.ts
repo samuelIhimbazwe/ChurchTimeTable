@@ -1,3 +1,5 @@
+import type { ResolvedAuth } from './capability.types'
+
 export type ChoirDashboardPosition = {
   roleKey: string
   roleName: string
@@ -37,4 +39,5 @@ export type ChoirDashboardContext = {
     outOfOffice: boolean
     joinReview: boolean
   }
+  contributionAuth?: ResolvedAuth
 }

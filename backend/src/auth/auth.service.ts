@@ -14,6 +14,7 @@ import { MemberStatus } from '@prisma/client';
 import { PermissionsResolver } from './permissions.resolver';
 import { MemberNumberService } from '../members/member-number.service';
 import { MemberPhoneEnforcementService } from '../common/member/member-phone-enforcement.service';
+import { ContributionCapabilityResolverService } from '../common/choir/contribution-capability-resolver.service';
 import { durationToMs } from './auth.constants';
 import {
   AccountInactiveException,
@@ -44,6 +45,7 @@ export class AuthService {
     private permissionsResolver: PermissionsResolver,
     private memberNumberService: MemberNumberService,
     private phoneEnforcement: MemberPhoneEnforcementService,
+    private contributionCapabilities: ContributionCapabilityResolverService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -197,7 +199,7 @@ export class AuthService {
     return { loggedOut: true as const };
   }
 
-  async me(userId: string) {
+  async me(userId: string, choirId?: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -237,6 +239,13 @@ export class AuthService {
     const phoneEnforcementState =
       await this.phoneEnforcement.buildAuthEnforcementState(userId, roles);
 
+    const contributionAuth = choirId
+      ? await this.contributionCapabilities.resolveGrantsToCapabilities(
+          userId,
+          choirId,
+        )
+      : undefined;
+
     return {
       id: user.id,
       email: user.email,
@@ -246,6 +255,8 @@ export class AuthService {
       permissions,
       onboardingCompleted: user.member?.onboardingCompleted ?? false,
       phoneEnforcement: phoneEnforcementState,
+      contributionAuth,
+      /** Capabilities are resolved fresh on /auth/me — not embedded in JWT (see migration-notes/01-summary.md). */
     };
   }
 

@@ -48,7 +48,7 @@ export class ContributionSubmissionService {
 
   async submit(actorUserId: string, dto: SubmitContributionDto) {
     const ctx = await this.scope.resolveActor(actorUserId);
-    this.scope.assertCanSubmit(ctx);
+    await this.scope.assertCanSubmit(ctx, dto.choirId);
 
     const { member, familyId, submissionMode } = await this.resolveSubmitter(
       ctx.memberId!,
@@ -349,7 +349,7 @@ export class ContributionSubmissionService {
 
   async getSubmitOptions(actorUserId: string, choirId?: string) {
     const ctx = await this.scope.resolveActor(actorUserId);
-    this.scope.assertCanSubmit(ctx);
+    await this.scope.assertCanSubmit(ctx, dto.choirId);
 
     const familyMember = ctx.memberId
       ? await this.prisma.familyMember.findUnique({

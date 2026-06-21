@@ -45,6 +45,13 @@ export class ContributionGovernanceService {
     private financeExport: FinanceExportService,
   ) {}
 
+  private async resolveChoirIdForRecord(record: {
+    choirId?: string | null;
+    familyId?: string | null;
+  }): Promise<string> {
+    return this.scope.resolveChoirIdForRecord(record);
+  }
+
   async getFamilyInbox(
     actorUserId: string,
     familyId?: string,
@@ -100,7 +107,7 @@ export class ContributionGovernanceService {
     limit = 30,
   ) {
     const ctx = await this.scope.resolveActor(actorUserId);
-    this.scope.assertCanViewAll(ctx);
+    await this.scope.assertCanViewAll(ctx, choirId);
 
     const choir = await this.prisma.choir.findUnique({
       where: { id: choirId },
@@ -239,7 +246,7 @@ export class ContributionGovernanceService {
     limit = 30,
   ) {
     const ctx = await this.scope.resolveActor(actorUserId);
-    this.scope.assertCanVerifyTreasury(ctx);
+    await this.scope.assertCanVerifyTreasury(ctx, choirId);
 
     const choir = await this.prisma.choir.findUnique({
       where: { id: choirId },
@@ -306,7 +313,7 @@ export class ContributionGovernanceService {
 
   async getTreasuryDashboard(actorUserId: string, choirId: string) {
     const ctx = await this.scope.resolveActor(actorUserId);
-    this.scope.assertCanVerifyTreasury(ctx);
+    await this.scope.assertCanVerifyTreasury(ctx, choirId);
 
     const choir = await this.prisma.choir.findUnique({
       where: { id: choirId },
@@ -388,7 +395,7 @@ export class ContributionGovernanceService {
     monthKey?: string,
   ) {
     const ctx = await this.scope.resolveActor(actorUserId);
-    this.scope.assertCanVerifyTreasury(ctx);
+    await this.scope.assertCanVerifyTreasury(ctx, choirId);
     await this.assertActiveChoir(choirId);
     return this.financeExport.exportChoirTreasuryPeriodPdf(
       actorUserId,
@@ -403,7 +410,7 @@ export class ContributionGovernanceService {
     dto: CloseTreasuryPeriodDto,
   ) {
     const ctx = await this.scope.resolveActor(actorUserId);
-    this.scope.assertCanVerifyTreasury(ctx);
+    await this.scope.assertCanVerifyTreasury(ctx, choirId);
     await this.assertActiveChoir(choirId);
 
     const bounds = resolveTreasuryPeriodMonth(dto.month);
@@ -535,7 +542,7 @@ export class ContributionGovernanceService {
     if (ministryScope === MinistryScope.PROTOCOL) {
       this.scope.assertCanViewAllProtocol(ctx);
     } else {
-      this.scope.assertCanViewAll(ctx);
+      await this.scope.assertCanViewChoirContributionsAny(ctx);
     }
 
     const records = await this.prisma.contributionRecord.findMany({
@@ -616,7 +623,7 @@ export class ContributionGovernanceService {
     }
 
     const record = await this.findWorkflowRecord(contributionId);
-    this.assertCanProcessRecord(ctx, record);
+    await this.assertCanProcessRecord(ctx, record);
     this.assertSubmittedOnly(record.status);
 
     if (record.financeTransactionId) {
@@ -841,9 +848,9 @@ export class ContributionGovernanceService {
 
   async verifyTreasury(actorUserId: string, contributionId: string) {
     const ctx = await this.scope.resolveActor(actorUserId);
-    this.scope.assertCanVerifyTreasury(ctx);
-
     const record = await this.findWorkflowRecord(contributionId);
+    const choirId = await this.resolveChoirIdForRecord(record);
+    await this.scope.assertCanVerifyTreasury(ctx, choirId);
     if (!record.familyId) {
       throw new BadRequestException(
         'Only family-approved contributions can be treasury-verified',
@@ -977,9 +984,9 @@ export class ContributionGovernanceService {
     dto: RejectFamilyContributionDto,
   ) {
     const ctx = await this.scope.resolveActor(actorUserId);
-    this.scope.assertCanVerifyTreasury(ctx);
-
     const record = await this.findWorkflowRecord(contributionId);
+    const choirId = await this.resolveChoirIdForRecord(record);
+    await this.scope.assertCanVerifyTreasury(ctx, choirId);
     if (!record.familyId) {
       throw new BadRequestException('Only family-approved contributions can be returned');
     }
@@ -1043,7 +1050,7 @@ export class ContributionGovernanceService {
     }
 
     const record = await this.findWorkflowRecord(contributionId);
-    this.assertCanProcessRecord(ctx, record);
+    await this.assertCanProcessRecord(ctx, record);
     this.assertSubmittedOnly(record.status);
 
     const rejectionReason = dto.rejectionReason.trim();
@@ -1106,10 +1113,11 @@ export class ContributionGovernanceService {
       throw new NotFoundException('Contribution not found');
     }
 
-    this.scope.assertCanAdjust(ctx, {
+    const choirId = await this.scope.resolveChoirIdForRecord(record);
+    await this.scope.assertCanAdjust(ctx, {
       familyId: record.familyId,
       status: record.status,
-    });
+    }, choirId);
 
     if (record.status !== ContributionStatus.CONFIRMED) {
       throw new BadRequestException('Only confirmed contributions can be adjusted');
@@ -1211,15 +1219,17 @@ export class ContributionGovernanceService {
     return record.contributionTypeCatalog?.ministryScope === MinistryScope.PROTOCOL;
   }
 
-  private assertCanProcessRecord(
+  private async assertCanProcessRecord(
     ctx: Awaited<ReturnType<ContributionScopeService['resolveActor']>>,
     record: {
       familyId: string | null;
+      choirId?: string | null;
       contributionTypeCatalog?: { ministryScope: MinistryScope } | null;
     },
   ) {
     if (record.familyId) {
-      this.scope.assertCanApproveFamily(ctx, record.familyId);
+      const choirId = await this.resolveChoirIdForRecord(record);
+      await this.scope.assertCanApproveFamily(ctx, record.familyId, choirId);
       this.scope.assertCanViewFamilyRecord(ctx, record);
       return;
     }
@@ -1227,7 +1237,7 @@ export class ContributionGovernanceService {
       this.scope.assertCanApproveProtocol(ctx);
       return;
     }
-    this.scope.assertCanViewAll(ctx);
+    await this.scope.assertCanViewChoirContributionsAny(ctx);
   }
 
   private async findWorkflowRecord(contributionId: string) {

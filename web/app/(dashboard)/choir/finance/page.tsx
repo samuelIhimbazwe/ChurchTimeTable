@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { financeApi } from '@/lib/api'
 import {
   Card, CardHeader, CardTitle, CardDescription,
-  StatTile, PermissionGate, SkeletonStatTile, SkeletonCard,
+  StatTile, CapabilityGate, SkeletonStatTile, SkeletonCard,
 } from '@/components/shared'
 import { DollarSign, TrendingUp, Users, PieChart } from 'lucide-react'
 import { useResolvedChoirScope } from '@/lib/hooks'
@@ -27,7 +27,7 @@ export default function FinancePage() {
   const a = analytics as Record<string, unknown> | undefined
 
   return (
-    <PermissionGate anyOf={['choir.contribution.view.all', 'finance:view']} fallback={
+    <CapabilityGate uiCapability="contribution-finance-overview" fallback={
       <div className="flex items-center justify-center h-64">
         <p className="text-text-muted">You do not have access to finance data.</p>
       </div>
@@ -106,6 +106,6 @@ export default function FinancePage() {
           )}
         </Card>
       </div>
-    </PermissionGate>
+    </CapabilityGate>
   )
 }

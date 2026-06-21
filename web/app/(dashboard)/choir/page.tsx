@@ -246,25 +246,39 @@ export default function ChoirHubPage() {
 
       </div>
 
-      {/* President-only section */}
-      <PermissionGate anyOf={['choir.contribution.view.all', 'member:manage']}>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[
-            { label: 'Pending Approvals', value: leaderSummary?.pendingApprovals ?? 0, href: choirLink('join-requests'), color: 'text-warning' },
-            { label: 'Active Welfare',    value: leaderSummary?.activeWelfare ?? 0,     href: choirLink('welfare'),       color: 'text-danger' },
-            { label: 'Pending Swaps',     value: leaderSummary?.pendingSwaps ?? 0,      href: choirLink('scheduling'),    color: 'text-info' },
-          ].map((item) => (
-            <Link key={item.label} href={item.href}>
-              <Card padding="md" className="hover:shadow-raised transition-shadow cursor-pointer">
-                <p className="text-sm text-text-secondary">{item.label}</p>
-                <p className={`font-display text-4xl font-bold mt-1 ${item.color}`}>
-                  {item.value}
-                </p>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      </PermissionGate>
+      {/* Leadership ops tiles — not contribution data; gate each tile separately */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <PermissionGate anyOf={['choir.join.review', 'member:manage', 'choir.ops.manage']}>
+          <Link href={choirLink('join-requests')}>
+            <Card padding="md" className="hover:shadow-raised transition-shadow cursor-pointer">
+              <p className="text-sm text-text-secondary">Pending Approvals</p>
+              <p className="font-display text-4xl font-bold mt-1 text-warning">
+                {leaderSummary?.pendingApprovals ?? 0}
+              </p>
+            </Card>
+          </Link>
+        </PermissionGate>
+        <PermissionGate anyOf={['choir.welfare.view', 'choir.welfare.manage', 'discipline:manage']}>
+          <Link href={choirLink('welfare')}>
+            <Card padding="md" className="hover:shadow-raised transition-shadow cursor-pointer">
+              <p className="text-sm text-text-secondary">Active Welfare</p>
+              <p className="font-display text-4xl font-bold mt-1 text-danger">
+                {leaderSummary?.activeWelfare ?? 0}
+              </p>
+            </Card>
+          </Link>
+        </PermissionGate>
+        <PermissionGate anyOf={['event:write', 'choir.ops.manage', 'choir.ops.view']}>
+          <Link href={choirLink('scheduling')}>
+            <Card padding="md" className="hover:shadow-raised transition-shadow cursor-pointer">
+              <p className="text-sm text-text-secondary">Pending Swaps</p>
+              <p className="font-display text-4xl font-bold mt-1 text-info">
+                {leaderSummary?.pendingSwaps ?? 0}
+              </p>
+            </Card>
+          </Link>
+        </PermissionGate>
+      </div>
 
     </div>
   )

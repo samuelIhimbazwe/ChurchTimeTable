@@ -7,6 +7,9 @@ import {
 import type { NavItem, NavSection } from '@/lib/navigation/role-nav'
 import { choirMemberHome, choirPath } from '@/lib/choir/paths'
 import { resolveChoirLandingPath } from '@/lib/choir/officer-roles'
+import { can } from '@/lib/choir/capability-can'
+import type { ResolvedAuth } from '@/lib/choir/capability.types'
+import { uiCapabilityVisible } from '@/lib/choir/contribution-ui-capability-registry'
 
 const BACK_TO_PORTAL: NavSection = {
   items: [{ label: 'Member portal', icon: Home, path: '/portal' }],
@@ -124,6 +127,7 @@ export function getComposedChoirNav(
   permissions: string[],
   familyOffices: Array<{ label: string; officePath: string }> = [],
   positions: Array<{ roleKey: string }> = [],
+  contributionAuth?: ResolvedAuth,
 ): NavSection[] {
   const sections: NavSection[] = [BACK_TO_PORTAL]
   const familyOfficePaths = new Set(familyOffices.map((o) => o.officePath))
@@ -162,6 +166,11 @@ export function getComposedChoirNav(
     sections.push({ section: 'Committee roles', items: hubs })
   }
 
+  const capCheck = (uiId: string) =>
+    contributionAuth
+      ? uiCapabilityVisible(uiId, (capId, scopeId) => can(contributionAuth, capId, scopeId))
+      : false
+
   if (hasChoirWideAdminAccess(positions, permissions)) {
     const adminTools = adminToolsForPermissions(choirId, permissions)
     if (adminTools.length > 0) {
@@ -169,32 +178,40 @@ export function getComposedChoirNav(
     }
 
     const financeItems: NavItem[] = []
-    if (
-      permissions.some((p) =>
-        [
-          'choir.contribution.view.all',
-          'choir.finance.view',
-          'choir.finance.manage',
-          'choir.contribution.adjust',
-        ].includes(p),
-      )
-    ) {
-      financeItems.push({
-        label: 'Stewardship',
-        icon: DollarSign,
-        path: choirPath(choirId, 'stewardship'),
-      })
-      financeItems.push({
-        label: 'Finance analytics',
-        icon: DollarSign,
-        path: choirPath(choirId, 'finance'),
-      })
+    const showStewardshipFinance =
+      contributionAuth
+        ? capCheck('contribution-stewardship') || capCheck('contribution-finance-overview')
+        : permissions.some((p) =>
+            [
+              'choir.contribution.view.all',
+              'choir.finance.view',
+              'choir.finance.manage',
+              'choir.contribution.adjust',
+            ].includes(p),
+          )
+    if (showStewardshipFinance) {
+      if (!contributionAuth || capCheck('contribution-stewardship')) {
+        financeItems.push({
+          label: 'Stewardship',
+          icon: DollarSign,
+          path: choirPath(choirId, 'stewardship'),
+        })
+      }
+      if (!contributionAuth || capCheck('contribution-finance-overview')) {
+        financeItems.push({
+          label: 'Finance analytics',
+          icon: DollarSign,
+          path: choirPath(choirId, 'finance'),
+        })
+      }
     }
-    if (
-      permissions.some((p) =>
-        ['choir.contribution.type.manage', 'choir.contribution.campaign.manage'].includes(p),
-      )
-    ) {
+    const showCatalog =
+      contributionAuth
+        ? capCheck('contribution-catalog')
+        : permissions.some((p) =>
+            ['choir.contribution.type.manage', 'choir.contribution.campaign.manage'].includes(p),
+          )
+    if (showCatalog) {
       financeItems.push({
         label: 'Catalog & campaigns',
         icon: FileText,

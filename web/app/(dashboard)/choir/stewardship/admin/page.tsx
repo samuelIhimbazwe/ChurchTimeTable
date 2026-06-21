@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { PermissionGate } from '@/components/shared'
+import { CapabilityGate } from '@/components/shared'
 import { ContributionCatalogAdminPanel } from '@/components/choir/ContributionCatalogAdminPanel'
 import { FamilyLeadershipHistoryPanel } from '@/components/choir/FamilyLeadershipHistoryPanel'
 import { useResolvedChoirScope } from '@/lib/hooks'
@@ -10,8 +10,8 @@ export default function StewardshipAdminPage() {
   const { choirId, choirLink } = useResolvedChoirScope()
 
   return (
-    <PermissionGate
-      anyOf={['choir.contribution.type.manage', 'choir.contribution.campaign.manage']}
+    <CapabilityGate
+      uiCapability="contribution-catalog"
       fallback={
         <div className="flex items-center justify-center h-64">
           <p className="text-text-muted">Treasurer access required for contribution administration.</p>
@@ -41,6 +41,6 @@ export default function StewardshipAdminPage() {
           <p className="text-sm text-text-muted">Open from an active choir dashboard to manage catalog.</p>
         )}
       </div>
-    </PermissionGate>
+    </CapabilityGate>
   )
 }

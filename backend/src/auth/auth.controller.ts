@@ -4,6 +4,7 @@ import {
   Get,
   Patch,
   Post,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -78,8 +79,11 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  me(@CurrentUser('sub') userId: string) {
-    return this.authService.me(userId);
+  me(
+    @CurrentUser('sub') userId: string,
+    @Query('choirId') choirId?: string,
+  ) {
+    return this.authService.me(userId, choirId);
   }
 
   @Patch('onboarding-complete')
