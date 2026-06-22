@@ -15,8 +15,8 @@ import {
   DataTableColumnPicker,
   DataTableSavedViews,
   EmptyState,
-  PermissionGate,
   SkeletonCard,
+  CapabilityGate,
   type DataTableColumn,
 } from '@/components/shared'
 import { exportRowsToCsv } from '@/lib/table/table-views'
@@ -172,11 +172,11 @@ export default function ChoirMembersPage() {
         id: 'actions',
         header: '',
         cell: ({ row: m }) => (
-          <PermissionGate anyOf={['member:manage', 'choir.join.review', 'choir.ops.manage']}>
+          <CapabilityGate uiCapability="roster-manage">
             <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
               <ChoirRosterActions member={m} choirId={choirId} />
             </div>
-          </PermissionGate>
+          </CapabilityGate>
         ),
         cellClassName: 'w-12',
       },
@@ -197,6 +197,15 @@ export default function ChoirMembersPage() {
   const columnMeta = columns.map((c) => ({ id: c.id, header: c.header }))
 
   return (
+    <CapabilityGate
+      uiCapability="roster-hub"
+      fallback={
+        <EmptyState
+          title="Roster not available"
+          description="You do not have permission to view the choir roster."
+        />
+      }
+    >
     <ChoirOpsShell
       title="Choir roster"
       subtitle="Sort and filter members by family, voice, and participation."
@@ -219,7 +228,7 @@ export default function ChoirMembersPage() {
         ) : (
           <>
             <div className="flex flex-wrap items-center justify-end gap-2">
-              <PermissionGate anyOf={['report:export', 'member:manage', 'choir.oversight']}>
+              <CapabilityGate uiCapability="roster-manage">
                 <PrintSheet
                   sheetId="print-sheet-roster"
                   title="Choir roster"
@@ -248,7 +257,7 @@ export default function ChoirMembersPage() {
                 >
                   <Download size={15} /> Export CSV
                 </button>
-              </PermissionGate>
+              </CapabilityGate>
             </div>
 
             <DataTableFilterBar
@@ -379,5 +388,6 @@ export default function ChoirMembersPage() {
         )}
       </div>
     </ChoirOpsShell>
+    </CapabilityGate>
   )
 }

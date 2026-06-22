@@ -15,6 +15,7 @@ import { OpsCapabilityModule } from '../common/choir/ops-capability.module';
 import { JoinCapabilityModule } from '../common/choir/join-capability.module';
 import { SponsorCapabilityModule } from '../common/choir/sponsor-capability.module';
 import { MusicCapabilityModule } from '../common/choir/music-capability.module';
+import { RosterCapabilityModule } from '../common/choir/roster-capability.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { MusicCapabilityModule } from '../common/choir/music-capability.module';
     forwardRef(() => JoinCapabilityModule),
     forwardRef(() => SponsorCapabilityModule),
     forwardRef(() => MusicCapabilityModule),
+    forwardRef(() => RosterCapabilityModule),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -41,6 +43,6 @@ import { MusicCapabilityModule } from '../common/choir/music-capability.module';
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, PermissionsResolver],
-  exports: [AuthService, JwtModule, PermissionsResolver, ContributionCapabilityModule, WelfareCapabilityModule, DisciplineCapabilityModule, OpsCapabilityModule, JoinCapabilityModule, SponsorCapabilityModule, MusicCapabilityModule],
+  exports: [AuthService, JwtModule, PermissionsResolver, ContributionCapabilityModule, WelfareCapabilityModule, DisciplineCapabilityModule, OpsCapabilityModule, JoinCapabilityModule, SponsorCapabilityModule, MusicCapabilityModule, RosterCapabilityModule],
 })
 export class AuthModule {}

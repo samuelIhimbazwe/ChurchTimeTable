@@ -6,16 +6,9 @@ import {
 } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { PermissionsResolver } from '../auth/permissions.resolver';
 import { AuditService } from '../audit/audit.service';
-import { PERMISSIONS, ROLES } from '../common/constants/roles';
-import { hasEffectivePermission } from '../common/governance/governance-permissions.util';
+import { ChoirRosterAccessService } from './choir-roster-access.service';
 import { activeChoirCommitteeMemberWhere } from '../common/governance/choir-committee-member.util';
-
-const ADMIN_ROLES: ReadonlySet<string> = new Set([
-  ROLES.CHOIR_ADMIN,
-  ROLES.CHURCH_ADMIN,
-]);
 
 type ListQuery = {
   page?: number;
@@ -33,41 +26,12 @@ function scoreBand(score: number): 'excellent' | 'good' | 'needs_attention' {
 export class ChoirMembersService {
   constructor(
     private prisma: PrismaService,
-    private permissions: PermissionsResolver,
+    private rosterAccess: ChoirRosterAccessService,
     private audit: AuditService,
   ) {}
 
-  private async assertCanList(actorUserId: string, choirId: string) {
-    const resolved = await this.permissions.resolveForUser(actorUserId);
-    const isAdmin = resolved.roles.some((r) => ADMIN_ROLES.has(r));
-
-    const canView =
-      isAdmin ||
-      hasEffectivePermission(resolved.permissions, PERMISSIONS.MEMBER_READ) ||
-      hasEffectivePermission(resolved.permissions, PERMISSIONS.CHOIR_OPS_VIEW) ||
-      hasEffectivePermission(resolved.permissions, PERMISSIONS.CHOIR_OVERSIGHT) ||
-      hasEffectivePermission(resolved.permissions, PERMISSIONS.MEMBER_MANAGE) ||
-      hasEffectivePermission(
-        resolved.permissions,
-        PERMISSIONS.ATTENDANCE_MARK_SCOPE,
-      );
-
-    if (!canView) {
-      throw new ForbiddenException('Choir roster view denied');
-    }
-
-    if (isAdmin) return;
-
-    const membership = await this.prisma.choirMembership.findUnique({
-      where: { userId_choirId: { userId: actorUserId, choirId } },
-    });
-    if (!membership?.isActive) {
-      throw new ForbiddenException('Not a member of this choir');
-    }
-  }
-
   async listMembers(actorUserId: string, choirId: string, query: ListQuery = {}) {
-    await this.assertCanList(actorUserId, choirId);
+    await this.rosterAccess.requireViewRoster(actorUserId, choirId);
 
     const choir = await this.prisma.choir.findFirst({
       where: { id: choirId, isActive: true },
@@ -215,33 +179,12 @@ export class ChoirMembersService {
     };
   }
 
-  private async assertCanManage(actorUserId: string, choirId: string) {
-    const resolved = await this.permissions.resolveForUser(actorUserId);
-    const isAdmin = resolved.roles.some((r) => ADMIN_ROLES.has(r));
-    const canManage =
-      isAdmin ||
-      hasEffectivePermission(resolved.permissions, PERMISSIONS.MEMBER_MANAGE) ||
-      hasEffectivePermission(resolved.permissions, PERMISSIONS.CHOIR_OPERATIONS_MANAGE);
-
-    if (!canManage) {
-      throw new ForbiddenException('Choir roster manage denied');
-    }
-
-    const choir = await this.prisma.choir.findFirst({
-      where: { id: choirId, isActive: true },
-      select: { id: true },
-    });
-    if (!choir) {
-      throw new NotFoundException('Choir not found');
-    }
-  }
-
   async deactivateMembership(
     actorUserId: string,
     choirId: string,
     memberId: string,
   ) {
-    await this.assertCanManage(actorUserId, choirId);
+    await this.rosterAccess.requireManageRoster(actorUserId, choirId);
 
     const member = await this.prisma.member.findUnique({
       where: { id: memberId },
