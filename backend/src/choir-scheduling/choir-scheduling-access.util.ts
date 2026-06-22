@@ -1,5 +1,12 @@
 import { PERMISSIONS } from '../common/constants/roles';
+import { can } from '../common/choir/capability-can.util';
+import type { ResolvedAuth } from '../common/choir/capability.types';
 import { hasEffectivePermission } from '../common/governance/governance-permissions.util';
+
+const OPS_VIEW = 'choir.ops.view@choir';
+const OPS_MANAGE = 'choir.ops.manage@choir';
+const OPS_SCHEDULE = 'choir.ops.schedule@choir';
+const OPS_ATTENDANCE = 'choir.ops.attendance@choir';
 
 export function hasChoirOpsView(permissions: string[]): boolean {
   return (
@@ -46,4 +53,41 @@ export function hasChoirOpsReport(permissions: string[]): boolean {
     hasEffectivePermission(permissions, PERMISSIONS.CHOIR_REPORTS_VIEW) ||
     hasChoirOpsView(permissions)
   );
+}
+
+export function hasChoirOpsViewFromAuth(auth: ResolvedAuth | undefined): boolean {
+  if (!auth) return false;
+  return (
+    can(auth, OPS_VIEW)
+    || can(auth, OPS_MANAGE)
+    || can(auth, OPS_SCHEDULE)
+  );
+}
+
+export function hasChoirOpsManageFromAuth(auth: ResolvedAuth | undefined): boolean {
+  if (!auth) return false;
+  return can(auth, OPS_MANAGE);
+}
+
+export function hasChoirOpsScheduleFromAuth(auth: ResolvedAuth | undefined): boolean {
+  if (!auth) return false;
+  return can(auth, OPS_SCHEDULE) || hasChoirOpsManageFromAuth(auth);
+}
+
+export function hasChoirOpsAttendanceFromAuth(auth: ResolvedAuth | undefined): boolean {
+  if (!auth) return false;
+  return can(auth, OPS_ATTENDANCE) || hasChoirOpsManageFromAuth(auth);
+}
+
+export function hasChoirOpsRankingViewFromAuth(auth: ResolvedAuth | undefined): boolean {
+  if (!auth) return false;
+  return (
+    can(auth, OPS_VIEW)
+    || hasChoirOpsManageFromAuth(auth)
+  );
+}
+
+export function hasChoirOpsReportFromAuth(auth: ResolvedAuth | undefined): boolean {
+  if (!auth) return false;
+  return hasChoirOpsViewFromAuth(auth) || hasChoirOpsManageFromAuth(auth);
 }

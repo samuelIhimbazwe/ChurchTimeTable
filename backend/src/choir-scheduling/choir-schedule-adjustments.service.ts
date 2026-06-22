@@ -3,9 +3,8 @@ import { ChoirScheduleAdjustmentAction } from '@prisma/client';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
-import { PermissionsResolver } from '../auth/permissions.resolver';
+import { ChoirOpsAccessService } from './choir-ops-access.service';
 import { CHOIR_SCHEDULING_AUDIT } from './choir-scheduling.constants';
-import { hasChoirOpsSchedule } from './choir-scheduling-access.util';
 import { ChoirServiceAssignmentsService } from './choir-service-assignments.service';
 import { ChoirSchedulingNotificationsService } from './choir-scheduling-notifications.service';
 
@@ -14,7 +13,7 @@ export class ChoirScheduleAdjustmentsService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
-    private permissions: PermissionsResolver,
+    private opsAccess: ChoirOpsAccessService,
     private assignments: ChoirServiceAssignmentsService,
     private notify: ChoirSchedulingNotificationsService,
   ) {}
@@ -30,12 +29,7 @@ export class ChoirScheduleAdjustmentsService {
       reason?: string;
     },
   ) {
-    const resolved = await this.permissions.resolveForUser(actorUserId);
-    if (!hasChoirOpsSchedule(resolved.permissions)) {
-      throw new ForbiddenException('Denied');
-    }
-
-    let assignmentId: string | undefined;
+    await this.opsAccess.requireSchedule(actorUserId, data.choirId ?? data.newChoirId);
 
     if (data.action === 'REPLACE' && data.choirId && data.newChoirId) {
       const isChurch = await this.assignments.isChurchScheduler(actorUserId);
@@ -114,10 +108,7 @@ export class ChoirScheduleAdjustmentsService {
   }
 
   async list(actorUserId: string, occurrenceId?: string) {
-    const resolved = await this.permissions.resolveForUser(actorUserId);
-    if (!hasChoirOpsSchedule(resolved.permissions)) {
-      throw new ForbiddenException('Denied');
-    }
+    await this.opsAccess.requireSchedule(actorUserId);
     return this.prisma.choirScheduleAdjustment.findMany({
       where: occurrenceId ? { occurrenceId } : {},
       orderBy: { createdAt: 'desc' },

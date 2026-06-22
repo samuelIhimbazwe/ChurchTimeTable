@@ -7,7 +7,7 @@ import { choirServiceOpsApi, musicApi } from '@/lib/api'
 import type { ServicePreparationItem, ServicePreparationItemType, PepTalkTiming } from '@/lib/api/modules/choirServiceOps'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { toast } from '@/components/shared/Toast'
-import { Card, PageBreadcrumbs, PermissionGate, SkeletonCard } from '@/components/shared'
+import { Card, PageBreadcrumbs, CapabilityGate, SkeletonCard } from '@/components/shared'
 import { ChoirOpsShell } from '@/components/choir/ChoirOpsShell'
 import { useOptionalChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
 import { formatDate, formatTime } from '@/lib/utils/format'
@@ -131,8 +131,8 @@ export default function ServicePreparationDetailPage() {
         )}
       </div>
 
-      <PermissionGate
-        anyOf={['choir.ops.manage', 'choir.operations.manage']}
+      <CapabilityGate
+        uiCapability="ops-service-prep-manage"
         fallback={
           plan && (plan.uniformNotes || plan.pepTalkTitle || (plan.items?.length ?? 0) > 0) ? (
             <>
@@ -290,7 +290,7 @@ export default function ServicePreparationDetailPage() {
             {save.isPending ? 'Saving…' : 'Save preparation plan'}
           </button>
         </Card>
-      </PermissionGate>
+      </CapabilityGate>
 
       </div>
     </ChoirOpsShell>

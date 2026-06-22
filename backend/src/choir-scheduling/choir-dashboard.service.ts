@@ -1,26 +1,19 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { PermissionsResolver } from '../auth/permissions.resolver';
-import {
-  hasChoirOpsRankingView,
-  hasChoirOpsView,
-} from './choir-scheduling-access.util';
+import { ChoirOpsAccessService } from './choir-ops-access.service';
 import { getActiveChoirId } from '../common/choir/choir-context.storage';
 
 @Injectable()
 export class ChoirDashboardService {
   constructor(
     private prisma: PrismaService,
-    private permissions: PermissionsResolver,
+    private opsAccess: ChoirOpsAccessService,
   ) {}
 
   async leaderSummary(actorUserId: string, choirId?: string) {
-    const resolved = await this.permissions.resolveForUser(actorUserId);
-    if (!hasChoirOpsView(resolved.permissions)) {
-      throw new ForbiddenException('Denied');
-    }
     const cid = choirId ?? getActiveChoirId();
     if (!cid) throw new ForbiddenException('Choir context required');
+    await this.opsAccess.requireView(actorUserId, cid);
 
     const now = new Date();
     const in30 = new Date(now);
@@ -73,7 +66,7 @@ export class ChoirDashboardService {
           occurrence: { select: { title: true, startAt: true } },
         },
       }),
-      hasChoirOpsRankingView(resolved.permissions)
+      (await this.opsAccess.canRankingView(actorUserId, cid))
         ? this.prisma.choirCategoryRankingEntry.findMany({
             where: {
               choirId: cid,
@@ -109,10 +102,8 @@ export class ChoirDashboardService {
   }
 
   async memberSummary(actorUserId: string, choirId?: string) {
-    const resolved = await this.permissions.resolveForUser(actorUserId);
-    if (!hasChoirOpsView(resolved.permissions)) {
-      throw new ForbiddenException('Denied');
-    }
+    const cid = choirId ?? getActiveChoirId();
+    await this.opsAccess.requireView(actorUserId, cid ?? undefined);
     const member = await this.prisma.member.findUniqueOrThrow({
       where: { userId: actorUserId },
     });

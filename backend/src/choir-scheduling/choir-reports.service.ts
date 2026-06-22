@@ -2,28 +2,23 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
-import { PermissionsResolver } from '../auth/permissions.resolver';
+import { ChoirOpsAccessService } from './choir-ops-access.service';
 import { CHOIR_SCHEDULING_AUDIT } from './choir-scheduling.constants';
-import { hasChoirOpsReport } from './choir-scheduling-access.util';
 
 @Injectable()
 export class ChoirReportsService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
-    private permissions: PermissionsResolver,
+    private opsAccess: ChoirOpsAccessService,
   ) {}
 
-  private async assertReport(actorUserId: string) {
-    const resolved = await this.permissions.resolveForUser(actorUserId);
-    if (!hasChoirOpsReport(resolved.permissions)) {
-      throw new ForbiddenException('Denied');
-    }
-    return resolved;
+  private async assertReport(actorUserId: string, choirId?: string) {
+    await this.opsAccess.requireReport(actorUserId, choirId);
   }
 
   async participationReport(actorUserId: string, choirId: string) {
-    await this.assertReport(actorUserId);
+    await this.assertReport(actorUserId, choirId);
     return this.prisma.choirMemberParticipationProfile.findMany({
       where: { choirId },
       include: {
@@ -39,7 +34,7 @@ export class ChoirReportsService {
     choirId: string,
     activityType: 'SERVICE' | 'REHEARSAL' | 'PRAYER',
   ) {
-    await this.assertReport(actorUserId);
+    await this.assertReport(actorUserId, choirId);
     const activities = await this.prisma.choirActivity.findMany({
       where: {
         choirId,
@@ -62,7 +57,7 @@ export class ChoirReportsService {
   }
 
   async choirHealth(actorUserId: string, choirId: string) {
-    await this.assertReport(actorUserId);
+    await this.assertReport(actorUserId, choirId);
     const profiles = await this.prisma.choirMemberParticipationProfile.findMany({
       where: { choirId },
     });
@@ -85,7 +80,7 @@ export class ChoirReportsService {
   }
 
   exportCsv(actorUserId: string, choirId: string, report: string): string {
-    void this.assertReport(actorUserId);
+    void this.assertReport(actorUserId, choirId);
     const header = 'memberId,overallScore,serviceRate,rehearsalRate,prayerRate\n';
     void choirId;
     void report;
@@ -93,7 +88,7 @@ export class ChoirReportsService {
   }
 
   async logExport(actorUserId: string, choirId: string, format: string) {
-    await this.assertReport(actorUserId);
+    await this.assertReport(actorUserId, choirId);
     await this.audit.log({
       userId: actorUserId,
       action: CHOIR_SCHEDULING_AUDIT.REPORT_EXPORTED,

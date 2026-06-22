@@ -32,7 +32,7 @@ import {
 
   EmptyState,
 
-  PermissionGate,
+  CapabilityGate,
 
   SkeletonCard,
 
@@ -308,6 +308,15 @@ export default function ActivitiesPage() {
 
   return (
 
+    <CapabilityGate
+      uiCapability="ops-activities-hub"
+      fallback={
+        <EmptyState
+          title="Activities not available"
+          description="You do not have permission to view choir activities."
+        />
+      }
+    >
     <ChoirOpsShell
 
       title="Activities"
@@ -322,7 +331,7 @@ export default function ActivitiesPage() {
 
         <div className="flex items-center justify-end">
 
-          <PermissionGate anyOf={['choir.events.manage', 'event:write']}>
+          <CapabilityGate uiCapability="ops-activities-manage">
 
             <Link
 
@@ -336,7 +345,7 @@ export default function ActivitiesPage() {
 
             </Link>
 
-          </PermissionGate>
+          </CapabilityGate>
 
         </div>
 
@@ -447,6 +456,8 @@ export default function ActivitiesPage() {
       </div>
 
     </ChoirOpsShell>
+
+    </CapabilityGate>
 
   )
 

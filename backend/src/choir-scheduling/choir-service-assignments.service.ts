@@ -17,7 +17,7 @@ import { PERMISSIONS } from '../common/constants/roles';
 import { hasEffectivePermission } from '../common/governance/governance-permissions.util';
 import { CHOIR_SCHEDULING_AUDIT } from './choir-scheduling.constants';
 import { CONFIRMED_ASSIGNMENT_FILTER } from './choir-assignment-filters.util';
-import { hasChoirOpsManage, hasChoirOpsSchedule, hasChoirOpsView } from './choir-scheduling-access.util';
+import { ChoirOpsAccessService } from './choir-ops-access.service';
 import { ChoirServiceRulesService } from './choir-service-rules.service';
 import { ChoirSchedulingNotificationsService } from './choir-scheduling-notifications.service';
 import { ChoirScheduleConflictService } from './choir-schedule-conflict.service';
@@ -40,17 +40,14 @@ export class ChoirServiceAssignmentsService {
     private prisma: PrismaService,
     private audit: AuditService,
     private permissions: PermissionsResolver,
+    private opsAccess: ChoirOpsAccessService,
     private rules: ChoirServiceRulesService,
     private notify: ChoirSchedulingNotificationsService,
     private conflicts: ChoirScheduleConflictService,
   ) {}
 
-  private async actor(userId: string) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    if (!hasChoirOpsView(resolved.permissions)) {
-      throw new ForbiddenException('Denied');
-    }
-    return resolved;
+  private async actor(userId: string, choirId?: string) {
+    await this.opsAccess.requireView(userId, choirId);
   }
 
   async isChurchScheduler(actorUserId: string) {
@@ -470,11 +467,6 @@ export class ChoirServiceAssignmentsService {
   }
 
   async acceptByChoir(actorUserId: string, assignmentId: string, notes?: string) {
-    const resolved = await this.actor(actorUserId);
-    if (!hasChoirOpsSchedule(resolved.permissions) && !hasChoirOpsManage(resolved.permissions)) {
-      throw new ForbiddenException('Denied');
-    }
-
     const existing = await this.prisma.choirServiceAssignment.findUnique({
       where: { id: assignmentId },
       include: {
@@ -483,6 +475,12 @@ export class ChoirServiceAssignmentsService {
       },
     });
     if (!existing) throw new NotFoundException('Assignment not found');
+    await this.opsAccess.requireView(actorUserId, existing.choirId);
+    const canSchedule = await this.opsAccess.canSchedule(actorUserId, existing.choirId);
+    const canManage = await this.opsAccess.canManage(actorUserId, existing.choirId);
+    if (!canSchedule && !canManage) {
+      throw new ForbiddenException('Denied');
+    }
     if (existing.status !== ChoirServiceAssignmentStatus.PENDING_CHOIR_ACCEPTANCE) {
       throw new BadRequestException('Only conflicted assignments awaiting choir acceptance can be accepted');
     }
@@ -520,11 +518,6 @@ export class ChoirServiceAssignmentsService {
   }
 
   async declineByChoir(actorUserId: string, assignmentId: string, reason?: string) {
-    const resolved = await this.actor(actorUserId);
-    if (!hasChoirOpsSchedule(resolved.permissions) && !hasChoirOpsManage(resolved.permissions)) {
-      throw new ForbiddenException('Denied');
-    }
-
     const existing = await this.prisma.choirServiceAssignment.findUnique({
       where: { id: assignmentId },
       include: {
@@ -533,6 +526,12 @@ export class ChoirServiceAssignmentsService {
       },
     });
     if (!existing) throw new NotFoundException('Assignment not found');
+    await this.opsAccess.requireView(actorUserId, existing.choirId);
+    const canSchedule = await this.opsAccess.canSchedule(actorUserId, existing.choirId);
+    const canManage = await this.opsAccess.canManage(actorUserId, existing.choirId);
+    if (!canSchedule && !canManage) {
+      throw new ForbiddenException('Denied');
+    }
     if (existing.status !== ChoirServiceAssignmentStatus.PENDING_CHOIR_ACCEPTANCE) {
       throw new BadRequestException('Only conflicted assignments can be declined');
     }
@@ -622,10 +621,9 @@ export class ChoirServiceAssignmentsService {
   }
 
   async listForOccurrence(actorUserId: string, occurrenceId: string) {
-    await this.actor(actorUserId);
-    const resolved = await this.permissions.resolveForUser(actorUserId);
+    await this.opsAccess.requireView(actorUserId);
     const isChurch = await this.canChurchSchedule(actorUserId);
-    const canSchedule = hasChoirOpsSchedule(resolved.permissions);
+    const canSchedule = await this.opsAccess.canSchedule(actorUserId);
 
     return this.prisma.choirServiceAssignment.findMany({
       where: {
@@ -639,17 +637,17 @@ export class ChoirServiceAssignmentsService {
   }
 
   async listForChoir(actorUserId: string, choirId: string) {
-    await this.actor(actorUserId);
-    const resolved = await this.permissions.resolveForUser(actorUserId);
+    await this.opsAccess.requireView(actorUserId, choirId);
     const isChurch = await this.canChurchSchedule(actorUserId);
-    const canSchedule =
-      hasChoirOpsSchedule(resolved.permissions) || hasChoirOpsManage(resolved.permissions);
+    const canSchedule = await this.opsAccess.canSchedule(actorUserId, choirId);
+    const canManage = await this.opsAccess.canManage(actorUserId, choirId);
+    const canScheduleOrManage = canSchedule || canManage;
 
     return this.prisma.choirServiceAssignment.findMany({
       where: {
         choirId,
         cancelledAt: null,
-        ...(isChurch || canSchedule ? {} : CONFIRMED_ASSIGNMENT_FILTER),
+        ...(isChurch || canScheduleOrManage ? {} : CONFIRMED_ASSIGNMENT_FILTER),
       },
       include: {
         occurrence: { select: { id: true, title: true, startAt: true, endAt: true } },
@@ -660,7 +658,7 @@ export class ChoirServiceAssignmentsService {
   }
 
   async listPendingChoirAcceptance(actorUserId: string, choirId: string) {
-    await this.actor(actorUserId);
+    await this.opsAccess.requireView(actorUserId, choirId);
     return this.prisma.choirServiceAssignment.findMany({
       where: {
         choirId,

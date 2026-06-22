@@ -9,31 +9,22 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
-import { PermissionsResolver } from '../auth/permissions.resolver';
-import { hasChoirOpsManage, hasChoirOpsView } from '../choir-scheduling/choir-scheduling-access.util';
+import { ChoirOpsAccessService } from '../choir-scheduling/choir-ops-access.service';
 
 @Injectable()
 export class ServicePreparationService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
-    private permissions: PermissionsResolver,
+    private opsAccess: ChoirOpsAccessService,
   ) {}
 
-  private async assertView(userId: string) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    if (!hasChoirOpsView(resolved.permissions)) {
-      throw new ForbiddenException('Service preparation access denied');
-    }
-    return resolved;
+  private async assertView(userId: string, choirId: string) {
+    await this.opsAccess.requireView(userId, choirId);
   }
 
-  private async assertManage(userId: string) {
-    const resolved = await this.assertView(userId);
-    if (!hasChoirOpsManage(resolved.permissions)) {
-      throw new ForbiddenException('Service preparation management denied');
-    }
-    return resolved;
+  private async assertManage(userId: string, choirId: string) {
+    await this.opsAccess.requireManage(userId, choirId);
   }
 
   private async assertActiveMember(userId: string, choirId: string) {
@@ -80,7 +71,7 @@ export class ServicePreparationService {
   }
 
   async getPlan(actorUserId: string, choirId: string, occurrenceId: string) {
-    await this.assertView(actorUserId);
+    await this.assertView(actorUserId, choirId);
     return this.loadPlan(choirId, occurrenceId);
   }
 
@@ -125,7 +116,7 @@ export class ServicePreparationService {
   }
 
   async listForChoir(actorUserId: string, choirId: string, from?: Date, to?: Date) {
-    await this.assertView(actorUserId);
+    await this.assertView(actorUserId, choirId);
     return this.listAssignments(choirId, from, to);
   }
 
@@ -209,7 +200,7 @@ export class ServicePreparationService {
       }>;
     },
   ) {
-    await this.assertManage(actorUserId);
+    await this.assertManage(actorUserId, dto.choirId);
     await this.prisma.operationOccurrence.findUniqueOrThrow({
       where: { id: dto.occurrenceId },
     });

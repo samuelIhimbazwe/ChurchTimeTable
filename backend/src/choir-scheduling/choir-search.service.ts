@@ -1,18 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { PermissionsResolver } from '../auth/permissions.resolver';
-import { hasChoirOpsView } from './choir-scheduling-access.util';
+import { ChoirOpsAccessService } from './choir-ops-access.service';
 
 @Injectable()
 export class ChoirSearchService {
   constructor(
     private prisma: PrismaService,
-    private permissions: PermissionsResolver,
+    private opsAccess: ChoirOpsAccessService,
   ) {}
 
   async search(actorUserId: string, q: string, limit = 10) {
-    const resolved = await this.permissions.resolveForUser(actorUserId);
-    if (!hasChoirOpsView(resolved.permissions)) {
+    if (!(await this.opsAccess.canView(actorUserId))) {
       return { activities: [], plans: [], rankings: [], badges: [] };
     }
     const query = q.trim();

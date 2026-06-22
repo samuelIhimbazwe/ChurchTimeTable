@@ -1,25 +1,20 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { ChoirActivityType, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
-import { PermissionsResolver } from '../auth/permissions.resolver';
+import { ChoirOpsAccessService } from './choir-ops-access.service';
 import { CHOIR_SCHEDULING_AUDIT } from './choir-scheduling.constants';
-import { hasChoirOpsManage, hasChoirOpsView } from './choir-scheduling-access.util';
 
 @Injectable()
 export class ChoirActivitiesService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
-    private permissions: PermissionsResolver,
+    private opsAccess: ChoirOpsAccessService,
   ) {}
 
-  private async actor(userId: string) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    if (!hasChoirOpsView(resolved.permissions)) {
-      throw new ForbiddenException('Denied');
-    }
-    return resolved;
+  private async actor(userId: string, choirId?: string) {
+    await this.opsAccess.requireView(userId, choirId);
   }
 
   async create(
@@ -36,10 +31,8 @@ export class ChoirActivitiesService {
       occurrenceId?: string;
     },
   ) {
-    const resolved = await this.actor(actorUserId);
-    if (!hasChoirOpsManage(resolved.permissions)) {
-      throw new ForbiddenException('Denied');
-    }
+    await this.actor(actorUserId, data.choirId);
+    await this.opsAccess.requireManage(actorUserId, data.choirId);
 
     const activity = await this.prisma.choirActivity.create({
       data: {
@@ -76,7 +69,7 @@ export class ChoirActivitiesService {
       activityType?: ChoirActivityType;
     },
   ) {
-    await this.actor(actorUserId);
+    await this.actor(actorUserId, filters?.choirId);
     return this.prisma.choirActivity.findMany({
       where: {
         ...(filters?.choirId ? { choirId: filters.choirId } : {}),

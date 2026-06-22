@@ -12,6 +12,7 @@ import { getComposedChoirNav } from '@/lib/navigation/choir-nav'
 import { composeContributionAwareNav } from '@/lib/navigation/contribution-nav'
 import { composeWelfareAwareNav } from '@/lib/navigation/welfare-nav'
 import { composeDisciplineAwareNav } from '@/lib/navigation/discipline-nav'
+import { composeOpsAwareNav } from '@/lib/navigation/ops-nav'
 import { getComposedProtocolNav } from '@/lib/navigation/protocol-nav'
 import { parseChoirIdFromPath } from '@/lib/choir/paths'
 import { isProtocolDashboardPath } from '@/lib/protocol/paths'
@@ -50,6 +51,7 @@ export default function Sidebar({
   const contributionAuth = choirCtx?.contributionAuth
   const welfareAuth = choirCtx?.welfareAuth
   const disciplineAuth = choirCtx?.disciplineAuth
+  const opsAuth = choirCtx?.opsAuth
   const { data: protocolCtx, isLoading: loadingProtocolCtx } = useProtocolDashboardContext(inProtocolArea)
 
   const membershipForPath = choirId
@@ -76,18 +78,22 @@ export default function Sidebar({
     return getNavForContext(pathname, authRole, { canAccessChoirArea, isChoirMember }, permissions, activeChoirMemberships)
   })()
 
-  const capabilityAwareSections = composeDisciplineAwareNav(
-    composeWelfareAwareNav(
-      composeContributionAwareNav(
-        rawSections,
+  const capabilityAwareSections = composeOpsAwareNav(
+    composeDisciplineAwareNav(
+      composeWelfareAwareNav(
+        composeContributionAwareNav(
+          rawSections,
+          contextChoirId ?? choirId,
+          contributionAuth,
+        ),
         contextChoirId ?? choirId,
-        contributionAuth,
+        welfareAuth,
       ),
       contextChoirId ?? choirId,
-      welfareAuth,
+      disciplineAuth,
     ),
     contextChoirId ?? choirId,
-    disciplineAuth,
+    opsAuth,
   )
 
   const sections = useMemo(

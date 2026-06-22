@@ -1,7 +1,6 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { PermissionsResolver } from '../auth/permissions.resolver';
-import { hasChoirOpsView } from './choir-scheduling-access.util';
+import { ChoirOpsAccessService } from './choir-ops-access.service';
 import { CONFIRMED_ASSIGNMENT_FILTER } from './choir-assignment-filters.util';
 
 export type ChoirCalendarItem = {
@@ -20,7 +19,7 @@ export type ChoirCalendarItem = {
 export class ChoirCalendarService {
   constructor(
     private prisma: PrismaService,
-    private permissions: PermissionsResolver,
+    private opsAccess: ChoirOpsAccessService,
   ) {}
 
   async listForRange(
@@ -30,10 +29,7 @@ export class ChoirCalendarService {
     choirId?: string,
   ): Promise<ChoirCalendarItem[]> {
     if (actorUserId) {
-      const resolved = await this.permissions.resolveForUser(actorUserId);
-      if (!hasChoirOpsView(resolved.permissions)) {
-        throw new ForbiddenException('Denied');
-      }
+      await this.opsAccess.requireView(actorUserId, choirId);
     }
 
     const activities = await this.prisma.choirActivity.findMany({

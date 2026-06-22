@@ -7,7 +7,7 @@ import { choirSchedulingApi } from '@/lib/api'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { ChoirOpsShell } from '@/components/choir/ChoirOpsShell'
 import {
-  Card, CardHeader, CardTitle, CardDescription, Badge, SkeletonCard, PermissionGate, EmptyState,
+  Card, CardHeader, CardTitle, CardDescription, Badge, SkeletonCard, CapabilityGate, EmptyState,
 } from '@/components/shared'
 import {
   MonthCalendarGrid, CalendarLegend, WeekCalendarGrid, AgendaList,
@@ -143,6 +143,15 @@ export default function SchedulingPage() {
   const pendingCount = pendingAcceptance?.length ?? 0
 
   return (
+    <CapabilityGate
+      uiCapability="ops-scheduling-hub"
+      fallback={
+        <EmptyState
+          title="Scheduling not available"
+          description="You do not have permission to view the choir schedule."
+        />
+      }
+    >
     <ChoirOpsShell
       title="Scheduling"
       subtitle="Choir calendar — services in navy, rehearsals in green."
@@ -154,7 +163,7 @@ export default function SchedulingPage() {
     >
       <div className="space-y-6 max-w-5xl">
 
-      <PermissionGate anyOf={['choir.ops.schedule', 'choir.ops.manage']}>
+      <CapabilityGate uiCapability="ops-schedule-manage">
         <Card padding="none">
           <CardHeader className="px-5 pt-5">
             <CardTitle className="flex items-center gap-2">
@@ -230,7 +239,7 @@ export default function SchedulingPage() {
             </ul>
           )}
         </Card>
-      </PermissionGate>
+      </CapabilityGate>
 
       <Card padding="md">
         <CardHeader className="p-0 mb-4">
@@ -401,5 +410,6 @@ export default function SchedulingPage() {
       </Card>
       </div>
     </ChoirOpsShell>
+    </CapabilityGate>
   )
 }

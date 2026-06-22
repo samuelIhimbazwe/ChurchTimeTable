@@ -12,6 +12,10 @@ import {
   uiCapabilityVisible as disciplineUiVisible,
   isDisciplineUiCapability,
 } from '@/lib/choir/discipline-ui-capability-registry';
+import {
+  uiCapabilityVisible as opsUiVisible,
+  isOpsUiCapability,
+} from '@/lib/choir/ops-ui-capability-registry';
 
 export function useContributionAuth(): ResolvedAuth | undefined {
   return useOptionalChoirDashboardCtx()?.context?.contributionAuth;
@@ -25,6 +29,10 @@ export function useDisciplineAuth(): ResolvedAuth | undefined {
   return useOptionalChoirDashboardCtx()?.context?.disciplineAuth;
 }
 
+export function useOpsAuth(): ResolvedAuth | undefined {
+  return useOptionalChoirDashboardCtx()?.context?.opsAuth;
+}
+
 function isWelfareCapabilityId(id: string): boolean {
   return id.startsWith('choir.welfare.');
 }
@@ -33,21 +41,22 @@ function isDisciplineCapabilityId(id: string): boolean {
   return id.startsWith('choir.discipline.');
 }
 
-function authForCapabilityId(capabilityId: string): ResolvedAuth | undefined {
-  if (isDisciplineCapabilityId(capabilityId)) return useDisciplineAuth();
-  if (isWelfareCapabilityId(capabilityId)) return useWelfareAuth();
-  return useContributionAuth();
+function isOpsCapabilityId(id: string): boolean {
+  return id.startsWith('choir.ops.');
 }
 
 export function useCapability(capabilityId: string, scopeId?: string): boolean {
+  const opsAuth = useOpsAuth();
   const disciplineAuth = useDisciplineAuth();
   const welfareAuth = useWelfareAuth();
   const contributionAuth = useContributionAuth();
-  const auth = isDisciplineCapabilityId(capabilityId)
-    ? disciplineAuth
-    : isWelfareCapabilityId(capabilityId)
-      ? welfareAuth
-      : contributionAuth;
+  const auth = isOpsCapabilityId(capabilityId)
+    ? opsAuth
+    : isDisciplineCapabilityId(capabilityId)
+      ? disciplineAuth
+      : isWelfareCapabilityId(capabilityId)
+        ? welfareAuth
+        : contributionAuth;
   return can(auth, capabilityId, scopeId);
 }
 
@@ -55,14 +64,21 @@ export function useAnyCapability(
   capabilityIds: string[],
   scopeId?: string,
 ): boolean {
+  const opsIds = capabilityIds.filter(isOpsCapabilityId);
   const disciplineIds = capabilityIds.filter(isDisciplineCapabilityId);
   const welfareIds = capabilityIds.filter(isWelfareCapabilityId);
   const contributionIds = capabilityIds.filter(
-    (id) => !isDisciplineCapabilityId(id) && !isWelfareCapabilityId(id),
+    (id) =>
+      !isOpsCapabilityId(id)
+      && !isDisciplineCapabilityId(id)
+      && !isWelfareCapabilityId(id),
   );
+  const opsAuth = useOpsAuth();
   const disciplineAuth = useDisciplineAuth();
   const welfareAuth = useWelfareAuth();
   const contributionAuth = useContributionAuth();
+  const opsOk =
+    opsIds.length === 0 || hasAnyCapability(opsAuth, opsIds, scopeId);
   const disciplineOk =
     disciplineIds.length === 0
     || hasAnyCapability(disciplineAuth, disciplineIds, scopeId);
@@ -72,10 +88,14 @@ export function useAnyCapability(
   const contributionOk =
     contributionIds.length === 0
     || hasAnyCapability(contributionAuth, contributionIds, scopeId);
-  return disciplineOk && welfareOk && contributionOk;
+  return opsOk && disciplineOk && welfareOk && contributionOk;
 }
 
 export function useUiCapability(uiId: string, scopeId?: string): boolean {
+  if (isOpsUiCapability(uiId)) {
+    const auth = useOpsAuth();
+    return opsUiVisible(uiId, (capId) => can(auth, capId));
+  }
   if (isDisciplineUiCapability(uiId)) {
     const auth = useDisciplineAuth();
     return disciplineUiVisible(uiId, (capId) => can(auth, capId));
@@ -90,6 +110,16 @@ export function useUiCapability(uiId: string, scopeId?: string): boolean {
     (capId, famId) => can(auth, capId, famId ?? scopeId),
     scopeId,
   );
+}
+
+export function useOpsCapability(capabilityId: string): boolean {
+  const auth = useOpsAuth();
+  return can(auth, capabilityId);
+}
+
+export function useOpsUiCapability(uiId: string): boolean {
+  const auth = useOpsAuth();
+  return opsUiVisible(uiId, (capId) => can(auth, capId));
 }
 
 export function useDisciplineCapability(capabilityId: string): boolean {

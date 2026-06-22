@@ -21,11 +21,14 @@ import { ChoirScheduleConflictService } from './choir-schedule-conflict.service'
 import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
 import { FinanceModule } from '../finance/finance.module';
 import { ChoirMemberRecognitionService } from './choir-member-recognition.service';
+import { OpsCapabilityModule } from '../common/choir/ops-capability.module';
+import { ChoirOpsAccessService } from './choir-ops-access.service';
 
 @Module({
   imports: [
     AuditModule,
     AuthModule,
+    OpsCapabilityModule,
     NotificationsModule,
     MemberPhoneEnforcementModule,
     PilotReadyModule,
@@ -48,7 +51,8 @@ import { ChoirMemberRecognitionService } from './choir-member-recognition.servic
     ChoirSchedulingNotificationsService,
     ChoirScheduleConflictService,
     ChoirMemberRecognitionService,
+    ChoirOpsAccessService,
   ],
-  exports: [ChoirCalendarService, ChoirServiceAssignmentsService, ChoirScheduleConflictService],
+  exports: [ChoirCalendarService, ChoirServiceAssignmentsService, ChoirScheduleConflictService, ChoirOpsAccessService],
 })
 export class ChoirSchedulingModule {}

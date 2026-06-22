@@ -3,9 +3,8 @@ import { ChoirAttendanceOutcome } from '@prisma/client';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
-import { PermissionsResolver } from '../auth/permissions.resolver';
+import { ChoirOpsAccessService } from './choir-ops-access.service';
 import { CHOIR_SCHEDULING_AUDIT } from './choir-scheduling.constants';
-import { hasChoirOpsAttendance, hasChoirOpsView } from './choir-scheduling-access.util';
 import { ChoirParticipationService } from './choir-participation.service';
 
 @Injectable()
@@ -13,17 +12,9 @@ export class ChoirAttendanceService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
-    private permissions: PermissionsResolver,
+    private opsAccess: ChoirOpsAccessService,
     private participation: ChoirParticipationService,
   ) {}
-
-  private async actor(userId: string) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    if (!hasChoirOpsView(resolved.permissions)) {
-      throw new ForbiddenException('Denied');
-    }
-    return resolved;
-  }
 
   async record(
     actorUserId: string,
@@ -34,14 +25,11 @@ export class ChoirAttendanceService {
       notes?: string;
     },
   ) {
-    const resolved = await this.actor(actorUserId);
-    if (!hasChoirOpsAttendance(resolved.permissions)) {
-      throw new ForbiddenException('Denied');
-    }
-
     const activity = await this.prisma.choirActivity.findUniqueOrThrow({
       where: { id: data.activityId },
     });
+    await this.opsAccess.requireView(actorUserId, activity.choirId);
+    await this.opsAccess.requireAttendance(actorUserId, activity.choirId);
     const settings = await this.prisma.choirEngineSettings.findUniqueOrThrow({
       where: { id: 'default' },
     });
@@ -85,7 +73,11 @@ export class ChoirAttendanceService {
   }
 
   async listForActivity(actorUserId: string, activityId: string) {
-    await this.actor(actorUserId);
+    const activity = await this.prisma.choirActivity.findUniqueOrThrow({
+      where: { id: activityId },
+      select: { choirId: true },
+    });
+    await this.opsAccess.requireView(actorUserId, activity.choirId);
     return this.prisma.choirAttendance.findMany({
       where: { activityId },
       include: {

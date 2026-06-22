@@ -3,9 +3,8 @@ import { ChoirSchedulePlanPeriod } from '@prisma/client';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
-import { PermissionsResolver } from '../auth/permissions.resolver';
+import { ChoirOpsAccessService } from './choir-ops-access.service';
 import { CHOIR_SCHEDULING_AUDIT } from './choir-scheduling.constants';
-import { hasChoirOpsSchedule } from './choir-scheduling-access.util';
 import { ChoirServiceAssignmentsService } from './choir-service-assignments.service';
 
 @Injectable()
@@ -13,7 +12,7 @@ export class ChoirSchedulePlansService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
-    private permissions: PermissionsResolver,
+    private opsAccess: ChoirOpsAccessService,
     private assignments: ChoirServiceAssignmentsService,
   ) {}
 
@@ -29,12 +28,7 @@ export class ChoirSchedulePlansService {
       endAt: string;
     },
   ) {
-    const resolved = await this.permissions.resolveForUser(actorUserId);
-    if (!hasChoirOpsSchedule(resolved.permissions)) {
-      throw new ForbiddenException('Denied');
-    }
-
-    const plan = await this.prisma.choirSchedulePlan.create({
+    await this.opsAccess.requireSchedule(actorUserId);
       data: {
         label: data.label,
         periodType: data.periodType,
@@ -107,10 +101,7 @@ export class ChoirSchedulePlansService {
   }
 
   async list(actorUserId: string) {
-    const resolved = await this.permissions.resolveForUser(actorUserId);
-    if (!hasChoirOpsSchedule(resolved.permissions)) {
-      throw new ForbiddenException('Denied');
-    }
+    await this.opsAccess.requireSchedule(actorUserId);
     return this.prisma.choirSchedulePlan.findMany({
       orderBy: { startAt: 'desc' },
       take: 50,

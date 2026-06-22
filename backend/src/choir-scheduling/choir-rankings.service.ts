@@ -3,12 +3,8 @@ import { ChoirBadgeKind, ChoirRankingCategory } from '@prisma/client';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
-import { PermissionsResolver } from '../auth/permissions.resolver';
+import { ChoirOpsAccessService } from './choir-ops-access.service';
 import { CHOIR_SCHEDULING_AUDIT } from './choir-scheduling.constants';
-import {
-  hasChoirOpsRankingView,
-  hasChoirOpsView,
-} from './choir-scheduling-access.util';
 import { ChoirParticipationService } from './choir-participation.service';
 
 type ProfileRow = {
@@ -30,7 +26,7 @@ export class ChoirRankingsService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
-    private permissions: PermissionsResolver,
+    private opsAccess: ChoirOpsAccessService,
     private participation: ChoirParticipationService,
   ) {}
 
@@ -102,10 +98,7 @@ export class ChoirRankingsService {
     year: number,
     month?: number,
   ) {
-    const resolved = await this.permissions.resolveForUser(actorUserId);
-    if (!hasChoirOpsRankingView(resolved.permissions)) {
-      throw new ForbiddenException('Denied');
-    }
+    await this.opsAccess.requireRankingView(actorUserId, choirId);
 
     const settings = await this.prisma.choirEngineSettings.findUniqueOrThrow({
       where: { id: 'default' },
@@ -226,10 +219,7 @@ export class ChoirRankingsService {
     month?: number,
     category?: ChoirRankingCategory,
   ) {
-    const resolved = await this.permissions.resolveForUser(actorUserId);
-    if (!hasChoirOpsRankingView(resolved.permissions)) {
-      throw new ForbiddenException('Denied');
-    }
+    await this.opsAccess.requireRankingView(actorUserId, choirId);
     return this.prisma.choirCategoryRankingEntry.findMany({
       where: {
         choirId,
@@ -245,10 +235,7 @@ export class ChoirRankingsService {
   }
 
   async myRanking(actorUserId: string, choirId: string, year: number, month?: number) {
-    const resolved = await this.permissions.resolveForUser(actorUserId);
-    if (!hasChoirOpsView(resolved.permissions)) {
-      throw new ForbiddenException('Denied');
-    }
+    await this.opsAccess.requireView(actorUserId, choirId);
     const member = await this.prisma.member.findUniqueOrThrow({
       where: { userId: actorUserId },
     });
