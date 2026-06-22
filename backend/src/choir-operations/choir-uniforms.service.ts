@@ -5,22 +5,19 @@ import {
 } from '@nestjs/common';
 import { UniformItemStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { PermissionsResolver } from '../auth/permissions.resolver';
 import { AuditService } from '../audit/audit.service';
-import { PERMISSIONS } from '../common/constants/roles';
-import { assertChoirOpsManage, assertChoirOpsView } from './choir-operations.util';
+import { ChoirLogisticsAccessService } from './choir-logistics-access.service';
 
 @Injectable()
 export class ChoirUniformsService {
   constructor(
     private prisma: PrismaService,
-    private permissions: PermissionsResolver,
     private audit: AuditService,
+    private logisticsAccess: ChoirLogisticsAccessService,
   ) {}
 
-  async dashboard(userId: string) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    assertChoirOpsView(resolved.permissions, PERMISSIONS.CHOIR_UNIFORM_MANAGE);
+  async dashboard(userId: string, choirId?: string) {
+    await this.logisticsAccess.requireViewUniforms(userId, choirId);
 
     const [items, assignments, byStatus] = await Promise.all([
       this.prisma.uniformItem.count(),
@@ -49,9 +46,8 @@ export class ChoirUniformsService {
     };
   }
 
-  async listTypes(userId: string) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    assertChoirOpsView(resolved.permissions, PERMISSIONS.CHOIR_UNIFORM_MANAGE);
+  async listTypes(userId: string, choirId?: string) {
+    await this.logisticsAccess.requireViewUniforms(userId, choirId);
     return this.prisma.uniformType.findMany({
       include: { items: true },
       orderBy: { name: 'asc' },
@@ -61,9 +57,9 @@ export class ChoirUniformsService {
   async createType(
     userId: string,
     dto: { choirId?: string; code: string; name: string; description?: string },
+    choirId?: string,
   ) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    assertChoirOpsManage(resolved.permissions, PERMISSIONS.CHOIR_UNIFORM_MANAGE);
+    await this.logisticsAccess.requireManageUniforms(userId, choirId ?? dto.choirId);
     const row = await this.prisma.uniformType.create({
       data: {
         choirId: dto.choirId ?? null,
@@ -90,9 +86,9 @@ export class ChoirUniformsService {
       size?: string;
       condition?: string;
     },
+    choirId?: string,
   ) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    assertChoirOpsManage(resolved.permissions, PERMISSIONS.CHOIR_UNIFORM_MANAGE);
+    await this.logisticsAccess.requireManageUniforms(userId, choirId);
     const type = await this.prisma.uniformType.findUnique({
       where: { id: dto.uniformTypeId },
     });
@@ -120,9 +116,9 @@ export class ChoirUniformsService {
   async issueUniform(
     userId: string,
     dto: { uniformItemId: string; memberId: string; notes?: string },
+    choirId?: string,
   ) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    assertChoirOpsManage(resolved.permissions, PERMISSIONS.CHOIR_UNIFORM_MANAGE);
+    await this.logisticsAccess.requireManageUniforms(userId, choirId);
 
     const item = await this.prisma.uniformItem.findUnique({
       where: { id: dto.uniformItemId },
@@ -159,9 +155,13 @@ export class ChoirUniformsService {
     return assignment;
   }
 
-  async returnUniform(userId: string, assignmentId: string, notes?: string) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    assertChoirOpsManage(resolved.permissions, PERMISSIONS.CHOIR_UNIFORM_MANAGE);
+  async returnUniform(
+    userId: string,
+    assignmentId: string,
+    notes?: string,
+    choirId?: string,
+  ) {
+    await this.logisticsAccess.requireManageUniforms(userId, choirId);
 
     const assignment = await this.prisma.uniformAssignment.findUnique({
       where: { id: assignmentId },

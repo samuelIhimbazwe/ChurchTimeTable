@@ -24,13 +24,24 @@ export const LEGACY_PERMISSION_ALIASES: Record<string, readonly string[]> = {
   'finance:view': ['choir.contribution.view@choir', 'choir.budget.view@choir'],
   'finance:write': ['choir.budget.manage@choir'],
   'choir.family.manage': ['choir.contribution.oversight@choir'],
-  'choir.welfare.view': ['choir.welfare.view@choir'],
+  'choir.welfare.view': ['choir.welfare.view@choir', 'choir.document.view@choir'],
   'choir.welfare.manage': ['choir.welfare.manage@choir'],
   'discipline:read_all': ['choir.discipline.view@choir'],
   'discipline:manage': ['choir.discipline.manage@choir'],
   'discipline.review': ['choir.discipline.review@choir'],
-  'choir.ops.view': ['choir.ops.view@choir', 'choir.member.view@choir'],
-  'choir.ops.manage': ['choir.ops.manage@choir'],
+  'choir.ops.view': [
+    'choir.ops.view@choir',
+    'choir.member.view@choir',
+    'choir.uniform.view@choir',
+    'choir.equipment.view@choir',
+  ],
+  'choir.ops.manage': [
+    'choir.ops.manage@choir',
+    'choir.uniform.manage@choir',
+    'choir.equipment.manage@choir',
+    'choir.uniform.view@choir',
+    'choir.equipment.view@choir',
+  ],
   'choir.operations.manage': [
     'choir.ops.manage@choir',
     'choir.join.review@choir',
@@ -40,9 +51,14 @@ export const LEGACY_PERMISSION_ALIASES: Record<string, readonly string[]> = {
   'choir.ops.schedule': ['choir.ops.schedule@choir'],
   'choir.ops.attendance': ['choir.ops.attendance@choir'],
   'choir.attendance.manage': ['choir.ops.attendance@choir'],
-  'choir.music.view': ['choir.music.view@choir', 'choir.voice.view@choir'],
+  'choir.music.view': ['choir.music.view@choir', 'choir.voice.view@choir', 'choir.document.view@choir'],
   'choir.music.manage': ['choir.music.manage@choir', 'choir.voice.view@choir'],
-  'choir.rehearsal.view': ['choir.rehearsal.view@choir', 'choir.ops.view@choir', 'choir.voice.view@choir'],
+  'choir.rehearsal.view': [
+    'choir.rehearsal.view@choir',
+    'choir.ops.view@choir',
+    'choir.voice.view@choir',
+    'choir.document.view@choir',
+  ],
   'choir.rehearsal.manage': [
     'choir.rehearsal.manage@choir',
     'choir.ops.manage@choir',
@@ -71,5 +87,17 @@ export const LEGACY_PERMISSION_ALIASES: Record<string, readonly string[]> = {
     'choir.meeting.view@choir',
   ],
   'announcement:write': ['choir.announcement.manage@choir'],
+  'choir.document.manage': [
+    'choir.document.manage@choir',
+    'choir.document.view@choir',
+  ],
+  'choir.uniform.manage': [
+    'choir.uniform.manage@choir',
+    'choir.uniform.view@choir',
+  ],
+  'choir.equipment.manage': [
+    'choir.equipment.manage@choir',
+    'choir.equipment.view@choir',
+  ],
   'choir.events.manage': ['choir.meeting.manage@choir', 'choir.ops.manage@choir'],
 };

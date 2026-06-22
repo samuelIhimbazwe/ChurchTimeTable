@@ -1,19 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { PermissionsResolver } from '../auth/permissions.resolver';
-import { PERMISSIONS } from '../common/constants/roles';
-import { assertChoirOpsManage, assertChoirOpsView } from './choir-operations.util';
+import { ChoirLogisticsAccessService } from './choir-logistics-access.service';
 
 @Injectable()
 export class ChoirDocumentsService {
   constructor(
     private prisma: PrismaService,
-    private permissions: PermissionsResolver,
+    private logisticsAccess: ChoirLogisticsAccessService,
   ) {}
 
-  async list(userId: string) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    assertChoirOpsView(resolved.permissions, PERMISSIONS.CHOIR_DOCUMENT_MANAGE);
+  async list(userId: string, choirId?: string) {
+    await this.logisticsAccess.requireViewDocuments(userId, choirId);
     return this.prisma.choirDocument.findMany({
       orderBy: { updatedAt: 'desc' },
       include: {
@@ -23,9 +20,8 @@ export class ChoirDocumentsService {
     });
   }
 
-  async get(userId: string, id: string) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    assertChoirOpsView(resolved.permissions, PERMISSIONS.CHOIR_DOCUMENT_MANAGE);
+  async get(userId: string, id: string, choirId?: string) {
+    await this.logisticsAccess.requireViewDocuments(userId, choirId);
     const row = await this.prisma.choirDocument.findUnique({
       where: { id },
       include: {
@@ -47,9 +43,9 @@ export class ChoirDocumentsService {
       fileUrl: string;
       mimeType?: string;
     },
+    choirId?: string,
   ) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    assertChoirOpsManage(resolved.permissions, PERMISSIONS.CHOIR_DOCUMENT_MANAGE);
+    await this.logisticsAccess.requireManageDocuments(userId, choirId);
 
     return this.prisma.$transaction(async (tx) => {
       const doc = await tx.choirDocument.create({

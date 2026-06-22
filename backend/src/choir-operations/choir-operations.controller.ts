@@ -25,14 +25,21 @@ export class ChoirOperationsController {
 
   @Get('documents')
   @SkipPhoneEnforcement()
-  listDocuments(@CurrentUser() user: JwtPayload) {
-    return this.documents.list(user.sub);
+  listDocuments(
+    @CurrentUser() user: JwtPayload,
+    @Query('choirId') choirId?: string,
+  ) {
+    return this.documents.list(user.sub, choirId);
   }
 
   @Get('documents/:id')
   @SkipPhoneEnforcement()
-  getDocument(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
-    return this.documents.get(user.sub, id);
+  getDocument(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+    @Query('choirId') choirId?: string,
+  ) {
+    return this.documents.get(user.sub, id, choirId);
   }
 
   @Post('documents')
@@ -47,8 +54,9 @@ export class ChoirOperationsController {
       fileUrl: string;
       mimeType?: string;
     },
+    @Query('choirId') choirId?: string,
   ) {
-    return this.documents.create(user.sub, dto);
+    return this.documents.create(user.sub, dto, choirId);
   }
 
   @Get('meetings')
@@ -79,20 +87,29 @@ export class ChoirOperationsController {
 
   @Get('uniforms/dashboard')
   @SkipPhoneEnforcement()
-  uniformsDashboard(@CurrentUser() user: JwtPayload) {
-    return this.uniforms.dashboard(user.sub);
+  uniformsDashboard(
+    @CurrentUser() user: JwtPayload,
+    @Query('choirId') choirId?: string,
+  ) {
+    return this.uniforms.dashboard(user.sub, choirId);
   }
 
   @Get('uniforms/types')
   @SkipPhoneEnforcement()
-  uniformTypes(@CurrentUser() user: JwtPayload) {
-    return this.uniforms.listTypes(user.sub);
+  uniformTypes(
+    @CurrentUser() user: JwtPayload,
+    @Query('choirId') choirId?: string,
+  ) {
+    return this.uniforms.listTypes(user.sub, choirId);
   }
 
   @Get('equipment/dashboard')
   @SkipPhoneEnforcement()
-  equipmentDashboard(@CurrentUser() user: JwtPayload) {
-    return this.equipment.dashboard(user.sub);
+  equipmentDashboard(
+    @CurrentUser() user: JwtPayload,
+    @Query('choirId') choirId?: string,
+  ) {
+    return this.equipment.dashboard(user.sub, choirId);
   }
 
   @Post('uniforms/types')
@@ -100,8 +117,9 @@ export class ChoirOperationsController {
     @CurrentUser() user: JwtPayload,
     @Body()
     dto: { choirId?: string; code: string; name: string; description?: string },
+    @Query('choirId') choirId?: string,
   ) {
-    return this.uniforms.createType(user.sub, dto);
+    return this.uniforms.createType(user.sub, dto, choirId);
   }
 
   @Post('uniforms/items')
@@ -109,16 +127,18 @@ export class ChoirOperationsController {
     @CurrentUser() user: JwtPayload,
     @Body()
     dto: { uniformTypeId: string; label: string; size?: string; condition?: string },
+    @Query('choirId') choirId?: string,
   ) {
-    return this.uniforms.createItem(user.sub, dto);
+    return this.uniforms.createItem(user.sub, dto, choirId);
   }
 
   @Post('uniforms/assignments')
   issueUniform(
     @CurrentUser() user: JwtPayload,
     @Body() dto: { uniformItemId: string; memberId: string; notes?: string },
+    @Query('choirId') choirId?: string,
   ) {
-    return this.uniforms.issueUniform(user.sub, dto);
+    return this.uniforms.issueUniform(user.sub, dto, choirId);
   }
 
   @Post('uniforms/assignments/:id/return')
@@ -126,8 +146,9 @@ export class ChoirOperationsController {
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
     @Body() dto?: { notes?: string },
+    @Query('choirId') choirId?: string,
   ) {
-    return this.uniforms.returnUniform(user.sub, id, dto?.notes);
+    return this.uniforms.returnUniform(user.sub, id, dto?.notes, choirId);
   }
 
   @Post('equipment')
@@ -142,8 +163,9 @@ export class ChoirOperationsController {
       condition?: EquipmentCondition;
       notes?: string;
     },
+    @Query('choirId') choirId?: string,
   ) {
-    return this.equipment.create(user.sub, dto);
+    return this.equipment.create(user.sub, dto, choirId);
   }
 
   @Post('equipment/:id/assign')
@@ -151,8 +173,9 @@ export class ChoirOperationsController {
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
     @Body() dto: { memberId: string; notes?: string },
+    @Query('choirId') choirId?: string,
   ) {
-    return this.equipment.assign(user.sub, id, dto);
+    return this.equipment.assign(user.sub, id, dto, choirId);
   }
 
   @Post('equipment/assignments/:id/return')
@@ -160,8 +183,9 @@ export class ChoirOperationsController {
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
     @Body() dto?: { notes?: string },
+    @Query('choirId') choirId?: string,
   ) {
-    return this.equipment.returnAssignment(user.sub, id, dto?.notes);
+    return this.equipment.returnAssignment(user.sub, id, dto?.notes, choirId);
   }
 
   @Get('announcements/music-notify')

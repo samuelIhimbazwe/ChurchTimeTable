@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { assetsApi, choirOperationsApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
-import { Card, PermissionGate, SkeletonCard, EmptyState } from '@/components/shared'
+import { Card, CapabilityGate, PermissionGate, SkeletonCard, EmptyState } from '@/components/shared'
 import { FormField, Input, Select, Textarea } from '@/components/shared/form'
 import {
   maintenanceLogFormSchema,
@@ -354,7 +354,7 @@ function UniformsPanel({
 
   return (
     <div className="space-y-4">
-      <PermissionGate anyOf={['choir.uniform.manage', 'choir.ops.manage']}>
+      <CapabilityGate uiCapability="logistics-uniform-manage">
         <Card padding="md">
           <button
             type="button"
@@ -443,7 +443,7 @@ function UniformsPanel({
             </div>
           )}
         </Card>
-      </PermissionGate>
+      </CapabilityGate>
 
       <Card padding="none">
         <ul className="divide-y divide-border">
@@ -468,7 +468,7 @@ function UniformsPanel({
                     {a.member?.firstName} {a.member?.lastName}
                   </p>
                 </div>
-                <PermissionGate anyOf={['choir.uniform.manage', 'choir.ops.manage']}>
+                <CapabilityGate uiCapability="logistics-uniform-manage">
                   <button
                     type="button"
                     onClick={() => returnUniform.mutate(a.id)}
@@ -477,7 +477,7 @@ function UniformsPanel({
                   >
                     Mark returned
                   </button>
-                </PermissionGate>
+                </CapabilityGate>
               </li>
             ))
           )}
@@ -548,7 +548,7 @@ function EquipmentPanel({
 
   return (
     <div className="space-y-4">
-      <PermissionGate anyOf={['choir.equipment.manage', 'choir.ops.manage']}>
+      <CapabilityGate uiCapability="logistics-equipment-manage">
         <Card padding="md">
           <form
             className="space-y-3"
@@ -596,7 +596,7 @@ function EquipmentPanel({
             </button>
           </form>
         </Card>
-      </PermissionGate>
+      </CapabilityGate>
 
       <Card padding="none">
         <ul className="divide-y divide-border">
@@ -625,7 +625,7 @@ function EquipmentPanel({
                     <p className="text-xs text-text-muted font-mono mt-0.5">{a.id}</p>
                   </div>
                   {active && (
-                    <PermissionGate anyOf={['choir.equipment.manage', 'choir.ops.manage']}>
+                    <CapabilityGate uiCapability="logistics-equipment-manage">
                       <button
                         type="button"
                         onClick={() => returnEquipment.mutate(active.id)}
@@ -634,7 +634,7 @@ function EquipmentPanel({
                       >
                         Return
                       </button>
-                    </PermissionGate>
+                    </CapabilityGate>
                   )}
                 </li>
               )

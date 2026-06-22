@@ -10,10 +10,12 @@ import { ChoirUniformsService } from './choir-uniforms.service';
 import { ChoirEquipmentService } from './choir-equipment.service';
 import { ChoirAnnouncementsService } from './choir-announcements.service';
 import { CommsCapabilityModule } from '../common/choir/comms-capability.module';
+import { LogisticsCapabilityModule } from '../common/choir/logistics-capability.module';
 import { ChoirCommsAccessService } from './choir-comms-access.service';
+import { ChoirLogisticsAccessService } from './choir-logistics-access.service';
 
 @Module({
-  imports: [AuthModule, AuditModule, NotificationsModule, MemberPhoneEnforcementModule, CommsCapabilityModule],
+  imports: [AuthModule, AuditModule, NotificationsModule, MemberPhoneEnforcementModule, CommsCapabilityModule, LogisticsCapabilityModule],
   controllers: [ChoirOperationsController],
   providers: [
     ChoirDocumentsService,
@@ -22,6 +24,7 @@ import { ChoirCommsAccessService } from './choir-comms-access.service';
     ChoirEquipmentService,
     ChoirAnnouncementsService,
     ChoirCommsAccessService,
+    ChoirLogisticsAccessService,
   ],
   exports: [
     ChoirDocumentsService,
@@ -30,6 +33,7 @@ import { ChoirCommsAccessService } from './choir-comms-access.service';
     ChoirEquipmentService,
     ChoirAnnouncementsService,
     ChoirCommsAccessService,
+    ChoirLogisticsAccessService,
   ],
 })
 export class ChoirOperationsModule {}

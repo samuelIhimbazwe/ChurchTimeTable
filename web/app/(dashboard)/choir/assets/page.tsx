@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { assetsApi } from '@/lib/api'
 import {
   Card, CardHeader, CardTitle, CardDescription,
-  StatTile, Badge, SkeletonStatTile, SkeletonCard, EmptyState,
+  StatTile, Badge, SkeletonStatTile, SkeletonCard, EmptyState, CapabilityGate,
 } from '@/components/shared'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { Package, Shirt, Wrench } from 'lucide-react'
@@ -48,6 +48,15 @@ export default function AssetsPage() {
   const un = uniforms as Record<string, unknown> | undefined
 
   return (
+    <CapabilityGate
+      uiCapability="logistics-assets-hub"
+      fallback={
+        <EmptyState
+          title="Assets not available"
+          description="You do not have permission to view choir assets."
+        />
+      }
+    >
     <div className="space-y-6 max-w-5xl mx-auto">
       <div>
         <h2 className="font-display text-3xl text-text-primary">Assets</h2>
@@ -140,6 +149,7 @@ export default function AssetsPage() {
         )}
       </Card>
     </div>
+    </CapabilityGate>
   )
 }
 

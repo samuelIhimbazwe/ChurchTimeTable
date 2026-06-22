@@ -5,22 +5,19 @@ import {
 } from '@nestjs/common';
 import { EquipmentAssignmentStatus, EquipmentCondition } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { PermissionsResolver } from '../auth/permissions.resolver';
 import { AuditService } from '../audit/audit.service';
-import { PERMISSIONS } from '../common/constants/roles';
-import { assertChoirOpsManage, assertChoirOpsView } from './choir-operations.util';
+import { ChoirLogisticsAccessService } from './choir-logistics-access.service';
 
 @Injectable()
 export class ChoirEquipmentService {
   constructor(
     private prisma: PrismaService,
-    private permissions: PermissionsResolver,
     private audit: AuditService,
+    private logisticsAccess: ChoirLogisticsAccessService,
   ) {}
 
-  async dashboard(userId: string) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    assertChoirOpsView(resolved.permissions, PERMISSIONS.CHOIR_EQUIPMENT_MANAGE);
+  async dashboard(userId: string, choirId?: string) {
+    await this.logisticsAccess.requireViewEquipment(userId, choirId);
 
     const [assets, assignments, byCondition] = await Promise.all([
       this.prisma.equipmentAsset.findMany({
@@ -59,9 +56,9 @@ export class ChoirEquipmentService {
       condition?: EquipmentCondition;
       notes?: string;
     },
+    choirId?: string,
   ) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    assertChoirOpsManage(resolved.permissions, PERMISSIONS.CHOIR_EQUIPMENT_MANAGE);
+    await this.logisticsAccess.requireManageEquipment(userId, choirId ?? dto.choirId);
 
     const row = await this.prisma.equipmentAsset.create({
       data: {
@@ -87,9 +84,9 @@ export class ChoirEquipmentService {
     userId: string,
     equipmentId: string,
     dto: { memberId: string; notes?: string },
+    choirId?: string,
   ) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    assertChoirOpsManage(resolved.permissions, PERMISSIONS.CHOIR_EQUIPMENT_MANAGE);
+    await this.logisticsAccess.requireManageEquipment(userId, choirId);
 
     const asset = await this.prisma.equipmentAsset.findUnique({
       where: { id: equipmentId },
@@ -119,9 +116,13 @@ export class ChoirEquipmentService {
     return row;
   }
 
-  async returnAssignment(userId: string, assignmentId: string, notes?: string) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    assertChoirOpsManage(resolved.permissions, PERMISSIONS.CHOIR_EQUIPMENT_MANAGE);
+  async returnAssignment(
+    userId: string,
+    assignmentId: string,
+    notes?: string,
+    choirId?: string,
+  ) {
+    await this.logisticsAccess.requireManageEquipment(userId, choirId);
 
     const assignment = await this.prisma.equipmentAssignment.findUnique({
       where: { id: assignmentId },
