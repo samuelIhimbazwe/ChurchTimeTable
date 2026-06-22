@@ -11,7 +11,7 @@ import { ContributionAmountDisplay } from '@/components/choir/ContributionAmount
 import { useResolvedChoirId } from '@/lib/hooks'
 import { legacyOrScopedChoirPath } from '@/lib/choir/paths'
 import {
-  Card, StatTile, SkeletonStatTile, PermissionGate, HubTabs,
+  Card, StatTile, SkeletonStatTile, CapabilityGate, HubTabs,
 } from '@/components/shared'
 import { HubQuickLink } from '@/components/choir/ChoirPositionHubShell'
 import { formatDate } from '@/lib/utils/format'
@@ -158,7 +158,7 @@ export function ChoirExecutiveHubContent({ deputyMode = false }: Props) {
 
       {tab === 'governance' && (
         <div className="space-y-4">
-          <PermissionGate anyOf={['choir.join.review', 'member:manage']}>
+          <CapabilityGate uiCapability="admin-executive-join-card">
             <Card padding="md" accent="gold">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -174,13 +174,13 @@ export function ChoirExecutiveHubContent({ deputyMode = false }: Props) {
                 </Link>
               </div>
             </Card>
-          </PermissionGate>
+          </CapabilityGate>
           <div className="grid sm:grid-cols-2 gap-4">
             <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'admin')} label="Administration hub" desc="Joins, roster, families, settings" icon={Shield} />
             <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'public-profile')} label="Public choir profile" desc="What members and visitors see" icon={Settings2} />
-            <PermissionGate anyOf={['choir.custom_role.manage', 'committee.role.manage']}>
+            <CapabilityGate uiCapability="admin-executive-roles-link">
               <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'roles')} label="Position roles" desc="Customize officer permissions" icon={KeyRound} />
-            </PermissionGate>
+            </CapabilityGate>
             <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'members')} label="Roster" desc="Manage members and positions" icon={Users} />
             <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'admin/families')} label="Families structure" desc="Move members — privacy-safe view" icon={Users} />
             <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'settings')} label="Choir settings" desc="Membership rules and configuration" icon={Settings2} />

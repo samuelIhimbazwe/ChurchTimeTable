@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import { choirApi } from '@/lib/api'
 import { choirServiceOpsApi } from '@/lib/api/modules/choirServiceOps'
-import { Card, PermissionGate, StatTile } from '@/components/shared'
+import { Card, CapabilityGate, StatTile } from '@/components/shared'
 import { HubQuickLink } from '@/components/choir/ChoirPositionHubShell'
 import { useResolvedChoirScope } from '@/lib/hooks'
 
@@ -95,7 +95,7 @@ export function ChoirAdminHub() {
       <div>
         <p className="text-sm font-semibold text-text-primary mb-3">Core administration</p>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <PermissionGate anyOf={['choir.join.review', 'member:manage', 'choir.ops.manage']}>
+          <CapabilityGate uiCapability="admin-join-link">
             <HubQuickLink
               href={choirLink('join-requests')}
               label="Join requests"
@@ -103,8 +103,8 @@ export function ChoirAdminHub() {
               icon={UserPlus}
               stat={`${pendingJoins?.length ?? 0} pending`}
             />
-          </PermissionGate>
-          <PermissionGate anyOf={['choir.ops.view', 'member:manage', 'choir.oversight', 'member:read']}>
+          </CapabilityGate>
+          <CapabilityGate uiCapability="admin-roster-link">
             <HubQuickLink
               href={choirLink('members')}
               label="Roster"
@@ -112,48 +112,39 @@ export function ChoirAdminHub() {
               icon={Users}
               stat={roster?.total != null ? `${roster.total} members` : undefined}
             />
-          </PermissionGate>
-          <PermissionGate
-            anyOf={[
-              'family:view',
-              'family:manage',
-              'choir.family.view',
-              'choir.family.manage',
-              'choir.join.review',
-              'member:manage',
-            ]}
-          >
+          </CapabilityGate>
+          <CapabilityGate uiCapability="admin-families-link">
             <HubQuickLink
               href={choirLink('admin/families')}
               label="Families structure"
               desc="View family rosters and move members — no other families' finances"
               icon={Users}
             />
-          </PermissionGate>
-          <PermissionGate anyOf={['choir.custom_role.manage', 'committee.role.manage', 'member:manage']}>
+          </CapabilityGate>
+          <CapabilityGate uiCapability="admin-roles-link">
             <HubQuickLink
               href={choirLink('roles')}
               label="Position roles"
               desc="Officer permission templates for this choir"
               icon={KeyRound}
             />
-          </PermissionGate>
-          <PermissionGate anyOf={['choir.ops.manage', 'choir.oversight']}>
+          </CapabilityGate>
+          <CapabilityGate uiCapability="admin-public-profile-link">
             <HubQuickLink
               href={choirLink('public-profile')}
               label="Public profile"
               desc="What members and visitors see on the portal"
               icon={Settings2}
             />
-          </PermissionGate>
-          <PermissionGate anyOf={['choir.ops.manage', 'choir.oversight', 'choir.join.review']}>
+          </CapabilityGate>
+          <CapabilityGate uiCapability="admin-settings-link">
             <HubQuickLink
               href={choirLink('settings')}
               label="Choir-wide settings"
               desc="Membership rules, voice sections, and configuration"
               icon={Shield}
             />
-          </PermissionGate>
+          </CapabilityGate>
         </div>
       </div>
 
@@ -173,7 +164,7 @@ export function ChoirAdminHub() {
             desc="Calendar, assignments, and service prep entry"
             icon={LayoutDashboard}
           />
-          <PermissionGate anyOf={['choir.join.review', 'choir.ops.manage', 'choir.oversight']}>
+          <CapabilityGate uiCapability="admin-service-requests-link">
             <HubQuickLink
               href="/church/service-requests"
               label="Church service requests"
@@ -185,7 +176,7 @@ export function ChoirAdminHub() {
                   : undefined
               }
             />
-          </PermissionGate>
+          </CapabilityGate>
         </div>
       </div>
 

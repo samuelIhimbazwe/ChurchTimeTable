@@ -22,6 +22,8 @@ import { composeVoiceAwareNav } from '@/lib/navigation/voice-nav'
 import { composeLogisticsAwareNav } from '@/lib/navigation/logistics-nav'
 import { composeDevotionAwareNav } from '@/lib/navigation/devotion-nav'
 import { composeRolesAwareNav } from '@/lib/navigation/roles-nav'
+import { composeAdminHubAwareNav } from '@/lib/navigation/admin-hub-nav'
+import { useCapabilityRouter } from '@/lib/hooks/useCapability'
 import { getComposedProtocolNav } from '@/lib/navigation/protocol-nav'
 import { parseChoirIdFromPath } from '@/lib/choir/paths'
 import { isProtocolDashboardPath } from '@/lib/protocol/paths'
@@ -70,6 +72,7 @@ export default function Sidebar({
   const logisticsAuth = choirCtx?.logisticsAuth
   const devotionAuth = choirCtx?.devotionAuth
   const rolesAuth = choirCtx?.rolesAuth
+  const capabilityCheck = useCapabilityRouter(contextChoirId ?? choirId ?? undefined)
   const { data: protocolCtx, isLoading: loadingProtocolCtx } = useProtocolDashboardContext(inProtocolArea)
 
   const membershipForPath = choirId
@@ -96,58 +99,62 @@ export default function Sidebar({
     return getNavForContext(pathname, authRole, { canAccessChoirArea, isChoirMember }, permissions, activeChoirMemberships)
   })()
 
-  const capabilityAwareSections = composeRolesAwareNav(
-    composeDevotionAwareNav(
-      composeLogisticsAwareNav(
-        composeVoiceAwareNav(
-          composeCommsAwareNav(
-            composeRosterAwareNav(
-              composeMusicAwareNav(
-                composeSponsorAwareNav(
-                  composeJoinAwareNav(
-                    composeOpsAwareNav(
-                      composeDisciplineAwareNav(
-                        composeWelfareAwareNav(
-                          composeContributionAwareNav(
-                            rawSections,
+  const capabilityAwareSections = composeAdminHubAwareNav(
+    composeRolesAwareNav(
+      composeDevotionAwareNav(
+        composeLogisticsAwareNav(
+          composeVoiceAwareNav(
+            composeCommsAwareNav(
+              composeRosterAwareNav(
+                composeMusicAwareNav(
+                  composeSponsorAwareNav(
+                    composeJoinAwareNav(
+                      composeOpsAwareNav(
+                        composeDisciplineAwareNav(
+                          composeWelfareAwareNav(
+                            composeContributionAwareNav(
+                              rawSections,
+                              contextChoirId ?? choirId,
+                              contributionAuth,
+                            ),
                             contextChoirId ?? choirId,
-                            contributionAuth,
+                            welfareAuth,
                           ),
                           contextChoirId ?? choirId,
-                          welfareAuth,
+                          disciplineAuth,
                         ),
                         contextChoirId ?? choirId,
-                        disciplineAuth,
+                        opsAuth,
                       ),
                       contextChoirId ?? choirId,
-                      opsAuth,
+                      joinAuth,
                     ),
                     contextChoirId ?? choirId,
-                    joinAuth,
+                    sponsorAuth,
                   ),
                   contextChoirId ?? choirId,
-                  sponsorAuth,
+                  musicAuth,
                 ),
                 contextChoirId ?? choirId,
-                musicAuth,
+                rosterAuth,
               ),
               contextChoirId ?? choirId,
-              rosterAuth,
+              commsAuth,
             ),
             contextChoirId ?? choirId,
-            commsAuth,
+            voiceAuth,
           ),
           contextChoirId ?? choirId,
-          voiceAuth,
+          logisticsAuth,
         ),
         contextChoirId ?? choirId,
-        logisticsAuth,
+        devotionAuth,
       ),
       contextChoirId ?? choirId,
-      devotionAuth,
+      rolesAuth,
     ),
     contextChoirId ?? choirId,
-    rolesAuth,
+    capabilityCheck,
   )
 
   const sections = useMemo(

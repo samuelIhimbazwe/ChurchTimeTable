@@ -52,6 +52,10 @@ import {
   uiCapabilityVisible as rolesUiVisible,
   isRolesUiCapability,
 } from '@/lib/choir/roles-ui-capability-registry';
+import {
+  uiCapabilityVisible as adminHubUiVisible,
+  isAdminHubUiCapability,
+} from '@/lib/choir/admin-hub-ui-capability-registry';
 
 const MEMBER_VIEW_CAP = 'choir.member.view@choir';
 
@@ -375,6 +379,28 @@ export function useUiCapability(uiId: string, scopeId?: string): boolean {
   const welfareAuth = useWelfareAuth();
   const contributionAuth = useContributionAuth();
 
+  const routeCheck = (capId: string) =>
+    canWithRouting(
+      capId,
+      rolesAuth,
+      devotionAuth,
+      logisticsAuth,
+      voiceAuth,
+      commsAuth,
+      rosterAuth,
+      musicAuth,
+      joinAuth,
+      sponsorAuth,
+      opsAuth,
+      disciplineAuth,
+      welfareAuth,
+      contributionAuth,
+      scopeId,
+    );
+
+  if (isAdminHubUiCapability(uiId)) {
+    return adminHubUiVisible(uiId, routeCheck);
+  }
   if (isRolesUiCapability(uiId)) {
     return rolesUiVisible(uiId, (capId) => can(rolesAuth, capId));
   }
@@ -565,4 +591,45 @@ export function useRolesCapability(capabilityId: string): boolean {
 export function useRolesUiCapability(uiId: string): boolean {
   const auth = useRolesAuth();
   return rolesUiVisible(uiId, (capId) => can(auth, capId));
+}
+
+/** Route a capability id across all choir-scoped auth blobs (for composite UI gates). */
+export function useCapabilityRouter(scopeId?: string): (capId: string) => boolean {
+  const rolesAuth = useRolesAuth();
+  const devotionAuth = useDevotionAuth();
+  const logisticsAuth = useLogisticsAuth();
+  const voiceAuth = useVoiceAuth();
+  const commsAuth = useCommsAuth();
+  const rosterAuth = useRosterAuth();
+  const musicAuth = useMusicAuth();
+  const joinAuth = useJoinAuth();
+  const sponsorAuth = useSponsorAuth();
+  const opsAuth = useOpsAuth();
+  const disciplineAuth = useDisciplineAuth();
+  const welfareAuth = useWelfareAuth();
+  const contributionAuth = useContributionAuth();
+
+  return (capId: string) =>
+    canWithRouting(
+      capId,
+      rolesAuth,
+      devotionAuth,
+      logisticsAuth,
+      voiceAuth,
+      commsAuth,
+      rosterAuth,
+      musicAuth,
+      joinAuth,
+      sponsorAuth,
+      opsAuth,
+      disciplineAuth,
+      welfareAuth,
+      contributionAuth,
+      scopeId,
+    );
+}
+
+export function useAdminHubUiCapability(uiId: string, scopeId?: string): boolean {
+  const routeCheck = useCapabilityRouter(scopeId);
+  return adminHubUiVisible(uiId, routeCheck);
 }
