@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { welfareApi } from '@/lib/api'
 import { ChoirPositionHubShell } from '@/components/choir/ChoirPositionHubShell'
 import { CareCaseConsole } from '@/components/choir/committee/CareCaseConsole'
+import { CapabilityGate } from '@/components/shared'
 import { useResolvedChoirScope } from '@/lib/hooks'
 
 export default function CareDeskPage() {
@@ -19,6 +20,14 @@ export default function CareDeskPage() {
   const breaches = dashboard?.slaBreaches ?? 0
 
   return (
+    <CapabilityGate
+      uiCapability="welfare-care-inbox"
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <p className="text-text-muted">Care desk access required.</p>
+        </div>
+      }
+    >
     <ChoirPositionHubShell
       roleKey="discipline_social_welfare"
       subtitle="Triage member care cases with SLA tracking and confidential follow-up."
@@ -39,5 +48,6 @@ export default function CareDeskPage() {
       )}
       <CareCaseConsole />
     </ChoirPositionHubShell>
+    </CapabilityGate>
   )
 }

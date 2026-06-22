@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { welfareApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import {
-  Card, Badge, Avatar, PermissionGate, SkeletonCard,
+  Card, Badge, Avatar, CapabilityGate, SkeletonCard,
 } from '@/components/shared'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { formatDate } from '@/lib/utils/format'
@@ -102,6 +102,14 @@ export default function WelfareCaseDetailPage() {
   })
 
   return (
+    <CapabilityGate
+      uiCapability="welfare-case-detail"
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <p className="text-text-muted">You do not have access to this welfare case.</p>
+        </div>
+      }
+    >
     <div className="max-w-3xl mx-auto space-y-6 pb-8">
       <Link
         href={choirLink('welfare')}
@@ -144,7 +152,7 @@ export default function WelfareCaseDetailPage() {
       <EntityTimeline title="Case timeline" events={events} />
 
       {welfareCase.status !== 'RESOLVED' && (
-        <PermissionGate permission="choir.welfare.manage">
+        <CapabilityGate capability="choir.welfare.manage@choir">
           <Card padding="md" accent="info">
             <div className="flex items-center gap-2 mb-4">
               <Heart size={16} className="text-primary-600" />
@@ -186,7 +194,7 @@ export default function WelfareCaseDetailPage() {
               </button>
             </div>
           </Card>
-        </PermissionGate>
+        </CapabilityGate>
       )}
 
       <p className="text-xs text-text-muted">
@@ -197,5 +205,6 @@ export default function WelfareCaseDetailPage() {
         .
       </p>
     </div>
+    </CapabilityGate>
   )
 }

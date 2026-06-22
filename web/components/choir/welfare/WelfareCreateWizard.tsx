@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { welfareApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
-import { Card, CardHeader, CardTitle, PermissionGate } from '@/components/shared'
+import { Card, CardHeader, CardTitle, CapabilityGate } from '@/components/shared'
 import { FormField, Input, Textarea } from '@/components/shared/form'
 import { FormWizard } from '@/components/shared/form/FormWizard'
 import { ChoirMemberPicker } from '@/components/choir/ChoirMemberPicker'
@@ -65,7 +65,7 @@ export function WelfareCreateWizard({ onClose }: Props) {
   }
 
   return (
-    <PermissionGate permission="choir.welfare.manage">
+    <CapabilityGate uiCapability="welfare-manage">
       <Card padding="md" accent="info">
         <CardHeader>
           <CardTitle>Open new case</CardTitle>
@@ -135,6 +135,6 @@ export function WelfareCreateWizard({ onClose }: Props) {
           </div>
         </FormWizard>
       </Card>
-    </PermissionGate>
+    </CapabilityGate>
   )
 }

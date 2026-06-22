@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
+import { WelfareCapabilityModule } from '../common/choir/welfare-capability.module';
 import { AuditModule } from '../audit/audit.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ReportsModule } from '../reports/reports.module';
@@ -11,6 +12,7 @@ import { WelfareSeedService } from './welfare-seed.service';
 @Module({
   imports: [
     AuthModule,
+    WelfareCapabilityModule,
     AuditModule,
     NotificationsModule,
     ReportsModule,

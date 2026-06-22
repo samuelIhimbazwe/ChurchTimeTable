@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { welfareApi } from '@/lib/api'
 import {
-  StatTile, SkeletonStatTile, SkeletonCard, PermissionGate,
+  StatTile, SkeletonStatTile, SkeletonCard, CapabilityGate,
 } from '@/components/shared'
 import { Heart } from 'lucide-react'
 import { useResolvedChoirScope } from '@/lib/hooks'
@@ -41,6 +41,14 @@ export default function WelfarePage() {
   const active = cases?.filter((c) => c.status !== 'RESOLVED') ?? []
 
   return (
+    <CapabilityGate
+      uiCapability="welfare-desk"
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <p className="text-text-muted">You do not have access to welfare cases.</p>
+        </div>
+      }
+    >
     <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
@@ -49,7 +57,7 @@ export default function WelfarePage() {
             {active.length} active · table, board, or full care desk queue
           </p>
         </div>
-        <PermissionGate permission="choir.welfare.manage">
+        <CapabilityGate uiCapability="welfare-manage">
           <button
             type="button"
             onClick={() => setShowCreate((v) => !v)}
@@ -57,7 +65,7 @@ export default function WelfarePage() {
           >
             + New Case
           </button>
-        </PermissionGate>
+        </CapabilityGate>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -88,5 +96,6 @@ export default function WelfarePage() {
         />
       )}
     </div>
+    </CapabilityGate>
   )
 }

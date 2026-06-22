@@ -15,6 +15,7 @@ import { PermissionsResolver } from './permissions.resolver';
 import { MemberNumberService } from '../members/member-number.service';
 import { MemberPhoneEnforcementService } from '../common/member/member-phone-enforcement.service';
 import { ContributionCapabilityResolverService } from '../common/choir/contribution-capability-resolver.service';
+import { WelfareCapabilityResolverService } from '../common/choir/welfare-capability-resolver.service';
 import { durationToMs } from './auth.constants';
 import {
   AccountInactiveException,
@@ -46,6 +47,7 @@ export class AuthService {
     private memberNumberService: MemberNumberService,
     private phoneEnforcement: MemberPhoneEnforcementService,
     private contributionCapabilities: ContributionCapabilityResolverService,
+    private welfareCapabilities: WelfareCapabilityResolverService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -246,6 +248,13 @@ export class AuthService {
         )
       : undefined;
 
+    const welfareAuth = choirId
+      ? await this.welfareCapabilities.resolveGrantsToCapabilities(
+          userId,
+          choirId,
+        )
+      : undefined;
+
     return {
       id: user.id,
       email: user.email,
@@ -256,6 +265,7 @@ export class AuthService {
       onboardingCompleted: user.member?.onboardingCompleted ?? false,
       phoneEnforcement: phoneEnforcementState,
       contributionAuth,
+      welfareAuth,
       /** Capabilities are resolved fresh on /auth/me — not embedded in JWT (see migration-notes/01-summary.md). */
     };
   }

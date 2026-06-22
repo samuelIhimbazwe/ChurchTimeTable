@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { welfareApi, type WelfareCareCase } from '@/lib/api/modules/welfare'
 import { toast } from '@/components/shared/Toast'
 import {
-  Badge, Card, PermissionGate, SkeletonCard,
+  Badge, Card, CapabilityGate, SkeletonCard,
 } from '@/components/shared'
 import { SplitQueueConsole } from '@/components/shared/office/SplitQueueConsole'
 import { CareCaseHighlightsPanel } from '@/components/choir/committee/CareCaseHighlightsPanel'
@@ -175,7 +175,7 @@ export function CareCaseConsole() {
           </Card>
         )}
 
-        <PermissionGate anyOf={['choir.welfare.manage']}>
+        <CapabilityGate capability="choir.welfare.manage@choir">
           <Card padding="md">
             <textarea
               value={actionNotes}
@@ -260,16 +260,16 @@ export function CareCaseConsole() {
               </button>
             </div>
           </Card>
-        </PermissionGate>
+        </CapabilityGate>
 
-        <PermissionGate
-          anyOf={['choir.welfare.view']}
+        <CapabilityGate
+          capability="choir.welfare.view@choir"
           fallback={null}
         >
           <p className="text-xs text-text-muted">
             View-only — contact a care officer with manage permission to update this case.
           </p>
-        </PermissionGate>
+        </CapabilityGate>
       </div>
     )
   }

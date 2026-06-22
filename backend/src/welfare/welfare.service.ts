@@ -8,10 +8,9 @@ import { WelfareCaseStatus, Prisma, WelfareUrgency } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { PermissionsResolver } from '../auth/permissions.resolver';
-import { PERMISSIONS } from '../common/constants/roles';
-import { hasEffectivePermission } from '../common/governance/governance-permissions.util';
 import { paginate, paginatedResult } from '../common/dto/pagination.dto';
 import { getActiveChoirId } from '../common/choir/choir-context.storage';
+import { WelfareCapabilityResolverService } from '../common/choir/welfare-capability-resolver.service';
 import { CreateWelfareCaseDto } from './dto/create-welfare-case.dto';
 import { UpdateWelfareCaseDto } from './dto/update-welfare-case.dto';
 import { RecordWelfareContributionDto } from './dto/record-welfare-contribution.dto';
@@ -43,21 +42,30 @@ export class WelfareService {
     private permissions: PermissionsResolver,
     private choirNotifications: ChoirNotificationsService,
     private reports: ReportsService,
+    private welfareCapabilities: WelfareCapabilityResolverService,
   ) {}
 
   private async assertWelfareAccess(userId: string, manage = false) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    const view = hasEffectivePermission(
-      resolved.permissions,
-      PERMISSIONS.CHOIR_WELFARE_VIEW,
+    const choirId = getActiveChoirId();
+    if (!choirId) {
+      throw new ForbiddenException('Choir context required');
+    }
+    const auth = await this.welfareCapabilities.resolveGrantsToCapabilities(
+      userId,
+      choirId,
     );
-    const mgr = hasEffectivePermission(
-      resolved.permissions,
-      PERMISSIONS.CHOIR_WELFARE_MANAGE,
+    const view = this.welfareCapabilities.can(
+      auth,
+      'choir.welfare.view@choir',
+    );
+    const mgr = this.welfareCapabilities.can(
+      auth,
+      'choir.welfare.manage@choir',
     );
     if (manage && !mgr) throw new ForbiddenException('Not allowed');
     if (!view && !mgr) throw new NotFoundException('Not found');
-    return resolved;
+    const resolved = await this.permissions.resolveForUser(userId);
+    return { ...resolved, canManage: mgr };
   }
 
   private async memberIdForUser(userId: string) {
@@ -238,10 +246,7 @@ export class WelfareService {
 
   async getCase(userId: string, id: string) {
     const resolved = await this.assertWelfareAccess(userId);
-    const canManage = hasEffectivePermission(
-      resolved.permissions,
-      PERMISSIONS.CHOIR_WELFARE_MANAGE,
-    );
+    const canManage = resolved.canManage;
     const row = await this.prisma.welfareCase.findUnique({
       where: { id },
       include: {

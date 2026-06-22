@@ -4,10 +4,11 @@ import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { isContributionRoutePath } from '@/lib/choir/contribution-routes'
+import { isWelfareRoutePath } from '@/lib/choir/welfare-routes'
 
 /**
- * Re-fetch choir dashboard context (including contributionAuth) when entering
- * a contribution route so mid-session office grant changes are picked up.
+ * Re-fetch choir dashboard context (including contributionAuth / welfareAuth) when
+ * entering a capability-gated route so mid-session office grant changes are picked up.
  */
 export function useContributionAuthRefresh(choirId: string) {
   const pathname = usePathname()
@@ -16,10 +17,11 @@ export function useContributionAuthRefresh(choirId: string) {
 
   useEffect(() => {
     if (!choirId) return
-    const enteredContribution =
-      isContributionRoutePath(pathname) && prevPathRef.current !== pathname
+    const enteredCapabilityRoute =
+      (isContributionRoutePath(pathname) || isWelfareRoutePath(pathname))
+      && prevPathRef.current !== pathname
     prevPathRef.current = pathname
-    if (!enteredContribution) return
+    if (!enteredCapabilityRoute) return
 
     void queryClient.invalidateQueries({
       queryKey: ['choir-dashboard-context', choirId],

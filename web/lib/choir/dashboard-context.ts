@@ -40,4 +40,5 @@ export type ChoirDashboardContext = {
     joinReview: boolean
   }
   contributionAuth?: ResolvedAuth
+  welfareAuth?: ResolvedAuth
 }
