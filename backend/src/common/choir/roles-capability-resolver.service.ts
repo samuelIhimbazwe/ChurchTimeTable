@@ -91,6 +91,11 @@ export class RolesCapabilityResolverService {
     return this.can(auth, 'choir.committee_role.manage@choir');
   }
 
+  canManageCommitteeMember(auth: ResolvedAuth | undefined): boolean {
+    if (!auth) return false;
+    return this.can(auth, 'choir.committee_member.manage@choir');
+  }
+
   canAccessRolesHub(auth: ResolvedAuth | undefined): boolean {
     return (
       this.canManageCustomRole(auth) || this.canManageCommitteeRole(auth)

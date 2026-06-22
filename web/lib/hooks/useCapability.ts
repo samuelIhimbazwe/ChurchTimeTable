@@ -159,6 +159,7 @@ function isRolesCapabilityId(id: string): boolean {
   return (
     id.startsWith('choir.custom_role.')
     || id.startsWith('choir.committee_role.')
+    || id.startsWith('choir.committee_member.')
   );
 }
 

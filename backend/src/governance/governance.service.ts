@@ -63,6 +63,7 @@ export class GovernanceService {
     dto: AssignCommitteeMemberDto,
     actorUserId: string,
   ) {
+    await this.rolesAccess.requireManageCommitteeMember(actorUserId, dto.scopeId);
     await this.ensureChoirRole(dto.roleId);
     const assignedAt = dto.effectiveStart ? new Date(dto.effectiveStart) : new Date();
     const assignment = await this.prisma.choirCommitteeMember.upsert({
@@ -339,6 +340,10 @@ export class GovernanceService {
       where: { id: assignmentId },
       include: { role: true, member: true },
     });
+    await this.rolesAccess.requireManageCommitteeMember(
+      actorUserId,
+      assignment.choirId,
+    );
     const endedAt = effectiveEnd ? new Date(effectiveEnd) : new Date();
     const updated = await this.prisma.choirCommitteeMember.update({
       where: { id: assignmentId },

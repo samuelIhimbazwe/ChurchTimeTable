@@ -2,6 +2,7 @@
 export const CHOIR_ROLES_CAPABILITY_IDS = [
   'choir.custom_role.manage@choir',
   'choir.committee_role.manage@choir',
+  'choir.committee_member.manage@choir',
 ] as const;
 
 export type ChoirRolesCapabilityId =

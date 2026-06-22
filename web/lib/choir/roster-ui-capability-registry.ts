@@ -22,7 +22,10 @@ export const ROSTER_UI_CAPABILITY_REGISTRY: RosterUiCapabilityDefinition[] = [
     id: 'roster-manage',
     label: 'Manage choir roster',
     routeSegments: ['members'],
-    requireAnyOf: ['choir.member.manage@choir'],
+    requireAnyOf: [
+      'choir.member.manage@choir',
+      'choir.committee_member.manage@choir',
+    ],
     mode: 'any',
   },
 ];

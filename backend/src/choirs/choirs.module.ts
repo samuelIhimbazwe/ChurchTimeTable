@@ -18,6 +18,7 @@ import { ChoirExecutiveDashboardService } from './choir-executive-dashboard.serv
 import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
 import { ProtocolMembershipService } from '../member-portal/protocol-membership.service';
 import { RosterCapabilityModule } from '../common/choir/roster-capability.module';
+import { ChoirCustomRolesModule } from '../choir-custom-roles/choir-custom-roles.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { RosterCapabilityModule } from '../common/choir/roster-capability.module
     MemberPhoneEnforcementModule,
     forwardRef(() => PilotReadyModule),
     RosterCapabilityModule,
+    ChoirCustomRolesModule,
   ],
   controllers: [ChoirsController],
   providers: [

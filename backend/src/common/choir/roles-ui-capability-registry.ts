@@ -31,6 +31,16 @@ export const ROLES_UI_CAPABILITY_REGISTRY: RolesUiCapabilityDefinition[] = [
     requireAnyOf: ['choir.committee_role.manage@choir'],
     mode: 'any',
   },
+  {
+    id: 'roles-committee-assign',
+    label: 'Assign committee seats',
+    routeSegments: ['members', 'join-requests'],
+    requireAnyOf: [
+      'choir.committee_member.manage@choir',
+      'choir.member.manage@choir',
+    ],
+    mode: 'any',
+  },
 ];
 
 export function uiCapabilityVisible(

@@ -21,6 +21,7 @@ import { ChoirContextService } from '../choirs/choir-context.service';
 import { MEMBER_PORTAL_AUDIT, YERUSALEMU_CHOIR_CODE } from './member-portal.constants';
 import { ChoirMembershipRulesService } from './choir-membership-rules.service';
 import { ChoirJoinAccessService } from './choir-join-access.service';
+import { ChoirRolesAccessService } from '../choir-custom-roles/choir-roles-access.service';
 import { MemberPortalNotificationsService } from './member-portal-notifications.service';
 import { IndividualWhatsAppService } from '../messaging/individual-whatsapp.service';
 import { AppLinkService } from '../messaging/app-link.service';
@@ -33,6 +34,7 @@ export class ChoirJoinRequestsService {
     private audit: AuditService,
     private permissions: PermissionsResolver,
     private joinAccess: ChoirJoinAccessService,
+    private rolesAccess: ChoirRolesAccessService,
     private joinCapabilities: JoinCapabilityResolverService,
     private rules: ChoirMembershipRulesService,
     private choirContext: ChoirContextService,
@@ -348,7 +350,7 @@ export class ChoirJoinRequestsService {
     actorUserId: string,
     data: { choirId: string; memberId: string; roleId: string },
   ) {
-    await this.joinAccess.requireReview(actorUserId, data.choirId);
+    await this.rolesAccess.requireAssignCommitteeSeat(actorUserId, data.choirId);
 
     const member = await this.prisma.member.findUnique({
       where: { id: data.memberId },
@@ -379,7 +381,7 @@ export class ChoirJoinRequestsService {
     actorUserId: string,
     data: { choirId: string; memberId: string; roleId: string },
   ) {
-    await this.joinAccess.requireReview(actorUserId, data.choirId);
+    await this.rolesAccess.requireAssignCommitteeSeat(actorUserId, data.choirId);
 
     const assignment = await this.prisma.choirCommitteeMember.findFirst({
       where: {

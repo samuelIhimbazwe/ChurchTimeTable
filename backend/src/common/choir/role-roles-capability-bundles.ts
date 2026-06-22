@@ -2,8 +2,9 @@ import { ROLES } from '../constants/roles';
 
 const CUSTOM = 'choir.custom_role.manage@choir' as const;
 const COMMITTEE = 'choir.committee_role.manage@choir' as const;
+const COMMITTEE_MEMBER = 'choir.committee_member.manage@choir' as const;
 
-const FULL_ROLES = [CUSTOM, COMMITTEE] as const;
+const FULL_ROLES = [CUSTOM, COMMITTEE, COMMITTEE_MEMBER] as const;
 
 /** CMMS role name → choir-scoped role governance capabilities. */
 export const ROLE_ROLES_CAPABILITY_BUNDLES: Record<

@@ -13,6 +13,7 @@ const rolesAuth: ResolvedAuth = {
   capabilities: [
     { id: 'choir.custom_role.manage@choir' },
     { id: 'choir.committee_role.manage@choir' },
+    { id: 'choir.committee_member.manage@choir' },
   ],
 };
 
