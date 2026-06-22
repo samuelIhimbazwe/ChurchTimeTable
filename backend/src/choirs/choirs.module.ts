@@ -7,6 +7,7 @@ import { ChoirsController } from './choirs.controller';
 import { ChoirContextService } from './choir-context.service';
 import { ChoirDiscoveryService } from '../member-portal/choir-discovery.service';
 import { ChoirJoinRequestsService } from '../member-portal/choir-join-requests.service';
+import { ChoirJoinAccessService } from '../member-portal/choir-join-access.service';
 import { ChoirSponsorRequestsService } from '../member-portal/choir-sponsor-requests.service';
 import { ChoirMembershipRulesService } from '../member-portal/choir-membership-rules.service';
 import { MemberPortalNotificationsService } from '../member-portal/member-portal-notifications.service';
@@ -30,6 +31,7 @@ import { MemberMinistryScopeService } from '../member-portal/member-ministry-sco
     ChoirContextService,
     ChoirDiscoveryService,
     ChoirJoinRequestsService,
+    ChoirJoinAccessService,
     ChoirSponsorRequestsService,
     ChoirMembershipRulesService,
     MemberPortalNotificationsService,

@@ -16,6 +16,10 @@ import {
   uiCapabilityVisible as opsUiVisible,
   isOpsUiCapability,
 } from '@/lib/choir/ops-ui-capability-registry';
+import {
+  uiCapabilityVisible as joinUiVisible,
+  isJoinUiCapability,
+} from '@/lib/choir/join-ui-capability-registry';
 
 export function useContributionAuth(): ResolvedAuth | undefined {
   return useOptionalChoirDashboardCtx()?.context?.contributionAuth;
@@ -33,6 +37,10 @@ export function useOpsAuth(): ResolvedAuth | undefined {
   return useOptionalChoirDashboardCtx()?.context?.opsAuth;
 }
 
+export function useJoinAuth(): ResolvedAuth | undefined {
+  return useOptionalChoirDashboardCtx()?.context?.joinAuth;
+}
+
 function isWelfareCapabilityId(id: string): boolean {
   return id.startsWith('choir.welfare.');
 }
@@ -45,18 +53,39 @@ function isOpsCapabilityId(id: string): boolean {
   return id.startsWith('choir.ops.');
 }
 
+function isJoinCapabilityId(id: string): boolean {
+  return id.startsWith('choir.join.') || id === 'choir.member.manage@choir';
+}
+
+function authForCapabilityId(
+  capabilityId: string,
+  joinAuth: ResolvedAuth | undefined,
+  opsAuth: ResolvedAuth | undefined,
+  disciplineAuth: ResolvedAuth | undefined,
+  welfareAuth: ResolvedAuth | undefined,
+  contributionAuth: ResolvedAuth | undefined,
+): ResolvedAuth | undefined {
+  if (isJoinCapabilityId(capabilityId)) return joinAuth;
+  if (isOpsCapabilityId(capabilityId)) return opsAuth;
+  if (isDisciplineCapabilityId(capabilityId)) return disciplineAuth;
+  if (isWelfareCapabilityId(capabilityId)) return welfareAuth;
+  return contributionAuth;
+}
+
 export function useCapability(capabilityId: string, scopeId?: string): boolean {
+  const joinAuth = useJoinAuth();
   const opsAuth = useOpsAuth();
   const disciplineAuth = useDisciplineAuth();
   const welfareAuth = useWelfareAuth();
   const contributionAuth = useContributionAuth();
-  const auth = isOpsCapabilityId(capabilityId)
-    ? opsAuth
-    : isDisciplineCapabilityId(capabilityId)
-      ? disciplineAuth
-      : isWelfareCapabilityId(capabilityId)
-        ? welfareAuth
-        : contributionAuth;
+  const auth = authForCapabilityId(
+    capabilityId,
+    joinAuth,
+    opsAuth,
+    disciplineAuth,
+    welfareAuth,
+    contributionAuth,
+  );
   return can(auth, capabilityId, scopeId);
 }
 
@@ -64,19 +93,24 @@ export function useAnyCapability(
   capabilityIds: string[],
   scopeId?: string,
 ): boolean {
+  const joinIds = capabilityIds.filter(isJoinCapabilityId);
   const opsIds = capabilityIds.filter(isOpsCapabilityId);
   const disciplineIds = capabilityIds.filter(isDisciplineCapabilityId);
   const welfareIds = capabilityIds.filter(isWelfareCapabilityId);
   const contributionIds = capabilityIds.filter(
     (id) =>
-      !isOpsCapabilityId(id)
+      !isJoinCapabilityId(id)
+      && !isOpsCapabilityId(id)
       && !isDisciplineCapabilityId(id)
       && !isWelfareCapabilityId(id),
   );
+  const joinAuth = useJoinAuth();
   const opsAuth = useOpsAuth();
   const disciplineAuth = useDisciplineAuth();
   const welfareAuth = useWelfareAuth();
   const contributionAuth = useContributionAuth();
+  const joinOk =
+    joinIds.length === 0 || hasAnyCapability(joinAuth, joinIds, scopeId);
   const opsOk =
     opsIds.length === 0 || hasAnyCapability(opsAuth, opsIds, scopeId);
   const disciplineOk =
@@ -88,10 +122,14 @@ export function useAnyCapability(
   const contributionOk =
     contributionIds.length === 0
     || hasAnyCapability(contributionAuth, contributionIds, scopeId);
-  return opsOk && disciplineOk && welfareOk && contributionOk;
+  return joinOk && opsOk && disciplineOk && welfareOk && contributionOk;
 }
 
 export function useUiCapability(uiId: string, scopeId?: string): boolean {
+  if (isJoinUiCapability(uiId)) {
+    const auth = useJoinAuth();
+    return joinUiVisible(uiId, (capId) => can(auth, capId));
+  }
   if (isOpsUiCapability(uiId)) {
     const auth = useOpsAuth();
     return opsUiVisible(uiId, (capId) => can(auth, capId));
@@ -110,6 +148,16 @@ export function useUiCapability(uiId: string, scopeId?: string): boolean {
     (capId, famId) => can(auth, capId, famId ?? scopeId),
     scopeId,
   );
+}
+
+export function useJoinCapability(capabilityId: string): boolean {
+  const auth = useJoinAuth();
+  return can(auth, capabilityId);
+}
+
+export function useJoinUiCapability(uiId: string): boolean {
+  const auth = useJoinAuth();
+  return joinUiVisible(uiId, (capId) => can(auth, capId));
 }
 
 export function useOpsCapability(capabilityId: string): boolean {

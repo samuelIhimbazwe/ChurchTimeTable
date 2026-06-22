@@ -7,6 +7,7 @@ import { isContributionRoutePath } from '@/lib/choir/contribution-routes'
 import { isWelfareRoutePath } from '@/lib/choir/welfare-routes'
 import { isDisciplineRoutePath } from '@/lib/choir/discipline-routes'
 import { isOpsRoutePath } from '@/lib/choir/ops-routes'
+import { isJoinRoutePath } from '@/lib/choir/join-routes'
 
 /**
  * Re-fetch choir dashboard context (including contributionAuth / welfareAuth) when
@@ -23,7 +24,8 @@ export function useContributionAuthRefresh(choirId: string) {
       (isContributionRoutePath(pathname)
         || isWelfareRoutePath(pathname)
         || isDisciplineRoutePath(pathname)
-        || isOpsRoutePath(pathname))
+        || isOpsRoutePath(pathname)
+        || isJoinRoutePath(pathname))
       && prevPathRef.current !== pathname
     prevPathRef.current = pathname
     if (!enteredCapabilityRoute) return

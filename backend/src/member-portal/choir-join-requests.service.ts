@@ -13,12 +13,14 @@ import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { PermissionsResolver } from '../auth/permissions.resolver';
+import { JoinCapabilityResolverService } from '../common/choir/join-capability-resolver.service';
 import { PERMISSIONS, ROLES } from '../common/constants/roles';
 import { hasEffectivePermission } from '../common/governance/governance-permissions.util';
 import { activeChoirCommitteeMemberWhere } from '../common/governance/choir-committee-member.util';
 import { ChoirContextService } from '../choirs/choir-context.service';
 import { MEMBER_PORTAL_AUDIT, YERUSALEMU_CHOIR_CODE } from './member-portal.constants';
 import { ChoirMembershipRulesService } from './choir-membership-rules.service';
+import { ChoirJoinAccessService } from './choir-join-access.service';
 import { MemberPortalNotificationsService } from './member-portal-notifications.service';
 import { IndividualWhatsAppService } from '../messaging/individual-whatsapp.service';
 import { AppLinkService } from '../messaging/app-link.service';
@@ -30,6 +32,8 @@ export class ChoirJoinRequestsService {
     private prisma: PrismaService,
     private audit: AuditService,
     private permissions: PermissionsResolver,
+    private joinAccess: ChoirJoinAccessService,
+    private joinCapabilities: JoinCapabilityResolverService,
     private rules: ChoirMembershipRulesService,
     private choirContext: ChoirContextService,
     private notify: MemberPortalNotificationsService,
@@ -40,14 +44,6 @@ export class ChoirJoinRequestsService {
 
   private async memberForUser(userId: string) {
     return this.prisma.member.findUniqueOrThrow({ where: { userId } });
-  }
-
-  private canReview(perms: string[]) {
-    return (
-      hasEffectivePermission(perms, PERMISSIONS.CHOIR_JOIN_REVIEW) ||
-      hasEffectivePermission(perms, PERMISSIONS.CHOIR_OPERATIONS_MANAGE) ||
-      hasEffectivePermission(perms, PERMISSIONS.MEMBER_MANAGE)
-    );
   }
 
   private async loadCommitteeRoleNames(
@@ -66,15 +62,18 @@ export class ChoirJoinRequestsService {
     actorUserId: string,
     choirId: string,
   ): Promise<void> {
+    await this.joinAccess.requireReview(actorUserId, choirId);
+
     const resolved = await this.permissions.resolveForUser(actorUserId);
-    if (!this.canReview(resolved.permissions)) {
-      throw new ForbiddenException('Denied');
-    }
+    const auth = await this.joinCapabilities.resolveGrantsToCapabilities(
+      actorUserId,
+      choirId,
+    );
 
     if (resolved.roles.includes(ROLES.CHOIR_PRESIDENT)) return;
+    if (this.joinCapabilities.can(auth, 'choir.member.manage@choir')) return;
     if (
-      hasEffectivePermission(resolved.permissions, PERMISSIONS.CHOIR_OPERATIONS_MANAGE) ||
-      hasEffectivePermission(resolved.permissions, PERMISSIONS.MEMBER_MANAGE)
+      hasEffectivePermission(resolved.permissions, PERMISSIONS.CHOIR_OPERATIONS_MANAGE)
     ) {
       return;
     }
@@ -233,10 +232,9 @@ export class ChoirJoinRequestsService {
   }
 
   async list(actorUserId: string, filters?: { choirId?: string; status?: ChoirJoinRequestStatus }) {
-    const resolved = await this.permissions.resolveForUser(actorUserId);
     const member = await this.memberForUser(actorUserId);
 
-    if (this.canReview(resolved.permissions)) {
+    if (await this.joinAccess.canReview(actorUserId, filters?.choirId)) {
       return this.prisma.choirJoinRequest.findMany({
         where: {
           ...(filters?.choirId ? { choirId: filters.choirId } : {}),
@@ -267,16 +265,12 @@ export class ChoirJoinRequestsService {
       assignedRoleId?: string;
     },
   ) {
-    const resolved = await this.permissions.resolveForUser(actorUserId);
-    if (!this.canReview(resolved.permissions)) {
-      throw new ForbiddenException('Denied');
-    }
-
     const request = await this.prisma.choirJoinRequest.findUniqueOrThrow({
       where: { id: requestId },
       include: { member: true, choir: true },
     });
 
+    await this.joinAccess.requireReview(actorUserId, request.choirId);
     await this.assertCanDecideJoin(actorUserId, request.choirId);
 
     if (request.status !== 'PENDING' && request.status !== 'NEEDS_INFO') {
@@ -343,10 +337,7 @@ export class ChoirJoinRequestsService {
   }
 
   async listPositionRoles(actorUserId: string, choirId: string) {
-    const resolved = await this.permissions.resolveForUser(actorUserId);
-    if (!this.canReview(resolved.permissions)) {
-      throw new ForbiddenException('Denied');
-    }
+    await this.joinAccess.requireReview(actorUserId, choirId);
     return this.prisma.choirCommitteeRole.findMany({
       where: { choirId },
       orderBy: { name: 'asc' },
@@ -357,10 +348,7 @@ export class ChoirJoinRequestsService {
     actorUserId: string,
     data: { choirId: string; memberId: string; roleId: string },
   ) {
-    const resolved = await this.permissions.resolveForUser(actorUserId);
-    if (!this.canReview(resolved.permissions)) {
-      throw new ForbiddenException('Denied');
-    }
+    await this.joinAccess.requireReview(actorUserId, data.choirId);
 
     const member = await this.prisma.member.findUnique({
       where: { id: data.memberId },
@@ -391,10 +379,7 @@ export class ChoirJoinRequestsService {
     actorUserId: string,
     data: { choirId: string; memberId: string; roleId: string },
   ) {
-    const resolved = await this.permissions.resolveForUser(actorUserId);
-    if (!this.canReview(resolved.permissions)) {
-      throw new ForbiddenException('Denied');
-    }
+    await this.joinAccess.requireReview(actorUserId, data.choirId);
 
     const assignment = await this.prisma.choirCommitteeMember.findFirst({
       where: {

@@ -7,8 +7,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { choirApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import {
-  Card, Badge, Avatar, PermissionGate, SkeletonCard,
+  Card, Badge, Avatar, CapabilityGate, PermissionGate, SkeletonCard,
 } from '@/components/shared'
+import { useJoinUiCapability } from '@/lib/hooks/useCapability'
 import {
   CHOIR_JOIN_REQUEST_TYPES,
   CHOIR_SPONSOR_REQUEST_TYPES,
@@ -16,7 +17,6 @@ import {
 } from '@/lib/constants/choir-positions'
 import { ChoirPositionGuide } from '@/components/choir/ChoirPositionGuide'
 import { useResolvedChoirId, useResolvedChoirScope } from '@/lib/hooks'
-import { useAuthStore } from '@/stores/index'
 import { useOptionalChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
 import { UserPlus, CheckCircle2, XCircle, MessageSquare } from 'lucide-react'
 import { formatDate } from '@/lib/utils/format'
@@ -77,12 +77,7 @@ export default function JoinRequestsPage() {
   const { choirLink } = useResolvedChoirScope()
   const choirCtx = useOptionalChoirDashboardCtx()
   const choirName = choirCtx?.context?.choir.name
-  const hasAnyPermission = useAuthStore((s) => s.hasAnyPermission)
-  const canReview = hasAnyPermission([
-    'choir.join.review',
-    'member:manage',
-    'choir.operations.manage',
-  ])
+  const canReview = useJoinUiCapability('join-requests-review')
 
   useEffect(() => {
     if (!choirId || !canReview) return
@@ -364,7 +359,7 @@ export default function JoinRequestsPage() {
                   </div>
                   <div className="flex flex-col items-end gap-2 shrink-0">
                     <Badge variant={STATUS_BADGE[r.status]}>{r.status}</Badge>
-                    <PermissionGate anyOf={['choir.join.review', 'member:manage']}>
+                    <CapabilityGate uiCapability="join-requests-review">
                       {isReviewable ? (
                         <>
                           <Link
@@ -388,7 +383,7 @@ export default function JoinRequestsPage() {
                           </button>
                         </>
                       ) : null}
-                    </PermissionGate>
+                    </CapabilityGate>
                     {!isReviewable && (
                       <span className="text-xs font-semibold text-primary-600">
                         {isOpen ? 'Close' : 'View details'}

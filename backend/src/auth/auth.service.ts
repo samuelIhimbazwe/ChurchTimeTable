@@ -18,6 +18,7 @@ import { ContributionCapabilityResolverService } from '../common/choir/contribut
 import { WelfareCapabilityResolverService } from '../common/choir/welfare-capability-resolver.service';
 import { DisciplineCapabilityResolverService } from '../common/choir/discipline-capability-resolver.service';
 import { OpsCapabilityResolverService } from '../common/choir/ops-capability-resolver.service';
+import { JoinCapabilityResolverService } from '../common/choir/join-capability-resolver.service';
 import { durationToMs } from './auth.constants';
 import {
   AccountInactiveException,
@@ -52,6 +53,7 @@ export class AuthService {
     private welfareCapabilities: WelfareCapabilityResolverService,
     private disciplineCapabilities: DisciplineCapabilityResolverService,
     private opsCapabilities: OpsCapabilityResolverService,
+    private joinCapabilities: JoinCapabilityResolverService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -273,6 +275,13 @@ export class AuthService {
         )
       : undefined;
 
+    const joinAuth = choirId
+      ? await this.joinCapabilities.resolveGrantsToCapabilities(
+          userId,
+          choirId,
+        )
+      : undefined;
+
     return {
       id: user.id,
       email: user.email,
@@ -286,6 +295,7 @@ export class AuthService {
       welfareAuth,
       disciplineAuth,
       opsAuth,
+      joinAuth,
       /** Capabilities are resolved fresh on /auth/me — not embedded in JWT (see migration-notes/01-summary.md). */
     };
   }
