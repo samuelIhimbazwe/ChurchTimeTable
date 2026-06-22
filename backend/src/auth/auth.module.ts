@@ -10,6 +10,7 @@ import { MemberNumberModule } from '../members/member-number.module';
 import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
 import { ContributionCapabilityModule } from '../common/choir/contribution-capability.module';
 import { WelfareCapabilityModule } from '../common/choir/welfare-capability.module';
+import { DisciplineCapabilityModule } from '../common/choir/discipline-capability.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { WelfareCapabilityModule } from '../common/choir/welfare-capability.modu
     MemberPhoneEnforcementModule,
     forwardRef(() => ContributionCapabilityModule),
     forwardRef(() => WelfareCapabilityModule),
+    forwardRef(() => DisciplineCapabilityModule),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -31,6 +33,6 @@ import { WelfareCapabilityModule } from '../common/choir/welfare-capability.modu
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, PermissionsResolver],
-  exports: [AuthService, JwtModule, PermissionsResolver, ContributionCapabilityModule, WelfareCapabilityModule],
+  exports: [AuthService, JwtModule, PermissionsResolver, ContributionCapabilityModule, WelfareCapabilityModule, DisciplineCapabilityModule],
 })
 export class AuthModule {}

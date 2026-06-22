@@ -6,6 +6,8 @@ import { CreateDisciplineDto } from './dto/create-discipline.dto';
 import { BusinessRuleException } from '../common/exceptions/business.exception';
 import { NotificationsService } from '../notifications/notifications.service';
 import { paginate, paginatedResult } from '../common/dto/pagination.dto';
+import { getActiveChoirId } from '../common/choir/choir-context.storage';
+import { DisciplineCapabilityResolverService } from '../common/choir/discipline-capability-resolver.service';
 
 const STAGE_ORDER: DisciplineStage[] = [
   'REPORTED',
@@ -21,9 +23,30 @@ export class DisciplineService {
     private prisma: PrismaService,
     private audit: AuditService,
     private notifications: NotificationsService,
+    private disciplineCapabilities: DisciplineCapabilityResolverService,
   ) {}
 
+  private async resolveDisciplineAuth(userId: string) {
+    const choirId = getActiveChoirId();
+    if (!choirId) {
+      throw new ForbiddenException('Choir context required');
+    }
+    return this.disciplineCapabilities.resolveGrantsToCapabilities(
+      userId,
+      choirId,
+    );
+  }
+
+  private async assertCanManage(userId: string) {
+    const auth = await this.resolveDisciplineAuth(userId);
+    if (!this.disciplineCapabilities.can(auth, 'choir.discipline.manage@choir')) {
+      throw new ForbiddenException('Not allowed');
+    }
+    return auth;
+  }
+
   async create(dto: CreateDisciplineDto, userId: string) {
+    await this.assertCanManage(userId);
     const record = await this.prisma.disciplineCase.create({
       data: {
         memberId: dto.memberId,
@@ -48,6 +71,7 @@ export class DisciplineService {
   }
 
   async advanceStage(id: string, userId: string, resolution?: string, actionTaken?: string) {
+    await this.assertCanManage(userId);
     const record = await this.getOrThrow(id);
     const idx = STAGE_ORDER.indexOf(record.stage);
     if (idx < 0 || idx >= STAGE_ORDER.length - 1) {
@@ -78,12 +102,14 @@ export class DisciplineService {
   }
 
   async findAll(
+    userId: string,
     page = 1,
     limit = 20,
     filters?: { memberId?: string; stage?: DisciplineStage },
     viewerMemberId?: string,
-    canViewAll = false,
   ) {
+    const auth = await this.resolveDisciplineAuth(userId);
+    const canViewAll = this.disciplineCapabilities.canViewChoirDiscipline(auth);
     const { skip, take } = paginate(page, limit);
     const where: Prisma.DisciplineCaseWhereInput = {};
 
@@ -112,7 +138,9 @@ export class DisciplineService {
     return paginatedResult(items, total, page, limit);
   }
 
-  async findOne(id: string, viewerMemberId?: string, canViewAll = false) {
+  async findOne(id: string, userId: string, viewerMemberId?: string) {
+    const auth = await this.resolveDisciplineAuth(userId);
+    const canViewAll = this.disciplineCapabilities.canViewChoirDiscipline(auth);
     const record = await this.getOrThrow(id);
     if (!canViewAll && record.memberId !== viewerMemberId) {
       throw new ForbiddenException('You can only view your own discipline cases');

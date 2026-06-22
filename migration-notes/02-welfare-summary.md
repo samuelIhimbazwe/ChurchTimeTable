@@ -38,6 +38,8 @@
 
 **Discipline** — overlaps `/choir/care`, `HUB_PERMISSIONS`, `CareCaseConsole` discipline gates.
 
+**Completed:** see `03-discipline-summary.md`.
+
 ## Legacy alias map
 
 **Do not delete** until all welfare call sites migrated and contract tests pass in CI.

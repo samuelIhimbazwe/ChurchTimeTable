@@ -26,4 +26,7 @@ export const LEGACY_PERMISSION_ALIASES: Record<string, readonly string[]> = {
   'choir.family.manage': ['choir.contribution.oversight@choir'],
   'choir.welfare.view': ['choir.welfare.view@choir'],
   'choir.welfare.manage': ['choir.welfare.manage@choir'],
+  'discipline:read_all': ['choir.discipline.view@choir'],
+  'discipline:manage': ['choir.discipline.manage@choir'],
+  'discipline.review': ['choir.discipline.review@choir'],
 };

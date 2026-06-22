@@ -10,6 +10,7 @@ import { ROLES } from '../common/constants/roles';
 import { ChoirMembershipRulesService } from './choir-membership-rules.service';
 import { ContributionCapabilityResolverService } from '../common/choir/contribution-capability-resolver.service';
 import { WelfareCapabilityResolverService } from '../common/choir/welfare-capability-resolver.service';
+import { DisciplineCapabilityResolverService } from '../common/choir/discipline-capability-resolver.service';
 import type { ResolvedAuth } from '../common/choir/capability.types';
 import {
   inferCommitteeRoleKeys,
@@ -92,6 +93,7 @@ export type ChoirDashboardContext = {
   };
   contributionAuth: ResolvedAuth;
   welfareAuth: ResolvedAuth;
+  disciplineAuth: ResolvedAuth;
 };
 
 @Injectable()
@@ -102,6 +104,7 @@ export class ChoirDashboardContextService {
     private choirRules: ChoirMembershipRulesService,
     private contributionCapabilities: ContributionCapabilityResolverService,
     private welfareCapabilities: WelfareCapabilityResolverService,
+    private disciplineCapabilities: DisciplineCapabilityResolverService,
   ) {}
 
   async getContext(userId: string, choirId: string): Promise<ChoirDashboardContext> {
@@ -275,6 +278,12 @@ export class ChoirDashboardContextService {
         choirId,
       );
 
+    const disciplineAuth =
+      await this.disciplineCapabilities.resolveGrantsToCapabilities(
+        userId,
+        choirId,
+      );
+
     return {
       choir: {
         id: choir.id,
@@ -297,6 +306,7 @@ export class ChoirDashboardContextService {
       },
       contributionAuth,
       welfareAuth,
+      disciplineAuth,
     };
   }
 }

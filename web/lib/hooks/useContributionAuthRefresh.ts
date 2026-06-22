@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { isContributionRoutePath } from '@/lib/choir/contribution-routes'
 import { isWelfareRoutePath } from '@/lib/choir/welfare-routes'
+import { isDisciplineRoutePath } from '@/lib/choir/discipline-routes'
 
 /**
  * Re-fetch choir dashboard context (including contributionAuth / welfareAuth) when
@@ -18,7 +19,9 @@ export function useContributionAuthRefresh(choirId: string) {
   useEffect(() => {
     if (!choirId) return
     const enteredCapabilityRoute =
-      (isContributionRoutePath(pathname) || isWelfareRoutePath(pathname))
+      (isContributionRoutePath(pathname)
+        || isWelfareRoutePath(pathname)
+        || isDisciplineRoutePath(pathname))
       && prevPathRef.current !== pathname
     prevPathRef.current = pathname
     if (!enteredCapabilityRoute) return

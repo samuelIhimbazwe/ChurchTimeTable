@@ -13,7 +13,7 @@ import {
 } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import {
-  Card, Badge, Avatar, HubTabs, PermissionGate, SkeletonCard, EmptyState,
+  Card, Badge, Avatar, HubTabs, PermissionGate, CapabilityGate, SkeletonCard, EmptyState,
 } from '@/components/shared'
 import { CareCommandHome } from '@/components/choir/committee/CareCommandHome'
 import { formatDate } from '@/lib/utils/format'
@@ -309,7 +309,7 @@ export default function CareHubPage() {
 
       {tab === 'discipline' && (
         <div className="space-y-4">
-          <PermissionGate permission="discipline:manage">
+          <CapabilityGate uiCapability="discipline-manage">
             <Card padding="md">
               <p className="font-semibold mb-3">Open discipline case</p>
               <div className="space-y-3">
@@ -331,7 +331,7 @@ export default function CareHubPage() {
                 </button>
               </div>
             </Card>
-          </PermissionGate>
+          </CapabilityGate>
           {loadingDisc ? (
             <SkeletonCard rows={4} />
           ) : (
@@ -360,7 +360,7 @@ export default function CareHubPage() {
 
       {tab === 'welfare' && (
         <div className="space-y-4">
-          <PermissionGate anyOf={['choir.welfare.manage', 'discipline:manage']}>
+          <CapabilityGate uiCapability="welfare-manage">
             <Card padding="md" accent="gold">
               <p className="font-semibold mb-3">New welfare case (e.g. visit sick member)</p>
               <div className="space-y-3">
@@ -391,7 +391,7 @@ export default function CareHubPage() {
                 </button>
               </div>
             </Card>
-          </PermissionGate>
+          </CapabilityGate>
           {loadingWelfare ? (
             <SkeletonCard rows={4} />
           ) : (
