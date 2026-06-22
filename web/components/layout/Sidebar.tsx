@@ -20,6 +20,7 @@ import { composeRosterAwareNav } from '@/lib/navigation/roster-nav'
 import { composeCommsAwareNav } from '@/lib/navigation/comms-nav'
 import { composeVoiceAwareNav } from '@/lib/navigation/voice-nav'
 import { composeLogisticsAwareNav } from '@/lib/navigation/logistics-nav'
+import { composeDevotionAwareNav } from '@/lib/navigation/devotion-nav'
 import { getComposedProtocolNav } from '@/lib/navigation/protocol-nav'
 import { parseChoirIdFromPath } from '@/lib/choir/paths'
 import { isProtocolDashboardPath } from '@/lib/protocol/paths'
@@ -66,6 +67,7 @@ export default function Sidebar({
   const commsAuth = choirCtx?.commsAuth
   const voiceAuth = choirCtx?.voiceAuth
   const logisticsAuth = choirCtx?.logisticsAuth
+  const devotionAuth = choirCtx?.devotionAuth
   const { data: protocolCtx, isLoading: loadingProtocolCtx } = useProtocolDashboardContext(inProtocolArea)
 
   const membershipForPath = choirId
@@ -92,50 +94,54 @@ export default function Sidebar({
     return getNavForContext(pathname, authRole, { canAccessChoirArea, isChoirMember }, permissions, activeChoirMemberships)
   })()
 
-  const capabilityAwareSections = composeLogisticsAwareNav(
-    composeVoiceAwareNav(
-      composeCommsAwareNav(
-        composeRosterAwareNav(
-          composeMusicAwareNav(
-            composeSponsorAwareNav(
-              composeJoinAwareNav(
-                composeOpsAwareNav(
-                  composeDisciplineAwareNav(
-                    composeWelfareAwareNav(
-                      composeContributionAwareNav(
-                        rawSections,
+  const capabilityAwareSections = composeDevotionAwareNav(
+    composeLogisticsAwareNav(
+      composeVoiceAwareNav(
+        composeCommsAwareNav(
+          composeRosterAwareNav(
+            composeMusicAwareNav(
+              composeSponsorAwareNav(
+                composeJoinAwareNav(
+                  composeOpsAwareNav(
+                    composeDisciplineAwareNav(
+                      composeWelfareAwareNav(
+                        composeContributionAwareNav(
+                          rawSections,
+                          contextChoirId ?? choirId,
+                          contributionAuth,
+                        ),
                         contextChoirId ?? choirId,
-                        contributionAuth,
+                        welfareAuth,
                       ),
                       contextChoirId ?? choirId,
-                      welfareAuth,
+                      disciplineAuth,
                     ),
                     contextChoirId ?? choirId,
-                    disciplineAuth,
+                    opsAuth,
                   ),
                   contextChoirId ?? choirId,
-                  opsAuth,
+                  joinAuth,
                 ),
                 contextChoirId ?? choirId,
-                joinAuth,
+                sponsorAuth,
               ),
               contextChoirId ?? choirId,
-              sponsorAuth,
+              musicAuth,
             ),
             contextChoirId ?? choirId,
-            musicAuth,
+            rosterAuth,
           ),
           contextChoirId ?? choirId,
-          rosterAuth,
+          commsAuth,
         ),
         contextChoirId ?? choirId,
-        commsAuth,
+        voiceAuth,
       ),
       contextChoirId ?? choirId,
-      voiceAuth,
+      logisticsAuth,
     ),
     contextChoirId ?? choirId,
-    logisticsAuth,
+    devotionAuth,
   )
 
   const sections = useMemo(

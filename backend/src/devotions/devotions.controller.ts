@@ -44,27 +44,31 @@ export class DevotionsController {
   @Get('widget')
   @SkipPhoneEnforcement()
   @RequireAnyPermissions(...DEVOTION_VIEW)
-  widget(@ChoirId() choirId: string) {
-    return this.devotions.widgetFeed(choirId);
+  widget(@CurrentUser() user: JwtPayload, @ChoirId() choirId: string) {
+    return this.devotions.widgetFeed(user.sub, choirId);
   }
 
   @Get()
   @SkipPhoneEnforcement()
   @RequireAnyPermissions(...DEVOTION_VIEW)
-  list(@ChoirId() choirId: string, @Query() query: ListDevotionsQueryDto) {
+  list(
+    @CurrentUser() user: JwtPayload,
+    @ChoirId() choirId: string,
+    @Query() query: ListDevotionsQueryDto,
+  ) {
     const pinned =
       query.pinned === 'true'
         ? true
         : query.pinned === 'false'
           ? false
           : undefined;
-    return this.devotions.list(choirId, { type: query.type, pinned });
+    return this.devotions.list(user.sub, choirId, { type: query.type, pinned });
   }
 
   @Get('manage')
   @RequirePermissions(PERMISSIONS.CHOIR_DEVOTION_MANAGE)
-  manageList(@ChoirId() choirId: string) {
-    return this.devotions.listAllForManage(choirId);
+  manageList(@CurrentUser() user: JwtPayload, @ChoirId() choirId: string) {
+    return this.devotions.listAllForManage(user.sub, choirId);
   }
 
   @Get('bookmarks')
@@ -77,8 +81,12 @@ export class DevotionsController {
   @Get(':id')
   @SkipPhoneEnforcement()
   @RequireAnyPermissions(...DEVOTION_VIEW)
-  getOne(@ChoirId() choirId: string, @Param('id') id: string) {
-    return this.devotions.getById(choirId, id);
+  getOne(
+    @CurrentUser() user: JwtPayload,
+    @ChoirId() choirId: string,
+    @Param('id') id: string,
+  ) {
+    return this.devotions.getById(user.sub, choirId, id);
   }
 
   @Post()

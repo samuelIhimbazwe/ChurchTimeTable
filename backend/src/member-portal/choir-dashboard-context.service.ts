@@ -19,6 +19,7 @@ import { RosterCapabilityResolverService } from '../common/choir/roster-capabili
 import { CommsCapabilityResolverService } from '../common/choir/comms-capability-resolver.service';
 import { VoiceCapabilityResolverService } from '../common/choir/voice-capability-resolver.service';
 import { LogisticsCapabilityResolverService } from '../common/choir/logistics-capability-resolver.service';
+import { DevotionCapabilityResolverService } from '../common/choir/devotion-capability-resolver.service';
 import type { ResolvedAuth } from '../common/choir/capability.types';
 import {
   inferCommitteeRoleKeys,
@@ -110,6 +111,7 @@ export type ChoirDashboardContext = {
   commsAuth: ResolvedAuth;
   voiceAuth: ResolvedAuth;
   logisticsAuth: ResolvedAuth;
+  devotionAuth: ResolvedAuth;
 };
 
 @Injectable()
@@ -129,6 +131,7 @@ export class ChoirDashboardContextService {
     private commsCapabilities: CommsCapabilityResolverService,
     private voiceCapabilities: VoiceCapabilityResolverService,
     private logisticsCapabilities: LogisticsCapabilityResolverService,
+    private devotionCapabilities: DevotionCapabilityResolverService,
   ) {}
 
   async getContext(userId: string, choirId: string): Promise<ChoirDashboardContext> {
@@ -356,6 +359,12 @@ export class ChoirDashboardContextService {
         choirId,
       );
 
+    const devotionAuth =
+      await this.devotionCapabilities.resolveGrantsToCapabilities(
+        userId,
+        choirId,
+      );
+
     return {
       choir: {
         id: choir.id,
@@ -387,6 +396,7 @@ export class ChoirDashboardContextService {
       commsAuth,
       voiceAuth,
       logisticsAuth,
+      devotionAuth,
     };
   }
 }

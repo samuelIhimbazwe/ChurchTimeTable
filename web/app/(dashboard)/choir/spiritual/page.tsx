@@ -6,8 +6,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { devotionsApi, memberPortalApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import {
-  Card, Badge, HubTabs, PermissionGate, SkeletonCard, EmptyState,
+  Card, Badge, HubTabs, PermissionGate, SkeletonCard, EmptyState, CapabilityGate,
 } from '@/components/shared'
+import { useDevotionUiCapability } from '@/lib/hooks/useCapability'
 import { formatDate } from '@/lib/utils/format'
 import { SpiritualCommandHome } from '@/components/choir/committee/SpiritualCommandHome'
 import { BookOpen, HeartHandshake, Sparkles } from 'lucide-react'
@@ -43,9 +44,12 @@ export default function SpiritualHubPage() {
     queryFn: memberPortalApi.getIntercessorInbox,
   })
 
+  const canManageDevotions = useDevotionUiCapability('devotion-manage')
+
   const { data: devotions, isLoading: loadingDev } = useQuery({
     queryKey: ['choir-devotions-manage'],
     queryFn: devotionsApi.listManage,
+    enabled: canManageDevotions,
   })
 
   const updatePrayer = useMutation({
@@ -227,8 +231,17 @@ export default function SpiritualHubPage() {
       )}
 
       {tab === 'devotions' && (
+        <CapabilityGate
+          uiCapability="devotion-spiritual-content"
+          fallback={
+            <EmptyState
+              title="Devotions not available"
+              description="You do not have permission to view choir devotions."
+            />
+          }
+        >
         <div className="space-y-4">
-          <PermissionGate anyOf={['choir.devotion.create', 'choir.devotion.publish']}>
+          <CapabilityGate uiCapability="devotion-publish-form">
             <Card padding="md">
               <p className="font-semibold mb-3">Publish encouragement / holiness message</p>
               <div className="space-y-3">
@@ -261,9 +274,9 @@ export default function SpiritualHubPage() {
                 </button>
               </div>
             </Card>
-          </PermissionGate>
+          </CapabilityGate>
 
-          {loadingDev ? (
+          {canManageDevotions && (loadingDev ? (
             <SkeletonCard rows={4} />
           ) : (
             <ul className="space-y-3">
@@ -282,11 +295,13 @@ export default function SpiritualHubPage() {
                 </Card>
               ))}
             </ul>
-          )}
+          ))}
+
           <Link href="/portal/devotion" className="text-sm font-semibold text-primary-600 inline-flex items-center gap-1">
             <BookOpen size={14} /> Member devotion center preview →
           </Link>
         </div>
+        </CapabilityGate>
       )}
     </div>
   )

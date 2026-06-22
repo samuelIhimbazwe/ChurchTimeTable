@@ -25,6 +25,7 @@ import { RosterCapabilityResolverService } from '../common/choir/roster-capabili
 import { CommsCapabilityResolverService } from '../common/choir/comms-capability-resolver.service';
 import { VoiceCapabilityResolverService } from '../common/choir/voice-capability-resolver.service';
 import { LogisticsCapabilityResolverService } from '../common/choir/logistics-capability-resolver.service';
+import { DevotionCapabilityResolverService } from '../common/choir/devotion-capability-resolver.service';
 import { durationToMs } from './auth.constants';
 import {
   AccountInactiveException,
@@ -66,6 +67,7 @@ export class AuthService {
     private commsCapabilities: CommsCapabilityResolverService,
     private voiceCapabilities: VoiceCapabilityResolverService,
     private logisticsCapabilities: LogisticsCapabilityResolverService,
+    private devotionCapabilities: DevotionCapabilityResolverService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -336,6 +338,13 @@ export class AuthService {
         )
       : undefined;
 
+    const devotionAuth = choirId
+      ? await this.devotionCapabilities.resolveGrantsToCapabilities(
+          userId,
+          choirId,
+        )
+      : undefined;
+
     return {
       id: user.id,
       email: user.email,
@@ -356,6 +365,7 @@ export class AuthService {
       commsAuth,
       voiceAuth,
       logisticsAuth,
+      devotionAuth,
       /** Capabilities are resolved fresh on /auth/me — not embedded in JWT (see migration-notes/01-summary.md). */
     };
   }

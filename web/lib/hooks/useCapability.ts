@@ -44,6 +44,10 @@ import {
   uiCapabilityVisible as logisticsUiVisible,
   isLogisticsUiCapability,
 } from '@/lib/choir/logistics-ui-capability-registry';
+import {
+  uiCapabilityVisible as devotionUiVisible,
+  isDevotionUiCapability,
+} from '@/lib/choir/devotion-ui-capability-registry';
 
 const MEMBER_VIEW_CAP = 'choir.member.view@choir';
 
@@ -95,6 +99,10 @@ export function useLogisticsAuth(): ResolvedAuth | undefined {
   return useOptionalChoirDashboardCtx()?.context?.logisticsAuth;
 }
 
+export function useDevotionAuth(): ResolvedAuth | undefined {
+  return useOptionalChoirDashboardCtx()?.context?.devotionAuth;
+}
+
 function isWelfareCapabilityId(id: string): boolean {
   return id.startsWith('choir.welfare.');
 }
@@ -135,6 +143,10 @@ function isLogisticsCapabilityId(id: string): boolean {
   );
 }
 
+function isDevotionCapabilityId(id: string): boolean {
+  return id.startsWith('choir.devotion.');
+}
+
 const MEMBER_MANAGE_CAP = 'choir.member.manage@choir';
 
 function isMemberManageCapabilityId(id: string): boolean {
@@ -155,6 +167,7 @@ function canMemberManage(
 
 function canWithRouting(
   capabilityId: string,
+  devotionAuth: ResolvedAuth | undefined,
   logisticsAuth: ResolvedAuth | undefined,
   voiceAuth: ResolvedAuth | undefined,
   commsAuth: ResolvedAuth | undefined,
@@ -173,6 +186,9 @@ function canWithRouting(
   }
   if (isRosterViewCapabilityId(capabilityId)) {
     return can(rosterAuth, capabilityId, scopeId);
+  }
+  if (isDevotionCapabilityId(capabilityId)) {
+    return can(devotionAuth, capabilityId, scopeId);
   }
   if (isLogisticsCapabilityId(capabilityId)) {
     return can(logisticsAuth, capabilityId, scopeId);
@@ -207,6 +223,7 @@ function canWithRouting(
 export function useCapability(capabilityId: string, scopeId?: string): boolean {
   return canWithRouting(
     capabilityId,
+    useDevotionAuth(),
     useLogisticsAuth(),
     useVoiceAuth(),
     useCommsAuth(),
@@ -228,6 +245,7 @@ export function useAnyCapability(
 ): boolean {
   const memberManageIds = capabilityIds.filter(isMemberManageCapabilityId);
   const rosterViewIds = capabilityIds.filter(isRosterViewCapabilityId);
+  const devotionIds = capabilityIds.filter(isDevotionCapabilityId);
   const logisticsIds = capabilityIds.filter(isLogisticsCapabilityId);
   const voiceIds = capabilityIds.filter(isVoiceCapabilityId);
   const commsIds = capabilityIds.filter(isCommsCapabilityId);
@@ -241,6 +259,7 @@ export function useAnyCapability(
     (id) =>
       !isMemberManageCapabilityId(id)
       && !isRosterViewCapabilityId(id)
+      && !isDevotionCapabilityId(id)
       && !isLogisticsCapabilityId(id)
       && !isVoiceCapabilityId(id)
       && !isCommsCapabilityId(id)
@@ -251,6 +270,7 @@ export function useAnyCapability(
       && !isDisciplineCapabilityId(id)
       && !isWelfareCapabilityId(id),
   );
+  const devotionAuth = useDevotionAuth();
   const logisticsAuth = useLogisticsAuth();
   const voiceAuth = useVoiceAuth();
   const commsAuth = useCommsAuth();
@@ -268,6 +288,9 @@ export function useAnyCapability(
   const rosterViewOk =
     rosterViewIds.length === 0
     || hasAnyCapability(rosterAuth, rosterViewIds, scopeId);
+  const devotionOk =
+    devotionIds.length === 0
+    || hasAnyCapability(devotionAuth, devotionIds, scopeId);
   const logisticsOk =
     logisticsIds.length === 0
     || hasAnyCapability(logisticsAuth, logisticsIds, scopeId);
@@ -296,6 +319,7 @@ export function useAnyCapability(
   return (
     memberManageOk
     && rosterViewOk
+    && devotionOk
     && logisticsOk
     && voiceOk
     && commsOk
@@ -310,6 +334,7 @@ export function useAnyCapability(
 }
 
 export function useUiCapability(uiId: string, scopeId?: string): boolean {
+  const devotionAuth = useDevotionAuth();
   const logisticsAuth = useLogisticsAuth();
   const voiceAuth = useVoiceAuth();
   const commsAuth = useCommsAuth();
@@ -322,6 +347,9 @@ export function useUiCapability(uiId: string, scopeId?: string): boolean {
   const welfareAuth = useWelfareAuth();
   const contributionAuth = useContributionAuth();
 
+  if (isDevotionUiCapability(uiId)) {
+    return devotionUiVisible(uiId, (capId) => can(devotionAuth, capId));
+  }
   if (isLogisticsUiCapability(uiId)) {
     return logisticsUiVisible(uiId, (capId) => can(logisticsAuth, capId));
   }
@@ -486,4 +514,14 @@ export function useLogisticsCapability(capabilityId: string): boolean {
 export function useLogisticsUiCapability(uiId: string): boolean {
   const auth = useLogisticsAuth();
   return logisticsUiVisible(uiId, (capId) => can(auth, capId));
+}
+
+export function useDevotionCapability(capabilityId: string): boolean {
+  const auth = useDevotionAuth();
+  return can(auth, capabilityId);
+}
+
+export function useDevotionUiCapability(uiId: string): boolean {
+  const auth = useDevotionAuth();
+  return devotionUiVisible(uiId, (capId) => can(auth, capId));
 }

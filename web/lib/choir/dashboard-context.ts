@@ -50,4 +50,5 @@ export type ChoirDashboardContext = {
   commsAuth?: ResolvedAuth
   voiceAuth?: ResolvedAuth
   logisticsAuth?: ResolvedAuth
+  devotionAuth?: ResolvedAuth
 }

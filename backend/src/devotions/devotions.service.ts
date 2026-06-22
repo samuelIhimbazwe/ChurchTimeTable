@@ -10,8 +10,9 @@ import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { IndividualWhatsAppService } from '../messaging/individual-whatsapp.service';
 import { AppLinkService } from '../messaging/app-link.service';
-import { getActiveChoirId, choirScopeFilter } from '../common/choir/choir-context.storage';
+import { ChoirDevotionAccessService } from './choir-devotion-access.service';
 import type { CreateDevotionDto, UpdateDevotionDto } from './dto/devotion.dto';
+import { getActiveChoirId } from '../common/choir/choir-context.storage';
 
 @Injectable()
 export class DevotionsService {
@@ -21,6 +22,7 @@ export class DevotionsService {
     private notifications: NotificationsService,
     private individualWhatsApp: IndividualWhatsAppService,
     private appLinks: AppLinkService,
+    private devotionAccess: ChoirDevotionAccessService,
   ) {}
 
   private publishedFilter(now = new Date()): Prisma.DevotionWhereInput {
@@ -31,9 +33,11 @@ export class DevotionsService {
   }
 
   async list(
+    userId: string,
     choirId: string,
     filters?: { type?: DevotionType; pinned?: boolean },
   ) {
+    await this.devotionAccess.requireViewDevotion(userId, choirId);
     return this.prisma.devotion.findMany({
       where: {
         choirId,
@@ -48,7 +52,8 @@ export class DevotionsService {
     });
   }
 
-  async listAllForManage(choirId: string) {
+  async listAllForManage(userId: string, choirId: string) {
+    await this.devotionAccess.requireManageDevotion(userId, choirId);
     return this.prisma.devotion.findMany({
       where: { choirId },
       orderBy: { updatedAt: 'desc' },
@@ -58,7 +63,8 @@ export class DevotionsService {
     });
   }
 
-  async widgetFeed(choirId: string) {
+  async widgetFeed(userId: string, choirId: string) {
+    await this.devotionAccess.requireViewDevotion(userId, choirId);
     const now = new Date();
     const base = {
       choirId,
@@ -83,7 +89,8 @@ export class DevotionsService {
     return { pinned, verseOfDay, encouragement };
   }
 
-  async getById(choirId: string, id: string) {
+  async getById(userId: string, choirId: string, id: string) {
+    await this.devotionAccess.requireViewDevotion(userId, choirId);
     const row = await this.prisma.devotion.findFirst({
       where: { id, choirId },
     });
@@ -94,6 +101,7 @@ export class DevotionsService {
   }
 
   async create(userId: string, choirId: string, dto: CreateDevotionDto) {
+    await this.devotionAccess.requireCreateDevotion(userId, choirId);
     const row = await this.prisma.devotion.create({
       data: {
         choirId,
@@ -126,7 +134,8 @@ export class DevotionsService {
     id: string,
     dto: UpdateDevotionDto,
   ) {
-    await this.getById(choirId, id);
+    await this.devotionAccess.requireManageDevotion(userId, choirId);
+    await this.getById(userId, choirId, id);
     const row = await this.prisma.devotion.update({
       where: { id },
       data: {
@@ -156,7 +165,8 @@ export class DevotionsService {
   }
 
   async publish(userId: string, choirId: string, id: string) {
-    const existing = await this.getById(choirId, id);
+    await this.devotionAccess.requirePublishDevotion(userId, choirId);
+    const existing = await this.getById(userId, choirId, id);
     if (existing.publishedAt) {
       throw new BadRequestException('Already published');
     }
@@ -191,7 +201,8 @@ export class DevotionsService {
   }
 
   async pin(userId: string, choirId: string, id: string) {
-    await this.getById(choirId, id);
+    await this.devotionAccess.requireManageDevotion(userId, choirId);
+    await this.getById(userId, choirId, id);
 
     const row = await this.prisma.$transaction(async (tx) => {
       await tx.devotion.updateMany({
@@ -294,7 +305,8 @@ export class DevotionsService {
   }
 
   async bookmark(userId: string, choirId: string, devotionId: string) {
-    await this.getById(choirId, devotionId);
+    await this.devotionAccess.requireViewDevotion(userId, choirId);
+    await this.getById(userId, choirId, devotionId);
     return this.prisma.devotionBookmark.upsert({
       where: { userId_devotionId: { userId, devotionId } },
       create: { userId, devotionId },
@@ -310,6 +322,7 @@ export class DevotionsService {
   }
 
   async listBookmarks(userId: string, choirId: string) {
+    await this.devotionAccess.requireViewDevotion(userId, choirId);
     return this.prisma.devotionBookmark.findMany({
       where: {
         userId,
