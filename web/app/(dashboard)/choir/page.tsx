@@ -4,7 +4,7 @@ import { useDashboard } from '@/lib/hooks'
 import {
   Card, CardHeader, CardTitle, CardDescription,
   StatTile, Badge, SkeletonStatTile, SkeletonCard,
-  PermissionGate,
+  CapabilityGate,
 } from '@/components/shared'
 import {
   Users, Calendar, CheckCircle2, ArrowLeftRight,
@@ -67,14 +67,14 @@ export default function ChoirHubPage() {
           >
             Public profile
           </Link>
-          <PermissionGate anyOf={['event:write', 'choir.events.manage']}>
+          <CapabilityGate uiCapability="hub-new-activity">
             <Link
               href={choirLink('activities/new')}
               className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-gold-500 text-primary-900 rounded-lg hover:bg-gold-400 transition-colors shadow-card"
             >
               <PlusCircle size={15} /> New Activity
             </Link>
-          </PermissionGate>
+          </CapabilityGate>
         </div>
       </div>
 
@@ -206,11 +206,11 @@ export default function ChoirHubPage() {
                       </p>
                     </div>
                     <Badge variant="default">{a.activityType}</Badge>
-                    <PermissionGate anyOf={['attendance:write']}>
+                    <CapabilityGate uiCapability="hub-attendance-link">
                       <span className="text-xs font-semibold text-primary-600 shrink-0">
                         Attend →
                       </span>
-                    </PermissionGate>
+                    </CapabilityGate>
                   </Link>
                 </li>
               ))}
@@ -248,7 +248,7 @@ export default function ChoirHubPage() {
 
       {/* Leadership ops tiles — not contribution data; gate each tile separately */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <PermissionGate anyOf={['choir.join.review', 'member:manage', 'choir.ops.manage']}>
+        <CapabilityGate uiCapability="hub-pending-approvals">
           <Link href={choirLink('join-requests')}>
             <Card padding="md" className="hover:shadow-raised transition-shadow cursor-pointer">
               <p className="text-sm text-text-secondary">Pending Approvals</p>
@@ -257,8 +257,8 @@ export default function ChoirHubPage() {
               </p>
             </Card>
           </Link>
-        </PermissionGate>
-        <PermissionGate anyOf={['choir.welfare.view', 'choir.welfare.manage', 'discipline:manage']}>
+        </CapabilityGate>
+        <CapabilityGate uiCapability="hub-welfare-alerts">
           <Link href={choirLink('welfare')}>
             <Card padding="md" className="hover:shadow-raised transition-shadow cursor-pointer">
               <p className="text-sm text-text-secondary">Active Welfare</p>
@@ -267,8 +267,8 @@ export default function ChoirHubPage() {
               </p>
             </Card>
           </Link>
-        </PermissionGate>
-        <PermissionGate anyOf={['event:write', 'choir.ops.manage', 'choir.ops.view']}>
+        </CapabilityGate>
+        <CapabilityGate uiCapability="hub-pending-swaps">
           <Link href={choirLink('scheduling')}>
             <Card padding="md" className="hover:shadow-raised transition-shadow cursor-pointer">
               <p className="text-sm text-text-secondary">Pending Swaps</p>
@@ -277,7 +277,7 @@ export default function ChoirHubPage() {
               </p>
             </Card>
           </Link>
-        </PermissionGate>
+        </CapabilityGate>
       </div>
 
     </div>
