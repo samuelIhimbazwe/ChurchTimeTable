@@ -91,6 +91,7 @@ export default function Sidebar({
         choirCtx?.familyOffices ?? [],
         choirCtx?.positions ?? [],
         contributionAuth,
+        choirCtx ? capabilityCheck : undefined,
       )
     }
     if (inProtocolArea && protocolCtx?.canAccess) {

@@ -2,6 +2,7 @@
 
 import { useOptionalChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider';
 import { can, hasAnyCapability } from '@/lib/choir/capability-can';
+import { routeChoirCapability } from '@/lib/choir/capability-router';
 import type { ResolvedAuth } from '@/lib/choir/capability.types';
 import { uiCapabilityVisible as contributionUiVisible } from '@/lib/choir/contribution-ui-capability-registry';
 import {
@@ -210,46 +211,25 @@ function canWithRouting(
   contributionAuth: ResolvedAuth | undefined,
   scopeId?: string,
 ): boolean {
-  if (isMemberManageCapabilityId(capabilityId)) {
-    return canMemberManage(joinAuth, sponsorAuth, rosterAuth);
-  }
-  if (isRosterViewCapabilityId(capabilityId)) {
-    return can(rosterAuth, capabilityId, scopeId);
-  }
-  if (isRolesCapabilityId(capabilityId)) {
-    return can(rolesAuth, capabilityId, scopeId);
-  }
-  if (isDevotionCapabilityId(capabilityId)) {
-    return can(devotionAuth, capabilityId, scopeId);
-  }
-  if (isLogisticsCapabilityId(capabilityId)) {
-    return can(logisticsAuth, capabilityId, scopeId);
-  }
-  if (isVoiceCapabilityId(capabilityId)) {
-    return can(voiceAuth, capabilityId, scopeId);
-  }
-  if (isCommsCapabilityId(capabilityId)) {
-    return can(commsAuth, capabilityId, scopeId);
-  }
-  if (isMusicCapabilityId(capabilityId)) {
-    return can(musicAuth, capabilityId, scopeId);
-  }
-  if (isSponsorCapabilityId(capabilityId)) {
-    return can(sponsorAuth, capabilityId, scopeId);
-  }
-  if (isJoinCapabilityId(capabilityId)) {
-    return can(joinAuth, capabilityId, scopeId);
-  }
-  if (isOpsCapabilityId(capabilityId)) {
-    return can(opsAuth, capabilityId, scopeId);
-  }
-  if (isDisciplineCapabilityId(capabilityId)) {
-    return can(disciplineAuth, capabilityId, scopeId);
-  }
-  if (isWelfareCapabilityId(capabilityId)) {
-    return can(welfareAuth, capabilityId, scopeId);
-  }
-  return can(contributionAuth, capabilityId, scopeId);
+  return routeChoirCapability(
+    capabilityId,
+    {
+      rolesAuth,
+      devotionAuth,
+      logisticsAuth,
+      voiceAuth,
+      commsAuth,
+      rosterAuth,
+      musicAuth,
+      joinAuth,
+      sponsorAuth,
+      opsAuth,
+      disciplineAuth,
+      welfareAuth,
+      contributionAuth,
+    },
+    scopeId,
+  );
 }
 
 export function useCapability(capabilityId: string, scopeId?: string): boolean {

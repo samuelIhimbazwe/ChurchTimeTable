@@ -9,7 +9,10 @@ import { choirMemberHome, choirPath } from '@/lib/choir/paths'
 import { resolveChoirLandingPath } from '@/lib/choir/officer-roles'
 import { can } from '@/lib/choir/capability-can'
 import type { ResolvedAuth } from '@/lib/choir/capability.types'
-import { uiCapabilityVisible } from '@/lib/choir/contribution-ui-capability-registry'
+import { uiCapabilityVisible as contributionUiVisible } from '@/lib/choir/contribution-ui-capability-registry'
+import { uiCapabilityVisible as adminUiVisible } from '@/lib/choir/admin-hub-ui-capability-registry'
+import { uiCapabilityVisible as opsUiVisible } from '@/lib/choir/ops-ui-capability-registry'
+import { uiCapabilityVisible as rosterUiVisible } from '@/lib/choir/roster-ui-capability-registry'
 
 const BACK_TO_PORTAL: NavSection = {
   items: [{ label: 'Member portal', icon: Home, path: '/portal' }],
@@ -78,6 +81,7 @@ const ELEVATED_COMMITTEE_ROLE_KEYS = new Set([
   'spiritual_leader',
 ])
 
+/** Legacy fallback when capability router is unavailable (e.g. breadcrumb labels). */
 const CHOIR_WIDE_ADMIN_PERMISSIONS = [
   'member:manage',
   'choir.oversight',
@@ -87,16 +91,54 @@ const CHOIR_WIDE_ADMIN_PERMISSIONS = [
   'family:manage',
 ] as const
 
-function hasChoirWideAdminAccess(
+export function hasChoirWideAdminAccess(
   positions: Array<{ roleKey: string }>,
   permissions: string[],
+  capabilityCheck?: (capId: string) => boolean,
 ): boolean {
   if (positions.some((p) => ELEVATED_COMMITTEE_ROLE_KEYS.has(p.roleKey))) {
     return true
   }
+  if (capabilityCheck) {
+    return (
+      adminUiVisible('admin-hub', capabilityCheck)
+      || contributionUiVisible('contribution-stewardship', capabilityCheck)
+      || contributionUiVisible('contribution-finance-overview', capabilityCheck)
+      || contributionUiVisible('contribution-catalog', capabilityCheck)
+      || opsUiVisible('ops-scheduling-hub', capabilityCheck)
+      || rosterUiVisible('roster-hub', capabilityCheck)
+    )
+  }
   return CHOIR_WIDE_ADMIN_PERMISSIONS.some((p) => permissions.includes(p))
 }
 
+export function adminToolsForCapabilities(
+  choirId: string,
+  capabilityCheck: (capId: string) => boolean,
+): NavItem[] {
+  const items: NavItem[] = []
+  if (adminUiVisible('admin-hub', capabilityCheck)) {
+    items.push({ label: 'Administration', icon: Shield, path: choirPath(choirId, 'admin') })
+  }
+  if (adminUiVisible('admin-join-link', capabilityCheck)) {
+    items.push({ label: 'Join requests', icon: UserPlus, path: choirPath(choirId, 'join-requests') })
+  }
+  if (adminUiVisible('admin-roles-link', capabilityCheck)) {
+    items.push({ label: 'Position roles', icon: KeyRound, path: choirPath(choirId, 'roles') })
+  }
+  if (adminUiVisible('admin-families-link', capabilityCheck)) {
+    items.push({ label: 'Families structure', icon: Users, path: choirPath(choirId, 'admin/families') })
+  }
+  if (adminUiVisible('admin-public-profile-link', capabilityCheck)) {
+    items.push({ label: 'Public profile', icon: Settings2, path: choirPath(choirId, 'public-profile') })
+  }
+  if (adminUiVisible('admin-settings-link', capabilityCheck)) {
+    items.push({ label: 'Choir settings', icon: Settings2, path: choirPath(choirId, 'settings') })
+  }
+  return items
+}
+
+/** @deprecated Legacy permission-based admin tools — use adminToolsForCapabilities. */
 function adminToolsForPermissions(choirId: string, permissions: string[]): NavItem[] {
   const items: NavItem[] = []
   const canAdmin =
@@ -120,6 +162,40 @@ function adminToolsForPermissions(choirId: string, permissions: string[]): NavIt
   return items
 }
 
+function opsItemsForCapabilities(
+  choirId: string,
+  capabilityCheck: (capId: string) => boolean,
+): NavItem[] {
+  const items: NavItem[] = []
+  const canViewSchedule = opsUiVisible('ops-scheduling-hub', capabilityCheck)
+  const canViewRoster = rosterUiVisible('roster-hub', capabilityCheck)
+  const canViewActivities =
+    opsUiVisible('ops-activities-hub', capabilityCheck)
+    || capabilityCheck('choir.ops.attendance@choir')
+  const showOverview =
+    capabilityCheck('choir.ops.manage@choir')
+    || capabilityCheck('choir.ops.view@choir')
+
+  if (canViewSchedule) {
+    items.push({ label: 'Scheduling', icon: Calendar, path: choirPath(choirId, 'scheduling') })
+    items.push({
+      label: 'Service prep',
+      icon: ClipboardList,
+      path: choirPath(choirId, 'service-preparation'),
+    })
+  }
+  if (canViewRoster) {
+    items.push({ label: 'Roster', icon: Users, path: choirPath(choirId, 'members') })
+  }
+  if (canViewActivities || canViewSchedule) {
+    items.push({ label: 'Activities', icon: Calendar, path: choirPath(choirId, 'activities') })
+  }
+  if (showOverview) {
+    items.push({ label: 'Overview', icon: LayoutDashboard, path: choirPath(choirId) })
+  }
+  return items
+}
+
 /** Composed sidebar for `/choir/{choirId}/*`: member baseline + roles in this choir. */
 export function getComposedChoirNav(
   choirId: string,
@@ -128,6 +204,7 @@ export function getComposedChoirNav(
   familyOffices: Array<{ label: string; officePath: string }> = [],
   positions: Array<{ roleKey: string }> = [],
   contributionAuth?: ResolvedAuth,
+  capabilityCheck?: (capId: string) => boolean,
 ): NavSection[] {
   const sections: NavSection[] = [BACK_TO_PORTAL]
   const familyOfficePaths = new Set(familyOffices.map((o) => o.officePath))
@@ -166,38 +243,42 @@ export function getComposedChoirNav(
     sections.push({ section: 'Committee roles', items: hubs })
   }
 
+  const hasCapRouting = Boolean(capabilityCheck || contributionAuth)
   const capCheck = (uiId: string) =>
-    contributionAuth
-      ? uiCapabilityVisible(uiId, (capId, scopeId) => can(contributionAuth, capId, scopeId))
-      : false
+    capabilityCheck
+      ? contributionUiVisible(uiId, capabilityCheck)
+      : contributionAuth
+        ? contributionUiVisible(uiId, (capId, scopeId) => can(contributionAuth, capId, scopeId))
+        : false
 
-  if (hasChoirWideAdminAccess(positions, permissions)) {
-    const adminTools = adminToolsForPermissions(choirId, permissions)
+  if (hasChoirWideAdminAccess(positions, permissions, capabilityCheck)) {
+    const adminTools = capabilityCheck
+      ? adminToolsForCapabilities(choirId, capabilityCheck)
+      : adminToolsForPermissions(choirId, permissions)
     if (adminTools.length > 0) {
       sections.push({ section: 'Administration', items: adminTools })
     }
 
     const financeItems: NavItem[] = []
-    const showStewardshipFinance =
-      contributionAuth
-        ? capCheck('contribution-stewardship') || capCheck('contribution-finance-overview')
-        : permissions.some((p) =>
-            [
-              'choir.contribution.view.all',
-              'choir.finance.view',
-              'choir.finance.manage',
-              'choir.contribution.adjust',
-            ].includes(p),
-          )
+    const showStewardshipFinance = hasCapRouting
+      ? capCheck('contribution-stewardship') || capCheck('contribution-finance-overview')
+      : permissions.some((p) =>
+          [
+            'choir.contribution.view.all',
+            'choir.finance.view',
+            'choir.finance.manage',
+            'choir.contribution.adjust',
+          ].includes(p),
+        )
     if (showStewardshipFinance) {
-      if (!contributionAuth || capCheck('contribution-stewardship')) {
+      if (!hasCapRouting || capCheck('contribution-stewardship')) {
         financeItems.push({
           label: 'Stewardship',
           icon: DollarSign,
           path: choirPath(choirId, 'stewardship'),
         })
       }
-      if (!contributionAuth || capCheck('contribution-finance-overview')) {
+      if (!hasCapRouting || capCheck('contribution-finance-overview')) {
         financeItems.push({
           label: 'Finance analytics',
           icon: DollarSign,
@@ -205,12 +286,11 @@ export function getComposedChoirNav(
         })
       }
     }
-    const showCatalog =
-      contributionAuth
-        ? capCheck('contribution-catalog')
-        : permissions.some((p) =>
-            ['choir.contribution.type.manage', 'choir.contribution.campaign.manage'].includes(p),
-          )
+    const showCatalog = hasCapRouting
+      ? capCheck('contribution-catalog')
+      : permissions.some((p) =>
+          ['choir.contribution.type.manage', 'choir.contribution.campaign.manage'].includes(p),
+        )
     if (showCatalog) {
       financeItems.push({
         label: 'Catalog & campaigns',
@@ -222,37 +302,42 @@ export function getComposedChoirNav(
       sections.push({ section: 'Treasury', items: financeItems })
     }
 
-    const opsItems: NavItem[] = []
-    const canViewRoster =
-      permissions.some((p) => ['member:manage', 'choir.ops.manage', 'choir.oversight'].includes(p))
-      || (
-        positions.some((p) => ELEVATED_COMMITTEE_ROLE_KEYS.has(p.roleKey))
-        && permissions.some((p) => ['member:read', 'choir.ops.view'].includes(p))
-      )
-    const canMarkAttendance = permissions.some((p) =>
-      ['member:manage', 'choir.ops.manage', 'choir.oversight', 'attendance.mark'].includes(p),
-    )
-    const canViewSchedule =
-      canViewRoster
-      || permissions.some((p) => ['choir.ops.view', 'member:read'].includes(p))
+    const opsItems = capabilityCheck
+      ? opsItemsForCapabilities(choirId, capabilityCheck)
+      : (() => {
+          const legacy: NavItem[] = []
+          const canViewRoster =
+            permissions.some((p) => ['member:manage', 'choir.ops.manage', 'choir.oversight'].includes(p))
+            || (
+              positions.some((p) => ELEVATED_COMMITTEE_ROLE_KEYS.has(p.roleKey))
+              && permissions.some((p) => ['member:read', 'choir.ops.view'].includes(p))
+            )
+          const canMarkAttendance = permissions.some((p) =>
+            ['member:manage', 'choir.ops.manage', 'choir.oversight', 'attendance.mark'].includes(p),
+          )
+          const canViewSchedule =
+            canViewRoster
+            || permissions.some((p) => ['choir.ops.view', 'member:read'].includes(p))
 
-    if (canViewSchedule) {
-      opsItems.push({ label: 'Scheduling', icon: Calendar, path: choirPath(choirId, 'scheduling') })
-      opsItems.push({
-        label: 'Service prep',
-        icon: ClipboardList,
-        path: choirPath(choirId, 'service-preparation'),
-      })
-    }
-    if (canViewRoster) {
-      opsItems.push({ label: 'Roster', icon: Users, path: choirPath(choirId, 'members') })
-    }
-    if (canMarkAttendance || canViewSchedule) {
-      opsItems.push({ label: 'Activities', icon: Calendar, path: choirPath(choirId, 'activities') })
-    }
-    if (permissions.some((p) => ['choir.ops.manage', 'choir.oversight'].includes(p))) {
-      opsItems.push({ label: 'Overview', icon: LayoutDashboard, path: choirPath(choirId) })
-    }
+          if (canViewSchedule) {
+            legacy.push({ label: 'Scheduling', icon: Calendar, path: choirPath(choirId, 'scheduling') })
+            legacy.push({
+              label: 'Service prep',
+              icon: ClipboardList,
+              path: choirPath(choirId, 'service-preparation'),
+            })
+          }
+          if (canViewRoster) {
+            legacy.push({ label: 'Roster', icon: Users, path: choirPath(choirId, 'members') })
+          }
+          if (canMarkAttendance || canViewSchedule) {
+            legacy.push({ label: 'Activities', icon: Calendar, path: choirPath(choirId, 'activities') })
+          }
+          if (permissions.some((p) => ['choir.ops.manage', 'choir.oversight'].includes(p))) {
+            legacy.push({ label: 'Overview', icon: LayoutDashboard, path: choirPath(choirId) })
+          }
+          return legacy
+        })()
     if (opsItems.length > 0) {
       sections.push({ section: 'Operations', items: opsItems })
     }
