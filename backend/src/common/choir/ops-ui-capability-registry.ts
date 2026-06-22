@@ -46,6 +46,25 @@ export const OPS_UI_CAPABILITY_REGISTRY: OpsUiCapabilityDefinition[] = [
     requireAnyOf: ['choir.ops.manage@choir'],
     mode: 'any',
   },
+  {
+    id: 'ops-reports-hub',
+    label: 'Choir reports',
+    routeSegments: ['reports'],
+    requireAnyOf: [
+      'choir.ops.view@choir',
+      'choir.welfare.view@choir',
+      'choir.music.view@choir',
+      'choir.rehearsal.view@choir',
+    ],
+    mode: 'any',
+  },
+  {
+    id: 'ops-reports-export',
+    label: 'Export choir reports',
+    routeSegments: ['reports'],
+    requireAnyOf: ['choir.report.export@choir', 'choir.ops.view@choir'],
+    mode: 'any',
+  },
 ];
 
 export function uiCapabilityVisible(

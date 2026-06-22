@@ -128,7 +128,7 @@ function isDisciplineCapabilityId(id: string): boolean {
 }
 
 function isOpsCapabilityId(id: string): boolean {
-  return id.startsWith('choir.ops.');
+  return id.startsWith('choir.ops.') || id === 'choir.report.export@choir';
 }
 
 function isJoinCapabilityId(id: string): boolean {
@@ -448,6 +448,9 @@ export function useUiCapability(uiId: string, scopeId?: string): boolean {
     );
   }
   if (isOpsUiCapability(uiId)) {
+    if (uiId === 'ops-reports-hub') {
+      return opsUiVisible(uiId, routeCheck);
+    }
     return opsUiVisible(uiId, (capId) => can(opsAuth, capId));
   }
   if (isDisciplineUiCapability(uiId)) {

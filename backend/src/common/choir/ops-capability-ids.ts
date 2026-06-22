@@ -4,6 +4,7 @@ export const CHOIR_OPS_CAPABILITY_IDS = [
   'choir.ops.manage@choir',
   'choir.ops.schedule@choir',
   'choir.ops.attendance@choir',
+  'choir.report.export@choir',
 ] as const;
 
 export type ChoirOpsCapabilityId = (typeof CHOIR_OPS_CAPABILITY_IDS)[number];

@@ -10,6 +10,7 @@ const TAIL_TO_UI: Record<string, string> = {
   scheduling: 'ops-scheduling-hub',
   'service-preparation': 'ops-scheduling-hub',
   activities: 'ops-activities-hub',
+  reports: 'ops-reports-hub',
 }
 
 function navGateVisible(uiId: string, auth: ResolvedAuth | undefined): boolean {

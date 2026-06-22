@@ -6,7 +6,7 @@ import { reportsApi } from '@/lib/api'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import {
   Card, CardHeader, CardTitle, CardDescription,
-  StatTile, PermissionGate, SkeletonStatTile, SkeletonCard, Badge,
+  StatTile, CapabilityGate, SkeletonStatTile, SkeletonCard, Badge, EmptyState,
 } from '@/components/shared'
 import { Download, Activity, Heart, Users } from 'lucide-react'
 import { toast } from '@/components/shared/Toast'
@@ -73,6 +73,15 @@ export default function ChoirReportsPage() {
   const membership = s?.membership
 
   return (
+    <CapabilityGate
+      uiCapability="ops-reports-hub"
+      fallback={
+        <EmptyState
+          title="Reports not available"
+          description="You do not have permission to view choir reports."
+        />
+      }
+    >
     <div className="space-y-6 max-w-5xl mx-auto">
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -81,7 +90,7 @@ export default function ChoirReportsPage() {
             Unified health score, module metrics, and export pack
           </p>
         </div>
-        <PermissionGate permission="report:export">
+        <CapabilityGate uiCapability="ops-reports-export">
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() =>
@@ -120,7 +129,7 @@ export default function ChoirReportsPage() {
               <Download size={15} /> CSV
             </button>
           </div>
-        </PermissionGate>
+        </CapabilityGate>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -249,5 +258,6 @@ export default function ChoirReportsPage() {
         )}
       </Card>
     </div>
+    </CapabilityGate>
   )
 }

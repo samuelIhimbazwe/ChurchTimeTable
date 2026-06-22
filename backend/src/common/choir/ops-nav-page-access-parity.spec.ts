@@ -70,6 +70,13 @@ describe('ops nav ↔ page access parity', () => {
           pageAccessForOpsRoute(path, persona.auth),
         );
       });
+
+      it('reports: nav visibility matches page access', () => {
+        const path = routePath('reports');
+        expect(opsNavItemVisible(path, persona.auth)).toBe(
+          pageAccessForOpsRoute(path, persona.auth),
+        );
+      });
     });
   }
 

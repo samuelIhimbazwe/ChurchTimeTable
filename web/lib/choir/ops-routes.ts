@@ -2,6 +2,7 @@ export const OPS_ROUTE_TAILS = [
   'scheduling',
   'activities',
   'service-preparation',
+  'reports',
 ] as const;
 
 export function opsRouteTailFromPath(pathname: string): string | null {
