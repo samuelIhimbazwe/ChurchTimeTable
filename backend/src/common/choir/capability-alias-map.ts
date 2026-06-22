@@ -31,7 +31,11 @@ export const LEGACY_PERMISSION_ALIASES: Record<string, readonly string[]> = {
   'discipline.review': ['choir.discipline.review@choir'],
   'choir.ops.view': ['choir.ops.view@choir'],
   'choir.ops.manage': ['choir.ops.manage@choir'],
-  'choir.operations.manage': ['choir.ops.manage@choir', 'choir.join.review@choir'],
+  'choir.operations.manage': [
+    'choir.ops.manage@choir',
+    'choir.join.review@choir',
+    'choir.sponsor.review@choir',
+  ],
   'choir.ops.schedule': ['choir.ops.schedule@choir'],
   'choir.ops.attendance': ['choir.ops.attendance@choir'],
   'choir.attendance.manage': ['choir.ops.attendance@choir'],
@@ -51,4 +55,5 @@ export const LEGACY_PERMISSION_ALIASES: Record<string, readonly string[]> = {
   'assignment:write': ['choir.ops.schedule@choir'],
   'choir.join.review': ['choir.join.review@choir'],
   'member:manage': ['choir.member.manage@choir'],
+  'choir.sponsor.review': ['choir.sponsor.review@choir'],
 };

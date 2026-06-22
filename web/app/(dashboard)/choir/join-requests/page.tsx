@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { choirApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import {
-  Card, Badge, Avatar, CapabilityGate, PermissionGate, SkeletonCard,
+  Card, Badge, Avatar, CapabilityGate, SkeletonCard,
 } from '@/components/shared'
 import { useJoinUiCapability } from '@/lib/hooks/useCapability'
 import {
@@ -241,7 +241,7 @@ export default function JoinRequestsPage() {
                     </div>
                     <div className="flex flex-col items-end gap-2 shrink-0">
                       <Badge variant={SPONSOR_STATUS_BADGE[r.status]}>{r.status}</Badge>
-                      <PermissionGate anyOf={['choir.sponsor.review', 'member:manage']}>
+                      <CapabilityGate uiCapability="sponsor-requests-review">
                         {isReviewable && (
                           <button
                             type="button"
@@ -255,7 +255,7 @@ export default function JoinRequestsPage() {
                             {isOpen ? 'Close' : 'Review'}
                           </button>
                         )}
-                      </PermissionGate>
+                      </CapabilityGate>
                     </div>
                   </div>
 

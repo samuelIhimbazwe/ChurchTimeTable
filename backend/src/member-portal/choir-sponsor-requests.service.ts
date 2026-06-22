@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -11,9 +10,7 @@ import {
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
-import { PermissionsResolver } from '../auth/permissions.resolver';
-import { PERMISSIONS } from '../common/constants/roles';
-import { hasEffectivePermission } from '../common/governance/governance-permissions.util';
+import { ChoirSponsorAccessService } from './choir-sponsor-access.service';
 import { MEMBER_PORTAL_AUDIT } from './member-portal.constants';
 
 @Injectable()
@@ -21,19 +18,11 @@ export class ChoirSponsorRequestsService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
-    private permissions: PermissionsResolver,
+    private sponsorAccess: ChoirSponsorAccessService,
   ) {}
 
   private async memberForUser(userId: string) {
     return this.prisma.member.findUniqueOrThrow({ where: { userId } });
-  }
-
-  private canReview(perms: string[]) {
-    return (
-      hasEffectivePermission(perms, PERMISSIONS.CHOIR_SPONSOR_REVIEW) ||
-      hasEffectivePermission(perms, PERMISSIONS.CHOIR_OPERATIONS_MANAGE) ||
-      hasEffectivePermission(perms, PERMISSIONS.MEMBER_MANAGE)
-    );
   }
 
   private async assertNotSingerOfChoir(userId: string, choirId: string) {
@@ -109,10 +98,9 @@ export class ChoirSponsorRequestsService {
     actorUserId: string,
     filters?: { choirId?: string; status?: ChoirSponsorRequestStatus },
   ) {
-    const resolved = await this.permissions.resolveForUser(actorUserId);
     const member = await this.memberForUser(actorUserId);
 
-    if (this.canReview(resolved.permissions)) {
+    if (await this.sponsorAccess.canReview(actorUserId, filters?.choirId)) {
       return this.prisma.choirSponsorRequest.findMany({
         where: {
           ...(filters?.choirId ? { choirId: filters.choirId } : {}),
@@ -142,15 +130,12 @@ export class ChoirSponsorRequestsService {
       reviewNotes?: string;
     },
   ) {
-    const resolved = await this.permissions.resolveForUser(actorUserId);
-    if (!this.canReview(resolved.permissions)) {
-      throw new ForbiddenException('Denied');
-    }
-
     const request = await this.prisma.choirSponsorRequest.findUniqueOrThrow({
       where: { id: requestId },
       include: { member: true, choir: true },
     });
+
+    await this.sponsorAccess.requireReview(actorUserId, request.choirId);
 
     if (request.status !== 'PENDING') {
       throw new BadRequestException('Request is not reviewable');

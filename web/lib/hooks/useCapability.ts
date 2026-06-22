@@ -20,6 +20,12 @@ import {
   uiCapabilityVisible as joinUiVisible,
   isJoinUiCapability,
 } from '@/lib/choir/join-ui-capability-registry';
+import {
+  uiCapabilityVisible as sponsorUiVisible,
+  isSponsorUiCapability,
+} from '@/lib/choir/sponsor-ui-capability-registry';
+
+const MEMBER_MANAGE_CAP = 'choir.member.manage@choir';
 
 export function useContributionAuth(): ResolvedAuth | undefined {
   return useOptionalChoirDashboardCtx()?.context?.contributionAuth;
@@ -41,6 +47,10 @@ export function useJoinAuth(): ResolvedAuth | undefined {
   return useOptionalChoirDashboardCtx()?.context?.joinAuth;
 }
 
+export function useSponsorAuth(): ResolvedAuth | undefined {
+  return useOptionalChoirDashboardCtx()?.context?.sponsorAuth;
+}
+
 function isWelfareCapabilityId(id: string): boolean {
   return id.startsWith('choir.welfare.');
 }
@@ -54,61 +64,101 @@ function isOpsCapabilityId(id: string): boolean {
 }
 
 function isJoinCapabilityId(id: string): boolean {
-  return id.startsWith('choir.join.') || id === 'choir.member.manage@choir';
+  return id.startsWith('choir.join.');
 }
 
-function authForCapabilityId(
+function isSponsorCapabilityId(id: string): boolean {
+  return id.startsWith('choir.sponsor.');
+}
+
+function isMemberManageCapabilityId(id: string): boolean {
+  return id === MEMBER_MANAGE_CAP;
+}
+
+function canMemberManage(
+  joinAuth: ResolvedAuth | undefined,
+  sponsorAuth: ResolvedAuth | undefined,
+): boolean {
+  return (
+    can(joinAuth, MEMBER_MANAGE_CAP)
+    || can(sponsorAuth, MEMBER_MANAGE_CAP)
+  );
+}
+
+function canWithRouting(
   capabilityId: string,
   joinAuth: ResolvedAuth | undefined,
+  sponsorAuth: ResolvedAuth | undefined,
   opsAuth: ResolvedAuth | undefined,
   disciplineAuth: ResolvedAuth | undefined,
   welfareAuth: ResolvedAuth | undefined,
   contributionAuth: ResolvedAuth | undefined,
-): ResolvedAuth | undefined {
-  if (isJoinCapabilityId(capabilityId)) return joinAuth;
-  if (isOpsCapabilityId(capabilityId)) return opsAuth;
-  if (isDisciplineCapabilityId(capabilityId)) return disciplineAuth;
-  if (isWelfareCapabilityId(capabilityId)) return welfareAuth;
-  return contributionAuth;
+  scopeId?: string,
+): boolean {
+  if (isMemberManageCapabilityId(capabilityId)) {
+    return canMemberManage(joinAuth, sponsorAuth);
+  }
+  if (isSponsorCapabilityId(capabilityId)) {
+    return can(sponsorAuth, capabilityId, scopeId);
+  }
+  if (isJoinCapabilityId(capabilityId)) {
+    return can(joinAuth, capabilityId, scopeId);
+  }
+  if (isOpsCapabilityId(capabilityId)) {
+    return can(opsAuth, capabilityId, scopeId);
+  }
+  if (isDisciplineCapabilityId(capabilityId)) {
+    return can(disciplineAuth, capabilityId, scopeId);
+  }
+  if (isWelfareCapabilityId(capabilityId)) {
+    return can(welfareAuth, capabilityId, scopeId);
+  }
+  return can(contributionAuth, capabilityId, scopeId);
 }
 
 export function useCapability(capabilityId: string, scopeId?: string): boolean {
-  const joinAuth = useJoinAuth();
-  const opsAuth = useOpsAuth();
-  const disciplineAuth = useDisciplineAuth();
-  const welfareAuth = useWelfareAuth();
-  const contributionAuth = useContributionAuth();
-  const auth = authForCapabilityId(
+  return canWithRouting(
     capabilityId,
-    joinAuth,
-    opsAuth,
-    disciplineAuth,
-    welfareAuth,
-    contributionAuth,
+    useJoinAuth(),
+    useSponsorAuth(),
+    useOpsAuth(),
+    useDisciplineAuth(),
+    useWelfareAuth(),
+    useContributionAuth(),
+    scopeId,
   );
-  return can(auth, capabilityId, scopeId);
 }
 
 export function useAnyCapability(
   capabilityIds: string[],
   scopeId?: string,
 ): boolean {
+  const memberManageIds = capabilityIds.filter(isMemberManageCapabilityId);
+  const sponsorIds = capabilityIds.filter(isSponsorCapabilityId);
   const joinIds = capabilityIds.filter(isJoinCapabilityId);
   const opsIds = capabilityIds.filter(isOpsCapabilityId);
   const disciplineIds = capabilityIds.filter(isDisciplineCapabilityId);
   const welfareIds = capabilityIds.filter(isWelfareCapabilityId);
   const contributionIds = capabilityIds.filter(
     (id) =>
-      !isJoinCapabilityId(id)
+      !isMemberManageCapabilityId(id)
+      && !isSponsorCapabilityId(id)
+      && !isJoinCapabilityId(id)
       && !isOpsCapabilityId(id)
       && !isDisciplineCapabilityId(id)
       && !isWelfareCapabilityId(id),
   );
   const joinAuth = useJoinAuth();
+  const sponsorAuth = useSponsorAuth();
   const opsAuth = useOpsAuth();
   const disciplineAuth = useDisciplineAuth();
   const welfareAuth = useWelfareAuth();
   const contributionAuth = useContributionAuth();
+  const memberManageOk =
+    memberManageIds.length === 0 || canMemberManage(joinAuth, sponsorAuth);
+  const sponsorOk =
+    sponsorIds.length === 0
+    || hasAnyCapability(sponsorAuth, sponsorIds, scopeId);
   const joinOk =
     joinIds.length === 0 || hasAnyCapability(joinAuth, joinIds, scopeId);
   const opsOk =
@@ -122,42 +172,89 @@ export function useAnyCapability(
   const contributionOk =
     contributionIds.length === 0
     || hasAnyCapability(contributionAuth, contributionIds, scopeId);
-  return joinOk && opsOk && disciplineOk && welfareOk && contributionOk;
+  return (
+    memberManageOk
+    && sponsorOk
+    && joinOk
+    && opsOk
+    && disciplineOk
+    && welfareOk
+    && contributionOk
+  );
 }
 
 export function useUiCapability(uiId: string, scopeId?: string): boolean {
+  const joinAuth = useJoinAuth();
+  const sponsorAuth = useSponsorAuth();
+  const opsAuth = useOpsAuth();
+  const disciplineAuth = useDisciplineAuth();
+  const welfareAuth = useWelfareAuth();
+  const contributionAuth = useContributionAuth();
+
+  if (isSponsorUiCapability(uiId)) {
+    return sponsorUiVisible(uiId, (capId) =>
+      capId === MEMBER_MANAGE_CAP
+        ? canMemberManage(joinAuth, sponsorAuth)
+        : can(sponsorAuth, capId),
+    );
+  }
   if (isJoinUiCapability(uiId)) {
-    const auth = useJoinAuth();
-    return joinUiVisible(uiId, (capId) => can(auth, capId));
+    return joinUiVisible(uiId, (capId) =>
+      capId === MEMBER_MANAGE_CAP
+        ? canMemberManage(joinAuth, sponsorAuth)
+        : can(joinAuth, capId),
+    );
   }
   if (isOpsUiCapability(uiId)) {
-    const auth = useOpsAuth();
-    return opsUiVisible(uiId, (capId) => can(auth, capId));
+    return opsUiVisible(uiId, (capId) => can(opsAuth, capId));
   }
   if (isDisciplineUiCapability(uiId)) {
-    const auth = useDisciplineAuth();
-    return disciplineUiVisible(uiId, (capId) => can(auth, capId));
+    return disciplineUiVisible(uiId, (capId) => can(disciplineAuth, capId));
   }
   if (isWelfareUiCapability(uiId)) {
-    const auth = useWelfareAuth();
-    return welfareUiVisible(uiId, (capId) => can(auth, capId));
+    return welfareUiVisible(uiId, (capId) => can(welfareAuth, capId));
   }
-  const auth = useContributionAuth();
   return contributionUiVisible(
     uiId,
-    (capId, famId) => can(auth, capId, famId ?? scopeId),
+    (capId, famId) => can(contributionAuth, capId, famId ?? scopeId),
     scopeId,
   );
 }
 
+export function useSponsorCapability(capabilityId: string): boolean {
+  if (isMemberManageCapabilityId(capabilityId)) {
+    return canMemberManage(useJoinAuth(), useSponsorAuth());
+  }
+  const auth = useSponsorAuth();
+  return can(auth, capabilityId);
+}
+
+export function useSponsorUiCapability(uiId: string): boolean {
+  const joinAuth = useJoinAuth();
+  const sponsorAuth = useSponsorAuth();
+  return sponsorUiVisible(uiId, (capId) =>
+    capId === MEMBER_MANAGE_CAP
+      ? canMemberManage(joinAuth, sponsorAuth)
+      : can(sponsorAuth, capId),
+  );
+}
+
 export function useJoinCapability(capabilityId: string): boolean {
+  if (isMemberManageCapabilityId(capabilityId)) {
+    return canMemberManage(useJoinAuth(), useSponsorAuth());
+  }
   const auth = useJoinAuth();
   return can(auth, capabilityId);
 }
 
 export function useJoinUiCapability(uiId: string): boolean {
-  const auth = useJoinAuth();
-  return joinUiVisible(uiId, (capId) => can(auth, capId));
+  const joinAuth = useJoinAuth();
+  const sponsorAuth = useSponsorAuth();
+  return joinUiVisible(uiId, (capId) =>
+    capId === MEMBER_MANAGE_CAP
+      ? canMemberManage(joinAuth, sponsorAuth)
+      : can(joinAuth, capId),
+  );
 }
 
 export function useOpsCapability(capabilityId: string): boolean {
