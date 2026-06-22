@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { financeApi, familiesApi } from '@/lib/api'
-import { Card, Badge, PermissionGate } from '@/components/shared'
+import { Card, Badge, CapabilityGate } from '@/components/shared'
 import { SponsorContributionInboxPanel } from '@/components/choir/SponsorContributionInboxPanel'
 import { ContributionAdjustModal } from '@/components/shared/finance/ContributionAdjustModal'
 import { useResolvedChoirScope } from '@/lib/hooks'
@@ -17,6 +17,12 @@ const CHOIR_TREASURY_KEYS = [
   'finance-contributions-all',
   'contribution-adjustments-recent',
   'finance-contributions-choir-pending-family',
+] as const
+
+const CHOIR_TREASURY_VIEW_ANY = [
+  'choir.contribution.view@choir',
+  'choir.contribution.verify@choir',
+  'choir.contribution.adjust@choir',
 ] as const
 
 type TreasuryRow = TreasuryContributionRow
@@ -79,6 +85,16 @@ export function ContributionTreasuryPanel({ compact = false }: { compact?: boole
   })()
 
   return (
+    <CapabilityGate
+      anyOf={[...CHOIR_TREASURY_VIEW_ANY]}
+      fallback={
+        compact ? null : (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-text-muted text-sm">You do not have access to treasury data.</p>
+          </div>
+        )
+      }
+    >
     <>
       <div className={compact ? 'space-y-4' : 'space-y-6'}>
         {!compact && (
@@ -124,11 +140,7 @@ export function ContributionTreasuryPanel({ compact = false }: { compact?: boole
           </Card>
         )}
 
-        {choirId && (
-          <PermissionGate anyOf={['choir.contribution.view.all', 'choir.finance.manage', 'choir.contribution.adjust']}>
-            <SponsorContributionInboxPanel choirId={choirId} />
-          </PermissionGate>
-        )}
+        {choirId && <SponsorContributionInboxPanel choirId={choirId} />}
 
         <Card padding="md">
           <p className="font-semibold mb-2">Pending family confirmation</p>
@@ -172,7 +184,7 @@ export function ContributionTreasuryPanel({ compact = false }: { compact?: boole
                       {item.discrepancyReason && <> · {item.discrepancyReason}</>}
                     </p>
                   </div>
-                  <PermissionGate anyOf={['choir.contribution.adjust', 'choir.finance.manage']}>
+                  <CapabilityGate capability="choir.contribution.adjust@choir">
                     <button
                       type="button"
                       onClick={() => openAdjust(item)}
@@ -180,16 +192,15 @@ export function ContributionTreasuryPanel({ compact = false }: { compact?: boole
                     >
                       Adjust →
                     </button>
-                  </PermissionGate>
+                  </CapabilityGate>
                 </li>
               ))}
             </ul>
           )}
         </Card>
 
-        <PermissionGate anyOf={['choir.contribution.view.all', 'choir.finance.manage', 'choir.contribution.adjust']}>
-          <Card padding="md">
-            <p className="font-semibold mb-1">All choir contributions</p>
+        <Card padding="md">
+          <p className="font-semibold mb-1">All choir contributions</p>
             <p className="text-xs text-text-muted mb-3">
               Every family — view confirmed amounts and apply treasurer adjustments.
             </p>
@@ -237,7 +248,7 @@ export function ContributionTreasuryPanel({ compact = false }: { compact?: boole
                           {item.status}
                         </Badge>
                         {(item.status === 'CONFIRMED' || item.status === 'APPROVED') && (
-                          <PermissionGate anyOf={['choir.contribution.adjust', 'choir.finance.manage']}>
+                          <CapabilityGate capability="choir.contribution.adjust@choir">
                             <button
                               type="button"
                               onClick={() => openAdjust(item)}
@@ -245,7 +256,7 @@ export function ContributionTreasuryPanel({ compact = false }: { compact?: boole
                             >
                               Adjust
                             </button>
-                          </PermissionGate>
+                          </CapabilityGate>
                         )}
                       </div>
                     </li>
@@ -254,7 +265,6 @@ export function ContributionTreasuryPanel({ compact = false }: { compact?: boole
               </ul>
             )}
           </Card>
-        </PermissionGate>
 
         {!compact && adjustmentItems.length > 0 && (
           <Card padding="md">
@@ -286,6 +296,7 @@ export function ContributionTreasuryPanel({ compact = false }: { compact?: boole
         />
       )}
     </>
+    </CapabilityGate>
   )
 }
 

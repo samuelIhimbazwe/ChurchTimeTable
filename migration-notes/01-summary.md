@@ -110,7 +110,7 @@
 
 | `ChoirAdminHub`, `join-requests`, non-finance `advisor` checks | No contribution gates in those files (or out of scope) |
 
-| `ContributionTreasuryPanel` internal PermissionGates | API enforces; panel migration deferred |
+| `ContributionTreasuryPanel` internal PermissionGates | Migrated to CapabilityGate (post-merge cleanup) |
 
 | Protocol / sponsor contribution flows | Not in v1 capability list |
 
@@ -136,7 +136,9 @@
 
 - **`listAllContributions`** uses `assertCanViewChoirContributionsAny` (any choir membership with `view@choir`) because API lacks single `choirId` — may be broader than old `view.all` alone.
 
-- **`/choir/budget` page-level gate (confirmed, no code for merge):** The hub has **no page-level `CapabilityGate`** (unlike `stewardship`, `finance`, and `budget/verify`). Write actions and catalog links still use **legacy `PermissionGate`s**; all data fetches hit API routes guarded by **legacy `@RequireAnyPermissions`** (`FINANCE_VIEW_ANY`, `STEWARDSHIP_ANALYTICS_ANY`, etc.) — so unauthorized users see an empty shell, not leaked data. **Decision:** defer wrapping the page in `CapabilityGate uiCapability="contribution-budget-hub"` until a dedicated budget-page pass; nav parity already uses that UI capability, and API legacy guards are the safety net for merge.
+- **`/choir/budget` page-level gate (done):** Wrapped in `CapabilityGate uiCapability="contribution-budget-hub"`; create-budget and catalog sub-actions use `choir.budget.manage@choir` and `contribution-catalog`.
+
+- **`ContributionTreasuryPanel` (done):** Outer gate uses `anyOf` view/verify/adjust `@choir`; adjust buttons use `choir.contribution.adjust@choir`.
 
 ### Post-merge — do not delete yet
 

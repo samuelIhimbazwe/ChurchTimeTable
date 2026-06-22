@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { financeApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import {
-  Card, StatTile, HubTabs, PermissionGate, SkeletonCard, SkeletonStatTile,
+  Card, StatTile, HubTabs, CapabilityGate, SkeletonCard, SkeletonStatTile,
 } from '@/components/shared'
 import { ContributionTreasuryPanel } from '@/components/choir/ContributionTreasuryPanel'
 import { TreasurerCommandHome } from '@/components/choir/committee/TreasurerCommandHome'
@@ -100,6 +100,14 @@ export default function BudgetHubPage() {
     'w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold-500'
 
   return (
+    <CapabilityGate
+      uiCapability="contribution-budget-hub"
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <p className="text-text-muted">You do not have access to the budget hub.</p>
+        </div>
+      }
+    >
     <div className="space-y-6 max-w-5xl mx-auto pb-8">
       <div>
         <h1 className="font-display text-3xl text-text-primary">Treasurer & budget</h1>
@@ -159,18 +167,18 @@ export default function BudgetHubPage() {
             <Link href={choirLink('finance')} className="text-sm font-semibold text-primary-600">
               Finance analytics →
             </Link>
-            <PermissionGate anyOf={['choir.contribution.type.manage', 'choir.contribution.campaign.manage']}>
+            <CapabilityGate uiCapability="contribution-catalog">
               <Link href={choirLink('stewardship/admin')} className="text-sm font-semibold text-primary-600">
                 Catalog & campaigns →
               </Link>
-            </PermissionGate>
+            </CapabilityGate>
           </div>
         </div>
       )}
 
       {tab === 'budgets' && (
         <div className="space-y-4">
-          <PermissionGate anyOf={['choir.finance.manage', 'finance:write']}>
+          <CapabilityGate capability="choir.budget.manage@choir">
             <Card padding="md" accent="gold">
               <p className="font-semibold text-text-primary mb-3">Plan a budget line</p>
               <p className="text-xs text-text-muted mb-3">
@@ -219,7 +227,7 @@ export default function BudgetHubPage() {
                 Create budget line
               </button>
             </Card>
-          </PermissionGate>
+          </CapabilityGate>
 
           {loadingBudgets ? (
             <SkeletonCard rows={4} />
@@ -258,5 +266,6 @@ export default function BudgetHubPage() {
         </div>
       )}
     </div>
+    </CapabilityGate>
   )
 }
