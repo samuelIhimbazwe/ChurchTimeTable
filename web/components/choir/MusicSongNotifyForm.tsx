@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { musicApi, choirOperationsApi } from '@/lib/api'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { toast } from '@/components/shared/Toast'
-import { Card, Badge, PermissionGate } from '@/components/shared'
+import { Card, Badge, CapabilityGate } from '@/components/shared'
 import { Megaphone, Music } from 'lucide-react'
 import type { Song } from '@/lib/api/modules/music'
 
@@ -87,8 +87,8 @@ export function MusicSongNotifyForm({ defaultOccasion = 'REHEARSAL' }: Props) {
     'w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold-500'
 
   return (
-    <PermissionGate
-      anyOf={['choir.announcement.manage', 'choir.member.notify', 'choir.music.manage']}
+    <CapabilityGate
+      uiCapability="music-notify-members"
       fallback={
         <Card padding="md">
           <p className="text-sm text-text-muted">
@@ -179,6 +179,6 @@ export function MusicSongNotifyForm({ defaultOccasion = 'REHEARSAL' }: Props) {
           {publish.isPending ? 'Publishing…' : 'Notify all members'}
         </button>
       </Card>
-    </PermissionGate>
+    </CapabilityGate>
   )
 }

@@ -44,6 +44,16 @@ export const MUSIC_UI_CAPABILITY_REGISTRY: MusicUiCapabilityDefinition[] = [
     requireAnyOf: ['choir.music.manage@choir', 'choir.rehearsal.manage@choir'],
     mode: 'any',
   },
+  {
+    id: 'music-notify-members',
+    label: 'Notify members about songs',
+    routeSegments: ['music-direction'],
+    requireAnyOf: [
+      'choir.announcement.manage@choir',
+      'choir.music.manage@choir',
+    ],
+    mode: 'any',
+  },
 ];
 
 export function uiCapabilityVisible(

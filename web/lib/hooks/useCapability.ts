@@ -418,6 +418,9 @@ export function useUiCapability(uiId: string, scopeId?: string): boolean {
     );
   }
   if (isMusicUiCapability(uiId)) {
+    if (uiId === 'music-notify-members') {
+      return musicUiVisible(uiId, routeCheck);
+    }
     return musicUiVisible(uiId, (capId) => can(musicAuth, capId));
   }
   if (isSponsorUiCapability(uiId)) {
@@ -518,6 +521,10 @@ export function useMusicCapability(capabilityId: string): boolean {
 
 export function useMusicUiCapability(uiId: string): boolean {
   const auth = useMusicAuth();
+  if (uiId === 'music-notify-members') {
+    const routeCheck = useCapabilityRouter();
+    return musicUiVisible(uiId, routeCheck);
+  }
   return musicUiVisible(uiId, (capId) => can(auth, capId));
 }
 
