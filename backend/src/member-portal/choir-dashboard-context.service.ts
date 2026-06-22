@@ -16,6 +16,7 @@ import { JoinCapabilityResolverService } from '../common/choir/join-capability-r
 import { SponsorCapabilityResolverService } from '../common/choir/sponsor-capability-resolver.service';
 import { MusicCapabilityResolverService } from '../common/choir/music-capability-resolver.service';
 import { RosterCapabilityResolverService } from '../common/choir/roster-capability-resolver.service';
+import { CommsCapabilityResolverService } from '../common/choir/comms-capability-resolver.service';
 import type { ResolvedAuth } from '../common/choir/capability.types';
 import {
   inferCommitteeRoleKeys,
@@ -104,6 +105,7 @@ export type ChoirDashboardContext = {
   sponsorAuth: ResolvedAuth;
   musicAuth: ResolvedAuth;
   rosterAuth: ResolvedAuth;
+  commsAuth: ResolvedAuth;
 };
 
 @Injectable()
@@ -120,6 +122,7 @@ export class ChoirDashboardContextService {
     private sponsorCapabilities: SponsorCapabilityResolverService,
     private musicCapabilities: MusicCapabilityResolverService,
     private rosterCapabilities: RosterCapabilityResolverService,
+    private commsCapabilities: CommsCapabilityResolverService,
   ) {}
 
   async getContext(userId: string, choirId: string): Promise<ChoirDashboardContext> {
@@ -329,6 +332,12 @@ export class ChoirDashboardContextService {
         choirId,
       );
 
+    const commsAuth =
+      await this.commsCapabilities.resolveGrantsToCapabilities(
+        userId,
+        choirId,
+      );
+
     return {
       choir: {
         id: choir.id,
@@ -357,6 +366,7 @@ export class ChoirDashboardContextService {
       sponsorAuth,
       musicAuth,
       rosterAuth,
+      commsAuth,
     };
   }
 }

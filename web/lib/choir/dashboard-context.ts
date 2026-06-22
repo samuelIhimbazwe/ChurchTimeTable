@@ -47,4 +47,5 @@ export type ChoirDashboardContext = {
   sponsorAuth?: ResolvedAuth
   musicAuth?: ResolvedAuth
   rosterAuth?: ResolvedAuth
+  commsAuth?: ResolvedAuth
 }

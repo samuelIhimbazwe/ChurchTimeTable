@@ -11,19 +11,17 @@ import {
   Prisma,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { PermissionsResolver } from '../auth/permissions.resolver';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { IndividualWhatsAppService } from '../messaging/individual-whatsapp.service';
 import { AppLinkService } from '../messaging/app-link.service';
-import { PERMISSIONS } from '../common/constants/roles';
-import { assertChoirOpsManage, assertChoirOpsView } from './choir-operations.util';
+import { ChoirCommsAccessService } from './choir-comms-access.service';
 
 @Injectable()
 export class ChoirAnnouncementsService {
   constructor(
     private prisma: PrismaService,
-    private permissions: PermissionsResolver,
+    private commsAccess: ChoirCommsAccessService,
     private audit: AuditService,
     private notifications: NotificationsService,
     private individualWhatsApp: IndividualWhatsAppService,
@@ -31,11 +29,7 @@ export class ChoirAnnouncementsService {
   ) {}
 
   async listMusicNotifyDelivery(userId: string, choirId: string) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    assertChoirOpsView(
-      resolved.permissions,
-      PERMISSIONS.CHOIR_ANNOUNCEMENT_MANAGE,
-    );
+    await this.commsAccess.requireViewAnnouncements(userId, choirId);
 
     const rows = await this.prisma.choirAnnouncement.findMany({
       where: {
@@ -82,11 +76,7 @@ export class ChoirAnnouncementsService {
   }
 
   async listAnnouncementDelivery(userId: string, choirId: string) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    assertChoirOpsView(
-      resolved.permissions,
-      PERMISSIONS.CHOIR_ANNOUNCEMENT_MANAGE,
-    );
+    await this.commsAccess.requireViewAnnouncements(userId, choirId);
 
     const rows = await this.prisma.choirAnnouncement.findMany({
       where: {
@@ -132,21 +122,8 @@ export class ChoirAnnouncementsService {
     return { items };
   }
 
-  private async assertManage(userId: string) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    assertChoirOpsManage(
-      resolved.permissions,
-      PERMISSIONS.CHOIR_ANNOUNCEMENT_MANAGE,
-    );
-    return resolved;
-  }
-
   async list(userId: string, choirId: string) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    assertChoirOpsView(
-      resolved.permissions,
-      PERMISSIONS.CHOIR_ANNOUNCEMENT_MANAGE,
-    );
+    await this.commsAccess.requireViewAnnouncements(userId, choirId);
 
     return this.prisma.choirAnnouncement.findMany({
       where: { choirId },
@@ -167,7 +144,7 @@ export class ChoirAnnouncementsService {
       publish?: boolean;
     },
   ) {
-    await this.assertManage(userId);
+    await this.commsAccess.requireManageAnnouncements(userId, dto.choirId);
     if (!dto.title?.trim() || !dto.body?.trim()) {
       throw new BadRequestException('Title and body are required');
     }
@@ -204,11 +181,14 @@ export class ChoirAnnouncementsService {
   }
 
   async publish(userId: string, id: string) {
-    await this.assertManage(userId);
     const existing = await this.prisma.choirAnnouncement.findUnique({
       where: { id },
     });
     if (!existing) throw new NotFoundException('Announcement not found');
+    await this.commsAccess.requireManageAnnouncements(
+      userId,
+      existing.choirId ?? undefined,
+    );
     if (existing.publishedAt) return existing;
 
     const row = await this.prisma.choirAnnouncement.update({
@@ -342,7 +322,6 @@ export class ChoirAnnouncementsService {
       }
 
       case AnnouncementAudience.VOICE_SECTION: {
-        // Voice-section membership is not modeled yet; notify active choir members.
         return choirMemberUserIds();
       }
 

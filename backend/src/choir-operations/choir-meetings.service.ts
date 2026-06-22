@@ -1,20 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ActionItemStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { PermissionsResolver } from '../auth/permissions.resolver';
-import { PERMISSIONS } from '../common/constants/roles';
-import { assertChoirOpsManage, assertChoirOpsView } from './choir-operations.util';
+import { ChoirCommsAccessService } from './choir-comms-access.service';
 
 @Injectable()
 export class ChoirMeetingsService {
   constructor(
     private prisma: PrismaService,
-    private permissions: PermissionsResolver,
+    private commsAccess: ChoirCommsAccessService,
   ) {}
 
-  async list(userId: string) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    assertChoirOpsView(resolved.permissions, PERMISSIONS.CHOIR_MEETING_MANAGE);
+  async list(userId: string, choirId?: string) {
+    await this.commsAccess.requireViewMeetings(userId, choirId);
     return this.prisma.choirMeeting.findMany({
       orderBy: { scheduledAt: 'desc' },
       include: {
@@ -23,9 +20,8 @@ export class ChoirMeetingsService {
     });
   }
 
-  async get(userId: string, id: string) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    assertChoirOpsView(resolved.permissions, PERMISSIONS.CHOIR_MEETING_MANAGE);
+  async get(userId: string, id: string, choirId?: string) {
+    await this.commsAccess.requireViewMeetings(userId, choirId);
     const row = await this.prisma.choirMeeting.findUnique({
       where: { id },
       include: {
@@ -38,9 +34,8 @@ export class ChoirMeetingsService {
     return row;
   }
 
-  async reports(userId: string) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    assertChoirOpsView(resolved.permissions, PERMISSIONS.CHOIR_MEETING_MANAGE);
+  async reports(userId: string, choirId?: string) {
+    await this.commsAccess.requireViewMeetings(userId, choirId);
     const [open, overdue, completed] = await Promise.all([
       this.prisma.meetingActionItem.count({
         where: { status: ActionItemStatus.OPEN },
@@ -61,9 +56,9 @@ export class ChoirMeetingsService {
   async create(
     userId: string,
     dto: { title: string; scheduledAt: string; location?: string; agenda?: string },
+    choirId?: string,
   ) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    assertChoirOpsManage(resolved.permissions, PERMISSIONS.CHOIR_MEETING_MANAGE);
+    await this.commsAccess.requireManageMeetings(userId, choirId);
     return this.prisma.choirMeeting.create({
       data: {
         title: dto.title,

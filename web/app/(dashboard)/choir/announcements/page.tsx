@@ -12,7 +12,7 @@ import {
 import type { ChoirAnnouncementAudience } from '@/lib/api/modules/choir-operations'
 import { toast } from '@/components/shared/Toast'
 import {
-  Card, CardHeader, CardTitle, PermissionGate, SkeletonCard, Badge, EmptyState,
+  Card, CardHeader, CardTitle, SkeletonCard, Badge, EmptyState, CapabilityGate,
 } from '@/components/shared'
 import { FormField, Input, Select, Textarea } from '@/components/shared/form'
 import { AnnouncementMemberPreview } from '@/components/choir/AnnouncementMemberPreview'
@@ -126,6 +126,15 @@ export default function AnnouncementsPage() {
   })
 
   return (
+    <CapabilityGate
+      uiCapability="comms-announcements-hub"
+      fallback={
+        <EmptyState
+          title="Announcements not available"
+          description="You do not have permission to view choir announcements."
+        />
+      }
+    >
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
@@ -134,7 +143,7 @@ export default function AnnouncementsPage() {
             Targeted choir communications — entire choir, leadership, families, or voice sections
           </p>
         </div>
-        <PermissionGate anyOf={['choir.announcement.manage', 'announcement:write']}>
+        <CapabilityGate uiCapability="comms-announcements-manage">
           <button
             onClick={() => setShowForm((v) => !v)}
             disabled={!choirId}
@@ -142,7 +151,7 @@ export default function AnnouncementsPage() {
           >
             + New Announcement
           </button>
-        </PermissionGate>
+        </CapabilityGate>
       </div>
 
       {showForm && (
@@ -284,7 +293,7 @@ export default function AnnouncementsPage() {
                   </p>
                 </div>
                 {!a.publishedAt && (
-                  <PermissionGate anyOf={['choir.announcement.manage']}>
+                  <CapabilityGate uiCapability="comms-announcements-manage">
                     <button
                       type="button"
                       onClick={() => publishDraft.mutate(a.id)}
@@ -293,7 +302,7 @@ export default function AnnouncementsPage() {
                     >
                       Publish
                     </button>
-                  </PermissionGate>
+                  </CapabilityGate>
                 )}
               </div>
             </Card>
@@ -302,5 +311,6 @@ export default function AnnouncementsPage() {
         </div>
       )}
     </div>
+    </CapabilityGate>
   )
 }
