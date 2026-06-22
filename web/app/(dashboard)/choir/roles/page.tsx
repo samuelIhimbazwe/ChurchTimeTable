@@ -10,8 +10,9 @@ import { useResolvedChoirScope } from '@/lib/hooks'
 import { toast } from '@/components/shared/Toast'
 import {
   Card, CardHeader, CardTitle, CardDescription,
-  SkeletonCard, Badge,
+  SkeletonCard, Badge, CapabilityGate, EmptyState,
 } from '@/components/shared'
+import { useRolesUiCapability } from '@/lib/hooks/useCapability'
 import {
   CHOIR_POSITION_PERMISSION_OPTIONS,
   choirPositionLabel,
@@ -34,17 +35,18 @@ export default function ChoirRolesPage() {
   const [permissions, setPermissions] = useState<string[]>([])
 
   const { choirId, choirName } = useResolvedChoirScope()
+  const canManageCommittee = useRolesUiCapability('roles-committee-manage')
 
   const { data: roles, isLoading } = useQuery({
     queryKey: ['choir-position-roles', choirId],
     queryFn: () => choirApi.getPositionRoles(choirId),
-    enabled: !!choirId,
+    enabled: !!choirId && canManageCommittee,
   })
 
   const { data: templateData } = useQuery({
     queryKey: ['choir-role-templates'],
     queryFn: () => governanceApi.listChoirRoleTemplates(),
-    enabled: !!choirId,
+    enabled: !!choirId && canManageCommittee,
   })
 
   const save = useMutation({
@@ -103,6 +105,15 @@ export default function ChoirRolesPage() {
   const hasHighSod = sodWarnings.some((w) => w.severity === 'high')
 
   return (
+    <CapabilityGate
+      uiCapability="roles-hub"
+      fallback={
+        <EmptyState
+          title="Position roles not available"
+          description="You do not have permission to manage choir position roles."
+        />
+      }
+    >
     <div className="space-y-6 max-w-4xl mx-auto pb-8">
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -113,6 +124,7 @@ export default function ChoirRolesPage() {
               : 'Define choir leadership positions and their access.'}
           </p>
         </div>
+        <CapabilityGate uiCapability="roles-committee-manage">
         <button
           type="button"
           onClick={openCreate}
@@ -120,8 +132,10 @@ export default function ChoirRolesPage() {
         >
           <Plus size={15} /> Add role
         </button>
+        </CapabilityGate>
       </div>
 
+      <CapabilityGate uiCapability="roles-committee-manage">
       {showForm && (
         <Card padding="md" accent="gold">
           <CardHeader className="p-0 mb-4">
@@ -227,6 +241,8 @@ export default function ChoirRolesPage() {
           })}
         </div>
       )}
+      </CapabilityGate>
     </div>
+    </CapabilityGate>
   )
 }

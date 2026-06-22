@@ -8,8 +8,10 @@ import { ProtocolTeamGenerationService } from './protocol-team-generation.servic
 import { OperationalScopeService } from './operational-scope.service';
 import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
 
+import { ChoirCustomRolesModule } from '../choir-custom-roles/choir-custom-roles.module';
+
 @Module({
-  imports: [PrismaModule, AuditModule, AuthModule, MemberPhoneEnforcementModule],
+  imports: [PrismaModule, AuditModule, AuthModule, MemberPhoneEnforcementModule, ChoirCustomRolesModule],
   controllers: [GovernanceController],
   providers: [
     GovernanceService,

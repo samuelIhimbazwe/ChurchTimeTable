@@ -32,22 +32,31 @@ export class ChoirCustomRolesController {
   @Get()
   @RequirePermissions(PERMISSIONS.CHOIR_CUSTOM_ROLE_MANAGE)
   list(
+    @CurrentUser() user: JwtPayload,
     @ChoirId() choirId: string,
     @Query('includeInactive') includeInactive?: string,
   ) {
-    return this.roles.list(choirId, includeInactive === 'true');
+    return this.roles.list(user.sub, choirId, includeInactive === 'true');
   }
 
   @Get(':id')
   @RequirePermissions(PERMISSIONS.CHOIR_CUSTOM_ROLE_MANAGE)
-  getOne(@ChoirId() choirId: string, @Param('id') id: string) {
-    return this.roles.getById(choirId, id);
+  getOne(
+    @CurrentUser() user: JwtPayload,
+    @ChoirId() choirId: string,
+    @Param('id') id: string,
+  ) {
+    return this.roles.getById(user.sub, choirId, id);
   }
 
   @Get(':id/audit')
   @RequirePermissions(PERMISSIONS.CHOIR_CUSTOM_ROLE_MANAGE)
-  audit(@ChoirId() choirId: string, @Param('id') id: string) {
-    return this.roles.auditTrail(choirId, id);
+  audit(
+    @CurrentUser() user: JwtPayload,
+    @ChoirId() choirId: string,
+    @Param('id') id: string,
+  ) {
+    return this.roles.auditTrail(user.sub, choirId, id);
   }
 
   @Post()

@@ -114,5 +114,7 @@ export const LEGACY_PERMISSION_ALIASES: Record<string, readonly string[]> = {
     'choir.devotion.create@choir',
     'choir.devotion.view@choir',
   ],
+  'choir.custom_role.manage': ['choir.custom_role.manage@choir'],
+  'committee.role.manage': ['choir.committee_role.manage@choir'],
   'choir.events.manage': ['choir.meeting.manage@choir', 'choir.ops.manage@choir'],
 };

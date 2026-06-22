@@ -34,8 +34,17 @@ export class GovernanceController {
 
   @Post('choir/sod-check')
   @RequirePermissions(PERMISSIONS.COMMITTEE_ROLE_MANAGE_SCOPE)
-  checkChoirSod(@Body() dto: ChoirSodCheckDto) {
-    return this.governance.checkChoirPermissionSoD(dto.permissions, dto.roleName);
+  checkChoirSod(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: ChoirSodCheckDto,
+    @Query('choirId') choirId?: string,
+  ) {
+    return this.governance.checkChoirPermissionSoD(
+      user.sub,
+      dto.permissions,
+      dto.roleName,
+      choirId,
+    );
   }
 
   @Post('choir/members')
@@ -63,8 +72,11 @@ export class GovernanceController {
 
   @Get('choir/role-templates')
   @RequirePermissions(PERMISSIONS.COMMITTEE_ROLE_MANAGE_SCOPE)
-  listChoirRoleTemplates() {
-    return this.governance.listChoirRoleTemplates();
+  listChoirRoleTemplates(
+    @CurrentUser() user: JwtPayload,
+    @Query('choirId') choirId?: string,
+  ) {
+    return this.governance.listChoirRoleTemplates(user.sub, choirId);
   }
 
   @Post('choir/role-templates/:templateId/apply')

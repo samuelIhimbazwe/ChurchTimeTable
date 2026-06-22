@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { ChoirRolesAccessService } from '../choir-custom-roles/choir-roles-access.service';
 import { AssignCommitteeMemberDto } from './dto/assign-committee-member.dto';
 import { UpsertCommitteeRoleDto } from './dto/upsert-committee-role.dto';
 import { ApplyChoirRoleTemplateDto } from './dto/apply-choir-role-template.dto';
@@ -17,9 +18,11 @@ export class GovernanceService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
+    private rolesAccess: ChoirRolesAccessService,
   ) {}
 
   async upsertChoirCommitteeRole(dto: UpsertCommitteeRoleDto, actorUserId: string) {
+    await this.rolesAccess.requireManageCommitteeRole(actorUserId, dto.scopeId);
     const sodWarnings = evaluateChoirPermissionSoD(dto.permissions, dto.name);
 
     const role = await this.prisma.choirCommitteeRole.upsert({
@@ -44,7 +47,13 @@ export class GovernanceService {
     return { role, sodWarnings };
   }
 
-  checkChoirPermissionSoD(permissions: string[], roleName?: string) {
+  async checkChoirPermissionSoD(
+    actorUserId: string,
+    permissions: string[],
+    roleName?: string,
+    choirId?: string,
+  ) {
+    await this.rolesAccess.requireManageCommitteeRole(actorUserId, choirId);
     return {
       warnings: evaluateChoirPermissionSoD(permissions, roleName),
     };
@@ -174,7 +183,8 @@ export class GovernanceService {
     return { roles, members };
   }
 
-  async listChoirRoleTemplates() {
+  async listChoirRoleTemplates(actorUserId: string, choirId?: string) {
+    await this.rolesAccess.requireManageCommitteeRole(actorUserId, choirId);
     const rows = await this.prisma.choirCommitteeRoleTemplate.findMany({
       orderBy: { label: 'asc' },
     });
@@ -195,6 +205,7 @@ export class GovernanceService {
     dto: ApplyChoirRoleTemplateDto,
     actorUserId: string,
   ) {
+    await this.rolesAccess.requireManageCommitteeRole(actorUserId, dto.scopeId);
     const template = await this.prisma.choirCommitteeRoleTemplate.findUnique({
       where: { id: templateId },
     });
@@ -230,6 +241,7 @@ export class GovernanceService {
   }
 
   async createAdvisorElevation(dto: CreateAdvisorElevationDto, actorUserId: string) {
+    await this.rolesAccess.requireManageCommitteeRole(actorUserId, dto.scopeId);
     const durationDays = dto.durationDays ?? 7;
     const startsAt = new Date();
     const endsAt = new Date(startsAt.getTime() + durationDays * 24 * 60 * 60 * 1000);
@@ -298,6 +310,7 @@ export class GovernanceService {
     const elevation = await this.prisma.choirAdvisorElevation.findUniqueOrThrow({
       where: { id: elevationId },
     });
+    await this.rolesAccess.requireManageCommitteeRole(actorUserId, elevation.choirId);
     const revokedAt = new Date();
     const updated = await this.prisma.choirAdvisorElevation.update({
       where: { id: elevationId },

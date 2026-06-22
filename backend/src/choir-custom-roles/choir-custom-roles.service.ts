@@ -6,6 +6,7 @@ import {
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { ChoirRolesAccessService } from './choir-roles-access.service';
 import type {
   AssignCustomRoleDto,
   CreateCustomRoleDto,
@@ -17,9 +18,11 @@ export class ChoirCustomRolesService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
+    private rolesAccess: ChoirRolesAccessService,
   ) {}
 
-  async list(choirId: string, includeInactive = false) {
+  async list(userId: string, choirId: string, includeInactive = false) {
+    await this.rolesAccess.requireManageCustomRole(userId, choirId);
     return this.prisma.choirCustomRole.findMany({
       where: {
         choirId,
@@ -44,7 +47,8 @@ export class ChoirCustomRolesService {
     });
   }
 
-  async getById(choirId: string, id: string) {
+  async getById(userId: string, choirId: string, id: string) {
+    await this.rolesAccess.requireManageCustomRole(userId, choirId);
     const row = await this.prisma.choirCustomRole.findFirst({
       where: { id, choirId },
       include: {
@@ -70,6 +74,7 @@ export class ChoirCustomRolesService {
   }
 
   async create(userId: string, choirId: string, dto: CreateCustomRoleDto) {
+    await this.rolesAccess.requireManageCustomRole(userId, choirId);
     const existing = await this.prisma.choirCustomRole.findFirst({
       where: { choirId, name: dto.name },
     });
@@ -109,7 +114,8 @@ export class ChoirCustomRolesService {
     id: string,
     dto: UpdateCustomRoleDto,
   ) {
-    await this.getById(choirId, id);
+    await this.rolesAccess.requireManageCustomRole(userId, choirId);
+    await this.getById(userId, choirId, id);
 
     if (dto.permissions) {
       await this.prisma.choirCustomRolePermission.deleteMany({
@@ -149,7 +155,8 @@ export class ChoirCustomRolesService {
     roleId: string,
     dto: AssignCustomRoleDto,
   ) {
-    await this.getById(choirId, roleId);
+    await this.rolesAccess.requireManageCustomRole(userId, choirId);
+    await this.getById(userId, choirId, roleId);
 
     const assignment = await this.prisma.choirMemberCustomRole.upsert({
       where: {
@@ -190,7 +197,8 @@ export class ChoirCustomRolesService {
     roleId: string,
     memberId: string,
   ) {
-    await this.getById(choirId, roleId);
+    await this.rolesAccess.requireManageCustomRole(userId, choirId);
+    await this.getById(userId, choirId, roleId);
     await this.prisma.choirMemberCustomRole.deleteMany({
       where: { choirId, customRoleId: roleId, memberId },
     });
@@ -205,8 +213,9 @@ export class ChoirCustomRolesService {
     return { ok: true };
   }
 
-  async auditTrail(choirId: string, roleId: string) {
-    await this.getById(choirId, roleId);
+  async auditTrail(userId: string, choirId: string, roleId: string) {
+    await this.rolesAccess.requireManageCustomRole(userId, choirId);
+    await this.getById(userId, choirId, roleId);
     return this.prisma.auditLog.findMany({
       where: {
         entity: { in: ['ChoirCustomRole', 'ChoirMemberCustomRole'] },
