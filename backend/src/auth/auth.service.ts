@@ -23,6 +23,7 @@ import { SponsorCapabilityResolverService } from '../common/choir/sponsor-capabi
 import { MusicCapabilityResolverService } from '../common/choir/music-capability-resolver.service';
 import { RosterCapabilityResolverService } from '../common/choir/roster-capability-resolver.service';
 import { CommsCapabilityResolverService } from '../common/choir/comms-capability-resolver.service';
+import { VoiceCapabilityResolverService } from '../common/choir/voice-capability-resolver.service';
 import { durationToMs } from './auth.constants';
 import {
   AccountInactiveException,
@@ -62,6 +63,7 @@ export class AuthService {
     private musicCapabilities: MusicCapabilityResolverService,
     private rosterCapabilities: RosterCapabilityResolverService,
     private commsCapabilities: CommsCapabilityResolverService,
+    private voiceCapabilities: VoiceCapabilityResolverService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -318,6 +320,13 @@ export class AuthService {
         )
       : undefined;
 
+    const voiceAuth = choirId
+      ? await this.voiceCapabilities.resolveGrantsToCapabilities(
+          userId,
+          choirId,
+        )
+      : undefined;
+
     return {
       id: user.id,
       email: user.email,
@@ -336,6 +345,7 @@ export class AuthService {
       musicAuth,
       rosterAuth,
       commsAuth,
+      voiceAuth,
       /** Capabilities are resolved fresh on /auth/me — not embedded in JWT (see migration-notes/01-summary.md). */
     };
   }

@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { rehearsalsApi } from '@/lib/api'
-import { Card, Badge, SkeletonCard } from '@/components/shared'
+import { Card, Badge, SkeletonCard, EmptyState, CapabilityGate } from '@/components/shared'
 import { Mic2 } from 'lucide-react'
 
 export default function VoiceSectionsPage() {
@@ -12,6 +12,15 @@ export default function VoiceSectionsPage() {
   })
 
   return (
+    <CapabilityGate
+      uiCapability="voice-sections-hub"
+      fallback={
+        <EmptyState
+          title="Voice sections not available"
+          description="You do not have permission to view choir voice sections."
+        />
+      }
+    >
     <div className="space-y-6 max-w-4xl mx-auto">
       <div>
         <h2 className="font-display text-3xl text-text-primary">Voice Sections</h2>
@@ -49,5 +58,6 @@ export default function VoiceSectionsPage() {
         </div>
       )}
     </div>
+    </CapabilityGate>
   )
 }

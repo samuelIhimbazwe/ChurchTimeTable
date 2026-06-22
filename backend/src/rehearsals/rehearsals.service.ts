@@ -8,6 +8,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { ChoirMusicAccessService } from '../music/choir-music-access.service';
+import { ChoirVoiceAccessService } from './choir-voice-access.service';
 import { UpsertRehearsalPlanDto } from './dto/upsert-rehearsal-plan.dto';
 import { ChoirNotificationsService } from '../choir-mvp/choir-notifications.service';
 import { ReportsService } from '../reports/reports.service';
@@ -18,6 +19,7 @@ export class RehearsalsService {
     private prisma: PrismaService,
     private audit: AuditService,
     private musicAccess: ChoirMusicAccessService,
+    private voiceAccess: ChoirVoiceAccessService,
     private choirNotifications: ChoirNotificationsService,
     private reports: ReportsService,
   ) {}
@@ -41,7 +43,8 @@ export class RehearsalsService {
     return activity;
   }
 
-  async listVoiceSections() {
+  async listVoiceSections(userId: string, choirId?: string) {
+    await this.voiceAccess.requireViewVoice(userId, choirId);
     return this.prisma.voiceSection.findMany({
       where: { active: true },
       orderBy: { sortOrder: 'asc' },

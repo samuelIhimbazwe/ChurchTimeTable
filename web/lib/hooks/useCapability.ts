@@ -36,6 +36,10 @@ import {
   uiCapabilityVisible as commsUiVisible,
   isCommsUiCapability,
 } from '@/lib/choir/comms-ui-capability-registry';
+import {
+  uiCapabilityVisible as voiceUiVisible,
+  isVoiceUiCapability,
+} from '@/lib/choir/voice-ui-capability-registry';
 
 const MEMBER_VIEW_CAP = 'choir.member.view@choir';
 
@@ -79,6 +83,10 @@ export function useCommsAuth(): ResolvedAuth | undefined {
   return useOptionalChoirDashboardCtx()?.context?.commsAuth;
 }
 
+export function useVoiceAuth(): ResolvedAuth | undefined {
+  return useOptionalChoirDashboardCtx()?.context?.voiceAuth;
+}
+
 function isWelfareCapabilityId(id: string): boolean {
   return id.startsWith('choir.welfare.');
 }
@@ -107,6 +115,10 @@ function isCommsCapabilityId(id: string): boolean {
   return id.startsWith('choir.announcement.') || id.startsWith('choir.meeting.');
 }
 
+function isVoiceCapabilityId(id: string): boolean {
+  return id.startsWith('choir.voice.');
+}
+
 const MEMBER_MANAGE_CAP = 'choir.member.manage@choir';
 
 function isMemberManageCapabilityId(id: string): boolean {
@@ -127,6 +139,7 @@ function canMemberManage(
 
 function canWithRouting(
   capabilityId: string,
+  voiceAuth: ResolvedAuth | undefined,
   commsAuth: ResolvedAuth | undefined,
   rosterAuth: ResolvedAuth | undefined,
   musicAuth: ResolvedAuth | undefined,
@@ -143,6 +156,9 @@ function canWithRouting(
   }
   if (isRosterViewCapabilityId(capabilityId)) {
     return can(rosterAuth, capabilityId, scopeId);
+  }
+  if (isVoiceCapabilityId(capabilityId)) {
+    return can(voiceAuth, capabilityId, scopeId);
   }
   if (isCommsCapabilityId(capabilityId)) {
     return can(commsAuth, capabilityId, scopeId);
@@ -171,6 +187,7 @@ function canWithRouting(
 export function useCapability(capabilityId: string, scopeId?: string): boolean {
   return canWithRouting(
     capabilityId,
+    useVoiceAuth(),
     useCommsAuth(),
     useRosterAuth(),
     useMusicAuth(),
@@ -190,6 +207,7 @@ export function useAnyCapability(
 ): boolean {
   const memberManageIds = capabilityIds.filter(isMemberManageCapabilityId);
   const rosterViewIds = capabilityIds.filter(isRosterViewCapabilityId);
+  const voiceIds = capabilityIds.filter(isVoiceCapabilityId);
   const commsIds = capabilityIds.filter(isCommsCapabilityId);
   const musicIds = capabilityIds.filter(isMusicCapabilityId);
   const sponsorIds = capabilityIds.filter(isSponsorCapabilityId);
@@ -201,6 +219,7 @@ export function useAnyCapability(
     (id) =>
       !isMemberManageCapabilityId(id)
       && !isRosterViewCapabilityId(id)
+      && !isVoiceCapabilityId(id)
       && !isCommsCapabilityId(id)
       && !isMusicCapabilityId(id)
       && !isSponsorCapabilityId(id)
@@ -209,6 +228,7 @@ export function useAnyCapability(
       && !isDisciplineCapabilityId(id)
       && !isWelfareCapabilityId(id),
   );
+  const voiceAuth = useVoiceAuth();
   const commsAuth = useCommsAuth();
   const rosterAuth = useRosterAuth();
   const musicAuth = useMusicAuth();
@@ -224,6 +244,8 @@ export function useAnyCapability(
   const rosterViewOk =
     rosterViewIds.length === 0
     || hasAnyCapability(rosterAuth, rosterViewIds, scopeId);
+  const voiceOk =
+    voiceIds.length === 0 || hasAnyCapability(voiceAuth, voiceIds, scopeId);
   const commsOk =
     commsIds.length === 0 || hasAnyCapability(commsAuth, commsIds, scopeId);
   const musicOk =
@@ -247,6 +269,7 @@ export function useAnyCapability(
   return (
     memberManageOk
     && rosterViewOk
+    && voiceOk
     && commsOk
     && musicOk
     && sponsorOk
@@ -259,6 +282,7 @@ export function useAnyCapability(
 }
 
 export function useUiCapability(uiId: string, scopeId?: string): boolean {
+  const voiceAuth = useVoiceAuth();
   const commsAuth = useCommsAuth();
   const rosterAuth = useRosterAuth();
   const musicAuth = useMusicAuth();
@@ -269,6 +293,9 @@ export function useUiCapability(uiId: string, scopeId?: string): boolean {
   const welfareAuth = useWelfareAuth();
   const contributionAuth = useContributionAuth();
 
+  if (isVoiceUiCapability(uiId)) {
+    return voiceUiVisible(uiId, (capId) => can(voiceAuth, capId));
+  }
   if (isCommsUiCapability(uiId)) {
     return commsUiVisible(uiId, (capId) => can(commsAuth, capId));
   }
@@ -407,4 +434,14 @@ export function useCommsCapability(capabilityId: string): boolean {
 export function useCommsUiCapability(uiId: string): boolean {
   const auth = useCommsAuth();
   return commsUiVisible(uiId, (capId) => can(auth, capId));
+}
+
+export function useVoiceCapability(capabilityId: string): boolean {
+  const auth = useVoiceAuth();
+  return can(auth, capabilityId);
+}
+
+export function useVoiceUiCapability(uiId: string): boolean {
+  const auth = useVoiceAuth();
+  return voiceUiVisible(uiId, (capId) => can(auth, capId));
 }

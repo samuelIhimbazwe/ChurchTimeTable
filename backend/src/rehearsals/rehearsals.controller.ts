@@ -38,8 +38,8 @@ export class RehearsalsController {
   @Get('voice-sections')
   @SkipPhoneEnforcement()
   @RequireAnyPermissions(...REHEARSAL_VIEW_ANY)
-  voiceSections() {
-    return this.rehearsals.listVoiceSections();
+  voiceSections(@CurrentUser() user: JwtPayload, @Query('choirId') choirId?: string) {
+    return this.rehearsals.listVoiceSections(user.sub, choirId);
   }
 
   @Get('dashboard')

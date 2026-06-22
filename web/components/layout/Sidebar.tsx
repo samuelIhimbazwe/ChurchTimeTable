@@ -18,6 +18,7 @@ import { composeSponsorAwareNav } from '@/lib/navigation/sponsor-nav'
 import { composeMusicAwareNav } from '@/lib/navigation/music-nav'
 import { composeRosterAwareNav } from '@/lib/navigation/roster-nav'
 import { composeCommsAwareNav } from '@/lib/navigation/comms-nav'
+import { composeVoiceAwareNav } from '@/lib/navigation/voice-nav'
 import { getComposedProtocolNav } from '@/lib/navigation/protocol-nav'
 import { parseChoirIdFromPath } from '@/lib/choir/paths'
 import { isProtocolDashboardPath } from '@/lib/protocol/paths'
@@ -62,6 +63,7 @@ export default function Sidebar({
   const musicAuth = choirCtx?.musicAuth
   const rosterAuth = choirCtx?.rosterAuth
   const commsAuth = choirCtx?.commsAuth
+  const voiceAuth = choirCtx?.voiceAuth
   const { data: protocolCtx, isLoading: loadingProtocolCtx } = useProtocolDashboardContext(inProtocolArea)
 
   const membershipForPath = choirId
@@ -88,42 +90,46 @@ export default function Sidebar({
     return getNavForContext(pathname, authRole, { canAccessChoirArea, isChoirMember }, permissions, activeChoirMemberships)
   })()
 
-  const capabilityAwareSections = composeCommsAwareNav(
-    composeRosterAwareNav(
-      composeMusicAwareNav(
-        composeSponsorAwareNav(
-          composeJoinAwareNav(
-            composeOpsAwareNav(
-              composeDisciplineAwareNav(
-                composeWelfareAwareNav(
-                  composeContributionAwareNav(
-                    rawSections,
+  const capabilityAwareSections = composeVoiceAwareNav(
+    composeCommsAwareNav(
+      composeRosterAwareNav(
+        composeMusicAwareNav(
+          composeSponsorAwareNav(
+            composeJoinAwareNav(
+              composeOpsAwareNav(
+                composeDisciplineAwareNav(
+                  composeWelfareAwareNav(
+                    composeContributionAwareNav(
+                      rawSections,
+                      contextChoirId ?? choirId,
+                      contributionAuth,
+                    ),
                     contextChoirId ?? choirId,
-                    contributionAuth,
+                    welfareAuth,
                   ),
                   contextChoirId ?? choirId,
-                  welfareAuth,
+                  disciplineAuth,
                 ),
                 contextChoirId ?? choirId,
-                disciplineAuth,
+                opsAuth,
               ),
               contextChoirId ?? choirId,
-              opsAuth,
+              joinAuth,
             ),
             contextChoirId ?? choirId,
-            joinAuth,
+            sponsorAuth,
           ),
           contextChoirId ?? choirId,
-          sponsorAuth,
+          musicAuth,
         ),
         contextChoirId ?? choirId,
-        musicAuth,
+        rosterAuth,
       ),
       contextChoirId ?? choirId,
-      rosterAuth,
+      commsAuth,
     ),
     contextChoirId ?? choirId,
-    commsAuth,
+    voiceAuth,
   )
 
   const sections = useMemo(
