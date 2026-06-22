@@ -17,6 +17,7 @@ import {
   PageContainer,
   PageHeader,
   SkeletonCard,
+  CapabilityGate,
 } from '@/components/shared'
 import { Music } from 'lucide-react'
 
@@ -136,6 +137,17 @@ export default function MusicPage() {
   )
 
   return (
+    <CapabilityGate
+      uiCapability="music-library-hub"
+      fallback={
+        <PageContainer>
+          <EmptyState
+            title="Music library not available"
+            description="You do not have permission to browse the choir music library."
+          />
+        </PageContainer>
+      }
+    >
     <PageContainer>
       <div className="space-y-6">
         <PageHeader
@@ -209,5 +221,6 @@ export default function MusicPage() {
         )}
       </div>
     </PageContainer>
+    </CapabilityGate>
   )
 }

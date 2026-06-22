@@ -4,6 +4,7 @@ import { AuditModule } from '../audit/audit.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ReportsModule } from '../reports/reports.module';
 import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
+import { MusicModule } from '../music/music.module';
 import { RehearsalsController } from './rehearsals.controller';
 import { RehearsalsService } from './rehearsals.service';
 
@@ -14,6 +15,7 @@ import { RehearsalsService } from './rehearsals.service';
     NotificationsModule,
     ReportsModule,
     MemberPhoneEnforcementModule,
+    MusicModule,
   ],
   controllers: [RehearsalsController],
   providers: [RehearsalsService],

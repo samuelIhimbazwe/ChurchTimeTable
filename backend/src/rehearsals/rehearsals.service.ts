@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   ChoirActivityType,
   Prisma,
@@ -7,12 +7,7 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
-import { PermissionsResolver } from '../auth/permissions.resolver';
-import { PERMISSIONS } from '../common/constants/roles';
-import {
-  hasChoirOperations,
-  hasEffectivePermission,
-} from '../common/governance/governance-permissions.util';
+import { ChoirMusicAccessService } from '../music/choir-music-access.service';
 import { UpsertRehearsalPlanDto } from './dto/upsert-rehearsal-plan.dto';
 import { ChoirNotificationsService } from '../choir-mvp/choir-notifications.service';
 import { ReportsService } from '../reports/reports.service';
@@ -22,59 +17,17 @@ export class RehearsalsService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
-    private permissions: PermissionsResolver,
+    private musicAccess: ChoirMusicAccessService,
     private choirNotifications: ChoirNotificationsService,
     private reports: ReportsService,
   ) {}
 
-  private async resolveAccess(userId: string) {
-    return this.permissions.resolveForUser(userId);
+  private async assertView(userId: string, choirId?: string) {
+    await this.musicAccess.requireViewRehearsal(userId, choirId);
   }
 
-  private canView(resolved: { permissions: string[] }) {
-    return (
-      hasEffectivePermission(
-        resolved.permissions,
-        PERMISSIONS.CHOIR_REHEARSAL_VIEW,
-      ) ||
-      hasEffectivePermission(
-        resolved.permissions,
-        PERMISSIONS.CHOIR_REHEARSAL_MANAGE,
-      ) ||
-      hasEffectivePermission(resolved.permissions, PERMISSIONS.CHOIR_MUSIC_VIEW) ||
-      hasEffectivePermission(
-        resolved.permissions,
-        PERMISSIONS.CHOIR_MUSIC_MANAGE,
-      ) ||
-      hasChoirOperations(resolved.permissions) ||
-      hasEffectivePermission(resolved.permissions, PERMISSIONS.EVENT_READ)
-    );
-  }
-
-  private canManage(resolved: { permissions: string[] }) {
-    return (
-      hasEffectivePermission(
-        resolved.permissions,
-        PERMISSIONS.CHOIR_REHEARSAL_MANAGE,
-      ) ||
-      hasEffectivePermission(
-        resolved.permissions,
-        PERMISSIONS.CHOIR_OPERATIONS_MANAGE,
-      ) ||
-      hasChoirOperations(resolved.permissions)
-    );
-  }
-
-  private async assertView(userId: string) {
-    const resolved = await this.resolveAccess(userId);
-    if (!this.canView(resolved)) throw new NotFoundException('Not found');
-    return resolved;
-  }
-
-  private async assertManage(userId: string) {
-    const resolved = await this.resolveAccess(userId);
-    if (!this.canManage(resolved)) throw new ForbiddenException('Not allowed');
-    return resolved;
+  private async assertManage(userId: string, choirId?: string) {
+    await this.musicAccess.requireManageRehearsal(userId, choirId);
   }
 
   /** API param `eventId` maps to `ChoirActivity.id` (REHEARSAL). */
@@ -96,8 +49,8 @@ export class RehearsalsService {
   }
 
   async getPlan(userId: string, eventId: string) {
-    await this.assertView(userId);
-    await this.resolveRehearsalActivity(eventId);
+    const activity = await this.resolveRehearsalActivity(eventId);
+    await this.assertView(userId, activity.choirId);
     return this.prisma.rehearsalPlan.findUnique({
       where: { choirActivityId: eventId },
       include: {
@@ -120,8 +73,8 @@ export class RehearsalsService {
   }
 
   async upsertPlan(userId: string, eventId: string, dto: UpsertRehearsalPlanDto) {
-    await this.assertManage(userId);
     const activity = await this.resolveRehearsalActivity(eventId);
+    await this.assertManage(userId, activity.choirId);
 
     const result = await this.prisma.$transaction(async (tx) => {
       const plan = await tx.rehearsalPlan.upsert({
@@ -192,7 +145,8 @@ export class RehearsalsService {
   }
 
   async exportAttendancePdf(userId: string, eventId: string) {
-    await this.assertView(userId);
+    const activity = await this.resolveRehearsalActivity(eventId);
+    await this.assertView(userId, activity.choirId);
     const rows = await this.getAttendance(userId, eventId);
     const lines = rows.map(
       (row) =>
@@ -219,8 +173,8 @@ export class RehearsalsService {
       notes?: string;
     }>,
   ) {
-    await this.assertManage(userId);
-    await this.resolveRehearsalActivity(eventId);
+    const activity = await this.resolveRehearsalActivity(eventId);
+    await this.assertManage(userId, activity.choirId);
 
     const saved = await this.prisma.$transaction(
       rows.map((row) =>
@@ -257,7 +211,8 @@ export class RehearsalsService {
   }
 
   async getAttendance(userId: string, eventId: string) {
-    await this.assertView(userId);
+    const activity = await this.resolveRehearsalActivity(eventId);
+    await this.assertView(userId, activity.choirId);
     return this.prisma.rehearsalAttendance.findMany({
       where: { choirActivityId: eventId },
       include: {
@@ -561,7 +516,12 @@ export class RehearsalsService {
   }
 
   async exportAttendanceCsv(userId: string, eventId?: string) {
-    await this.assertView(userId);
+    if (eventId) {
+      const activity = await this.resolveRehearsalActivity(eventId);
+      await this.assertView(userId, activity.choirId);
+    } else {
+      await this.assertView(userId);
+    }
     const rows = await this.prisma.rehearsalAttendance.findMany({
       where: eventId ? { choirActivityId: eventId } : undefined,
       include: {

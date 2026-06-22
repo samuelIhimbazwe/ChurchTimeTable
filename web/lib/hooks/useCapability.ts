@@ -24,6 +24,10 @@ import {
   uiCapabilityVisible as sponsorUiVisible,
   isSponsorUiCapability,
 } from '@/lib/choir/sponsor-ui-capability-registry';
+import {
+  uiCapabilityVisible as musicUiVisible,
+  isMusicUiCapability,
+} from '@/lib/choir/music-ui-capability-registry';
 
 const MEMBER_MANAGE_CAP = 'choir.member.manage@choir';
 
@@ -51,6 +55,10 @@ export function useSponsorAuth(): ResolvedAuth | undefined {
   return useOptionalChoirDashboardCtx()?.context?.sponsorAuth;
 }
 
+export function useMusicAuth(): ResolvedAuth | undefined {
+  return useOptionalChoirDashboardCtx()?.context?.musicAuth;
+}
+
 function isWelfareCapabilityId(id: string): boolean {
   return id.startsWith('choir.welfare.');
 }
@@ -71,6 +79,10 @@ function isSponsorCapabilityId(id: string): boolean {
   return id.startsWith('choir.sponsor.');
 }
 
+function isMusicCapabilityId(id: string): boolean {
+  return id.startsWith('choir.music.') || id.startsWith('choir.rehearsal.');
+}
+
 function isMemberManageCapabilityId(id: string): boolean {
   return id === MEMBER_MANAGE_CAP;
 }
@@ -87,6 +99,7 @@ function canMemberManage(
 
 function canWithRouting(
   capabilityId: string,
+  musicAuth: ResolvedAuth | undefined,
   joinAuth: ResolvedAuth | undefined,
   sponsorAuth: ResolvedAuth | undefined,
   opsAuth: ResolvedAuth | undefined,
@@ -97,6 +110,9 @@ function canWithRouting(
 ): boolean {
   if (isMemberManageCapabilityId(capabilityId)) {
     return canMemberManage(joinAuth, sponsorAuth);
+  }
+  if (isMusicCapabilityId(capabilityId)) {
+    return can(musicAuth, capabilityId, scopeId);
   }
   if (isSponsorCapabilityId(capabilityId)) {
     return can(sponsorAuth, capabilityId, scopeId);
@@ -119,6 +135,7 @@ function canWithRouting(
 export function useCapability(capabilityId: string, scopeId?: string): boolean {
   return canWithRouting(
     capabilityId,
+    useMusicAuth(),
     useJoinAuth(),
     useSponsorAuth(),
     useOpsAuth(),
@@ -134,6 +151,7 @@ export function useAnyCapability(
   scopeId?: string,
 ): boolean {
   const memberManageIds = capabilityIds.filter(isMemberManageCapabilityId);
+  const musicIds = capabilityIds.filter(isMusicCapabilityId);
   const sponsorIds = capabilityIds.filter(isSponsorCapabilityId);
   const joinIds = capabilityIds.filter(isJoinCapabilityId);
   const opsIds = capabilityIds.filter(isOpsCapabilityId);
@@ -142,12 +160,14 @@ export function useAnyCapability(
   const contributionIds = capabilityIds.filter(
     (id) =>
       !isMemberManageCapabilityId(id)
+      && !isMusicCapabilityId(id)
       && !isSponsorCapabilityId(id)
       && !isJoinCapabilityId(id)
       && !isOpsCapabilityId(id)
       && !isDisciplineCapabilityId(id)
       && !isWelfareCapabilityId(id),
   );
+  const musicAuth = useMusicAuth();
   const joinAuth = useJoinAuth();
   const sponsorAuth = useSponsorAuth();
   const opsAuth = useOpsAuth();
@@ -156,6 +176,8 @@ export function useAnyCapability(
   const contributionAuth = useContributionAuth();
   const memberManageOk =
     memberManageIds.length === 0 || canMemberManage(joinAuth, sponsorAuth);
+  const musicOk =
+    musicIds.length === 0 || hasAnyCapability(musicAuth, musicIds, scopeId);
   const sponsorOk =
     sponsorIds.length === 0
     || hasAnyCapability(sponsorAuth, sponsorIds, scopeId);
@@ -174,6 +196,7 @@ export function useAnyCapability(
     || hasAnyCapability(contributionAuth, contributionIds, scopeId);
   return (
     memberManageOk
+    && musicOk
     && sponsorOk
     && joinOk
     && opsOk
@@ -184,6 +207,7 @@ export function useAnyCapability(
 }
 
 export function useUiCapability(uiId: string, scopeId?: string): boolean {
+  const musicAuth = useMusicAuth();
   const joinAuth = useJoinAuth();
   const sponsorAuth = useSponsorAuth();
   const opsAuth = useOpsAuth();
@@ -191,6 +215,9 @@ export function useUiCapability(uiId: string, scopeId?: string): boolean {
   const welfareAuth = useWelfareAuth();
   const contributionAuth = useContributionAuth();
 
+  if (isMusicUiCapability(uiId)) {
+    return musicUiVisible(uiId, (capId) => can(musicAuth, capId));
+  }
   if (isSponsorUiCapability(uiId)) {
     return sponsorUiVisible(uiId, (capId) =>
       capId === MEMBER_MANAGE_CAP
@@ -275,4 +302,14 @@ export function useDisciplineCapability(capabilityId: string): boolean {
 export function useDisciplineUiCapability(uiId: string): boolean {
   const auth = useDisciplineAuth();
   return disciplineUiVisible(uiId, (capId) => can(auth, capId));
+}
+
+export function useMusicCapability(capabilityId: string): boolean {
+  const auth = useMusicAuth();
+  return can(auth, capabilityId);
+}
+
+export function useMusicUiCapability(uiId: string): boolean {
+  const auth = useMusicAuth();
+  return musicUiVisible(uiId, (capId) => can(auth, capId));
 }

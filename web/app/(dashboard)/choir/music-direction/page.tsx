@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query'
 import { musicApi, rehearsalsApi, choirActivityApi, choirSchedulingApi } from '@/lib/api'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import {
-  Card, StatTile, Badge, SkeletonCard, PermissionGate,
+  Card, StatTile, Badge, SkeletonCard, CapabilityGate, EmptyState,
 } from '@/components/shared'
 import { ChoirPositionHubShell, HubQuickLink } from '@/components/choir/ChoirPositionHubShell'
 import { MusicSongNotifyForm } from '@/components/choir/MusicSongNotifyForm'
@@ -84,6 +84,15 @@ export default function MusicDirectorHubPage() {
   const rehearsalItems = activities?.items ?? []
 
   return (
+    <CapabilityGate
+      uiCapability="music-direction-hub"
+      fallback={
+        <EmptyState
+          title="Music direction not available"
+          description="You do not have permission to access the music direction hub."
+        />
+      }
+    >
     <ChoirPositionHubShell roleKey="music_director" tabs={TABS} activeTab={tab} onTabChange={setTab}>
       {tab === 'overview' && (
         <div className="space-y-4">
@@ -115,14 +124,14 @@ export default function MusicDirectorHubPage() {
 
       {tab === 'library' && (
         <div className="space-y-4">
-          <PermissionGate anyOf={['choir.music.manage']}>
+          <CapabilityGate uiCapability="music-direction-manage">
             <div className="flex flex-wrap items-center gap-3">
               <MusicCreateSongForm />
               <Link href={choirLink('music')} className="inline-flex px-4 py-2 text-sm font-semibold bg-primary-700 text-white rounded-lg">
                 Open full library →
               </Link>
             </div>
-          </PermissionGate>
+          </CapabilityGate>
           {loadingSongs ? (
             <SkeletonCard rows={5} />
           ) : (
@@ -171,7 +180,7 @@ export default function MusicDirectorHubPage() {
                       </p>
                     </Link>
                     <div className="flex items-center gap-2 shrink-0">
-                      <PermissionGate anyOf={['choir.music.manage']}>
+                      <CapabilityGate uiCapability="music-direction-manage">
                         <button
                           type="button"
                           onClick={() => setPlanEvent({ id: a.id, title: a.title })}
@@ -179,7 +188,7 @@ export default function MusicDirectorHubPage() {
                         >
                           Plan songs
                         </button>
-                      </PermissionGate>
+                      </CapabilityGate>
                       <Link
                         href={choirLink('attendance', a.id)}
                         className="text-xs font-semibold text-primary-600 hover:text-primary-800"
@@ -195,5 +204,6 @@ export default function MusicDirectorHubPage() {
         </div>
       )}
     </ChoirPositionHubShell>
+    </CapabilityGate>
   )
 }

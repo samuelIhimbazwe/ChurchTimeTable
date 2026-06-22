@@ -2,9 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
-import { PermissionsResolver } from '../auth/permissions.resolver';
-import { PERMISSIONS } from '../common/constants/roles';
-import { hasEffectivePermission } from '../common/governance/governance-permissions.util';
+import { ChoirMusicAccessService } from './choir-music-access.service';
 import { paginate, paginatedResult } from '../common/dto/pagination.dto';
 import { CreateSongDto } from './dto/create-song.dto';
 import { UpdateSongDto } from './dto/update-song.dto';
@@ -15,22 +13,15 @@ export class MusicService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
-    private permissions: PermissionsResolver,
+    private musicAccess: ChoirMusicAccessService,
   ) {}
 
-  private async assertAccess(userId: string, manage = false) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    const canView = hasEffectivePermission(
-      resolved.permissions,
-      PERMISSIONS.CHOIR_MUSIC_VIEW,
-    );
-    const canManage = hasEffectivePermission(
-      resolved.permissions,
-      PERMISSIONS.CHOIR_MUSIC_MANAGE,
-    );
-    if (manage && !canManage) throw new ForbiddenException('Not allowed');
-    if (!canView && !canManage) throw new NotFoundException('Not found');
-    return resolved;
+  private async assertAccess(userId: string, choirId?: string, manage = false) {
+    if (manage) {
+      await this.musicAccess.requireManageMusic(userId, choirId);
+    } else {
+      await this.musicAccess.requireViewMusic(userId, choirId);
+    }
   }
 
   private async memberIdForUser(userId: string) {
@@ -51,7 +42,7 @@ export class MusicService {
     language?: string,
     choirId?: string,
   ) {
-    await this.assertAccess(userId);
+    await this.assertAccess(userId, choirId);
     const { skip, take } = paginate(page, limit);
     const filters: Prisma.SongWhereInput[] = [{ active: true }];
     if (choirId) {
@@ -193,7 +184,7 @@ export class MusicService {
   }
 
   async createSong(userId: string, dto: CreateSongDto) {
-    await this.assertAccess(userId, true);
+    await this.assertAccess(userId, undefined, true);
     const row = await this.prisma.song.create({
       data: {
         title: dto.title.trim(),
@@ -237,9 +228,9 @@ export class MusicService {
   }
 
   async updateSong(userId: string, id: string, dto: UpdateSongDto) {
-    await this.assertAccess(userId, true);
     const existing = await this.prisma.song.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Not found');
+    await this.assertAccess(userId, existing.choirId ?? undefined, true);
     const row = await this.prisma.song.update({
       where: { id },
       data: {
@@ -285,9 +276,9 @@ export class MusicService {
   }
 
   async addAsset(userId: string, songId: string, dto: CreateSongAssetDto) {
-    await this.assertAccess(userId, true);
     const song = await this.prisma.song.findUnique({ where: { id: songId } });
     if (!song) throw new NotFoundException('Not found');
+    await this.assertAccess(userId, song.choirId ?? undefined, true);
     const row = await this.prisma.songAsset.create({
       data: {
         songId,
