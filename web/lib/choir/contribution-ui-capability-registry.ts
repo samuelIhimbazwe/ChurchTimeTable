@@ -68,6 +68,32 @@ export const CONTRIBUTION_UI_CAPABILITY_REGISTRY: ContributionUiCapabilityDefini
     ],
     mode: 'any',
   },
+  {
+    id: 'family-manage',
+    label: 'Manage choir families',
+    routeSegments: ['families', 'admin/families'],
+    requireAnyOf: ['choir.contribution.oversight@choir'],
+    mode: 'any',
+  },
+  {
+    id: 'family-hub',
+    label: 'Families desk',
+    routeSegments: ['families', 'admin/families', 'family-coordinator'],
+    requireAnyOf: [
+      'choir.contribution.oversight@choir',
+      'choir.contribution.view@family',
+      'choir.join.review@choir',
+      'choir.member.manage@choir',
+    ],
+    mode: 'any',
+  },
+  {
+    id: 'family-coordinator-hub',
+    label: 'Family coordinator hub',
+    routeSegments: ['family-coordinator'],
+    requireAnyOf: ['choir.contribution.oversight@choir'],
+    mode: 'any',
+  },
 ];
 
 export function uiCapabilityVisible(

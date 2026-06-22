@@ -8,7 +8,7 @@ import {
   type FamilyMemberRow,
 } from '@/lib/api/modules/families'
 import { toast } from '@/components/shared/Toast'
-import { Card, Badge, PermissionGate, SkeletonCard } from '@/components/shared'
+import { Card, Badge, CapabilityGate, SkeletonCard } from '@/components/shared'
 import { ChoirMemberPicker } from '@/components/choir/ChoirMemberPicker'
 import { ContributionAmountDisplay } from '@/components/choir/ContributionAmountDisplay'
 import { ChevronDown, ChevronRight, UserPlus, Users } from 'lucide-react'
@@ -144,7 +144,7 @@ function FamilyRow({
                         <p className="font-medium">{memberLabel(m)}</p>
                         <p className="text-xs text-text-muted">{m.role.replace(/_/g, ' ')}</p>
                       </div>
-                      <PermissionGate anyOf={['family:manage', 'choir.family.manage']}>
+                      <CapabilityGate uiCapability="family-manage">
                         <div className="flex flex-wrap gap-2 justify-end">
                           {m.role !== 'HEAD' && (
                             <button
@@ -175,7 +175,7 @@ function FamilyRow({
                             Remove
                           </button>
                         </div>
-                      </PermissionGate>
+                      </CapabilityGate>
                     </li>
                   ))}
                   {(detail?.members?.length ?? 0) === 0 && (
@@ -184,7 +184,7 @@ function FamilyRow({
                 </ul>
               </div>
 
-              <PermissionGate anyOf={['family:manage', 'choir.family.manage']}>
+              <CapabilityGate uiCapability="family-manage">
                 <div className="space-y-3 pt-2">
                   <p className="text-xs font-semibold text-text-secondary flex items-center gap-1">
                     <UserPlus size={14} /> Add member to this family
@@ -231,7 +231,7 @@ function FamilyRow({
                     </div>
                   </div>
                 )}
-              </PermissionGate>
+              </CapabilityGate>
             </>
           )}
         </div>

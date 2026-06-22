@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { familiesApi, choirActivityApi } from '@/lib/api'
 import {
-  Card, StatTile, Badge, SkeletonCard, PermissionGate,
+  Card, StatTile, Badge, SkeletonCard, CapabilityGate, EmptyState,
 } from '@/components/shared'
 import { ChoirPositionHubShell, HubQuickLink } from '@/components/choir/ChoirPositionHubShell'
 import { useResolvedChoirScope } from '@/lib/hooks'
@@ -40,6 +40,15 @@ export default function FamilyCoordinatorHubPage() {
   })
 
   return (
+    <CapabilityGate
+      uiCapability="family-coordinator-hub"
+      fallback={
+        <EmptyState
+          title="Family coordinator hub not available"
+          description="You do not have permission to access the family coordinator workspace."
+        />
+      }
+    >
     <ChoirPositionHubShell roleKey="family_coordinator" tabs={TABS} activeTab={tab} onTabChange={setTab}>
       {tab === 'overview' && (
         <div className="space-y-4">
@@ -55,11 +64,11 @@ export default function FamilyCoordinatorHubPage() {
 
       {tab === 'families' && (
         <div className="space-y-4">
-          <PermissionGate anyOf={['choir.family.manage', 'family:manage']}>
+          <CapabilityGate uiCapability="family-manage">
             <Link href={choirLink('families')} className="text-sm font-semibold text-primary-600">
               Open full families module →
             </Link>
-          </PermissionGate>
+          </CapabilityGate>
           {loadingFamilies ? (
             <SkeletonCard rows={6} />
           ) : (
@@ -148,5 +157,6 @@ export default function FamilyCoordinatorHubPage() {
         </div>
       )}
     </ChoirPositionHubShell>
+    </CapabilityGate>
   )
 }
