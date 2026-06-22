@@ -93,6 +93,11 @@ export const LEGACY_PERMISSION_ALIASES: Record<string, readonly string[]> = {
     'choir.document.manage@choir',
     'choir.document.view@choir',
   ],
+  'choir.rules.manage': [
+    'choir.document.manage@choir',
+    'choir.discipline.manage@choir',
+  ],
+  'choir.member.notify': ['choir.announcement.manage@choir'],
   'choir.uniform.manage': [
     'choir.uniform.manage@choir',
     'choir.uniform.view@choir',

@@ -18,6 +18,7 @@ import { isRolesRoutePath } from '@/lib/choir/roles-routes'
 import { isAdminHubRoutePath } from '@/lib/choir/admin-hub-routes'
 import { isChoirHubRoutePath } from '@/lib/choir/choir-hub-routes'
 import { isFamilyRoutePath } from '@/lib/choir/family-routes'
+import { isCareHubRoutePath } from '@/lib/choir/care-hub-routes'
 
 /**
  * Re-fetch choir dashboard context (including contributionAuth / welfareAuth) when
@@ -45,7 +46,8 @@ export function useContributionAuthRefresh(choirId: string) {
         || isRolesRoutePath(pathname)
         || isAdminHubRoutePath(pathname)
         || isChoirHubRoutePath(pathname)
-        || isFamilyRoutePath(pathname))
+        || isFamilyRoutePath(pathname)
+        || isCareHubRoutePath(pathname))
       && prevPathRef.current !== pathname
     prevPathRef.current = pathname
     if (!enteredCapabilityRoute) return

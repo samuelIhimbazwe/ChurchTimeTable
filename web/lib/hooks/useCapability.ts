@@ -60,6 +60,10 @@ import {
   uiCapabilityVisible as choirHubUiVisible,
   isChoirHubUiCapability,
 } from '@/lib/choir/choir-hub-ui-capability-registry';
+import {
+  uiCapabilityVisible as careHubUiVisible,
+  isCareHubUiCapability,
+} from '@/lib/choir/care-hub-ui-capability-registry';
 
 const MEMBER_VIEW_CAP = 'choir.member.view@choir';
 
@@ -408,6 +412,9 @@ export function useUiCapability(uiId: string, scopeId?: string): boolean {
   if (isChoirHubUiCapability(uiId)) {
     return choirHubUiVisible(uiId, routeCheck);
   }
+  if (isCareHubUiCapability(uiId)) {
+    return careHubUiVisible(uiId, routeCheck);
+  }
   if (isRolesUiCapability(uiId)) {
     return rolesUiVisible(uiId, (capId) => can(rolesAuth, capId));
   }
@@ -647,4 +654,9 @@ export function useAdminHubUiCapability(uiId: string, scopeId?: string): boolean
 export function useChoirHubUiCapability(uiId: string, scopeId?: string): boolean {
   const routeCheck = useCapabilityRouter(scopeId);
   return choirHubUiVisible(uiId, routeCheck);
+}
+
+export function useCareHubUiCapability(uiId: string, scopeId?: string): boolean {
+  const routeCheck = useCapabilityRouter(scopeId);
+  return careHubUiVisible(uiId, routeCheck);
 }

@@ -13,7 +13,7 @@ import {
 } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import {
-  Card, Badge, Avatar, HubTabs, PermissionGate, CapabilityGate, SkeletonCard, EmptyState,
+  Card, Badge, Avatar, HubTabs, CapabilityGate, SkeletonCard, EmptyState,
 } from '@/components/shared'
 import { CareCommandHome } from '@/components/choir/committee/CareCommandHome'
 import { formatDate } from '@/lib/utils/format'
@@ -168,6 +168,15 @@ export default function CareHubPage() {
     'w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold-500'
 
   return (
+    <CapabilityGate
+      uiCapability="care-hub"
+      fallback={
+        <EmptyState
+          title="Care hub not available"
+          description="You do not have permission to access care and discipline tools."
+        />
+      }
+    >
     <div className="space-y-6 max-w-5xl mx-auto pb-8">
       <div>
         <h1 className="font-display text-3xl text-text-primary">Care & discipline</h1>
@@ -180,9 +189,9 @@ export default function CareHubPage() {
 
       {tab === 'overview' && (
         <div className="space-y-6">
-          <PermissionGate anyOf={['choir.welfare.view', 'choir.welfare.manage']}>
+          <CapabilityGate uiCapability="care-command-home">
             <CareCommandHome />
-          </PermissionGate>
+          </CapabilityGate>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card padding="md" onClick={() => setTab('discipline')}>
             <Shield size={20} className="text-warning mb-2" />
@@ -227,7 +236,7 @@ export default function CareHubPage() {
 
       {tab === 'rules' && (
         <div className="space-y-4">
-          <PermissionGate anyOf={['choir.rules.manage', 'choir.document.manage', 'discipline:manage']}>
+          <CapabilityGate uiCapability="care-rules-manage">
             <Card padding="md" accent="info">
               <p className="font-semibold text-text-primary mb-3">Add or update choir rules</p>
               <div className="space-y-3">
@@ -270,7 +279,7 @@ export default function CareHubPage() {
                 </div>
               </div>
             </Card>
-          </PermissionGate>
+          </CapabilityGate>
 
           {loadingDocs ? (
             <SkeletonCard rows={3} />
@@ -421,7 +430,7 @@ export default function CareHubPage() {
       )}
 
       {tab === 'notices' && (
-        <PermissionGate anyOf={['choir.member.notify', 'choir.announcement.manage', 'discipline:manage']}>
+        <CapabilityGate uiCapability="care-notices-send">
           <Card padding="md">
             <div className="flex items-start gap-3 mb-4">
               <Megaphone size={20} className="text-primary-600 shrink-0 mt-0.5" />
@@ -467,8 +476,9 @@ export default function CareHubPage() {
               </button>
             </div>
           </Card>
-        </PermissionGate>
+        </CapabilityGate>
       )}
     </div>
+    </CapabilityGate>
   )
 }
