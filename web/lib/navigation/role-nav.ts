@@ -53,6 +53,10 @@ import {
   legacyPresidentHubLinkVisible,
   LEGACY_PRESIDENT_HUB_PATH,
 } from '@/lib/navigation/president-hub-nav'
+import {
+  legacyVicePresidentHubLinkVisible,
+  LEGACY_VICE_PRESIDENT_HUB_PATH,
+} from '@/lib/navigation/vice-president-hub-nav'
 
 const CHOIR_LEADERSHIP_ROLE_SET = CHOIR_LEADERSHIP
 
@@ -496,6 +500,9 @@ function officerHubLinkVisible(
   }
   if (link.path === LEGACY_PRESIDENT_HUB_PATH) {
     return legacyPresidentHubLinkVisible(permissions, capabilityCheck);
+  }
+  if (link.path === LEGACY_VICE_PRESIDENT_HUB_PATH) {
+    return legacyVicePresidentHubLinkVisible(permissions, capabilityCheck);
   }
   const required = HUB_PERMISSIONS[link.path];
   if (!required?.length) return false;
