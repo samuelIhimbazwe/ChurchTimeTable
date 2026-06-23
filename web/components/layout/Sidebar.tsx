@@ -71,7 +71,6 @@ export default function Sidebar({
   const commsAuth = choirCtx?.commsAuth
   const voiceAuth = choirCtx?.voiceAuth
   const logisticsAuth = choirCtx?.logisticsAuth
-  const devotionAuth = choirCtx?.devotionAuth
   const rolesAuth = choirCtx?.rolesAuth
   const capabilityCheck = useCapabilityRouter(contextChoirId ?? choirId ?? undefined)
   const { data: protocolCtx, isLoading: loadingProtocolCtx } = useProtocolDashboardContext(inProtocolArea)
@@ -158,7 +157,7 @@ export default function Sidebar({
             logisticsAuth,
           ),
           contextChoirId ?? choirId,
-          devotionAuth,
+          capabilityCheck,
         ),
         contextChoirId ?? choirId,
         rolesAuth,

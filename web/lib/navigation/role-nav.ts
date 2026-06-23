@@ -37,6 +37,10 @@ import {
   legacyCareHubLinkVisible,
   LEGACY_CARE_HUB_PATH,
 } from '@/lib/navigation/care-hub-nav'
+import {
+  legacySpiritualHubLinkVisible,
+  LEGACY_SPIRITUAL_HUB_PATH,
+} from '@/lib/navigation/devotion-nav'
 
 const CHOIR_LEADERSHIP_ROLE_SET = CHOIR_LEADERSHIP
 
@@ -468,6 +472,9 @@ function officerHubLinkVisible(
 ): boolean {
   if (link.path === LEGACY_CARE_HUB_PATH) {
     return legacyCareHubLinkVisible(permissions, capabilityCheck);
+  }
+  if (link.path === LEGACY_SPIRITUAL_HUB_PATH) {
+    return legacySpiritualHubLinkVisible(permissions, capabilityCheck);
   }
   const required = HUB_PERMISSIONS[link.path];
   if (!required?.length) return false;
