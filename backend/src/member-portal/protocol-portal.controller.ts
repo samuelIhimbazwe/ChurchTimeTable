@@ -1,15 +1,14 @@
 import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { RequireAnyPermissions } from '../common/decorators/roles.decorator';
-import { PERMISSIONS } from '../common/constants/roles';
+import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
+import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ProtocolInvitationsService } from './protocol-invitations.service';
 import { ProtocolClaimsService } from './protocol-claims.service';
 
 @Controller('protocol')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class ProtocolPortalController {
   constructor(
     private invitations: ProtocolInvitationsService,
@@ -17,7 +16,7 @@ export class ProtocolPortalController {
   ) {}
 
   @Post('invitations')
-  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_INVITE, PERMISSIONS.PROTOCOL_MANAGE)
+  @RequireUiCapability('protocol-invite')
   sendInvitation(
     @CurrentUser('sub') userId: string,
     @Body()
@@ -32,7 +31,7 @@ export class ProtocolPortalController {
   }
 
   @Get('invitations')
-  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_INVITE, PERMISSIONS.PROTOCOL_MANAGE)
+  @RequireUiCapability('protocol-invite')
   listInvitations(@CurrentUser('sub') userId: string) {
     return this.invitations.listSent(userId);
   }
@@ -60,7 +59,7 @@ export class ProtocolPortalController {
   }
 
   @Patch('claims/:id')
-  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_CLAIM_REVIEW, PERMISSIONS.PROTOCOL_MANAGE)
+  @RequireUiCapability('protocol-claims-review')
   reviewClaim(
     @CurrentUser('sub') userId: string,
     @Param('id') id: string,

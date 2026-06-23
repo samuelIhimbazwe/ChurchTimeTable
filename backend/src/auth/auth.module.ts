@@ -21,6 +21,7 @@ import { VoiceCapabilityModule } from '../common/choir/voice-capability.module';
 import { LogisticsCapabilityModule } from '../common/choir/logistics-capability.module';
 import { DevotionCapabilityModule } from '../common/choir/devotion-capability.module';
 import { RolesCapabilityModule } from '../common/choir/roles-capability.module';
+import { PlatformCapabilityModule } from '../common/platform/platform-capability.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { RolesCapabilityModule } from '../common/choir/roles-capability.module';
     forwardRef(() => LogisticsCapabilityModule),
     forwardRef(() => DevotionCapabilityModule),
     forwardRef(() => RolesCapabilityModule),
+    PlatformCapabilityModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -53,6 +55,6 @@ import { RolesCapabilityModule } from '../common/choir/roles-capability.module';
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, PermissionsResolver],
-  exports: [AuthService, JwtModule, PermissionsResolver, ContributionCapabilityModule, WelfareCapabilityModule, DisciplineCapabilityModule, OpsCapabilityModule, JoinCapabilityModule, SponsorCapabilityModule, MusicCapabilityModule, RosterCapabilityModule, CommsCapabilityModule, VoiceCapabilityModule, LogisticsCapabilityModule, DevotionCapabilityModule, RolesCapabilityModule],
+  exports: [AuthService, JwtModule, PermissionsResolver, ContributionCapabilityModule, WelfareCapabilityModule, DisciplineCapabilityModule, OpsCapabilityModule, JoinCapabilityModule, SponsorCapabilityModule, MusicCapabilityModule, RosterCapabilityModule, CommsCapabilityModule, VoiceCapabilityModule, LogisticsCapabilityModule, DevotionCapabilityModule, RolesCapabilityModule, PlatformCapabilityModule],
 })
 export class AuthModule {}

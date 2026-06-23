@@ -5,6 +5,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
 import { MembersModule } from '../members/members.module';
 import { ChoirsModule } from '../choirs/choirs.module';
+import { ChoirHttpAccessModule } from '../common/choir/choir-http-access.module';
 import {
   ImportsController,
   PilotReadyController,
@@ -37,6 +38,7 @@ import { DeploymentController, RemindersController } from './deployment.controll
     MemberPhoneEnforcementModule,
     forwardRef(() => MembersModule),
     ChoirsModule,
+    ChoirHttpAccessModule,
   ],
   controllers: [
     ImportsController,

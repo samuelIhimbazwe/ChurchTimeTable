@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
+import { ChoirHttpAccessModule } from '../common/choir/choir-http-access.module';
 import { ChoirDiscoveryService } from '../member-portal/choir-discovery.service';
 import { ChoirMembershipRulesService } from '../member-portal/choir-membership-rules.service';
 import {
@@ -15,7 +16,7 @@ import { ChurchGivingService } from './church-giving.service';
 import { UxAnalyticsService } from './ux-analytics.service';
 
 @Module({
-  imports: [AuthModule, MemberPhoneEnforcementModule],
+  imports: [AuthModule, MemberPhoneEnforcementModule, ChoirHttpAccessModule],
   controllers: [
     ChurchPublicController,
     UxAnalyticsController,

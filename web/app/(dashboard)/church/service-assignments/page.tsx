@@ -149,6 +149,7 @@ export default function ChurchServiceAssignmentsPage() {
   const allItems = (all ?? []) as ChurchServiceAssignment[]
 
   return (
+    <CapabilityGate platformUiCapability="church-service-assignments-view">
     <div className="space-y-6 max-w-5xl mx-auto pb-8">
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -415,5 +416,6 @@ export default function ChurchServiceAssignmentsPage() {
         )}
       </Card>
     </div>
+    </CapabilityGate>
   )
 }

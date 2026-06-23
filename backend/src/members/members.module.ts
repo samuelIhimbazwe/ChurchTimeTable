@@ -13,6 +13,7 @@ import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
 import { MemberProfileAccessService } from './member-profile-access.service';
 import { MemberProfileService } from './member-profile.service';
 import { MemberTimelineService } from './member-timeline.service';
+import { ChoirHttpAccessModule } from '../common/choir/choir-http-access.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { MemberTimelineService } from './member-timeline.service';
     ParticipationModule,
     AuditModule,
     forwardRef(() => PilotReadyModule),
+    ChoirHttpAccessModule,
   ],
   controllers: [MembersController],
   providers: [

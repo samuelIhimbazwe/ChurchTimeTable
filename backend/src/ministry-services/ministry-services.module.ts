@@ -18,6 +18,7 @@ import { DevotionsModule } from '../devotions/devotions.module';
 import { AssetsModule } from '../assets/assets.module';
 import { MinistryFinanceModule } from '../ministry-finance/ministry-finance.module';
 import { MinistryDevotionsController } from './ministry-devotions.controller';
+import { ChoirHttpAccessModule } from '../common/choir/choir-http-access.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { MinistryDevotionsController } from './ministry-devotions.controller';
     AssetsModule,
     MinistryFinanceModule,
     MemberPhoneEnforcementModule,
+    ChoirHttpAccessModule,
   ],
   controllers: [
     MinistryAnnouncementsController,

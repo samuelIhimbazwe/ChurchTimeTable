@@ -1,16 +1,15 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
+import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { RequireAnyPermissions } from '../common/decorators/roles.decorator';
-import { ADMIN_SETTINGS_ACCESS, PERMISSIONS } from '../common/constants/roles';
+import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
 import { DataQualityService } from '../pilot-ready/data-quality.service';
 import { PilotReadinessService } from '../pilot-ready/pilot-readiness.service';
 
 @Controller('system')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class SystemController {
   constructor(
     private prisma: PrismaService,
@@ -19,7 +18,7 @@ export class SystemController {
   ) {}
 
   @Get('stats')
-  @RequireAnyPermissions(...ADMIN_SETTINGS_ACCESS)
+  @RequireUiCapability('admin-settings-manage')
   async stats() {
     const started = Date.now();
     const [users, members, operationOccurrences, auditLogs, syncConflicts, activeChoirs] =
@@ -54,21 +53,13 @@ export class SystemController {
   }
 
   @Get('data-quality')
-  @RequireAnyPermissions(
-    PERMISSIONS.PILOT_READINESS_VIEW,
-    PERMISSIONS.CHURCH_INTELLIGENCE_VIEW,
-    ...ADMIN_SETTINGS_ACCESS,
-  )
+  @RequireUiCapability('admin-settings-manage')
   getDataQuality(@CurrentUser('sub') userId: string) {
     return this.dataQualityService.metrics(userId);
   }
 
   @Get('pilot-readiness')
-  @RequireAnyPermissions(
-    PERMISSIONS.PILOT_READINESS_VIEW,
-    PERMISSIONS.CHURCH_INTELLIGENCE_VIEW,
-    ...ADMIN_SETTINGS_ACCESS,
-  )
+  @RequireUiCapability('admin-settings-manage')
   getPilotReadiness(@CurrentUser('sub') userId: string) {
     return this.pilotReadinessService.indicators(userId);
   }

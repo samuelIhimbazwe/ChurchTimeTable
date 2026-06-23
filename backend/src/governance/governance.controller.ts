@@ -2,10 +2,12 @@ import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@n
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
 import {
   RequireAnyPermissions,
   RequirePermissions,
 } from '../common/decorators/roles.decorator';
+import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
 import { PERMISSIONS } from '../common/constants/roles';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/decorators/current-user.decorator';
@@ -19,7 +21,7 @@ import { ApplyChoirRoleTemplateDto } from './dto/apply-choir-role-template.dto';
 import { CreateAdvisorElevationDto } from './dto/create-advisor-elevation.dto';
 
 @Controller('governance')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class GovernanceController {
   constructor(
     private governance: GovernanceService,
@@ -126,7 +128,7 @@ export class GovernanceController {
   }
 
   @Post('protocol/roles')
-  @RequirePermissions(PERMISSIONS.COMMITTEE_ROLE_MANAGE_SCOPE)
+  @RequireUiCapability('protocol-committee-role-manage')
   upsertProtocolRole(
     @Body() dto: UpsertCommitteeRoleDto,
     @CurrentUser() user: JwtPayload,
@@ -135,7 +137,7 @@ export class GovernanceController {
   }
 
   @Post('protocol/members')
-  @RequirePermissions(PERMISSIONS.COMMITTEE_MEMBER_MANAGE_SCOPE)
+  @RequireUiCapability('protocol-committee-member-manage')
   assignProtocolMember(
     @Body() dto: AssignCommitteeMemberDto,
     @CurrentUser() user: JwtPayload,
@@ -144,17 +146,13 @@ export class GovernanceController {
   }
 
   @Get('protocol/:scopeId')
-  @RequireAnyPermissions(
-    PERMISSIONS.EVENT_READ,
-    PERMISSIONS.PROTOCOL_VIEW,
-    PERMISSIONS.COMMITTEE_MEMBER_MANAGE_SCOPE,
-  )
+  @RequireUiCapability('protocol-committee-member-manage')
   listProtocolCommittee(@Param('scopeId') scopeId: string) {
     return this.governance.listProtocolCommittee(scopeId);
   }
 
   @Delete('protocol/members/:assignmentId')
-  @RequirePermissions(PERMISSIONS.COMMITTEE_MEMBER_MANAGE_SCOPE)
+  @RequireUiCapability('protocol-committee-member-manage')
   revokeProtocolMember(
     @Param('assignmentId') assignmentId: string,
     @CurrentUser() user: JwtPayload,
@@ -163,7 +161,7 @@ export class GovernanceController {
   }
 
   @Post('protocol/teams/generate')
-  @RequirePermissions(PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE)
+  @RequireUiCapability('protocol-team-manage')
   generateProtocolTeams(
     @Body() dto: GenerateProtocolTeamsDto,
     @CurrentUser() user: JwtPayload,

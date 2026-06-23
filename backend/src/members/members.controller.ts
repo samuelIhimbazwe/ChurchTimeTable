@@ -17,10 +17,12 @@ import { SkipPhoneEnforcement } from '../common/decorators/skip-phone-enforcemen
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
 import {
   RequireAnyPermissions,
   RequirePermissions,
 } from '../common/decorators/roles.decorator';
+import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
 import { PERMISSIONS } from '../common/constants/roles';
 import { MEMBER_ROSTER_ACCESS_CLAIMS } from '../common/governance/governance-permissions.util';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -28,7 +30,7 @@ import type { JwtPayload } from '../common/decorators/current-user.decorator';
 import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Controller('members')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class MembersController {
   constructor(
     private membersService: MembersService,
@@ -52,7 +54,7 @@ export class MembersController {
   }
 
   @Get()
-  @RequirePermissions(PERMISSIONS.MEMBER_MANAGE)
+  @RequireUiCapability('member-manage')
   findAll(
     @Query() query: PaginationDto & {
       status?: MemberStatus;
@@ -145,7 +147,7 @@ export class MembersController {
   }
 
   @Get(':id')
-  @RequirePermissions(PERMISSIONS.MEMBER_MANAGE)
+  @RequireUiCapability('member-manage')
   findOne(@Param('id') id: string) {
     return this.membersService.findOne(id);
   }
@@ -178,7 +180,7 @@ export class MembersController {
   }
 
   @Patch(':id/status')
-  @RequirePermissions(PERMISSIONS.MEMBER_MANAGE)
+  @RequireUiCapability('member-manage')
   updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateMemberStatusDto,

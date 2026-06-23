@@ -1,6 +1,8 @@
 import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
+import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { RequireAnyPermissions } from '../common/decorators/roles.decorator';
@@ -65,7 +67,7 @@ export class UxAnalyticsController {
 }
 
 @Controller('church/branding')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class ChurchBrandingController {
   constructor(private branding: ChurchBrandingService) {}
 
@@ -75,7 +77,7 @@ export class ChurchBrandingController {
   }
 
   @Patch()
-  @RequireAnyPermissions(PERMISSIONS.ADMIN_SETTINGS_MANAGE, PERMISSIONS.ADMIN_USERS_MANAGE)
+  @RequireUiCapability('admin-settings-manage')
   update(
     @CurrentUser('sub') _userId: string,
     @Body()

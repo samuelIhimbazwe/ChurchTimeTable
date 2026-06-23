@@ -8,9 +8,10 @@ import { ChurchServiceRequestsService } from './church-service-requests.service'
 import { ServicePreparationService } from './service-preparation.service';
 import { ChoirDissolutionService } from './choir-dissolution.service';
 import { ChurchServiceOccurrenceService } from './church-service-occurrence.service';
+import { ChoirHttpAccessModule } from '../common/choir/choir-http-access.module';
 
 @Module({
-  imports: [AuditModule, AuthModule, ChoirSchedulingModule, MemberPhoneEnforcementModule],
+  imports: [AuditModule, AuthModule, ChoirSchedulingModule, MemberPhoneEnforcementModule, ChoirHttpAccessModule],
   controllers: [ChoirServiceOpsController],
   providers: [
     ChurchServiceRequestsService,

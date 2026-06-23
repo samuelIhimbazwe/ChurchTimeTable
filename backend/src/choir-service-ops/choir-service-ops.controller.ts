@@ -18,8 +18,10 @@ import {
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
+import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { RequireAnyPermissions } from '../common/decorators/roles.decorator';
+import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
 import { PERMISSIONS } from '../common/constants/roles';
 import { ChurchServiceRequestsService } from './church-service-requests.service';
 import { ServicePreparationService } from './service-preparation.service';
@@ -31,7 +33,7 @@ import {
 } from './church-service-occurrence.service';
 
 @Controller()
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class ChoirServiceOpsController {
   constructor(
     private churchRequests: ChurchServiceRequestsService,
@@ -42,13 +44,7 @@ export class ChoirServiceOpsController {
   ) {}
 
   @Get('church/service-requests')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHURCH_GOVERNANCE_MANAGE,
-    PERMISSIONS.CHURCH_GOVERNANCE_VIEW,
-    PERMISSIONS.OPERATIONS_MANAGE,
-    PERMISSIONS.CHOIR_OVERSIGHT,
-    PERMISSIONS.CHOIR_OPS_SCHEDULE,
-  )
+  @RequireUiCapability('church-service-requests-view')
   listChurchRequests(
     @CurrentUser('sub') userId: string,
     @Query('status') status?: ChurchServiceRequestStatus,
@@ -58,10 +54,7 @@ export class ChoirServiceOpsController {
   }
 
   @Post('church/service-requests')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHURCH_GOVERNANCE_MANAGE,
-    PERMISSIONS.OPERATIONS_MANAGE,
-  )
+  @RequireUiCapability('church-service-request-create')
   createChurchRequest(
     @CurrentUser('sub') userId: string,
     @Body()
@@ -77,11 +70,7 @@ export class ChoirServiceOpsController {
   }
 
   @Get('church/service-assignments/conflicts')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHURCH_SCHEDULE_MANAGE,
-    PERMISSIONS.CHURCH_SCHEDULE_RESOLVE,
-    PERMISSIONS.CHURCH_GOVERNANCE_MANAGE,
-  )
+  @RequireUiCapability('church-service-assignments-view')
   checkAssignmentConflicts(
     @CurrentUser('sub') userId: string,
     @Query('choirId') choirId: string,
@@ -102,12 +91,7 @@ export class ChoirServiceOpsController {
   }
 
   @Get('church/service-assignments')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHURCH_SCHEDULE_VIEW_QUEUE,
-    PERMISSIONS.CHURCH_SCHEDULE_MANAGE,
-    PERMISSIONS.CHURCH_SCHEDULE_RESOLVE,
-    PERMISSIONS.CHURCH_GOVERNANCE_MANAGE,
-  )
+  @RequireUiCapability('church-service-assignments-view')
   listChurchAssignments(
     @CurrentUser('sub') userId: string,
     @Query('status') status?: ChoirServiceAssignmentStatus,
@@ -126,11 +110,7 @@ export class ChoirServiceOpsController {
   }
 
   @Post('church/service-assignments')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHURCH_SCHEDULE_MANAGE,
-    PERMISSIONS.CHURCH_SCHEDULE_RESOLVE,
-    PERMISSIONS.CHURCH_GOVERNANCE_MANAGE,
-  )
+  @RequireUiCapability('church-service-request-schedule')
   async churchDirectAssign(
     @CurrentUser('sub') userId: string,
     @Body()
@@ -176,11 +156,7 @@ export class ChoirServiceOpsController {
   }
 
   @Post('church/service-assignments/:id/confirm')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHURCH_SCHEDULE_RESOLVE,
-    PERMISSIONS.CHURCH_SCHEDULE_MANAGE,
-    PERMISSIONS.CHURCH_GOVERNANCE_MANAGE,
-  )
+  @RequireUiCapability('church-service-request-schedule')
   confirmChurchAssignment(
     @CurrentUser('sub') userId: string,
     @Param('id') id: string,
@@ -190,11 +166,7 @@ export class ChoirServiceOpsController {
   }
 
   @Post('church/service-assignments/:id/reject')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHURCH_SCHEDULE_RESOLVE,
-    PERMISSIONS.CHURCH_SCHEDULE_MANAGE,
-    PERMISSIONS.CHURCH_GOVERNANCE_MANAGE,
-  )
+  @RequireUiCapability('church-service-request-schedule')
   rejectChurchAssignment(
     @CurrentUser('sub') userId: string,
     @Param('id') id: string,
@@ -204,11 +176,7 @@ export class ChoirServiceOpsController {
   }
 
   @Post('church/service-requests/:id/review')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHOIR_OPS_SCHEDULE,
-    PERMISSIONS.CHOIR_OPS_MANAGE,
-    PERMISSIONS.CHURCH_GOVERNANCE_MANAGE,
-  )
+  @RequireUiCapability('church-service-request-schedule')
   reviewChurchRequest(
     @CurrentUser('sub') userId: string,
     @Param('id') id: string,
@@ -313,13 +281,13 @@ export class ChoirServiceOpsController {
   }
 
   @Get('choirs/dissolution-transfers')
-  @RequireAnyPermissions(PERMISSIONS.CHURCH_GOVERNANCE_MANAGE, PERMISSIONS.CHOIR_OVERSIGHT)
+  @RequireUiCapability('church-governance-manage')
   listDissolutions(@CurrentUser('sub') userId: string) {
     return this.dissolution.list(userId);
   }
 
   @Get('choirs/:choirId/dissolution-preview')
-  @RequireAnyPermissions(PERMISSIONS.CHURCH_GOVERNANCE_MANAGE, PERMISSIONS.CHOIR_OVERSIGHT)
+  @RequireUiCapability('church-governance-manage')
   previewDissolution(
     @CurrentUser('sub') userId: string,
     @Param('choirId') choirId: string,
@@ -328,7 +296,7 @@ export class ChoirServiceOpsController {
   }
 
   @Post('choirs/dissolution-transfer')
-  @RequireAnyPermissions(PERMISSIONS.CHURCH_GOVERNANCE_MANAGE)
+  @RequireUiCapability('church-governance-manage')
   executeDissolution(
     @CurrentUser('sub') userId: string,
     @Body() body: { sourceChoirId: string; targetChoirId: string; reason?: string },

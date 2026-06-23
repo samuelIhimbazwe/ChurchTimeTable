@@ -16,6 +16,7 @@ export default function ChurchFacilitiesPage() {
   const items = Array.isArray(facilities) ? facilities : []
 
   return (
+    <CapabilityGate platformUiCapability="church-facility-view">
     <div className="space-y-6 max-w-4xl mx-auto">
       <div>
         <h2 className="font-display text-3xl text-text-primary">Church facilities</h2>
@@ -71,5 +72,6 @@ export default function ChurchFacilitiesPage() {
         )}
       </Card>
     </div>
+    </CapabilityGate>
   )
 }

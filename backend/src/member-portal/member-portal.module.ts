@@ -28,6 +28,7 @@ import { MemberPortalParticipationScheduleService } from './member-portal-partic
 import { MemberMinistryScopeService } from './member-ministry-scope.service';
 import { MemberPortalNotificationsService } from './member-portal-notifications.service';
 import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
+import { ChoirHttpAccessModule } from '../common/choir/choir-http-access.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
     NotificationsModule,
     MemberPhoneEnforcementModule,
     PilotReadyModule,
+    ChoirHttpAccessModule,
   ],
   controllers: [
     ChurchController,

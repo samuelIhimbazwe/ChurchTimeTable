@@ -30,6 +30,7 @@ import { ChurchScheduleScopeService } from './church-schedule-scope.service';
 
 import { ChurchScheduleNotificationsService } from './church-schedule-notifications.service';
 import { ChurchScheduleDigestTask } from './church-schedule-digest.task';
+import { ChoirHttpAccessModule } from '../common/choir/choir-http-access.module';
 
 
 
@@ -48,6 +49,8 @@ import { ChurchScheduleDigestTask } from './church-schedule-digest.task';
     OperationalUnitsModule,
 
     MemberPhoneEnforcementModule,
+
+    ChoirHttpAccessModule,
 
   ],
 

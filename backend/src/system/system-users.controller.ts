@@ -10,12 +10,8 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
-import {
-  RequireAnyPermissions,
-  RequirePermissions,
-} from '../common/decorators/roles.decorator';
-import { PERMISSIONS } from '../common/constants/roles';
+import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
+import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/decorators/current-user.decorator';
 import { SystemUsersService } from './system-users.service';
@@ -26,45 +22,36 @@ import { AssignSystemUserRolesDto } from './dto/assign-system-user-roles.dto';
 import { ResetSystemUserPasswordDto } from './dto/reset-system-user-password.dto';
 
 @Controller('system/users')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class SystemUsersController {
   constructor(private users: SystemUsersService) {}
 
   @Get()
-  @RequireAnyPermissions(
-    PERMISSIONS.ADMIN_USERS_VIEW,
-    PERMISSIONS.ADMIN_USERS_MANAGE,
-  )
+  @RequireUiCapability('admin-users-manage')
   list(@Query() query: ListSystemUsersDto) {
     return this.users.list(query);
   }
 
   @Get('roles')
-  @RequireAnyPermissions(
-    PERMISSIONS.ADMIN_USERS_VIEW,
-    PERMISSIONS.ADMIN_USERS_MANAGE,
-  )
+  @RequireUiCapability('admin-users-manage')
   listRoles() {
     return this.users.listRoles();
   }
 
   @Get(':id')
-  @RequireAnyPermissions(
-    PERMISSIONS.ADMIN_USERS_VIEW,
-    PERMISSIONS.ADMIN_USERS_MANAGE,
-  )
+  @RequireUiCapability('admin-users-manage')
   getById(@Param('id') id: string) {
     return this.users.getById(id);
   }
 
   @Post()
-  @RequirePermissions(PERMISSIONS.ADMIN_USERS_MANAGE)
+  @RequireUiCapability('admin-users-manage')
   create(@CurrentUser() user: JwtPayload, @Body() dto: CreateSystemUserDto) {
     return this.users.create(user.sub, dto);
   }
 
   @Patch(':id')
-  @RequirePermissions(PERMISSIONS.ADMIN_USERS_MANAGE)
+  @RequireUiCapability('admin-users-manage')
   update(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
@@ -74,7 +61,7 @@ export class SystemUsersController {
   }
 
   @Patch(':id/roles')
-  @RequirePermissions(PERMISSIONS.ADMIN_USERS_MANAGE)
+  @RequireUiCapability('admin-users-manage')
   assignRoles(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
@@ -84,7 +71,7 @@ export class SystemUsersController {
   }
 
   @Post(':id/reset-password')
-  @RequirePermissions(PERMISSIONS.ADMIN_USERS_MANAGE)
+  @RequireUiCapability('admin-users-manage')
   resetPassword(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,

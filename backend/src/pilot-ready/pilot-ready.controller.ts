@@ -15,8 +15,10 @@ import { ImportJobType, NotificationRuleTrigger } from '@prisma/client';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
+import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { RequireAnyPermissions } from '../common/decorators/roles.decorator';
+import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
 import { PERMISSIONS } from '../common/constants/roles';
 import { ImportsService } from './imports.service';
 import { BulkActionsService } from './bulk-actions.service';
@@ -28,12 +30,12 @@ import { WorkflowSimulationService } from './workflow-simulation.service';
 import { NotificationRulesService } from './notification-rules.service';
 
 @Controller()
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class ImportsController {
   constructor(private imports: ImportsService) {}
 
   @Post('imports')
-  @RequireAnyPermissions(PERMISSIONS.PILOT_IMPORT_MANAGE, PERMISSIONS.ADMIN_USERS_MANAGE)
+  @RequireUiCapability('admin-import')
   @UseInterceptors(FileInterceptor('file'))
   upload(
     @CurrentUser('sub') userId: string,
@@ -50,19 +52,19 @@ export class ImportsController {
   }
 
   @Get('imports')
-  @RequireAnyPermissions(PERMISSIONS.PILOT_IMPORT_MANAGE, PERMISSIONS.ADMIN_USERS_MANAGE)
+  @RequireUiCapability('admin-import')
   list(@CurrentUser('sub') userId: string) {
     return this.imports.list(userId);
   }
 
   @Get('imports/:id')
-  @RequireAnyPermissions(PERMISSIONS.PILOT_IMPORT_MANAGE, PERMISSIONS.ADMIN_USERS_MANAGE)
+  @RequireUiCapability('admin-import')
   get(@CurrentUser('sub') userId: string, @Param('id') id: string) {
     return this.imports.get(userId, id);
   }
 
   @Post('imports/:id/confirm')
-  @RequireAnyPermissions(PERMISSIONS.PILOT_IMPORT_MANAGE, PERMISSIONS.ADMIN_USERS_MANAGE)
+  @RequireUiCapability('admin-import')
   confirm(
     @CurrentUser('sub') userId: string,
     @Param('id') id: string,
@@ -73,20 +75,20 @@ export class ImportsController {
   }
 
   @Post('imports/:id/cancel')
-  @RequireAnyPermissions(PERMISSIONS.PILOT_IMPORT_MANAGE, PERMISSIONS.ADMIN_USERS_MANAGE)
+  @RequireUiCapability('admin-import')
   cancel(@CurrentUser('sub') userId: string, @Param('id') id: string) {
     return this.imports.cancel(userId, id);
   }
 
   @Get('imports/:id/results')
-  @RequireAnyPermissions(PERMISSIONS.PILOT_IMPORT_MANAGE, PERMISSIONS.ADMIN_USERS_MANAGE)
+  @RequireUiCapability('admin-import')
   results(@CurrentUser('sub') userId: string, @Param('id') id: string) {
     return this.imports.getResults(userId, id);
   }
 }
 
 @Controller('pilot')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class PilotReadyController {
   constructor(
     private bulk: BulkActionsService,
@@ -138,7 +140,7 @@ export class PilotReadyController {
   }
 
   @Post('bulk/protocol/attendance')
-  @RequireAnyPermissions(PERMISSIONS.PILOT_BULK_MANAGE, PERMISSIONS.PROTOCOL_ATTENDANCE_MANAGE)
+  @RequireUiCapability('protocol-attendance-manage')
   bulkProtocolAttendance(
     @CurrentUser('sub') userId: string,
     @Body()
@@ -170,37 +172,31 @@ export class PilotReadyController {
   }
 
   @Get('readiness')
-  @RequireAnyPermissions(
-    PERMISSIONS.PILOT_READINESS_VIEW,
-    PERMISSIONS.CHURCH_INTELLIGENCE_VIEW,
-  )
+  @RequireUiCapability('pilot-readiness-view')
   pilotReadiness(@CurrentUser('sub') userId: string) {
     return this.readinessService.indicators(userId);
   }
 
   @Get('permission-audit')
-  @RequireAnyPermissions(PERMISSIONS.PILOT_READINESS_VIEW, PERMISSIONS.ADMIN_ROLES_VIEW)
+  @RequireUiCapability('admin-roles-manage')
   getPermissionAudit(@CurrentUser('sub') userId: string) {
     return this.permissionAuditService.report(userId);
   }
 
   @Post('simulations/run')
-  @RequireAnyPermissions(PERMISSIONS.PILOT_SIMULATION_RUN, PERMISSIONS.ADMIN_SETTINGS_MANAGE)
+  @RequireUiCapability('admin-settings-manage')
   runSimulations(@CurrentUser('sub') userId: string) {
     return this.simulation.runAll(userId);
   }
 
   @Get('notification-rules')
-  @RequireAnyPermissions(PERMISSIONS.PILOT_READINESS_VIEW, PERMISSIONS.ADMIN_SETTINGS_MANAGE)
+  @RequireUiCapability('admin-settings-manage')
   listRules(@CurrentUser('sub') userId: string) {
     return this.rules.list(userId);
   }
 
   @Patch('notification-rules/:trigger')
-  @RequireAnyPermissions(
-    PERMISSIONS.PILOT_READINESS_VIEW,
-    PERMISSIONS.ADMIN_SETTINGS_MANAGE,
-  )
+  @RequireUiCapability('admin-settings-manage')
   updateRule(
     @CurrentUser('sub') userId: string,
     @Param('trigger') trigger: NotificationRuleTrigger,

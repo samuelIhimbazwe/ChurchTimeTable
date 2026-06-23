@@ -11,24 +11,21 @@ import {
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
+import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { RequireAnyPermissions, RequirePermissions } from '../common/decorators/roles.decorator';
-import { PERMISSIONS } from '../common/constants/roles';
+import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
 import { ChurchFacilitiesService } from './church-facilities.service';
 import { UpsertFacilityDto } from './dto/upsert-facility.dto';
 import { SkipPhoneEnforcement } from '../common/decorators/skip-phone-enforcement.decorator';
 
 @Controller('church/facilities')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class ChurchFacilitiesController {
   constructor(private facilities: ChurchFacilitiesService) {}
 
   @Get()
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(
-    PERMISSIONS.CHURCH_FACILITY_VIEW,
-    PERMISSIONS.CHURCH_FACILITY_MANAGE,
-  )
+  @RequireUiCapability('church-facility-view')
   list(
     @CurrentUser('sub') userId: string,
     @Query('includeInactive') includeInactive?: string,
@@ -37,13 +34,13 @@ export class ChurchFacilitiesController {
   }
 
   @Post()
-  @RequirePermissions(PERMISSIONS.CHURCH_FACILITY_MANAGE)
+  @RequireUiCapability('church-facility-manage')
   create(@CurrentUser('sub') userId: string, @Body() dto: UpsertFacilityDto) {
     return this.facilities.create(userId, dto);
   }
 
   @Patch(':id')
-  @RequirePermissions(PERMISSIONS.CHURCH_FACILITY_MANAGE)
+  @RequireUiCapability('church-facility-manage')
   update(
     @CurrentUser('sub') userId: string,
     @Param('id') id: string,

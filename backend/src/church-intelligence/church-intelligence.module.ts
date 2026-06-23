@@ -4,6 +4,7 @@ import { MinistriesModule } from '../ministries/ministries.module';
 import { ReportsModule } from '../reports/reports.module';
 import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
 import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
+import { ChoirHttpAccessModule } from '../common/choir/choir-http-access.module';
 import {
   ChurchActivityController,
   ChurchIntelligenceController,
@@ -28,6 +29,7 @@ import {
     ReportsModule,
     MemberPhoneEnforcementModule,
     PilotReadyModule,
+    ChoirHttpAccessModule,
   ],
   controllers: [
     ChurchIntelligenceController,

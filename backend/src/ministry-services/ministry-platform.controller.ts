@@ -5,9 +5,8 @@ import { MinistryReportsService } from './ministry-reports.service';
 import { MinistryActivityService } from './ministry-activity.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { RequireAnyPermissions } from '../common/decorators/roles.decorator';
-import { PERMISSIONS } from '../common/constants/roles';
+import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
+import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/decorators/current-user.decorator';
 import { MinistryActivityType } from '@prisma/client';
@@ -28,7 +27,7 @@ class ActivityQueryDto {
 }
 
 @Controller('ministries/:ministryId')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class MinistryPlatformController {
   constructor(
     private dashboard: MinistryDashboardService,
@@ -37,21 +36,13 @@ export class MinistryPlatformController {
   ) {}
 
   @Get('dashboard')
-  @RequireAnyPermissions(
-    PERMISSIONS.MINISTRY_DASHBOARD_VIEW,
-    PERMISSIONS.MINISTRY_VIEW,
-    PERMISSIONS.MINISTRY_MANAGE,
-  )
+  @RequireUiCapability('ministry-platform-view')
   dashboardView(@CurrentUser() user: JwtPayload, @Param('ministryId') ministryId: string) {
     return this.dashboard.getDashboard(user.sub, ministryId);
   }
 
   @Get('activity')
-  @RequireAnyPermissions(
-    PERMISSIONS.MINISTRY_ACTIVITY_VIEW,
-    PERMISSIONS.MINISTRY_VIEW,
-    PERMISSIONS.MINISTRY_MANAGE,
-  )
+  @RequireUiCapability('ministry-platform-view')
   activityFeed(
     @CurrentUser() user: JwtPayload,
     @Param('ministryId') ministryId: string,
@@ -61,16 +52,14 @@ export class MinistryPlatformController {
   }
 
   @Get('reports/summary')
-  @RequireAnyPermissions(
-    PERMISSIONS.MINISTRY_REPORT_VIEW,
-    PERMISSIONS.MINISTRY_MANAGE,
-  )
+  @RequireUiCapability('ministry-platform-view')
   reportSummary(@CurrentUser() user: JwtPayload, @Param('ministryId') ministryId: string) {
     return this.reports.summary(user.sub, ministryId);
   }
 
   @Get('reports/csv')
   @Header('Content-Type', 'text/csv')
+  @RequireUiCapability('ministry-platform-view')
   async reportCsv(
     @CurrentUser() user: JwtPayload,
     @Param('ministryId') ministryId: string,
@@ -82,6 +71,7 @@ export class MinistryPlatformController {
   }
 
   @Get('reports/pdf')
+  @RequireUiCapability('ministry-platform-view')
   async reportPdf(
     @CurrentUser() user: JwtPayload,
     @Param('ministryId') ministryId: string,

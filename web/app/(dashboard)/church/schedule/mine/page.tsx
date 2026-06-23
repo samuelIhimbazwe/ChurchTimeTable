@@ -51,6 +51,7 @@ export default function ChurchScheduleMinePage() {
   }
 
   return (
+    <CapabilityGate platformUiCapability="church-schedule-view">
     <div className="space-y-6 max-w-3xl mx-auto">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -156,5 +157,6 @@ export default function ChurchScheduleMinePage() {
         )}
       </Card>
     </div>
+    </CapabilityGate>
   )
 }

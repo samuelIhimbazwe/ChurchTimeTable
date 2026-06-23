@@ -6,6 +6,7 @@ import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enfo
 import { ReportsModule } from '../reports/reports.module';
 import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
 import { FinanceModule } from '../finance/finance.module';
+import { ChoirHttpAccessModule } from '../common/choir/choir-http-access.module';
 import { ProtocolController } from './protocol.controller';
 import { ProtocolTeamsService } from './protocol-teams.service';
 import { ProtocolAssignmentEngine } from './protocol-assignment.engine';
@@ -37,6 +38,7 @@ import { ProtocolMemberRecognitionService } from './protocol-member-recognition.
     ReportsModule,
     PilotReadyModule,
     FinanceModule,
+    ChoirHttpAccessModule,
   ],
   controllers: [ProtocolController],
   providers: [

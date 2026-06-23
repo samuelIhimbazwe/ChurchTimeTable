@@ -1,4 +1,6 @@
 import { apiClient, setAccessToken } from '../client'
+import type { ResolvedAuth } from '@/lib/choir/capability.types'
+import { usePlatformAuthStore } from '@/stores/platform-auth'
 
 export interface LoginPayload {
   email: string
@@ -45,6 +47,17 @@ interface MeResponse {
     firstName: string
     lastName: string
   } | null
+  protocolAuth?: ResolvedAuth
+  churchAuth?: ResolvedAuth
+  platformAuth?: ResolvedAuth
+}
+
+function syncPlatformAuthsFromMe(me: MeResponse) {
+  usePlatformAuthStore.getState().setPlatformAuths({
+    protocolAuth: me.protocolAuth,
+    churchAuth: me.churchAuth,
+    platformAuth: me.platformAuth,
+  })
 }
 
 function mapMeToAuthUser(me: MeResponse): AuthUser {
@@ -83,6 +96,7 @@ export const authApi = {
       setSessionCookie('1')
     }
     const profile = await apiClient.get<never, MeResponse>('/auth/me')
+    syncPlatformAuthsFromMe(profile)
     return {
       accessToken: tokens.accessToken,
       user: mapMeToAuthUser(profile),
@@ -99,6 +113,7 @@ export const authApi = {
       setSessionCookie('1')
     }
     const profile = await apiClient.get<never, MeResponse>('/auth/me')
+    syncPlatformAuthsFromMe(profile)
     return {
       accessToken: tokens.accessToken,
       user: mapMeToAuthUser(profile),
@@ -107,6 +122,7 @@ export const authApi = {
 
   logout: async (): Promise<void> => {
     await apiClient.post<never, void>('/auth/logout')
+    usePlatformAuthStore.getState().clearPlatformAuths()
     if (typeof window !== 'undefined') {
       clearSessionCookie()
     }
@@ -117,10 +133,15 @@ export const authApi = {
 
   me: async (): Promise<AuthUser> => {
     const profile = await apiClient.get<never, MeResponse>('/auth/me')
+    syncPlatformAuthsFromMe(profile)
     return mapMeToAuthUser(profile)
   },
 
-  getProfile: () => apiClient.get<never, MeResponse>('/auth/me'),
+  getProfile: async () => {
+    const profile = await apiClient.get<never, MeResponse>('/auth/me')
+    syncPlatformAuthsFromMe(profile)
+    return profile
+  },
 
   completeOnboarding: () =>
     apiClient.patch<never, void>('/auth/onboarding-complete'),

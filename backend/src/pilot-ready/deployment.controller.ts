@@ -1,17 +1,16 @@
 import { Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
+import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { RequireAnyPermissions } from '../common/decorators/roles.decorator';
-import { PERMISSIONS } from '../common/constants/roles';
+import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
 import { GoLiveReportService } from './go-live-report.service';
 import { RemindersDashboardService } from './reminders-dashboard.service';
 import { NotificationDeliveryService } from './notification-delivery.service';
 import { AutomatedRemindersService } from './automated-reminders.service';
 
 @Controller('deployment')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class DeploymentController {
   constructor(
     private goLiveReport: GoLiveReportService,
@@ -20,18 +19,14 @@ export class DeploymentController {
   ) {}
 
   @Get('go-live-report')
-  @RequireAnyPermissions(
-    PERMISSIONS.PILOT_READINESS_VIEW,
-    PERMISSIONS.CHURCH_INTELLIGENCE_VIEW,
-    PERMISSIONS.ADMIN_USERS_VIEW,
-  )
+  @RequireUiCapability('pilot-readiness-view')
   report(@CurrentUser('sub') userId: string) {
     return this.goLiveReport.build(userId);
   }
 }
 
 @Controller('reminders')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class RemindersController {
   constructor(
     private remindersDashboard: RemindersDashboardService,
@@ -40,28 +35,19 @@ export class RemindersController {
   ) {}
 
   @Get('dashboard')
-  @RequireAnyPermissions(
-    PERMISSIONS.PILOT_READINESS_VIEW,
-    PERMISSIONS.ADMIN_SETTINGS_MANAGE,
-  )
+  @RequireUiCapability('admin-settings-manage')
   dashboard(@CurrentUser('sub') userId: string) {
     return this.remindersDashboard.dashboard(userId);
   }
 
   @Get('delivery-logs')
-  @RequireAnyPermissions(
-    PERMISSIONS.PILOT_READINESS_VIEW,
-    PERMISSIONS.ADMIN_SETTINGS_MANAGE,
-  )
+  @RequireUiCapability('admin-settings-manage')
   listDeliveryLogs(@CurrentUser('sub') userId: string) {
     return this.deliveryService.listDeliveryLogs({ limit: 100 });
   }
 
   @Post('run-now')
-  @RequireAnyPermissions(
-    PERMISSIONS.PILOT_READINESS_VIEW,
-    PERMISSIONS.ADMIN_SETTINGS_MANAGE,
-  )
+  @RequireUiCapability('admin-settings-manage')
   async runNow() {
     await this.automatedReminders.runAll();
     return { ok: true };

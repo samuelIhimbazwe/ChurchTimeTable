@@ -16,11 +16,10 @@ import {
   ProtocolReplacementStatus,
 } from '@prisma/client';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
+import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { RequireAnyPermissions, RequirePermissions } from '../common/decorators/roles.decorator';
-import { PERMISSIONS } from '../common/constants/roles';
+import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
 import { ProtocolTeamsService } from './protocol-teams.service';
 import { ProtocolAttendanceService } from './protocol-attendance.service';
 import { ProtocolReplacementsService } from './protocol-replacements.service';
@@ -38,7 +37,7 @@ import { ProtocolMemberRecognitionService } from './protocol-member-recognition.
 import { ProtocolRankingCategory } from '@prisma/client';
 
 @Controller('protocol')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class ProtocolController {
   constructor(
     private teams: ProtocolTeamsService,
@@ -58,79 +57,55 @@ export class ProtocolController {
   ) {}
 
   @Get('documents')
-  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.PROTOCOL_MANAGE)
+  @RequireUiCapability('protocol-view')
   listDocuments(@CurrentUser('sub') userId: string) {
     return this.documents.list(userId);
   }
 
   @Get('dashboard/team-leader')
-  @RequireAnyPermissions(
-    PERMISSIONS.PROTOCOL_TEAM_LEADER_EXECUTE,
-    PERMISSIONS.PROTOCOL_TEAM_HEAD,
-    PERMISSIONS.PROTOCOL_MANAGE,
-  )
+  @RequireUiCapability('protocol-team-leadership')
   teamLeaderDashboard(@CurrentUser('sub') userId: string) {
     return this.dashboard.teamLeaderSummary(userId);
   }
 
   @Get('dashboard')
-  @RequireAnyPermissions(
-    PERMISSIONS.PROTOCOL_VIEW,
-    PERMISSIONS.PROTOCOL_MANAGE,
-    PERMISSIONS.PROTOCOL_OVERSIGHT_SCOPE,
-    PERMISSIONS.PROTOCOL_OPERATIONAL_MONITOR,
-    PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE,
-  )
+  @RequireUiCapability('protocol-view')
   leaderDashboard(@CurrentUser('sub') userId: string) {
     return this.dashboard.leaderSummary(userId);
   }
 
   @Get('dashboard/admin')
-  @RequireAnyPermissions(
-    PERMISSIONS.PROTOCOL_MANAGE,
-    PERMISSIONS.PROTOCOL_CLAIM_REVIEW,
-    PERMISSIONS.PROTOCOL_INVITE,
-    PERMISSIONS.COMMITTEE_MEMBER_MANAGE_SCOPE,
-  )
+  @RequireUiCapability('protocol-admin-hub')
   adminDashboard(@CurrentUser('sub') userId: string) {
     return this.dashboard.adminSummary(userId);
   }
 
   @Get('dashboard/officer-sla')
-  @RequireAnyPermissions(
-    PERMISSIONS.PROTOCOL_OVERSIGHT_SCOPE,
-    PERMISSIONS.PROTOCOL_MANAGE,
-    PERMISSIONS.PROTOCOL_REPORT,
-    PERMISSIONS.PROTOCOL_OPERATIONAL_MONITOR,
-  )
+  @RequireUiCapability('protocol-rankings-oversight')
   officerSlaDashboard(@CurrentUser('sub') userId: string) {
     return this.officerSla.getOfficerSla(userId);
   }
 
   @Get('dashboard/me')
-  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.MEMBER_READ)
+  @RequireUiCapability('protocol-view')
   memberDashboard(@CurrentUser('sub') userId: string) {
     return this.dashboard.memberSummary(userId);
   }
 
   @Get('recognition/me')
-  @RequireAnyPermissions(
-    PERMISSIONS.PROTOCOL_VIEW,
-    PERMISSIONS.MEMBER_READ,
-    PERMISSIONS.MEMBER_PORTAL_VIEW,
-  )
+  @RequireUiCapability('protocol-view')
   myRecognition(@CurrentUser('sub') userId: string) {
     return this.recognition.getMyRecognition(userId);
   }
 
   @Get('my-statistics')
-  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.MEMBER_READ)
+  @RequireUiCapability('protocol-view')
   myStatistics(@CurrentUser('sub') userId: string) {
     return this.members.myStatistics(userId);
   }
 
   @Get('my-ranking')
-  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.MEMBER_READ)
+  @RequireUiCapability('protocol-view')
   myRanking(
     @CurrentUser('sub') userId: string,
     @Query('year') year?: string,
@@ -145,19 +120,19 @@ export class ProtocolController {
   }
 
   @Get('team-leaders')
-  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.PROTOCOL_MANAGE)
+  @RequireUiCapability('protocol-view')
   listTeamLeaders(@CurrentUser('sub') userId: string) {
     return this.teamLeaders.list(userId);
   }
 
   @Get('team-leaders/:id')
-  @RequirePermissions(PERMISSIONS.PROTOCOL_TEAM_LEADER_MANAGE)
+  @RequireUiCapability('protocol-team-leader-manage')
   getTeamLeader(@CurrentUser('sub') userId: string, @Param('id') id: string) {
     return this.teamLeaders.get(userId, id);
   }
 
   @Post('team-leaders')
-  @RequirePermissions(PERMISSIONS.PROTOCOL_TEAM_LEADER_MANAGE)
+  @RequireUiCapability('protocol-team-leader-manage')
   createTeamLeader(
     @CurrentUser('sub') userId: string,
     @Body()
@@ -173,7 +148,7 @@ export class ProtocolController {
   }
 
   @Patch('team-leaders/:id')
-  @RequirePermissions(PERMISSIONS.PROTOCOL_TEAM_LEADER_MANAGE)
+  @RequireUiCapability('protocol-team-leader-manage')
   updateTeamLeader(
     @CurrentUser('sub') userId: string,
     @Param('id') id: string,
@@ -189,7 +164,7 @@ export class ProtocolController {
   }
 
   @Post('teams/:teamId/leader')
-  @RequirePermissions(PERMISSIONS.PROTOCOL_MANAGE)
+  @RequireUiCapability('protocol-manage')
   assignTeamLeader(
     @CurrentUser('sub') userId: string,
     @Param('teamId') teamId: string,
@@ -205,19 +180,19 @@ export class ProtocolController {
   }
 
   @Get('teams/:teamId/leader/recommendation')
-  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.PROTOCOL_MANAGE)
+  @RequireUiCapability('protocol-view')
   recommendTeamLeader(@Param('teamId') teamId: string) {
     return this.teamLeaders.recommendForTeam(teamId);
   }
 
   @Get('backups')
-  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.PROTOCOL_MANAGE)
+  @RequireUiCapability('protocol-view')
   listBackups(@Query('teamId') teamId: string, @CurrentUser('sub') userId: string) {
     return this.teams.getBackups(userId, teamId);
   }
 
   @Post('teams/:teamId/backups/regenerate')
-  @RequirePermissions(PERMISSIONS.PROTOCOL_MANAGE)
+  @RequireUiCapability('protocol-manage')
   regenerateBackups(
     @CurrentUser('sub') userId: string,
     @Param('teamId') teamId: string,
@@ -226,7 +201,7 @@ export class ProtocolController {
   }
 
   @Get('occurrences/:occurrenceId/low-participation')
-  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.PROTOCOL_MANAGE)
+  @RequireUiCapability('protocol-view')
   lowParticipation(
     @CurrentUser('sub') userId: string,
     @Param('occurrenceId') occurrenceId: string,
@@ -235,21 +210,13 @@ export class ProtocolController {
   }
 
   @Get('reports')
-  @RequireAnyPermissions(
-    PERMISSIONS.PROTOCOL_REPORT,
-    PERMISSIONS.PROTOCOL_TEAM_LEADER_EXECUTE,
-  )
+  @RequireUiCapability('protocol-report-team-ops')
   listReports(@CurrentUser('sub') userId: string) {
     return this.teamReports.list(userId);
   }
 
   @Post('reports')
-  @RequireAnyPermissions(
-    PERMISSIONS.PROTOCOL_TEAM_LEADER_EXECUTE,
-    PERMISSIONS.PROTOCOL_TEAM_HEAD,
-    PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE,
-    PERMISSIONS.PROTOCOL_MANAGE,
-  )
+  @RequireUiCapability('protocol-report-team-ops')
   submitReport(
     @CurrentUser('sub') userId: string,
     @Body()
@@ -264,10 +231,7 @@ export class ProtocolController {
   }
 
   @Get('teams/:teamId/report')
-  @RequireAnyPermissions(
-    PERMISSIONS.PROTOCOL_VIEW,
-    PERMISSIONS.PROTOCOL_TEAM_LEADER_EXECUTE,
-  )
+  @RequireUiCapability('protocol-report-team-ops')
   getTeamReport(
     @CurrentUser('sub') userId: string,
     @Param('teamId') teamId: string,
@@ -276,13 +240,7 @@ export class ProtocolController {
   }
 
   @Get('rankings/categories')
-  @RequireAnyPermissions(
-    PERMISSIONS.PROTOCOL_RANKING_VIEW,
-    PERMISSIONS.PROTOCOL_VIEW,
-    PERMISSIONS.PROTOCOL_MANAGE,
-    PERMISSIONS.PROTOCOL_OPERATIONAL_MONITOR,
-    PERMISSIONS.PROTOCOL_OVERSIGHT_SCOPE,
-  )
+  @RequireUiCapability('protocol-rankings-oversight')
   categoryRankings(
     @Query('year') year: string,
     @Query('month') month: string,
@@ -296,7 +254,7 @@ export class ProtocolController {
   }
 
   @Get('teams')
-  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.PROTOCOL_MANAGE)
+  @RequireUiCapability('protocol-view')
   listTeams(
     @CurrentUser('sub') userId: string,
     @Query('from') from?: string,
@@ -310,26 +268,19 @@ export class ProtocolController {
   }
 
   @Get('teams/:id')
-  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.PROTOCOL_MANAGE)
+  @RequireUiCapability('protocol-view')
   getTeam(@CurrentUser('sub') userId: string, @Param('id') id: string) {
     return this.teams.getTeam(userId, id);
   }
 
   @Get('occurrences')
-  @RequireAnyPermissions(
-    PERMISSIONS.PROTOCOL_VIEW,
-    PERMISSIONS.PROTOCOL_MANAGE,
-    PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE,
-  )
+  @RequireUiCapability('protocol-view')
   listTeamOccurrences(@CurrentUser('sub') userId: string) {
     return this.teams.listTeamOccurrences(userId);
   }
 
   @Post('teams/generate')
-  @RequireAnyPermissions(
-    PERMISSIONS.PROTOCOL_MANAGE,
-    PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE,
-  )
+  @RequireUiCapability('protocol-team-manage')
   generateTeam(
     @CurrentUser('sub') userId: string,
     @Body()
@@ -343,12 +294,7 @@ export class ProtocolController {
   }
 
   @Patch('teams/:id/status')
-  @RequireAnyPermissions(
-    PERMISSIONS.PROTOCOL_TEAM_APPROVE,
-    PERMISSIONS.PROTOCOL_TEAM_PUBLISH,
-    PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE,
-    PERMISSIONS.PROTOCOL_MANAGE,
-  )
+  @RequireUiCapability('protocol-team-approve-publish')
   transitionTeam(
     @CurrentUser('sub') userId: string,
     @Param('id') id: string,
@@ -358,13 +304,7 @@ export class ProtocolController {
   }
 
   @Get('occurrences/:occurrenceId/team')
-  @RequireAnyPermissions(
-    PERMISSIONS.PROTOCOL_VIEW,
-    PERMISSIONS.PROTOCOL_MANAGE,
-    PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE,
-    PERMISSIONS.PROTOCOL_TEAM_HEAD,
-    PERMISSIONS.PROTOCOL_TEAM_LEADER_EXECUTE,
-  )
+  @RequireUiCapability('protocol-team-leadership')
   teamForOccurrence(
     @CurrentUser('sub') userId: string,
     @Param('occurrenceId') occurrenceId: string,
@@ -373,11 +313,7 @@ export class ProtocolController {
   }
 
   @Get('occurrences/:occurrenceId/recommendations')
-  @RequireAnyPermissions(
-    PERMISSIONS.PROTOCOL_VIEW,
-    PERMISSIONS.PROTOCOL_MANAGE,
-    PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE,
-  )
+  @RequireUiCapability('protocol-view')
   recommendations(
     @CurrentUser('sub') userId: string,
     @Param('occurrenceId') occurrenceId: string,
@@ -386,13 +322,13 @@ export class ProtocolController {
   }
 
   @Get('members')
-  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.PROTOCOL_MANAGE)
+  @RequireUiCapability('protocol-view')
   listMembers(@CurrentUser('sub') userId: string) {
     return this.members.listProfiles(userId);
   }
 
   @Get('members/:memberId')
-  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.MEMBER_READ)
+  @RequireUiCapability('protocol-view')
   getMember(
     @CurrentUser('sub') userId: string,
     @Param('memberId') memberId: string,
@@ -401,7 +337,7 @@ export class ProtocolController {
   }
 
   @Get('members/:memberId/attendance')
-  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.MEMBER_READ)
+  @RequireUiCapability('protocol-view')
   memberAttendance(
     @CurrentUser('sub') userId: string,
     @Param('memberId') memberId: string,
@@ -410,12 +346,7 @@ export class ProtocolController {
   }
 
   @Post('attendance')
-  @RequireAnyPermissions(
-    PERMISSIONS.PROTOCOL_ATTENDANCE_MANAGE,
-    PERMISSIONS.PROTOCOL_TEAM_LEADER_EXECUTE,
-    PERMISSIONS.PROTOCOL_TEAM_HEAD,
-    PERMISSIONS.PROTOCOL_MANAGE,
-  )
+  @RequireUiCapability('protocol-attendance-manage')
   recordAttendance(
     @CurrentUser('sub') userId: string,
     @Body()
@@ -434,7 +365,7 @@ export class ProtocolController {
   }
 
   @Get('teams/:teamId/attendance')
-  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.PROTOCOL_ATTENDANCE_MANAGE)
+  @RequireUiCapability('protocol-attendance-manage')
   teamAttendance(
     @CurrentUser('sub') userId: string,
     @Param('teamId') teamId: string,
@@ -443,28 +374,19 @@ export class ProtocolController {
   }
 
   @Get('attendance/history')
-  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.MEMBER_READ)
+  @RequireUiCapability('protocol-view')
   myAttendance(@CurrentUser('sub') userId: string) {
     return this.attendance.myHistory(userId);
   }
 
   @Get('replacements')
-  @RequireAnyPermissions(
-    PERMISSIONS.PROTOCOL_REPLACEMENT_MANAGE,
-    PERMISSIONS.PROTOCOL_MANAGE,
-    PERMISSIONS.PROTOCOL_TEAM_HEAD,
-    PERMISSIONS.PROTOCOL_TEAM_LEADER_EXECUTE,
-    PERMISSIONS.PROTOCOL_VIEW,
-  )
+  @RequireUiCapability('protocol-replacement-manage')
   pendingReplacements(@CurrentUser('sub') userId: string) {
     return this.replacements.listPending(userId);
   }
 
   @Post('replacements')
-  @RequireAnyPermissions(
-    PERMISSIONS.PROTOCOL_VIEW,
-    PERMISSIONS.PROTOCOL_REPLACEMENT_MANAGE,
-  )
+  @RequireUiCapability('protocol-replacement-manage')
   createReplacement(
     @CurrentUser('sub') userId: string,
     @Body()
@@ -478,12 +400,7 @@ export class ProtocolController {
   }
 
   @Patch('replacements/:id')
-  @RequireAnyPermissions(
-    PERMISSIONS.PROTOCOL_REPLACEMENT_MANAGE,
-    PERMISSIONS.PROTOCOL_MANAGE,
-    PERMISSIONS.PROTOCOL_TEAM_HEAD,
-    PERMISSIONS.PROTOCOL_TEAM_LEADER_EXECUTE,
-  )
+  @RequireUiCapability('protocol-replacement-manage')
   reviewReplacement(
     @CurrentUser('sub') userId: string,
     @Param('id') id: string,
@@ -493,7 +410,7 @@ export class ProtocolController {
   }
 
   @Get('rankings/monthly')
-  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.PROTOCOL_RANKING_VIEW)
+  @RequireUiCapability('protocol-view')
   monthlyRankings(
     @Query('year') year: string,
     @Query('month') month: string,
@@ -502,18 +419,13 @@ export class ProtocolController {
   }
 
   @Get('rankings/lifetime')
-  @RequirePermissions(PERMISSIONS.PROTOCOL_RANKING_VIEW)
+  @RequireUiCapability('protocol-view')
   lifetimeRankings() {
     return this.ranking.listLifetime();
   }
 
   @Post('rankings/generate')
-  @RequireAnyPermissions(
-    PERMISSIONS.PROTOCOL_MANAGE,
-    PERMISSIONS.PROTOCOL_OPERATIONAL_MONITOR,
-    PERMISSIONS.PROTOCOL_OVERSIGHT_SCOPE,
-    PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE,
-  )
+  @RequireUiCapability('protocol-rankings-oversight')
   generateRankings(
     @CurrentUser('sub') userId: string,
     @Body() body: { year: number; month: number },
@@ -522,13 +434,13 @@ export class ProtocolController {
   }
 
   @Get('settings')
-  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.PROTOCOL_MANAGE)
+  @RequireUiCapability('protocol-view')
   settings() {
     return this.quota.getSettings();
   }
 
   @Patch('settings')
-  @RequirePermissions(PERMISSIONS.PROTOCOL_MANAGE)
+  @RequireUiCapability('protocol-manage')
   updateSettings(
     @Body()
     body: {
@@ -542,13 +454,13 @@ export class ProtocolController {
   }
 
   @Get('reports/health')
-  @RequirePermissions(PERMISSIONS.PROTOCOL_REPORT)
+  @RequireUiCapability('protocol-report')
   healthReport(@CurrentUser('sub') userId: string) {
     return this.reports.health(userId);
   }
 
   @Get('reports/health-pack.pdf')
-  @RequirePermissions(PERMISSIONS.PROTOCOL_REPORT)
+  @RequireUiCapability('protocol-report')
   async healthPackPdf(@CurrentUser('sub') userId: string, @Res() res: Response) {
     const exported = await this.reports.exportHealthPackPdf(userId);
     res.setHeader('Content-Type', exported.mimeType);
@@ -560,7 +472,7 @@ export class ProtocolController {
   }
 
   @Get('reports/:type/export')
-  @RequirePermissions(PERMISSIONS.PROTOCOL_REPORT)
+  @RequireUiCapability('protocol-report')
   exportReport(
     @CurrentUser('sub') userId: string,
     @Param('type') type: string,
@@ -575,13 +487,13 @@ export class ProtocolController {
   }
 
   @Get('search')
-  @RequireAnyPermissions(PERMISSIONS.PROTOCOL_VIEW, PERMISSIONS.PROTOCOL_MANAGE)
+  @RequireUiCapability('protocol-view')
   search(@CurrentUser('sub') userId: string, @Query('q') q: string) {
     return this.protocolSearch.search(userId, q ?? '');
   }
 
   @Get('reports/monthly-service')
-  @RequirePermissions(PERMISSIONS.PROTOCOL_REPORT)
+  @RequireUiCapability('protocol-report')
   monthlyServiceReport(
     @Query('year') year: string,
     @Query('month') month: string,

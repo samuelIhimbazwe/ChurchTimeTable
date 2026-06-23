@@ -10,9 +10,9 @@ import {
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
+import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { RequireAnyPermissions } from '../common/decorators/roles.decorator';
-import { PERMISSIONS } from '../common/constants/roles';
+import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
 import { SkipPhoneEnforcement } from '../common/decorators/skip-phone-enforcement.decorator';
 import { ChurchScheduleEntriesService } from './church-schedule-entries.service';
 import { ChurchScheduleSubmissionsService } from './church-schedule-submissions.service';
@@ -20,7 +20,7 @@ import { CreateChurchScheduleEntryDto } from './dto/create-entry.dto';
 import { ResolveChurchScheduleConflictDto } from './dto/resolve-conflict.dto';
 
 @Controller('church/schedule')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class ChurchScheduleTimetableController {
   constructor(
     private entries: ChurchScheduleEntriesService,
@@ -29,14 +29,14 @@ export class ChurchScheduleTimetableController {
 
   @Get('conflicts')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(PERMISSIONS.CHURCH_SCHEDULE_VIEW_QUEUE)
+  @RequireUiCapability('church-schedule-view-queue')
   listConflicts(@CurrentUser('sub') userId: string) {
     return this.submissions.listConflicts(userId);
   }
 
   @Get('timetable')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(PERMISSIONS.CHURCH_SCHEDULE_VIEW)
+  @RequireUiCapability('church-schedule-view')
   listTimetable(
     @CurrentUser('sub') userId: string,
     @Query('from') from?: string,
@@ -55,7 +55,7 @@ export class ChurchScheduleTimetableController {
   }
 
   @Post('entries')
-  @RequireAnyPermissions(PERMISSIONS.CHURCH_SCHEDULE_MANAGE)
+  @RequireUiCapability('church-schedule-manage')
   createEntry(
     @CurrentUser('sub') userId: string,
     @Body() dto: CreateChurchScheduleEntryDto,
@@ -64,7 +64,7 @@ export class ChurchScheduleTimetableController {
   }
 
   @Post('entries/:id/cancel')
-  @RequireAnyPermissions(PERMISSIONS.CHURCH_SCHEDULE_MANAGE)
+  @RequireUiCapability('church-schedule-manage')
   cancelEntry(
     @CurrentUser('sub') userId: string,
     @Param('id') id: string,
@@ -74,7 +74,7 @@ export class ChurchScheduleTimetableController {
   }
 
   @Post('conflicts/:submissionId/resolve')
-  @RequireAnyPermissions(PERMISSIONS.CHURCH_SCHEDULE_RESOLVE)
+  @RequireUiCapability('church-schedule-resolve')
   resolveConflict(
     @CurrentUser('sub') userId: string,
     @Param('submissionId') submissionId: string,

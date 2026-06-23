@@ -9,9 +9,10 @@ import { OperationalScopeService } from './operational-scope.service';
 import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
 
 import { ChoirCustomRolesModule } from '../choir-custom-roles/choir-custom-roles.module';
+import { ChoirHttpAccessModule } from '../common/choir/choir-http-access.module';
 
 @Module({
-  imports: [PrismaModule, AuditModule, AuthModule, MemberPhoneEnforcementModule, ChoirCustomRolesModule],
+  imports: [PrismaModule, AuditModule, AuthModule, MemberPhoneEnforcementModule, ChoirCustomRolesModule, ChoirHttpAccessModule],
   controllers: [GovernanceController],
   providers: [
     GovernanceService,

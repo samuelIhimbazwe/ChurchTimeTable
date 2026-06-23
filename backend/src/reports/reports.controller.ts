@@ -3,17 +3,16 @@ import type { Response } from 'express';
 import { ReportsService } from './reports.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { RequirePermissions } from '../common/decorators/roles.decorator';
-import { PERMISSIONS } from '../common/constants/roles';
+import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
+import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
 
 @Controller('reports')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class ReportsController {
   constructor(private reportsService: ReportsService) {}
 
   @Get('attendance')
-  @RequirePermissions(PERMISSIONS.REPORT_EXPORT)
+  @RequireUiCapability('report-export')
   attendance(
     @Query('from') from?: string,
     @Query('to') to?: string,
@@ -23,25 +22,25 @@ export class ReportsController {
   }
 
   @Get('discipline')
-  @RequirePermissions(PERMISSIONS.REPORT_EXPORT)
+  @RequireUiCapability('report-export')
   discipline(@Query('ministry') ministry?: string) {
     return this.reportsService.disciplineSummary(ministry);
   }
 
   @Get('finance')
-  @RequirePermissions(PERMISSIONS.REPORT_EXPORT)
+  @RequireUiCapability('report-export')
   finance() {
     return this.reportsService.financeSummary();
   }
 
   @Get('protocol-quota')
-  @RequirePermissions(PERMISSIONS.REPORT_EXPORT)
+  @RequireUiCapability('report-export')
   protocolQuota(@Query('month') month?: string) {
     return this.reportsService.protocolQuotaCompliance(month);
   }
 
   @Get('scores/trends')
-  @RequirePermissions(PERMISSIONS.REPORT_EXPORT)
+  @RequireUiCapability('report-export')
   scoreTrends(@Query('months') months?: string) {
     return this.reportsService.responsibilityScoreTrends(
       months ? Number(months) : 6,
@@ -49,7 +48,7 @@ export class ReportsController {
   }
 
   @Get('attendance/export/csv')
-  @RequirePermissions(PERMISSIONS.REPORT_EXPORT)
+  @RequireUiCapability('report-export')
   async attendanceCsv(
     @Query('from') from: string,
     @Query('to') to: string,
@@ -69,7 +68,7 @@ export class ReportsController {
   }
 
   @Get('attendance/export/pdf')
-  @RequirePermissions(PERMISSIONS.REPORT_EXPORT)
+  @RequireUiCapability('report-export')
   async attendancePdf(
     @Query('from') from: string,
     @Query('to') to: string,
@@ -85,7 +84,7 @@ export class ReportsController {
   }
 
   @Get('finance/export/pdf')
-  @RequirePermissions(PERMISSIONS.REPORT_EXPORT)
+  @RequireUiCapability('report-export')
   async financePdf(@Res() res: Response) {
     const buffer = await this.reportsService.buildFinancePdf();
     res.setHeader('Content-Type', 'application/pdf');
@@ -97,7 +96,7 @@ export class ReportsController {
   }
 
   @Get('discipline/export/pdf')
-  @RequirePermissions(PERMISSIONS.REPORT_EXPORT)
+  @RequireUiCapability('report-export')
   async disciplinePdf(@Res() res: Response) {
     const buffer = await this.reportsService.buildDisciplinePdf();
     res.setHeader('Content-Type', 'application/pdf');
@@ -109,7 +108,7 @@ export class ReportsController {
   }
 
   @Get('protocol-quota/export/pdf')
-  @RequirePermissions(PERMISSIONS.REPORT_EXPORT)
+  @RequireUiCapability('report-export')
   async protocolQuotaPdf(
     @Query('month') month: string,
     @Res() res: Response,

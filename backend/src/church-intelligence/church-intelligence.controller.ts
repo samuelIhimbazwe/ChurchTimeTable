@@ -11,11 +11,10 @@ import {
 import type { Response } from 'express';
 import { ChurchActivityType, LeadershipAssignmentScope } from '@prisma/client';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
+import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { RequireAnyPermissions, RequirePermissions } from '../common/decorators/roles.decorator';
-import { PERMISSIONS } from '../common/constants/roles';
+import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
 import { ChurchHealthService } from './church-health.service';
 import { MinistryHealthService } from './ministry-health.service';
 import { OperationalUnitHealthService } from './operational-unit-health.service';
@@ -29,7 +28,7 @@ import {
 } from './church-intelligence-reports.service';
 
 @Controller('church/intelligence')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class ChurchIntelligenceController {
   constructor(
     private health: ChurchHealthService,
@@ -42,37 +41,25 @@ export class ChurchIntelligenceController {
   ) {}
 
   @Get('summary')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHURCH_INTELLIGENCE_VIEW,
-    PERMISSIONS.CHURCH_GOVERNANCE_VIEW,
-  )
+  @RequireUiCapability('church-intelligence-view')
   summary(@CurrentUser('sub') userId: string) {
     return this.health.summary(userId);
   }
 
   @Get('dashboard')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHURCH_INTELLIGENCE_VIEW,
-    PERMISSIONS.CHURCH_GOVERNANCE_VIEW,
-  )
+  @RequireUiCapability('church-intelligence-view')
   dashboard(@CurrentUser('sub') userId: string) {
     return this.dashboardService.widgetBundle(userId);
   }
 
   @Get('ministry-health')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHURCH_INTELLIGENCE_VIEW,
-    PERMISSIONS.CHURCH_GOVERNANCE_VIEW,
-  )
+  @RequireUiCapability('church-intelligence-view')
   ministryHealthList(@CurrentUser('sub') userId: string) {
     return this.ministryHealth.scoreAll(userId);
   }
 
   @Get('ministry-health/:ministryId')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHURCH_INTELLIGENCE_VIEW,
-    PERMISSIONS.CHURCH_GOVERNANCE_VIEW,
-  )
+  @RequireUiCapability('church-intelligence-view')
   ministryHealthOne(
     @CurrentUser('sub') userId: string,
     @Param('ministryId') ministryId: string,
@@ -81,37 +68,25 @@ export class ChurchIntelligenceController {
   }
 
   @Get('unit-health')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHURCH_INTELLIGENCE_VIEW,
-    PERMISSIONS.CHURCH_GOVERNANCE_VIEW,
-  )
+  @RequireUiCapability('church-intelligence-view')
   unitHealthList(@CurrentUser('sub') userId: string) {
     return this.unitHealth.scoreAll(userId);
   }
 
   @Get('alerts')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHURCH_GOVERNANCE_VIEW,
-    PERMISSIONS.CHURCH_INTELLIGENCE_VIEW,
-  )
+  @RequireUiCapability('church-intelligence-view')
   alertList(@CurrentUser('sub') userId: string) {
     return this.alerts.list(userId);
   }
 
   @Get('reports')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHURCH_REPORTS_VIEW,
-    PERMISSIONS.CHURCH_INTELLIGENCE_VIEW,
-  )
+  @RequireUiCapability('church-intelligence-view')
   reportCatalog(@CurrentUser('sub') userId: string) {
     return this.reports.listReports(userId);
   }
 
   @Get('reports/:reportType')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHURCH_REPORTS_VIEW,
-    PERMISSIONS.CHURCH_INTELLIGENCE_VIEW,
-  )
+  @RequireUiCapability('church-intelligence-view')
   reportData(
     @CurrentUser('sub') userId: string,
     @Param('reportType') reportType: string,
@@ -120,7 +95,7 @@ export class ChurchIntelligenceController {
   }
 
   @Get('reports/:reportType/csv')
-  @RequirePermissions(PERMISSIONS.CHURCH_REPORTS_EXPORT)
+  @RequireUiCapability('report-export')
   reportCsv(
     @CurrentUser('sub') userId: string,
     @Param('reportType') reportType: string,
@@ -134,7 +109,7 @@ export class ChurchIntelligenceController {
   }
 
   @Get('reports/:reportType/pdf')
-  @RequirePermissions(PERMISSIONS.CHURCH_REPORTS_EXPORT)
+  @RequireUiCapability('report-export')
   reportPdf(
     @CurrentUser('sub') userId: string,
     @Param('reportType') reportType: string,
@@ -148,16 +123,13 @@ export class ChurchIntelligenceController {
   }
 
   @Get('leadership-terms')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHURCH_GOVERNANCE_VIEW,
-    PERMISSIONS.CHURCH_INTELLIGENCE_VIEW,
-  )
+  @RequireUiCapability('church-intelligence-view')
   leadershipTerms(@CurrentUser('sub') userId: string) {
     return this.terms.list(userId);
   }
 
   @Post('leadership-terms')
-  @RequirePermissions(PERMISSIONS.CHURCH_GOVERNANCE_MANAGE)
+  @RequireUiCapability('church-governance-manage')
   upsertTerm(
     @CurrentUser('sub') userId: string,
     @Body()
@@ -175,15 +147,12 @@ export class ChurchIntelligenceController {
 }
 
 @Controller('church/activity')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class ChurchActivityController {
   constructor(private activity: ChurchActivityService) {}
 
   @Get()
-  @RequireAnyPermissions(
-    PERMISSIONS.CHURCH_INTELLIGENCE_VIEW,
-    PERMISSIONS.CHURCH_GOVERNANCE_VIEW,
-  )
+  @RequireUiCapability('church-intelligence-view')
   feed(
     @CurrentUser('sub') userId: string,
     @Query('from') from?: string,
@@ -205,24 +174,18 @@ export class ChurchActivityController {
 }
 
 @Controller('leadership/analytics')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class LeadershipAnalyticsController {
   constructor(private leadership: LeadershipAnalyticsService) {}
 
   @Get()
-  @RequireAnyPermissions(
-    PERMISSIONS.CHURCH_INTELLIGENCE_VIEW,
-    PERMISSIONS.CHURCH_GOVERNANCE_VIEW,
-  )
+  @RequireUiCapability('church-intelligence-view')
   list(@CurrentUser('sub') userId: string) {
     return this.leadership.list(userId);
   }
 
   @Get(':memberId')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHURCH_INTELLIGENCE_VIEW,
-    PERMISSIONS.CHURCH_GOVERNANCE_VIEW,
-  )
+  @RequireUiCapability('church-intelligence-view')
   one(
     @CurrentUser('sub') userId: string,
     @Param('memberId') memberId: string,

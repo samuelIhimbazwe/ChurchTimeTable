@@ -1,20 +1,45 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useEffectivePermissions } from '@/lib/hooks/useEffectivePermissions';
+import { usePlatformAuthStore } from '@/stores/platform-auth';
 import {
   platformUiCapabilityVisible,
   PLATFORM_PERMISSION_TO_UI,
 } from '@/lib/platform/platform-ui-capability-registry';
+import { buildPlatformCapabilityRouter } from '@/lib/platform/platform-capability-router';
+import { mapPermissionToPlatformCapabilities } from '@/lib/platform/platform-capability.util';
 
-export function usePlatformUiCapability(uiId: string): boolean {
-  const effective = useEffectivePermissions();
-  return platformUiCapabilityVisible(uiId, effective);
+export function usePlatformAuths() {
+  return usePlatformAuthStore((s) => ({
+    protocolAuth: s.protocolAuth,
+    churchAuth: s.churchAuth,
+    platformAuth: s.platformAuth,
+  }));
 }
 
-/** Resolve a legacy permission string to a platform UI capability check. */
+export function usePlatformCapabilityRouter(): (capabilityId: string) => boolean {
+  const auths = usePlatformAuths();
+  return useMemo(() => buildPlatformCapabilityRouter(auths), [auths]);
+}
+
+export function usePlatformUiCapability(uiId: string): boolean {
+  const router = usePlatformCapabilityRouter();
+  const effective = useEffectivePermissions();
+
+  const check = (capId: string) => {
+    if (router(capId)) return true;
+    return effective.some((perm) =>
+      mapPermissionToPlatformCapabilities(perm).some((m) => m.id === capId),
+    );
+  };
+
+  return platformUiCapabilityVisible(uiId, check);
+}
+
 export function usePlatformPermissionCapability(permission: string): boolean {
   const uiId = PLATFORM_PERMISSION_TO_UI[permission];
+  if (uiId) return usePlatformUiCapability(uiId);
   const effective = useEffectivePermissions();
-  if (uiId) return platformUiCapabilityVisible(uiId, effective);
   return effective.includes(permission);
 }

@@ -9,6 +9,7 @@ import { UI_CAPABILITY_KEY } from '../decorators/ui-capability.decorator';
 import { JwtPayload } from '../decorators/current-user.decorator';
 import { FamilyHttpAccessService } from '../choir/family-http-access.service';
 import { ChoirReportsHttpAccessService } from '../choir/choir-reports-http-access.service';
+import { PlatformHttpAccessService } from '../platform/platform-http-access.service';
 
 @Injectable()
 export class UiCapabilityGuard implements CanActivate {
@@ -16,6 +17,7 @@ export class UiCapabilityGuard implements CanActivate {
     private reflector: Reflector,
     private familyHttpAccess: FamilyHttpAccessService,
     private choirReportsHttpAccess: ChoirReportsHttpAccessService,
+    private platformHttpAccess: PlatformHttpAccessService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -75,7 +77,11 @@ export class UiCapabilityGuard implements CanActivate {
           choirId,
         );
       default:
-        return false;
+        return this.platformHttpAccess.canPlatformUi(
+          userId,
+          uiId,
+          permissions,
+        );
     }
   }
 }
