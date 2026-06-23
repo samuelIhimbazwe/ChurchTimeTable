@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { protocolApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
-import { Badge, Card, PermissionGate, SkeletonCard, EmptyState } from '@/components/shared'
+import { Badge, Card, CapabilityGate, SkeletonCard, EmptyState } from '@/components/shared'
 import { SplitQueueConsole } from '@/components/shared/office/SplitQueueConsole'
 import { SnoozeButton } from '@/components/workflow/SnoozeButton'
 import { useSnoozedQueue } from '@/lib/hooks'
@@ -183,7 +183,7 @@ export function ProtocolReplacementsConsole({ filter = 'pending' }: { filter?: F
                     <dd className="text-text-secondary">{row.reason || '—'}</dd>
                   </div>
                 </dl>
-                <PermissionGate anyOf={['protocol.replacement.manage', 'protocol.team.head', 'protocol.team.leader.execute']}>
+                <CapabilityGate platformUiCapability="protocol-replacement-manage">
                   {row.status === 'PENDING' && (
                     <div className="flex gap-2 pt-2">
                       <button
@@ -204,7 +204,7 @@ export function ProtocolReplacementsConsole({ filter = 'pending' }: { filter?: F
                       </button>
                     </div>
                   )}
-                </PermissionGate>
+                </CapabilityGate>
               </div>
             </Card>
           ) : null

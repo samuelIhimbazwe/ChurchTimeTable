@@ -1,7 +1,7 @@
 'use client'
 
 import { financeApi } from '@/lib/api'
-import { Card, PermissionGate, toast } from '@/components/shared'
+import { Card, CapabilityGate, toast } from '@/components/shared'
 import { Download } from 'lucide-react'
 
 async function downloadBlob(fetcher: () => Promise<Blob>, filename: string) {
@@ -23,7 +23,7 @@ export function ProtocolTreasuryExportsCard() {
   const stamp = new Date().toISOString().slice(0, 10)
 
   return (
-    <PermissionGate anyOf={['protocol.finance.view', 'protocol.finance.manage', 'protocol.finance.approve']}>
+    <CapabilityGate platformUiCapability="protocol-treasury-export">
       <Card padding="md" className="space-y-3">
         <p className="text-sm font-semibold text-text-primary">Stewardship exports</p>
         <p className="text-xs text-text-muted">
@@ -58,6 +58,6 @@ export function ProtocolTreasuryExportsCard() {
           </button>
         </div>
       </Card>
-    </PermissionGate>
+    </CapabilityGate>
   )
 }

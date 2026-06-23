@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { systemApi } from '@/lib/api'
 import type { ImportJobRecord } from '@/lib/api/modules/system'
 import { toast } from '@/components/shared/Toast'
-import { Card, CardHeader, CardTitle, CardDescription, Badge, EmptyState, PermissionGate } from '@/components/shared'
+import { Card, CardHeader, CardTitle, CardDescription, Badge, EmptyState, CapabilityGate } from '@/components/shared'
 import { ImportColumnMapping } from '@/components/admin/ImportColumnMapping'
 import { readCsvHeaders, detectColumnsFromPreviewRows } from '@/lib/import/import-column-specs'
 import { Upload, FileText, CheckCircle2, History } from 'lucide-react'
@@ -100,8 +100,8 @@ export default function ImportPage() {
         ])
 
   return (
-    <PermissionGate
-      anyOf={['pilot.import.manage', 'admin.users.manage']}
+    <CapabilityGate
+      platformUiCapability="admin-import"
       fallback={
         <EmptyState
           icon={Upload}
@@ -339,6 +339,6 @@ export default function ImportPage() {
         </Card>
       )}
     </div>
-    </PermissionGate>
+    </CapabilityGate>
   )
 }

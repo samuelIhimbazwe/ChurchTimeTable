@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { systemApi, dashboardApi } from '@/lib/api'
 import {
   Card, CardHeader, CardTitle, CardDescription,
-  StatTile, PermissionGate, SkeletonStatTile,
+  StatTile, CapabilityGate, SkeletonStatTile,
 } from '@/components/shared'
 import {
   Server, Database, Users, Shield,
@@ -85,15 +85,15 @@ export default function SystemPage() {
           </CardHeader>
           <div className="space-y-2">
             {[
-              { label: 'System Status',      href: '/system/status',     icon: Activity,   permission: 'admin.settings.manage' },
-              { label: 'User Management',    href: '/system/users',      icon: Users,    permission: 'admin.users.manage' },
-              { label: 'Role Management',    href: '/system/roles',      icon: Shield,   permission: 'admin.roles.manage' },
-              { label: 'Audit Log',          href: '/system/audit',      icon: Database, permission: 'admin.audit.view'   },
-              { label: 'Notification rules', href: '/system/notification-rules', icon: Activity, permission: 'admin.settings.manage' },
-              { label: 'Sync Management',    href: '/system/sync',       icon: RefreshCw,permission: 'admin.sync.manage'  },
-              { label: 'Deployment Center',  href: '/system/deployment', icon: Server,   permission: 'admin.settings.*'   },
+              { label: 'System Status',      href: '/system/status',     icon: Activity,   platformUiCapability: 'admin-settings-manage' },
+              { label: 'User Management',    href: '/system/users',      icon: Users,    platformUiCapability: 'admin-users-manage' },
+              { label: 'Role Management',    href: '/system/roles',      icon: Shield,   platformUiCapability: 'admin-roles-manage' },
+              { label: 'Audit Log',          href: '/system/audit',      icon: Database, platformUiCapability: 'admin-audit-view'   },
+              { label: 'Notification rules', href: '/system/notification-rules', icon: Activity, platformUiCapability: 'admin-settings-manage' },
+              { label: 'Sync Management',    href: '/system/sync',       icon: RefreshCw,platformUiCapability: 'admin-sync-manage'  },
+              { label: 'Deployment Center',  href: '/system/deployment', icon: Server,   platformUiCapability: 'admin-settings-manage'   },
             ].map((item) => (
-              <PermissionGate key={item.label} permission={item.permission}>
+              <CapabilityGate key={item.label} platformUiCapability={item.platformUiCapability}>
                 <Link
                   href={item.href}
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-raised transition-colors group"
@@ -101,7 +101,7 @@ export default function SystemPage() {
                   <item.icon size={18} className="text-text-muted group-hover:text-primary-600 transition-colors" />
                   <span className="text-sm font-medium text-text-primary">{item.label}</span>
                 </Link>
-              </PermissionGate>
+              </CapabilityGate>
             ))}
           </div>
         </Card>

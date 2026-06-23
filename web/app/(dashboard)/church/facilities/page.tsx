@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { churchScheduleApi } from '@/lib/api'
 import {
-  Card, Badge, SkeletonCard, EmptyState, PermissionGate,
+  Card, Badge, SkeletonCard, EmptyState, CapabilityGate,
 } from '@/components/shared'
 import { Building2, Bell } from 'lucide-react'
 
@@ -24,13 +24,13 @@ export default function ChurchFacilitiesPage() {
         </p>
       </div>
 
-      <PermissionGate permission="church.facility.manage">
+      <CapabilityGate platformUiCapability="church-facility-manage">
         <Card padding="sm" accent="info">
           <p className="text-sm text-text-secondary">
             Facility create/edit UI arrives in a later phase. Rooms are seeded for pilot use.
           </p>
         </Card>
-      </PermissionGate>
+      </CapabilityGate>
 
       <Card padding="none">
         {isLoading ? (

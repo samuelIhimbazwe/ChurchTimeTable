@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { choirApi, choirServiceOpsApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
-import { Card, PermissionGate, SkeletonCard, Badge } from '@/components/shared'
+import { Card, CapabilityGate, SkeletonCard, Badge } from '@/components/shared'
 import { formatDate } from '@/lib/utils/format'
 import { Users, AlertTriangle } from 'lucide-react'
 
@@ -69,7 +69,7 @@ export default function ChoirDissolutionPage() {
         </div>
       </Card>
 
-      <PermissionGate anyOf={['church.governance.manage']}>
+      <CapabilityGate platformUiCapability="church-governance-manage">
         <Card padding="md">
           <p className="font-semibold mb-3">Execute transfer</p>
           <div className="grid sm:grid-cols-2 gap-3">
@@ -118,7 +118,7 @@ export default function ChoirDissolutionPage() {
             {execute.isPending ? 'Transferring…' : 'Transfer all members'}
           </button>
         </Card>
-      </PermissionGate>
+      </CapabilityGate>
 
       <Card padding="none">
         <div className="px-5 py-4 border-b border-border">

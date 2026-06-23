@@ -8,7 +8,7 @@ import {
 import { Shield, ChevronRight } from 'lucide-react'
 import { formatDate } from '@/lib/utils/format'
 import Link from 'next/link'
-import { PermissionGate } from '@/components/shared'
+import { CapabilityGate } from '@/components/shared'
 import { ProtocolTeamPublishConsole } from '@/components/protocol/ProtocolTeamPublishConsole'
 
 type TeamRow = {
@@ -35,19 +35,19 @@ export default function ProtocolTeamsPage() {
             {list.length} teams on record
           </p>
         </div>
-        <PermissionGate anyOf={['protocol.team.manage', 'protocol.manage']}>
+        <CapabilityGate platformUiCapability="protocol-team-manage">
           <Link
             href="/protocol/teams/generate"
             className="px-4 py-2 text-sm font-semibold bg-gold-500 text-primary-900 rounded-lg hover:bg-gold-400 transition-colors"
           >
             Build team
           </Link>
-        </PermissionGate>
+        </CapabilityGate>
       </div>
 
-      <PermissionGate anyOf={['protocol.team.manage', 'protocol.manage']}>
+      <CapabilityGate platformUiCapability="protocol-team-manage">
         <ProtocolTeamPublishConsole />
-      </PermissionGate>
+      </CapabilityGate>
 
       <Card padding="none">
         <CardHeader className="px-5 pt-5">

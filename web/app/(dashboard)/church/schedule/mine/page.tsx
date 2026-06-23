@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { churchScheduleApi } from '@/lib/api'
 import {
-  Card, Badge, SkeletonCard, EmptyState, PermissionGate, toast,
+  Card, Badge, SkeletonCard, EmptyState, CapabilityGate, toast,
 } from '@/components/shared'
 import { ClipboardList } from 'lucide-react'
 import { formatDateTime } from '@/lib/utils/format'
@@ -59,14 +59,14 @@ export default function ChurchScheduleMinePage() {
             Drafts, published items, and items held for church office
           </p>
         </div>
-        <PermissionGate permission="church.schedule.submit">
+        <CapabilityGate platformUiCapability="church-schedule-submit">
           <Link
             href="/church/schedule/submit"
             className="px-3 py-1.5 rounded-lg bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700"
           >
             New submission
           </Link>
-        </PermissionGate>
+        </CapabilityGate>
       </div>
 
       <Card padding="none">

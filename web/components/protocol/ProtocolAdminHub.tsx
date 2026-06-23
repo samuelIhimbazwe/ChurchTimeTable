@@ -5,7 +5,7 @@ import { protocolApi } from '@/lib/api'
 import { ProtocolPositionHubShell, ProtocolHubQuickLink } from '@/components/protocol/ProtocolPositionHubShell'
 import { ProtocolCommitteePanel } from '@/components/protocol/ProtocolCommitteePanel'
 import { ProtocolMemberRosterPanel } from '@/components/protocol/ProtocolMemberRosterPanel'
-import { Card, StatTile, PermissionGate } from '@/components/shared'
+import { Card, StatTile, CapabilityGate } from '@/components/shared'
 import {
   Users, ClipboardCheck, UserPlus, Shield, Settings2,
 } from 'lucide-react'
@@ -93,14 +93,14 @@ export function ProtocolAdminHub() {
             <dd className="font-medium">{s.membersCanViewFullRanking ? 'Yes' : 'No'}</dd>
           </div>
         </dl>
-        <PermissionGate permission="protocol.manage">
+        <CapabilityGate platformUiCapability="protocol-manage">
           <a
             href="/protocol/admin/settings"
             className="inline-block mt-4 text-xs font-semibold text-primary-600 hover:text-primary-800"
           >
             Edit settings →
           </a>
-        </PermissionGate>
+        </CapabilityGate>
       </Card>
     </ProtocolPositionHubShell>
   )

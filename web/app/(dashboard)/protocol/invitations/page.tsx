@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { protocolApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
-import { Card, Badge, Avatar, PermissionGate, SkeletonCard } from '@/components/shared'
+import { Card, Badge, Avatar, CapabilityGate, SkeletonCard } from '@/components/shared'
 import { ProtocolMemberPicker } from '@/components/protocol/ProtocolMemberPicker'
 import { formatDate } from '@/lib/utils/format'
 import { Mail, UserPlus } from 'lucide-react'
@@ -57,7 +57,7 @@ export default function ProtocolInvitationsPage() {
         </p>
       </div>
 
-      <PermissionGate anyOf={['protocol.invite', 'protocol.manage']}>
+      <CapabilityGate platformUiCapability="protocol-invite">
         <Card padding="md">
           <p className="font-semibold flex items-center gap-2 mb-3">
             <UserPlus size={16} /> Send invitation
@@ -86,7 +86,7 @@ export default function ProtocolInvitationsPage() {
             </button>
           </div>
         </Card>
-      </PermissionGate>
+      </CapabilityGate>
 
       <Card padding="none">
         <div className="px-5 pt-5 pb-2">

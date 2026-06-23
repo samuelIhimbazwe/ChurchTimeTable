@@ -9,7 +9,7 @@ import {
 } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import {
-  Card, Badge, PermissionGate, SkeletonCard,
+  Card, Badge, CapabilityGate, SkeletonCard,
 } from '@/components/shared'
 import { formatDate, formatTime } from '@/lib/utils/format'
 import { Calendar, Church } from 'lucide-react'
@@ -84,7 +84,7 @@ export default function ChurchServiceRequestsPage() {
             Request a choir for a church service — church coordination assigns the choir from Service Assignments
           </p>
         </div>
-        <PermissionGate anyOf={['church.governance.manage', 'operations:manage']}>
+        <CapabilityGate platformUiCapability="church-service-request-create">
           <button
             type="button"
             onClick={() => setShowForm((v) => !v)}
@@ -92,7 +92,7 @@ export default function ChurchServiceRequestsPage() {
           >
             + New request
           </button>
-        </PermissionGate>
+        </CapabilityGate>
       </div>
 
       {showForm && (
@@ -181,7 +181,7 @@ export default function ChurchServiceRequestsPage() {
                   {r.notes && <p className="text-sm text-text-secondary mt-2">{r.notes}</p>}
                 </div>
                 {r.status === 'PENDING' && (
-                  <PermissionGate anyOf={['choir.ops.schedule', 'choir.ops.manage', 'church.governance.manage']}>
+                  <CapabilityGate platformUiCapability="church-service-request-schedule">
                     <div className="flex flex-col gap-2 shrink-0 min-w-[140px]">
                       <select
                         value={approveChoirId[r.id] ?? r.preferredChoirId ?? ''}
@@ -221,7 +221,7 @@ export default function ChurchServiceRequestsPage() {
                         Reject
                       </button>
                     </div>
-                  </PermissionGate>
+                  </CapabilityGate>
                 )}
               </div>
             </Card>

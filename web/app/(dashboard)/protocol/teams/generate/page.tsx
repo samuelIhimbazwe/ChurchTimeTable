@@ -6,7 +6,7 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import { protocolApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import { ApiError } from '@/lib/api/client'
-import { Card, CardHeader, CardTitle, Badge, PermissionGate, SkeletonCard, PageContainer, PageHeader, ResponsiveDataView, TableScroll } from '@/components/shared'
+import { Card, CardHeader, CardTitle, Badge, CapabilityGate, SkeletonCard, PageContainer, PageHeader, ResponsiveDataView, TableScroll } from '@/components/shared'
 import { formatDate, formatTime } from '@/lib/utils/format'
 import Link from 'next/link'
 import { Calendar } from 'lucide-react'
@@ -72,8 +72,8 @@ export default function GenerateTeamPage() {
   }
 
   return (
-    <PermissionGate
-      anyOf={['protocol.manage', 'protocol.team.manage']}
+    <CapabilityGate
+      platformUiCapability="protocol-team-manage"
       fallback={
         <div className="flex items-center justify-center h-64">
           <p className="text-text-muted">You do not have permission to build teams.</p>
@@ -259,6 +259,6 @@ export default function GenerateTeamPage() {
         )}
         </div>
       </PageContainer>
-    </PermissionGate>
+    </CapabilityGate>
   )
 }

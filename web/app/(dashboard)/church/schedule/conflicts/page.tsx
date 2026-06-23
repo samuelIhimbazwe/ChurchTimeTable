@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { churchScheduleApi } from '@/lib/api'
 import {
-  Card, SkeletonCard, EmptyState, PermissionGate,
+  Card, SkeletonCard, EmptyState, CapabilityGate,
 } from '@/components/shared'
 import { AlertTriangle } from 'lucide-react'
 import { ChurchScheduleConflictPanel } from '@/components/church/ChurchScheduleConflictPanel'
@@ -31,8 +31,8 @@ export default function ChurchScheduleConflictsPage() {
         </p>
       </div>
 
-      <PermissionGate
-        permission="church.schedule.view.queue"
+      <CapabilityGate
+        platformUiCapability="church-schedule-view-queue"
         fallback={
           <Card padding="md">
             <p className="text-sm text-text-secondary">Church admin access required.</p>
@@ -54,7 +54,7 @@ export default function ChurchScheduleConflictsPage() {
             ))}
           </div>
         )}
-      </PermissionGate>
+      </CapabilityGate>
     </div>
   )
 }

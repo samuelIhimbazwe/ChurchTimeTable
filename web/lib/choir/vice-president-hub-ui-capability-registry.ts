@@ -32,3 +32,7 @@ export function uiCapabilityVisible(
   }
   return def.requireAnyOf.some((cap) => check(cap));
 }
+
+export function isVicePresidentHubUiCapability(uiId: string): boolean {
+  return VICE_PRESIDENT_HUB_UI_CAPABILITY_REGISTRY.some((d) => d.id === uiId);
+}

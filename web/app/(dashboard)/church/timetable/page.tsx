@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { churchScheduleApi } from '@/lib/api'
 import type { ChurchScheduleEntry } from '@/lib/api/modules/churchSchedule'
 import {
-  Card, Badge, SkeletonCard, EmptyState, PermissionGate, toast,
+  Card, Badge, SkeletonCard, EmptyState, CapabilityGate, toast,
 } from '@/components/shared'
 import { Calendar, Clock, Building2 } from 'lucide-react'
 import { formatDate, formatDateTime } from '@/lib/utils/format'
@@ -65,25 +65,25 @@ export default function ChurchTimetablePage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <PermissionGate permission="church.schedule.view.queue">
+          <CapabilityGate platformUiCapability="church-schedule-view-queue">
             <Link
               href="/church/schedule/conflicts"
               className="px-3 py-1.5 rounded-lg border border-border text-sm font-semibold hover:bg-surface-raised"
             >
               Conflict queue
             </Link>
-          </PermissionGate>
-          <PermissionGate permission="church.schedule.submit">
+          </CapabilityGate>
+          <CapabilityGate platformUiCapability="church-schedule-submit">
             <Link
               href="/church/schedule/submit"
               className="px-3 py-1.5 rounded-lg border border-border text-sm font-semibold hover:bg-surface-raised"
             >
               Submit activity
             </Link>
-          </PermissionGate>
-          <PermissionGate permission="church.schedule.manage">
+          </CapabilityGate>
+          <CapabilityGate platformUiCapability="church-schedule-manage">
             <ChurchTimetableManagePanel />
-          </PermissionGate>
+          </CapabilityGate>
         </div>
       </div>
 
@@ -160,7 +160,7 @@ export default function ChurchTimetablePage() {
                   <Badge variant="status-present" className="text-[10px]">
                     {entry.source.replace(/_/g, ' ')}
                   </Badge>
-                  <PermissionGate permission="church.schedule.manage">
+                  <CapabilityGate platformUiCapability="church-schedule-manage">
                     <button
                       type="button"
                       disabled={cancelEntry.isPending}
@@ -173,7 +173,7 @@ export default function ChurchTimetablePage() {
                     >
                       Cancel
                     </button>
-                  </PermissionGate>
+                  </CapabilityGate>
                 </div>
               </li>
             ))}

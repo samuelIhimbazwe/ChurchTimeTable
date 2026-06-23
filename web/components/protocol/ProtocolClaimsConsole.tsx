@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { protocolApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
-import { Badge, Card, PermissionGate, SkeletonCard, EmptyState } from '@/components/shared'
+import { Badge, Card, CapabilityGate, SkeletonCard, EmptyState } from '@/components/shared'
 import { SplitQueueConsole } from '@/components/shared/office/SplitQueueConsole'
 import { SnoozeButton } from '@/components/workflow/SnoozeButton'
 import { FormField, Textarea } from '@/components/shared/form'
@@ -212,7 +212,7 @@ export function ProtocolClaimsConsole({ filter = 'pending' }: { filter?: Filter 
                     <p className="text-sm text-text-secondary mt-1">{row.notes}</p>
                   </div>
                 )}
-                <PermissionGate anyOf={['protocol.claim.review', 'protocol.manage']}>
+                <CapabilityGate platformUiCapability="protocol-claims-review">
                   {row.status === 'PENDING' && (
                     <div className="space-y-3 pt-2 border-t border-border">
                       <FormField label="Review notes" hint="Optional message to the member.">
@@ -255,7 +255,7 @@ export function ProtocolClaimsConsole({ filter = 'pending' }: { filter?: Filter 
                       </div>
                     </div>
                   )}
-                </PermissionGate>
+                </CapabilityGate>
                 {row.status !== 'PENDING' && row.reviewNotes && (
                   <p className="text-sm text-text-muted border-t border-border pt-3">
                     Review notes: {row.reviewNotes}

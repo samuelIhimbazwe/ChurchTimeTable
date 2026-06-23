@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { announcementsApi } from '@/lib/api'
 import {
   Card, CardHeader, CardTitle, Badge,
-  SkeletonCard, EmptyState, PermissionGate,
+  SkeletonCard, EmptyState, CapabilityGate,
 } from '@/components/shared'
 import { toast } from '@/components/shared/Toast'
 import { Megaphone, Plus } from 'lucide-react'
@@ -45,14 +45,14 @@ export default function ChurchAnnouncementsPage() {
             Church-wide broadcasts and notices
           </p>
         </div>
-        <PermissionGate anyOf={['ministry.announcement.manage', 'ministry.manage', 'church.intelligence.manage']}>
+        <CapabilityGate platformUiCapability="church-announcements-manage">
           <button
             onClick={() => setShowForm((v) => !v)}
             className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-gold-500 text-primary-900 rounded-lg hover:bg-gold-400 transition-colors"
           >
             <Plus size={15} /> New Announcement
           </button>
-        </PermissionGate>
+        </CapabilityGate>
       </div>
 
       {showForm && (

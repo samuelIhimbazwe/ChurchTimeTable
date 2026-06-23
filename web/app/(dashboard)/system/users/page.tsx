@@ -9,7 +9,7 @@ import {
   SkeletonCard,
   toast,
 } from '@/components/shared'
-import { PermissionGate } from '@/components/shared'
+import { CapabilityGate } from '@/components/shared'
 import {
   systemUsersApi,
   type CreateSystemUserPayload,
@@ -90,7 +90,7 @@ export default function SystemUsersPage() {
             Create accounts, assign roles, reset passwords
           </p>
         </div>
-        <PermissionGate permission="admin.users.manage">
+        <CapabilityGate platformUiCapability="admin-users-manage">
           <button
             type="button"
             onClick={() => setShowCreate(true)}
@@ -98,7 +98,7 @@ export default function SystemUsersPage() {
           >
             <UserPlus size={16} /> New user
           </button>
-        </PermissionGate>
+        </CapabilityGate>
       </div>
 
       <form
@@ -154,7 +154,7 @@ export default function SystemUsersPage() {
                     ))}
                   </div>
                 </div>
-                <PermissionGate permission="admin.users.manage">
+                <CapabilityGate platformUiCapability="admin-users-manage">
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       type="button"
@@ -190,7 +190,7 @@ export default function SystemUsersPage() {
                       )}
                     </button>
                   </div>
-                </PermissionGate>
+                </CapabilityGate>
               </li>
             ))}
           </ul>

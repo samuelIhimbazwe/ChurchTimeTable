@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { churchScheduleApi } from '@/lib/api'
-import { PermissionGate, SkeletonCard } from '@/components/shared'
+import { CapabilityGate, SkeletonCard } from '@/components/shared'
 import { ChurchScheduleSubmitForm } from '@/components/church/ChurchScheduleSubmitForm'
 
 function ChurchScheduleSubmitContent() {
@@ -34,8 +34,8 @@ function ChurchScheduleSubmitContent() {
         </p>
       </div>
 
-      <PermissionGate
-        permission="church.schedule.submit"
+      <CapabilityGate
+        platformUiCapability="church-schedule-submit"
         fallback={
           <p className="text-sm text-text-secondary">
             Schedule submit access is limited to ministry, choir, and protocol administrators.
@@ -47,7 +47,7 @@ function ChurchScheduleSubmitContent() {
         ) : (
           <ChurchScheduleSubmitForm initial={draft ?? null} />
         )}
-      </PermissionGate>
+      </CapabilityGate>
     </div>
   )
 }

@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { protocolApi, occurrencesApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
-import { Card, CardHeader, CardTitle, Badge, Avatar, PermissionGate } from '@/components/shared'
+import { Card, CardHeader, CardTitle, Badge, Avatar, CapabilityGate } from '@/components/shared'
 import { ChevronLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatDate, outcomeLabel } from '@/lib/utils/format'
@@ -162,7 +162,7 @@ export default function ProtocolTeamPage() {
                 {team.status}
               </Badge>
             )}
-            <PermissionGate anyOf={['protocol.team.approve', 'protocol.team.publish', 'protocol.team.manage', 'protocol.manage']}>
+            <CapabilityGate platformUiCapability="protocol-team-approve-publish">
               {nextStep && team && (
                 <button
                   type="button"
@@ -173,7 +173,7 @@ export default function ProtocolTeamPage() {
                   {advanceStatus.isPending ? 'Updating…' : nextStep.label}
                 </button>
               )}
-            </PermissionGate>
+            </CapabilityGate>
           </div>
         </div>
       </div>
@@ -199,9 +199,9 @@ export default function ProtocolTeamPage() {
         ) : (
           <p className="text-sm text-text-muted mb-4">No leader assigned yet.</p>
         )}
-        <PermissionGate anyOf={['protocol.manage', 'protocol.team.manage', 'protocol.team.leader.manage']}>
+        <CapabilityGate platformUiCapability="protocol-team-leadership">
           {team && <AssignTeamLeaderPanel teamId={team.id} />}
-        </PermissionGate>
+        </CapabilityGate>
       </Card>
 
       <Card padding="none">
@@ -247,7 +247,7 @@ export default function ProtocolTeamPage() {
                     )}
                   </div>
 
-                  <PermissionGate anyOf={['protocol.attendance.manage', 'protocol.team.leader.execute', 'protocol.team.head', 'attendance.mark']}>
+                  <CapabilityGate platformUiCapability="protocol-attendance-manage">
                     {isExpanded && (
                       <div className="mt-3 ml-11 flex flex-wrap gap-1.5">
                         {ALL_OUTCOMES.map(({ label, outcome, color }) => (
@@ -269,7 +269,7 @@ export default function ProtocolTeamPage() {
                         ))}
                       </div>
                     )}
-                  </PermissionGate>
+                  </CapabilityGate>
                 </li>
               )
             })}
@@ -277,7 +277,7 @@ export default function ProtocolTeamPage() {
         )}
       </Card>
 
-      <PermissionGate anyOf={['protocol.attendance.manage', 'protocol.team.leader.execute', 'protocol.team.head', 'attendance.mark']}>
+      <CapabilityGate platformUiCapability="protocol-attendance-manage">
         <div className="sticky bottom-6">
           <button
             onClick={() => submit.mutate()}
@@ -287,7 +287,7 @@ export default function ProtocolTeamPage() {
             {submit.isPending ? 'Saving…' : `Submit ${markedCount} Record${markedCount !== 1 ? 's' : ''}`}
           </button>
         </div>
-      </PermissionGate>
+      </CapabilityGate>
     </div>
   )
 }

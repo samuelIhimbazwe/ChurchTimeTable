@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ministriesApi, type MinistrySettings } from '@/lib/api'
-import { Card, CardHeader, CardTitle, CardDescription, PermissionGate } from '@/components/shared'
+import { Card, CardHeader, CardTitle, CardDescription, CapabilityGate } from '@/components/shared'
 import { toast } from '@/components/shared/Toast'
 
 const FLAGS: Array<{
@@ -43,8 +43,8 @@ export function MinistryFeatureFlags({ ministryId }: Props) {
   })
 
   return (
-    <PermissionGate
-      permission="ministry.settings.manage"
+    <CapabilityGate
+      platformUiCapability="ministry-settings-manage"
       fallback={
         <Card padding="md">
           <CardHeader>
@@ -91,6 +91,6 @@ export function MinistryFeatureFlags({ ministryId }: Props) {
           </ul>
         )}
       </Card>
-    </PermissionGate>
+    </CapabilityGate>
   )
 }

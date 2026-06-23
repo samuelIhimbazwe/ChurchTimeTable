@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { protocolApi } from '@/lib/api'
 import {
   Card, CardHeader, CardTitle, CardDescription,
-  PermissionGate, SkeletonCard, SkeletonStatTile, StatTile, Badge, toast,
+  CapabilityGate, SkeletonCard, SkeletonStatTile, StatTile, Badge, toast,
 } from '@/components/shared'
 import { FileText, Download, Activity, Heart } from 'lucide-react'
 import { formatDate } from '@/lib/utils/format'
@@ -88,7 +88,7 @@ export default function ProtocolReportsPage() {
         </div>
       </div>
 
-      <PermissionGate permission="protocol.report">
+      <CapabilityGate platformUiCapability="protocol-report">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {loadingHealth ? (
             Array.from({ length: 4 }).map((_, i) => <SkeletonStatTile key={i} />)
@@ -156,21 +156,21 @@ export default function ProtocolReportsPage() {
         )}
 
         <ProtocolOfficerSlaPanel />
-      </PermissionGate>
+      </CapabilityGate>
 
       <div className="flex items-center justify-between">
         <div>
           <h3 className="font-display text-xl text-text-primary">Team reports</h3>
           <p className="text-text-secondary text-sm mt-1">Post-service team leader narratives</p>
         </div>
-        <PermissionGate anyOf={['protocol.report', 'protocol.team.leader.execute', 'protocol.team.head', 'protocol.team.manage']}>
+        <CapabilityGate platformUiCapability="protocol-report-team-ops">
           <button
             onClick={() => setShowForm((v) => !v)}
             className="px-4 py-2 text-sm font-semibold bg-gold-500 text-primary-900 rounded-lg hover:bg-gold-400 transition-colors"
           >
             {showForm ? 'Cancel' : '+ Submit report'}
           </button>
-        </PermissionGate>
+        </CapabilityGate>
       </div>
 
       {showForm && (
@@ -180,7 +180,7 @@ export default function ProtocolReportsPage() {
         />
       )}
 
-      <PermissionGate permission="protocol.report">
+      <CapabilityGate platformUiCapability="protocol-report">
         <Card padding="md" className="space-y-3">
           <h3 className="text-sm font-semibold text-text-primary">Operational exports</h3>
           <p className="text-xs text-text-muted">CSV downloads for {year}, month {month}</p>
@@ -211,7 +211,7 @@ export default function ProtocolReportsPage() {
             </button>
           </div>
         </Card>
-      </PermissionGate>
+      </CapabilityGate>
 
       {isLoading ? (
         <SkeletonCard rows={4} />

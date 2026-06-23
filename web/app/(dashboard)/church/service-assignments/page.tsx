@@ -8,7 +8,7 @@ import {
 } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import {
-  Card, Badge, PermissionGate, SkeletonCard, EmptyState,
+  Card, Badge, CapabilityGate, SkeletonCard, EmptyState,
 } from '@/components/shared'
 import { formatDate, formatTime } from '@/lib/utils/format'
 import { Calendar, Check, Music, Plus, X } from 'lucide-react'
@@ -157,7 +157,7 @@ export default function ChurchServiceAssignmentsPage() {
             Assign choirs to church services — they are notified immediately unless they already have an activity at that time
           </p>
         </div>
-        <PermissionGate permission="church.schedule.manage">
+        <CapabilityGate platformUiCapability="church-schedule-manage">
           <button
             type="button"
             onClick={() => setShowDirectForm((v) => !v)}
@@ -166,7 +166,7 @@ export default function ChurchServiceAssignmentsPage() {
             <Plus size={16} />
             Assign choir
           </button>
-        </PermissionGate>
+        </CapabilityGate>
       </div>
 
       {showDirectForm && (
@@ -357,7 +357,7 @@ export default function ChurchServiceAssignmentsPage() {
                   </div>
                   {statusBadge(a.status)}
                 </div>
-                <PermissionGate permission="church.schedule.resolve">
+                <CapabilityGate platformUiCapability="church-schedule-resolve">
                   <div className="flex flex-wrap items-center gap-2 pl-7">
                     <input
                       className="flex-1 min-w-[140px] rounded border border-border px-2 py-1 text-xs"
@@ -379,7 +379,7 @@ export default function ChurchServiceAssignmentsPage() {
                       Reject
                     </button>
                   </div>
-                </PermissionGate>
+                </CapabilityGate>
               </li>
             ))}
           </ul>

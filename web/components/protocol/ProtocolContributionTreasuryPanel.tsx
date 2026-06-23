@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { contributionsApi, financeApi } from '@/lib/api'
-import { Card, Badge, PermissionGate } from '@/components/shared'
+import { Card, Badge, CapabilityGate } from '@/components/shared'
 import { MinistryContributionPendingInbox } from '@/components/shared/finance/MinistryContributionPendingInbox'
 import { ContributionAdjustModal } from '@/components/shared/finance/ContributionAdjustModal'
 import {
@@ -31,7 +31,7 @@ export function ProtocolContributionTreasuryPanel() {
   return (
     <>
       <div className="space-y-4">
-        <PermissionGate anyOf={['protocol.finance.approve', 'protocol.finance.manage']}>
+        <CapabilityGate platformUiCapability="protocol-finance-approve">
           <MinistryContributionPendingInbox
             title="Pending treasurer confirmation"
             description="Members submit directly — you confirm payment received on MoMo/bank."
@@ -41,16 +41,9 @@ export function ProtocolContributionTreasuryPanel() {
             invalidateQueryKeys={[...PROTOCOL_INBOX_KEYS]}
             emptyMessage="No pending claims."
           />
-        </PermissionGate>
+        </CapabilityGate>
 
-        <PermissionGate
-          anyOf={[
-            'protocol.contribution.view.all',
-            'protocol.finance.view',
-            'protocol.finance.manage',
-            'protocol.contribution.adjust',
-          ]}
-        >
+        <CapabilityGate platformUiCapability="protocol-contribution-treasury-view">
           <Card padding="md">
             <p className="font-semibold mb-2">All protocol contributions</p>
             {loadingAll ? (
@@ -84,9 +77,7 @@ export function ProtocolContributionTreasuryPanel() {
                         {item.status}
                       </Badge>
                       {item.status === 'CONFIRMED' && (
-                        <PermissionGate
-                          anyOf={['protocol.contribution.adjust', 'protocol.finance.manage']}
-                        >
+                        <CapabilityGate platformUiCapability="protocol-contribution-adjust">
                           <button
                             type="button"
                             onClick={() => setAdjusting(item)}
@@ -94,7 +85,7 @@ export function ProtocolContributionTreasuryPanel() {
                           >
                             Adjust
                           </button>
-                        </PermissionGate>
+                        </CapabilityGate>
                       )}
                     </div>
                   </li>
@@ -105,7 +96,7 @@ export function ProtocolContributionTreasuryPanel() {
               {confirmed.length} confirmed · list refreshes after each confirmation
             </p>
           </Card>
-        </PermissionGate>
+        </CapabilityGate>
       </div>
 
       {adjusting && (

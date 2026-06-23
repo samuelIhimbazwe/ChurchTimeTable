@@ -34,3 +34,7 @@ export function uiCapabilityVisible(
   }
   return def.requireAnyOf.some((cap) => check(cap));
 }
+
+export function isPresidentHubUiCapability(uiId: string): boolean {
+  return PRESIDENT_HUB_UI_CAPABILITY_REGISTRY.some((d) => d.id === uiId);
+}

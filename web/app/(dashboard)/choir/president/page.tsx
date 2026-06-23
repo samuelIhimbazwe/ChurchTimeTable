@@ -8,7 +8,7 @@ import { ChoirPositionHubShell } from '@/components/choir/ChoirPositionHubShell'
 import { PresidentCommandHome } from '@/components/choir/committee/PresidentCommandHome'
 import { PresidentDelegationPanel } from '@/components/choir/committee/PresidentDelegationPanel'
 import { ChoirExecutiveHubContent } from '@/components/choir/ChoirExecutiveHubContent'
-import { HubTabs } from '@/components/shared'
+import { HubTabs, CapabilityGate } from '@/components/shared'
 import { useResolvedChoirId, useResolvedChoirScope } from '@/lib/hooks'
 
 const TABS = [
@@ -33,6 +33,14 @@ export default function PresidentHubPage() {
     ).length ?? 0
 
   return (
+    <CapabilityGate
+      uiCapability="president-hub"
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <p className="text-text-muted">You do not have access to the president hub.</p>
+        </div>
+      }
+    >
     <ChoirPositionHubShell
       roleKey="president"
       subtitle="Executive command — membership decisions, choir health, and governance."
@@ -65,5 +73,6 @@ export default function PresidentHubPage() {
         )}
       </div>
     </ChoirPositionHubShell>
+    </CapabilityGate>
   )
 }

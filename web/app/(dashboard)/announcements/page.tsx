@@ -6,7 +6,7 @@ import { announcementsApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import {
   Card, CardHeader, CardTitle, CardDescription,
-  Badge, PermissionGate, SkeletonCard, EmptyState, HubTabs,
+  Badge, CapabilityGate, SkeletonCard, EmptyState, HubTabs,
 } from '@/components/shared'
 import { formatDate, relativeTime } from '@/lib/utils/format'
 import { Megaphone, Pin, PlusCircle } from 'lucide-react'
@@ -106,14 +106,14 @@ export default function AnnouncementsPage() {
             {tr('Church broadcasts and ministry updates')}
           </p>
         </div>
-        <PermissionGate permission="ministry.announcement.manage">
+        <CapabilityGate platformUiCapability="ministry-announcement-manage">
           <button
             onClick={() => setShowForm(!showForm)}
             className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-gold-500 text-primary-900 rounded-lg hover:bg-gold-400 transition-colors"
           >
             <PlusCircle size={15} /> {tr('New broadcast')}
           </button>
-        </PermissionGate>
+        </CapabilityGate>
       </div>
 
       {showForm && (

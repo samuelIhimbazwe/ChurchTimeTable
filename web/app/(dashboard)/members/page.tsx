@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useMembers } from '@/lib/hooks'
 import {
-  Card, Badge, Avatar, SkeletonMemberRow, PermissionGate,
+  Card, Badge, Avatar, SkeletonMemberRow, CapabilityGate,
 } from '@/components/shared'
 import { Search, UserPlus, Download, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -59,16 +59,16 @@ export default function MembersDirectoryPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <PermissionGate permission="report:export">
+          <CapabilityGate platformUiCapability="report-export">
             <button className="flex items-center gap-2 px-3 py-2 text-sm border border-border rounded-lg hover:bg-surface-raised transition-colors text-text-secondary">
               <Download size={15} /> Export
             </button>
-          </PermissionGate>
-          <PermissionGate permission="member:manage">
+          </CapabilityGate>
+          <CapabilityGate platformUiCapability="member-manage">
             <button className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-gold-500 text-primary-900 rounded-lg hover:bg-gold-400 transition-colors">
               <UserPlus size={15} /> Add Member
             </button>
-          </PermissionGate>
+          </CapabilityGate>
         </div>
       </div>
 
@@ -132,7 +132,7 @@ export default function MembersDirectoryPage() {
                     {m.attendanceRate}%
                   </span>
                 )}
-                <PermissionGate permission="member:manage">
+                <CapabilityGate platformUiCapability="member-manage">
                   <select
                     value={m.status}
                     onChange={(e) => updateStatus.mutate({ id: m.id, status: e.target.value as MemberStatus })}
@@ -142,7 +142,7 @@ export default function MembersDirectoryPage() {
                     <option value="INACTIVE">Inactive</option>
                     <option value="SUSPENDED">Suspended</option>
                   </select>
-                </PermissionGate>
+                </CapabilityGate>
               </li>
             ))}
           </ul>

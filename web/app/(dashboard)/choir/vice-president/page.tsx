@@ -7,7 +7,7 @@ import { choirApi } from '@/lib/api'
 import { ChoirPositionHubShell } from '@/components/choir/ChoirPositionHubShell'
 import { VicePresidentCommandHome } from '@/components/choir/committee/VicePresidentCommandHome'
 import { ChoirExecutiveHubContent } from '@/components/choir/ChoirExecutiveHubContent'
-import { HubTabs } from '@/components/shared'
+import { HubTabs, CapabilityGate } from '@/components/shared'
 import { useResolvedChoirId, useResolvedChoirScope } from '@/lib/hooks'
 
 const TABS = [
@@ -32,6 +32,14 @@ export default function VicePresidentHubPage() {
     ).length ?? 0
 
   return (
+    <CapabilityGate
+      uiCapability="vice-president-hub"
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <p className="text-text-muted">You do not have access to the vice president hub.</p>
+        </div>
+      }
+    >
     <ChoirPositionHubShell
       roleKey="vice_president"
       subtitle="Executive support — membership queue, choir health, and delegated decisions."
@@ -59,5 +67,6 @@ export default function VicePresidentHubPage() {
         {tab === 'governance' && <ChoirExecutiveHubContent deputyMode />}
       </div>
     </ChoirPositionHubShell>
+    </CapabilityGate>
   )
 }

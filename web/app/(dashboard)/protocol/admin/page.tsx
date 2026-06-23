@@ -1,18 +1,13 @@
 'use client'
 
-import { PermissionGate } from '@/components/shared'
+import { CapabilityGate } from '@/components/shared'
 import { ProtocolAdminHub } from '@/components/protocol/ProtocolAdminHub'
 import Link from 'next/link'
 
 export default function ProtocolAdminPage() {
   return (
-    <PermissionGate
-      anyOf={[
-        'committee.member.manage',
-        'protocol.invite',
-        'protocol.claim.review',
-        'protocol.manage',
-      ]}
+    <CapabilityGate
+      platformUiCapability="protocol-admin-hub"
       fallback={
         <div className="max-w-lg mx-auto py-16 text-center space-y-3">
           <p className="text-text-muted text-sm">
@@ -25,6 +20,6 @@ export default function ProtocolAdminPage() {
       }
     >
       <ProtocolAdminHub />
-    </PermissionGate>
+    </CapabilityGate>
   )
 }

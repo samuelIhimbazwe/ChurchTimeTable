@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { protocolApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
-import { Card, Avatar, SkeletonCard, PermissionGate } from '@/components/shared'
+import { Card, Avatar, SkeletonCard, CapabilityGate } from '@/components/shared'
 import { Trophy, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -61,7 +61,7 @@ export default function ProtocolRankingsPage() {
             {year} · month {month} — {CATEGORIES.find((c) => c.id === category)?.label}
           </p>
         </div>
-        <PermissionGate anyOf={['protocol.manage', 'protocol.operational.monitor', 'protocol.oversight', 'protocol.team.manage']}>
+        <CapabilityGate platformUiCapability="protocol-rankings-oversight">
           <button
             type="button"
             onClick={() => generate.mutate()}
@@ -71,7 +71,7 @@ export default function ProtocolRankingsPage() {
             <RefreshCw size={14} className={generate.isPending ? 'animate-spin' : ''} />
             {generate.isPending ? 'Generating…' : 'Generate this month'}
           </button>
-        </PermissionGate>
+        </CapabilityGate>
       </div>
 
       <Card padding="sm" className="flex flex-wrap items-end gap-3">

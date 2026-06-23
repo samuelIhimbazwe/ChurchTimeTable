@@ -73,6 +73,14 @@ import {
   uiCapabilityVisible as recordsHubUiVisible,
   isRecordsHubUiCapability,
 } from '@/lib/choir/records-hub-ui-capability-registry';
+import {
+  uiCapabilityVisible as presidentHubUiVisible,
+  isPresidentHubUiCapability,
+} from '@/lib/choir/president-hub-ui-capability-registry';
+import {
+  uiCapabilityVisible as vicePresidentHubUiVisible,
+  isVicePresidentHubUiCapability,
+} from '@/lib/choir/vice-president-hub-ui-capability-registry';
 
 const MEMBER_VIEW_CAP = 'choir.member.view@choir';
 
@@ -408,6 +416,12 @@ export function useUiCapability(uiId: string, scopeId?: string): boolean {
   }
   if (isRecordsHubUiCapability(uiId)) {
     return recordsHubUiVisible(uiId, routeCheck);
+  }
+  if (isPresidentHubUiCapability(uiId)) {
+    return presidentHubUiVisible(uiId, routeCheck);
+  }
+  if (isVicePresidentHubUiCapability(uiId)) {
+    return vicePresidentHubUiVisible(uiId, routeCheck);
   }
   if (isRolesUiCapability(uiId)) {
     return rolesUiVisible(uiId, (capId) => can(rolesAuth, capId));

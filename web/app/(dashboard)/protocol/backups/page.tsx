@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { protocolApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import {
-  Card, CardHeader, CardTitle, Avatar, PermissionGate, SkeletonCard, Badge,
+  Card, CardHeader, CardTitle, Avatar, CapabilityGate, SkeletonCard, Badge,
 } from '@/components/shared'
 import { RefreshCw, Users } from 'lucide-react'
 import { formatDate } from '@/lib/utils/format'
@@ -78,7 +78,7 @@ export default function BackupsPage() {
           <CardHeader
             className="px-5 pt-5"
             action={
-              <PermissionGate permission="protocol.manage">
+              <CapabilityGate platformUiCapability="protocol-manage">
                 <button
                   onClick={() => regenerate.mutate()}
                   disabled={regenerate.isPending}
@@ -86,7 +86,7 @@ export default function BackupsPage() {
                 >
                   <RefreshCw size={13} /> Regenerate
                 </button>
-              </PermissionGate>
+              </CapabilityGate>
             }
           >
             <CardTitle>Backup Members</CardTitle>

@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { governanceApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import {
-  Card, CardHeader, CardTitle, CardDescription, Badge, SkeletonCard, PermissionGate,
+  Card, CardHeader, CardTitle, CardDescription, Badge, SkeletonCard, CapabilityGate,
 } from '@/components/shared'
 import { ProtocolMemberPicker } from '@/components/protocol/ProtocolMemberPicker'
 import {
@@ -98,7 +98,7 @@ export function ProtocolCommitteePanel() {
         </CardDescription>
       </CardHeader>
 
-      <PermissionGate anyOf={['committee.member.manage', 'protocol.manage']}>
+      <CapabilityGate platformUiCapability="protocol-committee-member-manage">
         <div className="grid sm:grid-cols-2 gap-3 mb-6 p-4 rounded-lg bg-surface-raised border border-border">
           <div>
             <label className="text-xs font-semibold text-text-secondary block mb-1">Protocol member</label>
@@ -132,7 +132,7 @@ export function ProtocolCommitteePanel() {
             {assign.isPending ? 'Assigning…' : 'Assign role'}
           </button>
         </div>
-      </PermissionGate>
+      </CapabilityGate>
 
       {isLoading ? (
         <SkeletonCard rows={4} />
@@ -146,7 +146,7 @@ export function ProtocolCommitteePanel() {
                 <p className="text-sm font-medium text-text-primary">{memberName(row)}</p>
                 <Badge variant="role-member" className="mt-1">{roleLabel(row.role?.name)}</Badge>
               </div>
-              <PermissionGate anyOf={['committee.member.manage', 'protocol.manage']}>
+              <CapabilityGate platformUiCapability="protocol-committee-member-manage">
                 {row.role?.name !== 'protocol_president' && (
                   <button
                     type="button"
@@ -157,13 +157,13 @@ export function ProtocolCommitteePanel() {
                     <UserMinus size={13} /> Remove
                   </button>
                 )}
-              </PermissionGate>
+              </CapabilityGate>
             </li>
           ))}
         </ul>
       )}
 
-      <PermissionGate permission="committee.role.manage">
+      <CapabilityGate platformUiCapability="protocol-committee-role-manage">
         <details className="mt-6 text-sm">
           <summary className="cursor-pointer font-semibold text-text-secondary">Role permission reference</summary>
           <ul className="mt-3 space-y-2">
@@ -175,7 +175,7 @@ export function ProtocolCommitteePanel() {
             ))}
           </ul>
         </details>
-      </PermissionGate>
+      </CapabilityGate>
     </Card>
   )
 }

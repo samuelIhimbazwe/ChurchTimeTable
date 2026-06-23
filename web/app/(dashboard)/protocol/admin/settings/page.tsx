@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { protocolApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
-import { Card, CardHeader, CardTitle, PermissionGate, SkeletonCard } from '@/components/shared'
+import { Card, CardHeader, CardTitle, CapabilityGate, SkeletonCard } from '@/components/shared'
 import { ChevronLeft } from 'lucide-react'
 
 export default function ProtocolAdminSettingsPage() {
@@ -46,8 +46,8 @@ export default function ProtocolAdminSettingsPage() {
   })
 
   return (
-    <PermissionGate
-      permission="protocol.manage"
+    <CapabilityGate
+      platformUiCapability="protocol-manage"
       fallback={
         <p className="text-center text-text-muted py-16 text-sm">Protocol manage permission required.</p>
       }
@@ -128,6 +128,6 @@ export default function ProtocolAdminSettingsPage() {
           </Card>
         )}
       </div>
-    </PermissionGate>
+    </CapabilityGate>
   )
 }

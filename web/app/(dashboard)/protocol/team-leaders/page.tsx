@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { protocolApi, choirApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
-import { Card, Badge, Avatar, PermissionGate, SkeletonCard } from '@/components/shared'
+import { Card, Badge, Avatar, CapabilityGate, SkeletonCard } from '@/components/shared'
 import { ProtocolMemberPicker } from '@/components/protocol/ProtocolMemberPicker'
 import { UserCog } from 'lucide-react'
 
@@ -67,7 +67,7 @@ export default function TeamLeadersPage() {
         </p>
       </div>
 
-      <PermissionGate permission="protocol.team.leader.manage">
+      <CapabilityGate platformUiCapability="protocol-team-leader-manage">
         <Card padding="md">
           <p className="font-semibold mb-3">Register team leader</p>
           <div className="space-y-3">
@@ -123,7 +123,7 @@ export default function TeamLeadersPage() {
             </button>
           </div>
         </Card>
-      </PermissionGate>
+      </CapabilityGate>
 
       {isLoading ? (
         <SkeletonCard rows={5} />
@@ -164,7 +164,7 @@ export default function TeamLeadersPage() {
                     <Badge variant={l.active === false ? 'status-inactive' : 'status-present'}>
                       {l.active === false ? 'Inactive' : 'Active'}
                     </Badge>
-                    <PermissionGate permission="protocol.team.leader.manage">
+                    <CapabilityGate platformUiCapability="protocol-team-leader-manage">
                       {l.active !== false && (
                         <button
                           type="button"
@@ -175,7 +175,7 @@ export default function TeamLeadersPage() {
                           Deactivate
                         </button>
                       )}
-                    </PermissionGate>
+                    </CapabilityGate>
                   </div>
                 </div>
               </Card>

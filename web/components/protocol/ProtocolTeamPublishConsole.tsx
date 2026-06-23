@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { protocolApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
-import { Badge, Card, PermissionGate, SkeletonCard } from '@/components/shared'
+import { Badge, Card, CapabilityGate, SkeletonCard } from '@/components/shared'
 import { SplitQueueConsole } from '@/components/shared/office/SplitQueueConsole'
 import { formatDate } from '@/lib/utils/format'
 import type { ProtocolTeamStatus } from '@/types'
@@ -148,7 +148,7 @@ export function ProtocolTeamPublishConsole() {
                 </p>
                 <Badge variant="status-pending" className="mt-2">{row.status}</Badge>
               </div>
-              <PermissionGate anyOf={['protocol.team.manage', 'protocol.manage']}>
+              <CapabilityGate platformUiCapability="protocol-team-manage">
                 {nextAction && (
                   <button
                     type="button"
@@ -161,7 +161,7 @@ export function ProtocolTeamPublishConsole() {
                     {advance.isPending ? 'Updating…' : nextAction.label}
                   </button>
                 )}
-              </PermissionGate>
+              </CapabilityGate>
               <Link
                 href={`/protocol/teams/${row.occurrenceId}`}
                 className="flex items-center justify-center gap-1 text-sm font-semibold text-primary-600 hover:text-primary-800"
