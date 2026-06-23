@@ -8,6 +8,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
 import { FamilyMetricsService } from './family-metrics.service';
 import { FinanceModule } from '../finance/finance.module';
+import { ChoirHttpAccessModule } from '../common/choir/choir-http-access.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { FinanceModule } from '../finance/finance.module';
     ParticipationModule,
     MemberPhoneEnforcementModule,
     FinanceModule,
+    ChoirHttpAccessModule,
   ],
   controllers: [FamiliesController],
   providers: [FamiliesService, FamilyMetricsService],

@@ -1185,7 +1185,7 @@ export class SearchService {
     query: string,
     limit: number,
   ): Promise<FamilySearchResult[]> {
-    this.familiesService.ensureViewAccess(ctx);
+    await this.familiesService.ensureViewAccess(ctx);
     const scopeWhere = this.familiesService.buildScopeWhere(ctx);
 
     const rows = await this.prisma.family.findMany({

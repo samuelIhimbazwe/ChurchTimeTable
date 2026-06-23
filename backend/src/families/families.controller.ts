@@ -23,12 +23,8 @@ import { UpdateFamilyWorkspaceTemplateDto } from './dto/update-family-workspace-
 import { UpsertFamilyPulseDto } from './dto/upsert-family-pulse.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
-import {
-  RequireAnyPermissions,
-  RequirePermissions,
-} from '../common/decorators/roles.decorator';
-import { PERMISSIONS } from '../common/constants/roles';
+import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
+import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/decorators/current-user.decorator';
 import { PaginationDto } from '../common/dto/pagination.dto';
@@ -51,7 +47,7 @@ class FamilyListQueryDto extends PaginationDto {
 }
 
 @Controller('families')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class FamiliesController {
   constructor(
     private familiesService: FamiliesService,
@@ -59,23 +55,13 @@ export class FamiliesController {
   ) {}
 
   @Get('metrics/overview')
-  @RequireAnyPermissions(
-    PERMISSIONS.FAMILY_VIEW,
-    PERMISSIONS.FAMILY_MANAGE,
-    PERMISSIONS.CHOIR_FAMILY_VIEW,
-    PERMISSIONS.CHOIR_FAMILY_MANAGE,
-  )
+  @RequireUiCapability('family-hub')
   metricsOverview(@CurrentUser() user: JwtPayload) {
     return this.familyMetricsService.getOverview(user.sub);
   }
 
   @Get()
-  @RequireAnyPermissions(
-    PERMISSIONS.FAMILY_VIEW,
-    PERMISSIONS.FAMILY_MANAGE,
-    PERMISSIONS.CHOIR_FAMILY_VIEW,
-    PERMISSIONS.CHOIR_FAMILY_MANAGE,
-  )
+  @RequireUiCapability('family-hub')
   async list(@CurrentUser() user: JwtPayload, @Query() query: FamilyListQueryDto) {
     const result = await this.familiesService.list(
       user.sub,
@@ -129,41 +115,31 @@ export class FamiliesController {
   }
 
   @Get(':id/metrics')
-  @RequireAnyPermissions(
-    PERMISSIONS.FAMILY_VIEW,
-    PERMISSIONS.FAMILY_MANAGE,
-    PERMISSIONS.CHOIR_FAMILY_VIEW,
-    PERMISSIONS.CHOIR_FAMILY_MANAGE,
-  )
+  @RequireUiCapability('family-hub')
   familyMetrics(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.familyMetricsService.getFamilyMetrics(user.sub, id);
   }
 
   @Get(':id/leadership-history')
-  @RequireAnyPermissions(PERMISSIONS.FAMILY_VIEW, PERMISSIONS.FAMILY_MANAGE)
+  @RequireUiCapability('family-hub')
   leadershipHistory(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.familiesService.getLeadershipHistory(user.sub, id);
   }
 
   @Get(':id')
-  @RequireAnyPermissions(
-    PERMISSIONS.FAMILY_VIEW,
-    PERMISSIONS.FAMILY_MANAGE,
-    PERMISSIONS.CHOIR_FAMILY_VIEW,
-    PERMISSIONS.CHOIR_FAMILY_MANAGE,
-  )
+  @RequireUiCapability('family-hub')
   findOne(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.familiesService.findOne(user.sub, id);
   }
 
   @Post()
-  @RequirePermissions(PERMISSIONS.FAMILY_MANAGE)
+  @RequireUiCapability('family-manage')
   create(@CurrentUser() user: JwtPayload, @Body() dto: CreateFamilyDto) {
     return this.familiesService.create(user.sub, dto);
   }
 
   @Patch(':id')
-  @RequirePermissions(PERMISSIONS.FAMILY_MANAGE)
+  @RequireUiCapability('family-manage')
   update(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
@@ -173,12 +149,7 @@ export class FamiliesController {
   }
 
   @Get(':id/payment-instructions/history')
-  @RequireAnyPermissions(
-    PERMISSIONS.FAMILY_VIEW,
-    PERMISSIONS.FAMILY_MANAGE,
-    PERMISSIONS.CHOIR_FAMILY_VIEW,
-    PERMISSIONS.CHOIR_FAMILY_MANAGE,
-  )
+  @RequireUiCapability('family-hub')
   paymentInstructionsHistory(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
@@ -187,12 +158,7 @@ export class FamiliesController {
   }
 
   @Patch(':id/delegation')
-  @RequireAnyPermissions(
-    PERMISSIONS.FAMILY_VIEW,
-    PERMISSIONS.FAMILY_MANAGE,
-    PERMISSIONS.CHOIR_FAMILY_VIEW,
-    PERMISSIONS.CHOIR_FAMILY_MANAGE,
-  )
+  @RequireUiCapability('family-hub')
   updateDelegation(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
@@ -206,12 +172,7 @@ export class FamiliesController {
   }
 
   @Patch(':id/workspace-template')
-  @RequireAnyPermissions(
-    PERMISSIONS.FAMILY_VIEW,
-    PERMISSIONS.FAMILY_MANAGE,
-    PERMISSIONS.CHOIR_FAMILY_VIEW,
-    PERMISSIONS.CHOIR_FAMILY_MANAGE,
-  )
+  @RequireUiCapability('family-hub')
   updateWorkspaceTemplate(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
@@ -225,12 +186,7 @@ export class FamiliesController {
   }
 
   @Get(':id/pulse')
-  @RequireAnyPermissions(
-    PERMISSIONS.FAMILY_VIEW,
-    PERMISSIONS.FAMILY_MANAGE,
-    PERMISSIONS.CHOIR_FAMILY_VIEW,
-    PERMISSIONS.CHOIR_FAMILY_MANAGE,
-  )
+  @RequireUiCapability('family-hub')
   getPulse(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
@@ -240,12 +196,7 @@ export class FamiliesController {
   }
 
   @Post(':id/pulse')
-  @RequireAnyPermissions(
-    PERMISSIONS.FAMILY_VIEW,
-    PERMISSIONS.FAMILY_MANAGE,
-    PERMISSIONS.CHOIR_FAMILY_VIEW,
-    PERMISSIONS.CHOIR_FAMILY_MANAGE,
-  )
+  @RequireUiCapability('family-hub')
   upsertPulse(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
@@ -255,12 +206,7 @@ export class FamiliesController {
   }
 
   @Patch(':id/payment-instructions')
-  @RequireAnyPermissions(
-    PERMISSIONS.FAMILY_MANAGE,
-    PERMISSIONS.CHOIR_FAMILY_MANAGE,
-    PERMISSIONS.FAMILY_VIEW,
-    PERMISSIONS.CHOIR_FAMILY_VIEW,
-  )
+  @RequireUiCapability('family-hub')
   updatePaymentInstructions(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
@@ -270,13 +216,13 @@ export class FamiliesController {
   }
 
   @Delete(':id')
-  @RequirePermissions(PERMISSIONS.FAMILY_MANAGE)
+  @RequireUiCapability('family-manage')
   remove(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.familiesService.remove(user.sub, id);
   }
 
   @Post(':id/members')
-  @RequirePermissions(PERMISSIONS.FAMILY_MANAGE)
+  @RequireUiCapability('family-manage')
   addMember(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
@@ -286,7 +232,7 @@ export class FamiliesController {
   }
 
   @Patch(':id/members/:memberId')
-  @RequirePermissions(PERMISSIONS.FAMILY_MANAGE)
+  @RequireUiCapability('family-manage')
   updateMemberRole(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
@@ -297,7 +243,7 @@ export class FamiliesController {
   }
 
   @Delete(':id/members/:memberId')
-  @RequirePermissions(PERMISSIONS.FAMILY_MANAGE)
+  @RequireUiCapability('family-manage')
   removeMember(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,

@@ -8,6 +8,7 @@ import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enfo
 import { ChoirsModule } from '../choirs/choirs.module';
 import { ChoirReportsController } from './choir-reports.controller';
 import { ChoirReportsService } from './choir-reports.service';
+import { ChoirHttpAccessModule } from '../common/choir/choir-http-access.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ChoirReportsService } from './choir-reports.service';
     RehearsalsModule,
     ReportsModule,
     MemberPhoneEnforcementModule,
+    ChoirHttpAccessModule,
     forwardRef(() => ChoirsModule),
   ],
   controllers: [ChoirReportsController],

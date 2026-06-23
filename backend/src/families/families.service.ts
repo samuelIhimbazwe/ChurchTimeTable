@@ -30,6 +30,7 @@ import { UpdateFamilyPaymentDto } from './dto/update-family-payment.dto';
 import { UpsertFamilyPulseDto } from './dto/upsert-family-pulse.dto';
 import type { FamilyWorkspaceTemplate } from './dto/update-family-workspace-template.dto';
 import { ContributionWorkflowNotificationsService } from '../finance/contribution-workflow-notifications.service';
+import { FamilyHttpAccessService } from '../common/choir/family-http-access.service';
 
 const MEMBER_SELECT = {
   id: true,
@@ -47,6 +48,7 @@ export class FamiliesService {
     private audit: AuditService,
     private operationalScope: OperationalScopeService,
     private workflowNotifications: ContributionWorkflowNotificationsService,
+    private familyHttpAccess: FamilyHttpAccessService,
   ) {}
 
   private formatFamilyCode(value: number): string {
@@ -79,8 +81,8 @@ export class FamiliesService {
     return this.resolveScope(actorUserId);
   }
 
-  ensureViewAccess(ctx: OperationalScopeContext) {
-    this.assertView(ctx);
+  async ensureViewAccess(ctx: OperationalScopeContext) {
+    await this.assertView(ctx);
   }
 
   buildScopeWhere(ctx: OperationalScopeContext): Prisma.FamilyWhereInput {
@@ -91,14 +93,14 @@ export class FamiliesService {
     await this.assertFamilyInScope(ctx, familyId);
   }
 
-  private assertView(ctx: OperationalScopeContext) {
-    if (!canViewFamilies(ctx.permissions)) {
+  private async assertView(ctx: OperationalScopeContext) {
+    if (!(await this.familyHttpAccess.canView(ctx.actorUserId, ctx.permissions))) {
       throw new ForbiddenException('Family access denied');
     }
   }
 
-  private assertManage(ctx: OperationalScopeContext) {
-    if (!canManageFamilies(ctx.permissions)) {
+  private async assertManage(ctx: OperationalScopeContext) {
+    if (!(await this.familyHttpAccess.canManage(ctx.actorUserId, ctx.permissions))) {
       throw new ForbiddenException('Family management denied');
     }
   }
@@ -428,7 +430,7 @@ export class FamiliesService {
     filters?: { familyId?: string; search?: string },
   ) {
     const ctx = await this.scopeForUser(actorUserId);
-    this.assertView(ctx);
+    await this.assertView(ctx);
 
     const scopeWhere = this.buildScopedFamilyWhere(ctx);
     const andFilters: Prisma.FamilyWhereInput[] = [scopeWhere];
@@ -490,7 +492,7 @@ export class FamiliesService {
 
   async findOne(actorUserId: string, familyId: string) {
     const ctx = await this.scopeForUser(actorUserId);
-    this.assertView(ctx);
+    await this.assertView(ctx);
     await this.assertFamilyInScope(ctx, familyId);
 
     const family = await this.prisma.family.findUnique({
@@ -506,7 +508,7 @@ export class FamiliesService {
 
   async create(actorUserId: string, dto: CreateFamilyDto) {
     const ctx = await this.scopeForUser(actorUserId);
-    this.assertManage(ctx);
+    await this.assertManage(ctx);
 
     if (dto.headMemberId) {
       await this.assertMemberInScope(ctx, dto.headMemberId);
@@ -569,7 +571,7 @@ export class FamiliesService {
 
   async update(actorUserId: string, familyId: string, dto: UpdateFamilyDto) {
     const ctx = await this.scopeForUser(actorUserId);
-    this.assertManage(ctx);
+    await this.assertManage(ctx);
     await this.assertFamilyInScope(ctx, familyId);
 
     if (dto.headMemberId) {
@@ -768,7 +770,7 @@ export class FamiliesService {
 
   async getPaymentInstructionsHistory(actorUserId: string, familyId: string) {
     const ctx = await this.scopeForUser(actorUserId);
-    this.assertView(ctx);
+    await this.assertView(ctx);
     await this.assertFamilyInScope(ctx, familyId);
 
     const membership = ctx.memberId
@@ -810,7 +812,7 @@ export class FamiliesService {
 
   async getLeadershipHistory(actorUserId: string, familyId: string) {
     const ctx = await this.scopeForUser(actorUserId);
-    this.assertView(ctx);
+    await this.assertView(ctx);
     await this.assertFamilyInScope(ctx, familyId);
 
     const rows = await this.prisma.familyLeadershipHistory.findMany({
@@ -850,7 +852,7 @@ export class FamiliesService {
     dto: UpdateFamilyMemberDto,
   ) {
     const ctx = await this.scopeForUser(actorUserId);
-    this.assertManage(ctx);
+    await this.assertManage(ctx);
     await this.assertFamilyInScope(ctx, familyId);
 
     const membership = await this.prisma.familyMember.findFirst({
@@ -946,7 +948,7 @@ export class FamiliesService {
 
   async remove(actorUserId: string, familyId: string) {
     const ctx = await this.scopeForUser(actorUserId);
-    this.assertManage(ctx);
+    await this.assertManage(ctx);
     await this.assertFamilyInScope(ctx, familyId);
 
     await this.prisma.family.delete({ where: { id: familyId } });
@@ -967,7 +969,7 @@ export class FamiliesService {
     dto: AddFamilyMemberDto,
   ) {
     const ctx = await this.scopeForUser(actorUserId);
-    this.assertManage(ctx);
+    await this.assertManage(ctx);
     await this.assertFamilyInScope(ctx, familyId);
     await this.assertMemberInScope(ctx, dto.memberId);
 
@@ -1030,7 +1032,7 @@ export class FamiliesService {
     memberId: string,
   ) {
     const ctx = await this.scopeForUser(actorUserId);
-    this.assertManage(ctx);
+    await this.assertManage(ctx);
     await this.assertFamilyInScope(ctx, familyId);
 
     const membership = await this.prisma.familyMember.findFirst({

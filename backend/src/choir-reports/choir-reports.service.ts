@@ -1,14 +1,12 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { MemberStatus, MinistryScope } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { PermissionsResolver } from '../auth/permissions.resolver';
-import { PERMISSIONS } from '../common/constants/roles';
-import { hasEffectivePermission } from '../common/governance/governance-permissions.util';
 import { WelfareService } from '../welfare/welfare.service';
 import { MusicService } from '../music/music.service';
 import { RehearsalsService } from '../rehearsals/rehearsals.service';
 import { ReportsService } from '../reports/reports.service';
 import { ChoirExecutiveDashboardService } from '../choirs/choir-executive-dashboard.service';
+import { ChoirReportsHttpAccessService } from '../common/choir/choir-reports-http-access.service';
 
 export type ChoirHealthGrade = 'A' | 'B' | 'C' | 'D' | 'F';
 
@@ -38,7 +36,7 @@ export type ChoirHealthSnapshot = {
 export class ChoirReportsService {
   constructor(
     private prisma: PrismaService,
-    private permissions: PermissionsResolver,
+    private reportsAccess: ChoirReportsHttpAccessService,
     private welfare: WelfareService,
     private music: MusicService,
     private rehearsals: RehearsalsService,
@@ -46,22 +44,16 @@ export class ChoirReportsService {
     private executiveDashboard: ChoirExecutiveDashboardService,
   ) {}
 
-  private async assertChoirReportsAccess(userId: string) {
-    const resolved = await this.permissions.resolveForUser(userId);
-    const allowed =
-      hasEffectivePermission(resolved.permissions, PERMISSIONS.CHOIR_REPORTS_VIEW) ||
-      hasEffectivePermission(resolved.permissions, PERMISSIONS.CHOIR_OPS_REPORT) ||
-      hasEffectivePermission(resolved.permissions, PERMISSIONS.CHOIR_WELFARE_VIEW) ||
-      hasEffectivePermission(resolved.permissions, PERMISSIONS.CHOIR_WELFARE_MANAGE) ||
-      hasEffectivePermission(resolved.permissions, PERMISSIONS.CHOIR_MUSIC_VIEW) ||
-      hasEffectivePermission(resolved.permissions, PERMISSIONS.CHOIR_MUSIC_MANAGE) ||
-      hasEffectivePermission(resolved.permissions, PERMISSIONS.CHOIR_REHEARSAL_VIEW) ||
-      hasEffectivePermission(resolved.permissions, PERMISSIONS.CHOIR_REHEARSAL_MANAGE) ||
-      hasEffectivePermission(resolved.permissions, PERMISSIONS.CHOIR_OPERATIONS_MANAGE);
-    if (!allowed) {
+  private async assertChoirReportsAccess(userId: string, choirId?: string) {
+    if (!(await this.reportsAccess.canViewHub(userId, undefined, choirId))) {
       throw new ForbiddenException('Not allowed');
     }
-    return resolved;
+  }
+
+  private async assertChoirReportsExport(userId: string, choirId?: string) {
+    if (!(await this.reportsAccess.canExport(userId, undefined, choirId))) {
+      throw new ForbiddenException('Not allowed');
+    }
   }
 
   private gradeFromScore(score: number): ChoirHealthGrade {
@@ -98,7 +90,7 @@ export class ChoirReportsService {
   }
 
   async health(userId: string, choirId?: string): Promise<ChoirHealthSnapshot> {
-    await this.assertChoirReportsAccess(userId);
+    await this.assertChoirReportsAccess(userId, choirId);
 
     const participation = choirId ? await this.participationHealth(choirId) : null;
     const welfare = await this.safeWelfareReports(userId);
@@ -160,7 +152,7 @@ export class ChoirReportsService {
   }
 
   async summary(userId: string, choirId?: string) {
-    await this.assertChoirReportsAccess(userId);
+    await this.assertChoirReportsAccess(userId, choirId);
 
     const membershipWhere = choirId
       ? {
@@ -235,6 +227,7 @@ export class ChoirReportsService {
   }
 
   async exportSummaryPdf(userId: string, choirId?: string) {
+    await this.assertChoirReportsExport(userId, choirId);
     const data = await this.summary(userId, choirId);
     const lines = [
       choirId ? `Choir scope: ${choirId}` : 'Scope: all choir ministry members',
@@ -260,6 +253,7 @@ export class ChoirReportsService {
   }
 
   async exportHealthPackPdf(userId: string, choirId: string) {
+    await this.assertChoirReportsExport(userId, choirId);
     const data = await this.summary(userId, choirId);
     const health = data.health ?? await this.health(userId, choirId);
     const choir = await this.prisma.choir.findFirst({
@@ -311,6 +305,7 @@ export class ChoirReportsService {
   }
 
   async exportSummaryCsv(userId: string, choirId?: string) {
+    await this.assertChoirReportsExport(userId, choirId);
     const data = await this.summary(userId, choirId);
     const lines = [
       'section,metric,value',

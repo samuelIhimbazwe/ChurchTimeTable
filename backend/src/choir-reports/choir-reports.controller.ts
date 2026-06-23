@@ -3,33 +3,20 @@ import type { Response } from 'express';
 import { ChoirReportsService } from './choir-reports.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { RequireAnyPermissions } from '../common/decorators/roles.decorator';
-import { PERMISSIONS } from '../common/constants/roles';
+import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
+import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/decorators/current-user.decorator';
 import { SkipPhoneEnforcement } from '../common/decorators/skip-phone-enforcement.decorator';
 
-const CHOIR_REPORTS_VIEW = [
-  PERMISSIONS.CHOIR_REPORTS_VIEW,
-  PERMISSIONS.CHOIR_OPS_REPORT,
-  PERMISSIONS.CHOIR_WELFARE_VIEW,
-  PERMISSIONS.CHOIR_WELFARE_MANAGE,
-  PERMISSIONS.CHOIR_MUSIC_VIEW,
-  PERMISSIONS.CHOIR_MUSIC_MANAGE,
-  PERMISSIONS.CHOIR_REHEARSAL_VIEW,
-  PERMISSIONS.CHOIR_REHEARSAL_MANAGE,
-  PERMISSIONS.CHOIR_OPERATIONS_MANAGE,
-] as const;
-
 @Controller('choir/reports')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class ChoirReportsController {
   constructor(private choirReports: ChoirReportsService) {}
 
   @Get('summary')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(...CHOIR_REPORTS_VIEW)
+  @RequireUiCapability('ops-reports-hub')
   summary(
     @CurrentUser() user: JwtPayload,
     @Query('choirId') choirId?: string,
@@ -39,7 +26,7 @@ export class ChoirReportsController {
 
   @Get('health')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(...CHOIR_REPORTS_VIEW)
+  @RequireUiCapability('ops-reports-hub')
   health(
     @CurrentUser() user: JwtPayload,
     @Query('choirId') choirId: string,
@@ -48,7 +35,7 @@ export class ChoirReportsController {
   }
 
   @Get('summary.pdf')
-  @RequireAnyPermissions(...CHOIR_REPORTS_VIEW)
+  @RequireUiCapability('ops-reports-export')
   async summaryPdf(
     @CurrentUser() user: JwtPayload,
     @Res() res: Response,
@@ -64,7 +51,7 @@ export class ChoirReportsController {
   }
 
   @Get('health-pack.pdf')
-  @RequireAnyPermissions(...CHOIR_REPORTS_VIEW)
+  @RequireUiCapability('ops-reports-export')
   async healthPackPdf(
     @CurrentUser() user: JwtPayload,
     @Query('choirId') choirId: string,
@@ -83,7 +70,7 @@ export class ChoirReportsController {
   }
 
   @Get('summary.csv')
-  @RequireAnyPermissions(...CHOIR_REPORTS_VIEW)
+  @RequireUiCapability('ops-reports-export')
   async summaryCsv(
     @CurrentUser() user: JwtPayload,
     @Res() res: Response,

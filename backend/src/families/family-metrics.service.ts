@@ -641,7 +641,7 @@ export class FamilyMetricsService {
     familyId: string,
   ): Promise<FamilyMetricsPayload> {
     const ctx = await this.familiesService.resolveScope(actorUserId);
-    this.familiesService.ensureViewAccess(ctx);
+    await this.familiesService.ensureViewAccess(ctx);
     await this.familiesService.ensureFamilyInScope(ctx, familyId);
 
     const family = await this.prisma.family.findUnique({
@@ -671,7 +671,7 @@ export class FamilyMetricsService {
 
   async getOverview(actorUserId: string): Promise<FamilyMetricsOverview> {
     const ctx = await this.familiesService.resolveScope(actorUserId);
-    this.familiesService.ensureViewAccess(ctx);
+    await this.familiesService.ensureViewAccess(ctx);
 
     const families = await this.loadScopedFamilies(ctx);
     const allMemberIds = [...new Set(families.flatMap((family) => family.memberIds))];
