@@ -25,6 +25,7 @@ import { composeRolesAwareNav } from '@/lib/navigation/roles-nav'
 import { composeAdminHubAwareNav } from '@/lib/navigation/admin-hub-nav'
 import { composeCareHubAwareNav } from '@/lib/navigation/care-hub-nav'
 import { composeRecordsHubAwareNav } from '@/lib/navigation/records-hub-nav'
+import { composePresidentHubAwareNav } from '@/lib/navigation/president-hub-nav'
 import { useCapabilityRouter } from '@/lib/hooks/useCapability'
 import { getComposedProtocolNav } from '@/lib/navigation/protocol-nav'
 import { parseChoirIdFromPath } from '@/lib/choir/paths'
@@ -120,22 +121,26 @@ export default function Sidebar({
                     composeMusicAwareNav(
                       composeSponsorAwareNav(
                         composeJoinAwareNav(
-                          composeOpsAwareNav(
-                            composeDisciplineAwareNav(
-                              composeWelfareAwareNav(
-                                composeContributionAwareNav(
-                                  rawSections,
+                          composePresidentHubAwareNav(
+                            composeOpsAwareNav(
+                              composeDisciplineAwareNav(
+                                composeWelfareAwareNav(
+                                  composeContributionAwareNav(
+                                    rawSections,
+                                    contextChoirId ?? choirId,
+                                    contributionAuth,
+                                  ),
                                   contextChoirId ?? choirId,
-                                  contributionAuth,
+                                  welfareAuth,
                                 ),
                                 contextChoirId ?? choirId,
-                                welfareAuth,
+                                disciplineAuth,
                               ),
                               contextChoirId ?? choirId,
-                              disciplineAuth,
+                              opsAuth,
                             ),
                             contextChoirId ?? choirId,
-                            opsAuth,
+                            capabilityCheck,
                           ),
                           contextChoirId ?? choirId,
                           joinAuth,
