@@ -44,4 +44,14 @@ describe('family UI capabilities', () => {
     const routeCheck = check(memberAuth);
     expect(uiCapabilityVisible('family-hub', routeCheck)).toBe(false);
   });
+
+  it('family head can access family-head-hub', () => {
+    const headAuth: ResolvedAuth = {
+      userId: 'head',
+      choirId: 'c1',
+      capabilities: [{ id: 'choir.contribution.view@family', scopeId: 'fam-a' }],
+    };
+    const routeCheck = check(headAuth);
+    expect(uiCapabilityVisible('family-head-hub', routeCheck)).toBe(true);
+  });
 });

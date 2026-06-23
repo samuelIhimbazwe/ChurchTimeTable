@@ -2,6 +2,7 @@ export const FAMILY_ROUTE_TAILS = [
   'families',
   'admin/families',
   'family-coordinator',
+  'family-head',
 ] as const;
 
 export function familyRouteTailFromPath(pathname: string): string | null {

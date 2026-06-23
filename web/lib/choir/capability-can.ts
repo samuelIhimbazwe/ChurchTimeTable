@@ -15,7 +15,7 @@ export function can(
   return resolvedAuth.capabilities.some((cap) => {
     if (cap.id !== capabilityId) return false;
     if (!capabilityRequiresScopeId(capabilityId)) return true;
-    if (!scopeId) return false;
+    if (!scopeId) return true;
     return cap.scopeId === scopeId;
   });
 }

@@ -11,6 +11,15 @@ describe('family UI capability contract', () => {
     ]);
   });
 
+  it('aliases family view permissions to view@family', () => {
+    expect(LEGACY_PERMISSION_ALIASES['choir.family.view']).toEqual([
+      'choir.contribution.view@family',
+    ]);
+    expect(LEGACY_PERMISSION_ALIASES['family:view']).toEqual([
+      'choir.contribution.view@family',
+    ]);
+  });
+
   it('defines family-manage and family-hub UI capabilities', () => {
     const manage = CONTRIBUTION_UI_CAPABILITY_REGISTRY.find(
       (d) => d.id === 'family-manage',
@@ -21,6 +30,15 @@ describe('family UI capability contract', () => {
     expect(manage?.requireAnyOf).toEqual(['choir.contribution.oversight@choir']);
     expect(hub?.requireAnyOf).toEqual(
       expect.arrayContaining(['choir.contribution.oversight@choir']),
+    );
+  });
+
+  it('defines family-head-hub UI capability', () => {
+    const headHub = CONTRIBUTION_UI_CAPABILITY_REGISTRY.find(
+      (d) => d.id === 'family-head-hub',
+    );
+    expect(headHub?.requireAnyOf).toEqual(
+      expect.arrayContaining(['choir.contribution.view@family']),
     );
   });
 });

@@ -96,6 +96,18 @@ export const CONTRIBUTION_UI_CAPABILITY_REGISTRY: ContributionUiCapabilityDefini
       requireAnyOf: ['choir.contribution.oversight@choir'],
       mode: 'any',
     },
+    {
+      id: 'family-head-hub',
+      label: 'Family head hub',
+      routeSegments: ['family-head', 'family-leadership'],
+      requireAnyOf: [
+        'choir.contribution.view@family',
+        'choir.contribution.approve@family',
+        'choir.ops.attendance@choir',
+        'choir.member.view@choir',
+      ],
+      mode: 'any',
+    },
   ];
 
 export function uiCapabilityVisible(

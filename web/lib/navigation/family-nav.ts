@@ -6,6 +6,7 @@ import type { NavItem, NavSection } from './role-nav';
 
 const TAIL_TO_UI: Record<string, string> = {
   'family-coordinator': 'family-coordinator-hub',
+  'family-head': 'family-head-hub',
   families: 'family-hub',
   'admin/families': 'family-hub',
 };
@@ -17,6 +18,15 @@ export const LEGACY_FAMILY_COORDINATOR_HUB_PERMISSIONS = [
 ] as const;
 
 export const LEGACY_FAMILY_COORDINATOR_HUB_PATH = '/choir/family-coordinator';
+
+/** Legacy permission fallback for `/choir/family-head` (see role-nav HUB_PERMISSIONS). */
+export const LEGACY_FAMILY_HEAD_HUB_PERMISSIONS = [
+  'choir.family.view',
+  'family:view',
+  'attendance.mark',
+] as const;
+
+export const LEGACY_FAMILY_HEAD_HUB_PATH = '/choir/family-head';
 
 export function familyNavGateForPath(path: string): string | null {
   const tail = familyRouteTailFromPath(path);
@@ -51,6 +61,17 @@ export function legacyFamilyCoordinatorHubLinkVisible(
   return LEGACY_FAMILY_COORDINATOR_HUB_PERMISSIONS.some((p) =>
     permissions.includes(p),
   );
+}
+
+/** Legacy `/choir/family-head` hub link — capability router when available. */
+export function legacyFamilyHeadHubLinkVisible(
+  permissions: string[],
+  capabilityCheck?: (capId: string) => boolean,
+): boolean {
+  if (capabilityCheck) {
+    return uiCapabilityVisible('family-head-hub', capabilityCheck);
+  }
+  return LEGACY_FAMILY_HEAD_HUB_PERMISSIONS.some((p) => permissions.includes(p));
 }
 
 function filterItems(

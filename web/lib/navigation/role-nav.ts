@@ -64,6 +64,8 @@ import {
 import {
   legacyFamilyCoordinatorHubLinkVisible,
   LEGACY_FAMILY_COORDINATOR_HUB_PATH,
+  legacyFamilyHeadHubLinkVisible,
+  LEGACY_FAMILY_HEAD_HUB_PATH,
 } from '@/lib/navigation/family-nav'
 
 const CHOIR_LEADERSHIP_ROLE_SET = CHOIR_LEADERSHIP
@@ -517,6 +519,9 @@ function officerHubLinkVisible(
   }
   if (link.path === LEGACY_FAMILY_COORDINATOR_HUB_PATH) {
     return legacyFamilyCoordinatorHubLinkVisible(permissions, capabilityCheck);
+  }
+  if (link.path === LEGACY_FAMILY_HEAD_HUB_PATH) {
+    return legacyFamilyHeadHubLinkVisible(permissions, capabilityCheck);
   }
   const required = HUB_PERMISSIONS[link.path];
   if (!required?.length) return false;
