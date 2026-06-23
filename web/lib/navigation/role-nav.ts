@@ -61,6 +61,10 @@ import {
   legacyMusicDirectionHubLinkVisible,
   LEGACY_MUSIC_DIRECTION_HUB_PATH,
 } from '@/lib/navigation/music-nav'
+import {
+  legacyFamilyCoordinatorHubLinkVisible,
+  LEGACY_FAMILY_COORDINATOR_HUB_PATH,
+} from '@/lib/navigation/family-nav'
 
 const CHOIR_LEADERSHIP_ROLE_SET = CHOIR_LEADERSHIP
 
@@ -510,6 +514,9 @@ function officerHubLinkVisible(
   }
   if (link.path === LEGACY_MUSIC_DIRECTION_HUB_PATH) {
     return legacyMusicDirectionHubLinkVisible(permissions, capabilityCheck);
+  }
+  if (link.path === LEGACY_FAMILY_COORDINATOR_HUB_PATH) {
+    return legacyFamilyCoordinatorHubLinkVisible(permissions, capabilityCheck);
   }
   const required = HUB_PERMISSIONS[link.path];
   if (!required?.length) return false;
