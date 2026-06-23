@@ -71,6 +71,7 @@ import {
   legacyAdvisorHubLinkVisible,
   LEGACY_ADVISOR_HUB_PATH,
 } from '@/lib/navigation/advisor-hub-nav'
+import { filterRoleNavSections } from '@/lib/navigation/role-nav-capability'
 
 const CHOIR_LEADERSHIP_ROLE_SET = CHOIR_LEADERSHIP
 
@@ -594,7 +595,10 @@ export function getChoirNavForUser(
 
   if (usesChoirRoleNav(role)) {
     const choirNav = NAV_BY_ROLE[role!] ?? []
-    return [...sections, ...choirNav.filter((sec) =>
+    const roleSections = capabilityCheck
+      ? filterRoleNavSections(choirNav, capabilityCheck)
+      : choirNav
+    return [...sections, ...roleSections.filter((sec) =>
       sec.items.every((item) => item.path !== '/portal'),
     )]
   }

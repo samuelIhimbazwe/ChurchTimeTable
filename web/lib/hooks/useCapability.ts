@@ -65,6 +65,14 @@ import {
   uiCapabilityVisible as careHubUiVisible,
   isCareHubUiCapability,
 } from '@/lib/choir/care-hub-ui-capability-registry';
+import {
+  uiCapabilityVisible as advisorHubUiVisible,
+  isAdvisorHubUiCapability,
+} from '@/lib/choir/advisor-hub-ui-capability-registry';
+import {
+  uiCapabilityVisible as recordsHubUiVisible,
+  isRecordsHubUiCapability,
+} from '@/lib/choir/records-hub-ui-capability-registry';
 
 const MEMBER_VIEW_CAP = 'choir.member.view@choir';
 
@@ -394,6 +402,12 @@ export function useUiCapability(uiId: string, scopeId?: string): boolean {
   }
   if (isCareHubUiCapability(uiId)) {
     return careHubUiVisible(uiId, routeCheck);
+  }
+  if (isAdvisorHubUiCapability(uiId)) {
+    return advisorHubUiVisible(uiId, routeCheck);
+  }
+  if (isRecordsHubUiCapability(uiId)) {
+    return recordsHubUiVisible(uiId, routeCheck);
   }
   if (isRolesUiCapability(uiId)) {
     return rolesUiVisible(uiId, (capId) => can(rolesAuth, capId));

@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { choirApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import {
-  Badge, Card, PermissionGate, SkeletonCard,
+  Badge, Card, CapabilityGate, SkeletonCard,
 } from '@/components/shared'
 import { SplitQueueConsole } from '@/components/shared/office/SplitQueueConsole'
 import { ChoirPositionGuide } from '@/components/choir/ChoirPositionGuide'
@@ -428,8 +428,8 @@ export function PresidentDecisionConsole({
   }
 
   return (
-    <PermissionGate
-      anyOf={['choir.join.review', 'member:manage', 'choir.operations.manage']}
+    <CapabilityGate
+      uiCapability="join-requests-review"
       fallback={
         <Card padding="md">
           <p className="text-sm text-text-muted text-center py-8">
@@ -494,6 +494,6 @@ export function PresidentDecisionConsole({
           onClose={() => setShowApplicant360(false)}
         />
       )}
-    </PermissionGate>
+    </CapabilityGate>
   )
 }

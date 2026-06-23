@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { choirSchedulingApi, documentsApi, assetsApi } from '@/lib/api'
 import { useResolvedChoirScope } from '@/lib/hooks'
-import { useAuthStore } from '@/stores/index'
+import { useAnyCapability } from '@/lib/hooks/useCapability'
 import {
-  Card, StatTile, SkeletonStatTile,
+  Card, StatTile, SkeletonStatTile, CapabilityGate,
 } from '@/components/shared'
 import { ChoirPositionHubShell } from '@/components/choir/ChoirPositionHubShell'
 import { AdvisorCapabilityPanel } from '@/components/choir/AdvisorCapabilityPanel'
@@ -19,6 +19,15 @@ const TABS = [
   { id: 'snapshot', label: 'Choir snapshot' },
 ]
 
+const SNAPSHOT_CAPS = [
+  'choir.ops.view@choir',
+  'choir.discipline.view@choir',
+  'choir.budget.view@choir',
+  'choir.contribution.view@choir',
+  'choir.document.view@choir',
+  'choir.rehearsal.view@choir',
+] as const
+
 function num(v: unknown) {
   const n = Number(v)
   return Number.isFinite(n) ? n : 0
@@ -26,8 +35,7 @@ function num(v: unknown) {
 
 export default function AdvisorHubPage() {
   const [tab, setTab] = useState('my-access')
-  const permissions = useAuthStore((s) => s.user?.permissions ?? [])
-  const hasAnyPermission = useAuthStore((s) => s.hasAnyPermission)
+  const canSeeSnapshot = useAnyCapability([...SNAPSHOT_CAPS])
 
   const { choirId, choirLink } = useResolvedChoirScope()
 
@@ -36,10 +44,6 @@ export default function AdvisorHubPage() {
       setTab('snapshot')
     }
   }, [])
-
-  const canSeeSnapshot = hasAnyPermission([
-    'event:read', 'choir.reports.view', 'choir.finance.view', 'discipline:read_all', 'choir.ops.view',
-  ])
 
   const { data: health, isLoading: loadingHealth } = useQuery({
     queryKey: ['choir-leader-dashboard', choirId],
@@ -63,6 +67,14 @@ export default function AdvisorHubPage() {
   const eq = equipment as Record<string, unknown> | undefined
 
   return (
+    <CapabilityGate
+      uiCapability="advisor-hub"
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <p className="text-text-muted">You do not have access to the advisor hub.</p>
+        </div>
+      }
+    >
     <ChoirPositionHubShell
       roleKey="advisor"
       subtitle="Your tools depend on what the President assigns — operations, development, uniqueness, or counsel-only access."
@@ -83,8 +95,8 @@ export default function AdvisorHubPage() {
           {!canSeeSnapshot ? (
             <Card padding="md">
               <p className="text-sm text-text-muted text-center py-8">
-                No snapshot permissions assigned. Your President can grant event:read, choir.reports.view,
-                or similar codes on the Position roles page.
+                No snapshot permissions assigned. Your President can grant operations view,
+                reports, or similar capabilities on the Position roles page.
               </p>
             </Card>
           ) : loadingHealth ? (
@@ -99,7 +111,7 @@ export default function AdvisorHubPage() {
                 </p>
               </Card>
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                {hasAnyPermission(['event:read', 'choir.ops.view']) && (
+                <CapabilityGate anyOf={['choir.ops.view@choir', 'choir.rehearsal.view@choir']}>
                   <StatTile
                     label="Attendance rate"
                     value={num(h?.attendanceRate ?? h?.avgAttendanceRate)}
@@ -108,39 +120,35 @@ export default function AdvisorHubPage() {
                     animate
                     href={choirLink('reports')}
                   />
-                )}
-                {hasAnyPermission(['discipline:read_all', 'discipline.review']) && (
+                </CapabilityGate>
+                <CapabilityGate anyOf={['choir.discipline.view@choir']}>
                   <StatTile label="Open swaps" value={num(h?.pendingSwaps)} icon={Shield} animate href={choirLink('scheduling')} />
-                )}
-                {hasAnyPermission(['choir.finance.view', 'ministry.finance.view']) && (
+                </CapabilityGate>
+                <CapabilityGate anyOf={['choir.budget.view@choir', 'choir.contribution.view@choir']}>
                   <StatTile label="Reliability" value={num(h?.reliability ?? h?.reliabilityScore)} suffix="%" icon={DollarSign} animate href={choirLink('finance')} />
-                )}
+                </CapabilityGate>
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
-                {hasAnyPermission(['choir.records.view', 'choir.document.manage']) && (
+                <CapabilityGate uiCapability="logistics-documents-hub">
                   <Card padding="md" href={choirLink('documents')}>
                     <p className="text-xs text-text-muted">Documents on file</p>
                     <p className="font-display text-2xl text-primary-700">{documents?.length ?? 0}</p>
                   </Card>
-                )}
-                {hasAnyPermission(['choir.equipment.manage', 'choir.ops.view', 'asset:view']) && (
+                </CapabilityGate>
+                <CapabilityGate uiCapability="logistics-assets-hub">
                   <Card padding="md" href={choirLink('assets')}>
                     <p className="text-xs text-text-muted">Equipment items</p>
                     <p className="font-display text-2xl text-primary-700">
                       {num(eq?.totalAssets ?? eq?.total)}
                     </p>
                   </Card>
-                )}
+                </CapabilityGate>
               </div>
-              <Card padding="md">
-                <p className="text-xs text-text-muted">
-                  {permissions.length} permission(s) active on your account — use My assigned access for your tools.
-                </p>
-              </Card>
             </>
           )}
         </div>
       )}
     </ChoirPositionHubShell>
+    </CapabilityGate>
   )
 }

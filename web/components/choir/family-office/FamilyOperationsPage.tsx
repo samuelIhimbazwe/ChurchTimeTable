@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { choirActivityApi } from '@/lib/api'
 import { choirPath } from '@/lib/choir/paths'
-import { Card, PermissionGate, SkeletonCard } from '@/components/shared'
+import { Card, CapabilityGate, SkeletonCard } from '@/components/shared'
 import { OfficeNavCard } from '@/components/choir/OfficeNavCard'
 import { formatDate, formatTime } from '@/lib/utils/format'
 import { ChevronRight } from 'lucide-react'
@@ -50,11 +50,11 @@ export function FamilyOperationsPage() {
                     {a.startTime ? ` · ${formatTime(a.startTime)}` : ''}
                   </p>
                 </div>
-                <PermissionGate anyOf={['attendance.mark', 'attendance:write']}>
+                <CapabilityGate uiCapability="hub-attendance-link">
                   <span className="text-xs font-semibold text-primary-600 shrink-0 inline-flex items-center gap-1">
                     Mark team <ChevronRight size={14} />
                   </span>
-                </PermissionGate>
+                </CapabilityGate>
               </div>
             </OfficeNavCard>
           ))}

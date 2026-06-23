@@ -33,3 +33,7 @@ export function uiCapabilityVisible(
   }
   return def.requireAnyOf.some((cap) => check(cap));
 }
+
+export function isRecordsHubUiCapability(uiId: string): boolean {
+  return RECORDS_HUB_UI_CAPABILITY_REGISTRY.some((d) => d.id === uiId);
+}

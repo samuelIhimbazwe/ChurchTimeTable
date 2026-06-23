@@ -12,7 +12,7 @@ import {
   assetsApi,
 } from '@/lib/api'
 import {
-  Card, HubTabs, SkeletonCard, Badge,
+  Card, HubTabs, SkeletonCard, Badge, CapabilityGate,
 } from '@/components/shared'
 import { formatDate } from '@/lib/utils/format'
 import {
@@ -94,6 +94,14 @@ export default function RecordsHubPage() {
   }
 
   return (
+    <CapabilityGate
+      uiCapability="records-hub"
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <p className="text-text-muted">You do not have access to the records hub.</p>
+        </div>
+      }
+    >
     <div className="space-y-6 max-w-5xl mx-auto pb-8">
       <div>
         <h1 className="font-display text-3xl text-text-primary">Choir records</h1>
@@ -219,5 +227,6 @@ export default function RecordsHubPage() {
         </div>
       )}
     </div>
+    </CapabilityGate>
   )
 }

@@ -27,6 +27,8 @@ import { composeCareHubAwareNav } from '@/lib/navigation/care-hub-nav'
 import { composeRecordsHubAwareNav } from '@/lib/navigation/records-hub-nav'
 import { composePresidentHubAwareNav } from '@/lib/navigation/president-hub-nav'
 import { composeVicePresidentHubAwareNav } from '@/lib/navigation/vice-president-hub-nav'
+import { composeAdvisorHubAwareNav } from '@/lib/navigation/advisor-hub-nav'
+import { composeFamilyAwareNav } from '@/lib/navigation/family-nav'
 import { useCapabilityRouter } from '@/lib/hooks/useCapability'
 import { getComposedProtocolNav } from '@/lib/navigation/protocol-nav'
 import { parseChoirIdFromPath } from '@/lib/choir/paths'
@@ -113,6 +115,8 @@ export default function Sidebar({
   const capabilityAwareSections = composeAdminHubAwareNav(
     composeCareHubAwareNav(
       composeRolesAwareNav(
+        composeAdvisorHubAwareNav(
+          composeFamilyAwareNav(
         composeRecordsHubAwareNav(
           composeDevotionAwareNav(
             composeLogisticsAwareNav(
@@ -171,6 +175,12 @@ export default function Sidebar({
             contextChoirId ?? choirId,
             capabilityCheck,
           ),
+          contextChoirId ?? choirId,
+          capabilityCheck,
+        ),
+          contextChoirId ?? choirId,
+          capabilityCheck,
+        ),
           contextChoirId ?? choirId,
           capabilityCheck,
         ),

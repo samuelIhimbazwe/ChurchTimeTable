@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { familiesApi, choirActivityApi, financeApi } from '@/lib/api'
 import {
-  Card, StatTile, Badge, SkeletonCard, PermissionGate,
+  Card, StatTile, Badge, SkeletonCard, CapabilityGate,
 } from '@/components/shared'
 import { ChoirPositionHubShell, HubQuickLink } from '@/components/choir/ChoirPositionHubShell'
 import { useResolvedChoirScope } from '@/lib/hooks'
@@ -58,6 +58,14 @@ export default function FamilyHeadHubPage() {
   })
 
   return (
+    <CapabilityGate
+      uiCapability="family-head-hub"
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <p className="text-text-muted">You do not have access to the family head hub.</p>
+        </div>
+      }
+    >
     <ChoirPositionHubShell roleKey="family_head" tabs={TABS} activeTab={tab} onTabChange={setTab}>
       {tab === 'overview' && (
         <div className="space-y-4">
@@ -235,5 +243,6 @@ export default function FamilyHeadHubPage() {
         </div>
       )}
     </ChoirPositionHubShell>
+    </CapabilityGate>
   )
 }

@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { assetsApi, choirOperationsApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
-import { Card, CapabilityGate, PermissionGate, SkeletonCard, EmptyState } from '@/components/shared'
+import { Card, CapabilityGate, SkeletonCard, EmptyState } from '@/components/shared'
 import { FormField, Input, Select, Textarea } from '@/components/shared/form'
 import {
   maintenanceLogFormSchema,
@@ -674,7 +674,7 @@ function RegistryPanel({
   })
 
   return (
-    <PermissionGate anyOf={['asset:create', 'asset:manage']}>
+    <CapabilityGate uiCapability="logistics-equipment-manage">
       <Card padding="md">
         <form
           className="space-y-3"
@@ -706,6 +706,6 @@ function RegistryPanel({
           </button>
         </form>
       </Card>
-    </PermissionGate>
+    </CapabilityGate>
   )
 }
