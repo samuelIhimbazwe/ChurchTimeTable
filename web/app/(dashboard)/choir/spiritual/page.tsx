@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { devotionsApi, memberPortalApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import {
-  Card, Badge, HubTabs, PermissionGate, SkeletonCard, EmptyState, CapabilityGate,
+  Card, Badge, HubTabs, SkeletonCard, EmptyState, CapabilityGate,
 } from '@/components/shared'
 import { useDevotionUiCapability } from '@/lib/hooks/useCapability'
 import { formatDate } from '@/lib/utils/format'
@@ -153,7 +153,7 @@ export default function SpiritualHubPage() {
                     </div>
                     <div className="flex flex-col items-end gap-2 shrink-0">
                       <Badge variant="status-pending">{req.status}</Badge>
-                      <PermissionGate anyOf={['choir.intercession.manage', 'choir.devotion.manage']}>
+                      <CapabilityGate uiCapability="devotion-intercession-actions">
                         {req.status === 'PENDING' && (
                           <button
                             type="button"
@@ -172,7 +172,7 @@ export default function SpiritualHubPage() {
                             Completed
                           </button>
                         )}
-                      </PermissionGate>
+                      </CapabilityGate>
                     </div>
                   </div>
                 </Card>
@@ -183,7 +183,16 @@ export default function SpiritualHubPage() {
       )}
 
       {tab === 'programs' && (
-        <PermissionGate anyOf={['choir.spiritual.program.manage', 'choir.devotion.manage']}>
+        <CapabilityGate
+          uiCapability="devotion-prayer-programs"
+          fallback={
+            <EmptyState
+              icon={Sparkles}
+              title="Prayer programs not available"
+              description="You need spiritual program or devotion publish permissions to manage fasting and prayer guides."
+            />
+          }
+        >
           <Card padding="md">
             <div className="flex items-start gap-3 mb-4">
               <Sparkles size={20} className="text-gold-700" />
@@ -227,7 +236,7 @@ export default function SpiritualHubPage() {
               Publish prayer guide
             </button>
           </Card>
-        </PermissionGate>
+        </CapabilityGate>
       )}
 
       {tab === 'devotions' && (

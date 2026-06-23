@@ -39,6 +39,23 @@ export const DEVOTION_UI_CAPABILITY_REGISTRY: DevotionUiCapabilityDefinition[] =
       requireAnyOf: ['choir.devotion.manage@choir'],
       mode: 'any',
     },
+    {
+      id: 'devotion-intercession-actions',
+      label: 'Intercession inbox actions',
+      routeSegments: ['spiritual'],
+      requireAnyOf: ['choir.devotion.manage@choir'],
+      mode: 'any',
+    },
+    {
+      id: 'devotion-prayer-programs',
+      label: 'Prayer & fasting programs',
+      routeSegments: ['spiritual'],
+      requireAnyOf: [
+        'choir.devotion.publish@choir',
+        'choir.devotion.manage@choir',
+      ],
+      mode: 'any',
+    },
   ];
 
 export function uiCapabilityVisible(
