@@ -11,6 +11,14 @@ type ContributionNavGate =
   | string
   | 'contribution-family-contributions'
 
+/** Legacy permission fallback for `/choir/budget` (see role-nav HUB_PERMISSIONS). */
+export const LEGACY_BUDGET_HUB_PERMISSIONS = [
+  'choir.finance.manage',
+  'choir.finance.view',
+] as const
+
+export const LEGACY_BUDGET_HUB_PATH = '/choir/budget'
+
 const TAIL_TO_NAV_GATE: Record<string, ContributionNavGate> = {
   'membership/giving': 'contribution-submit',
   'family-leadership/contributions': 'contribution-family-contributions',
@@ -75,11 +83,44 @@ export function pageAccessForContributionRoute(
   return navGateVisible(gate, auth)
 }
 
+export function pageAccessForContributionRouteWithCheck(
+  path: string,
+  check: (capabilityId: string, scopeId?: string) => boolean,
+): boolean {
+  const gate = contributionNavGateForPath(path)
+  if (!gate) return true
+  if (gate === 'contribution-family-contributions') {
+    return (
+      check('choir.contribution.view@family')
+      || check('choir.contribution.approve@family')
+    )
+  }
+  return uiCapabilityVisible(gate, check)
+}
+
+/** Legacy `/choir/budget` hub link — capability router when available. */
+export function legacyBudgetHubLinkVisible(
+  permissions: string[],
+  capabilityCheck?: (capId: string) => boolean,
+): boolean {
+  if (capabilityCheck) {
+    return uiCapabilityVisible('contribution-budget-hub', capabilityCheck)
+  }
+  return LEGACY_BUDGET_HUB_PERMISSIONS.some((p) => permissions.includes(p))
+}
+
 export function contributionNavItemVisible(
   path: string,
   auth: ResolvedAuth | undefined,
 ): boolean {
   return pageAccessForContributionRoute(path, auth)
+}
+
+export function contributionNavItemVisibleWithCheck(
+  path: string,
+  check: (capabilityId: string, scopeId?: string) => boolean,
+): boolean {
+  return pageAccessForContributionRouteWithCheck(path, check)
 }
 
 function filterItems(

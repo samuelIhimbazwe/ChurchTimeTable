@@ -1,9 +1,15 @@
 import type { ResolvedAuth } from '../../../../web/lib/choir/capability.types';
+import { buildCapabilityRouterFromAuths } from '../../../../web/lib/choir/capability-router';
 import { choirPath } from '../../../../web/lib/choir/paths';
 import {
   contributionNavItemVisible,
+  contributionNavItemVisibleWithCheck,
+  legacyBudgetHubLinkVisible,
+  LEGACY_BUDGET_HUB_PATH,
   pageAccessForContributionRoute,
+  pageAccessForContributionRouteWithCheck,
 } from '../../../../web/lib/navigation/contribution-nav';
+import { getChoirNavForUser } from '../../../../web/lib/navigation/role-nav';
 
 const PILOT_CHOIR = '00000000-0000-0000-0000-000000000001';
 
@@ -107,5 +113,60 @@ describe('contribution nav ↔ page access parity', () => {
     expect(pageAccessForContributionRoute(routePath('budget/verify'), familyCoordinatorAuth)).toBe(
       false,
     );
+  });
+
+  it('legacy and scoped budget paths use same gate via capability router', () => {
+    const auths = { contributionAuth: treasurerAuth };
+    const check = buildCapabilityRouterFromAuths(auths);
+    expect(contributionNavItemVisibleWithCheck(LEGACY_BUDGET_HUB_PATH, check)).toBe(
+      pageAccessForContributionRouteWithCheck(LEGACY_BUDGET_HUB_PATH, check),
+    );
+    const scoped = choirPath(PILOT_CHOIR, 'budget');
+    expect(contributionNavItemVisibleWithCheck(scoped, check)).toBe(
+      pageAccessForContributionRouteWithCheck(scoped, check),
+    );
+  });
+
+  it('treasurer sees legacy budget hub link via capability router', () => {
+    const check = buildCapabilityRouterFromAuths({ contributionAuth: treasurerAuth });
+    expect(legacyBudgetHubLinkVisible([], check)).toBe(true);
+  });
+
+  it('member without caps falls back to legacy permissions only', () => {
+    expect(legacyBudgetHubLinkVisible(['choir.finance.view'])).toBe(true);
+    expect(legacyBudgetHubLinkVisible(['choir.finance.manage'])).toBe(true);
+    expect(legacyBudgetHubLinkVisible([])).toBe(false);
+  });
+
+  it('getChoirNavForUser includes budget hub when capability router grants access', () => {
+    const check = buildCapabilityRouterFromAuths({ contributionAuth: treasurerAuth });
+    const sections = getChoirNavForUser(
+      'MEMBER',
+      { canAccessChoirArea: true, isChoirMember: true },
+      [],
+      check,
+    );
+    const roleSection = sections.find((s) => s.section === 'My choir role');
+    expect(roleSection?.items.some((i) => i.path === LEGACY_BUDGET_HUB_PATH)).toBe(true);
+  });
+
+  it('getChoirNavForUser omits budget hub without caps or legacy permissions', () => {
+    const check = buildCapabilityRouterFromAuths({
+      contributionAuth: {
+        userId: 'mem',
+        choirId: PILOT_CHOIR,
+        capabilities: [],
+      },
+    });
+    const sections = getChoirNavForUser(
+      'MEMBER',
+      { canAccessChoirArea: true, isChoirMember: true },
+      [],
+      check,
+    );
+    const roleSection = sections.find((s) => s.section === 'My choir role');
+    const hasBudgetLink =
+      roleSection?.items.some((i) => i.path === LEGACY_BUDGET_HUB_PATH) ?? false;
+    expect(hasBudgetLink).toBe(false);
   });
 });
