@@ -10,6 +10,7 @@ import { JwtPayload } from '../decorators/current-user.decorator';
 import { FamilyHttpAccessService } from '../choir/family-http-access.service';
 import { ChoirReportsHttpAccessService } from '../choir/choir-reports-http-access.service';
 import { RolesHttpAccessService } from '../choir/roles-http-access.service';
+import { OpsHttpAccessService } from '../choir/ops-http-access.service';
 import { PlatformHttpAccessService } from '../platform/platform-http-access.service';
 import { getActiveChoirId } from '../choir/choir-context.storage';
 
@@ -20,6 +21,7 @@ export class UiCapabilityGuard implements CanActivate {
     private familyHttpAccess: FamilyHttpAccessService,
     private choirReportsHttpAccess: ChoirReportsHttpAccessService,
     private rolesHttpAccess: RolesHttpAccessService,
+    private opsHttpAccess: OpsHttpAccessService,
     private platformHttpAccess: PlatformHttpAccessService,
   ) {}
 
@@ -86,6 +88,14 @@ export class UiCapabilityGuard implements CanActivate {
       default:
         if (uiId.startsWith('roles-')) {
           return this.rolesHttpAccess.canRolesUi(
+            userId,
+            uiId,
+            permissions,
+            choirId,
+          );
+        }
+        if (uiId.startsWith('ops-')) {
+          return this.opsHttpAccess.canOpsUi(
             userId,
             uiId,
             permissions,

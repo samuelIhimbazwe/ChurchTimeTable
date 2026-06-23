@@ -15,6 +15,7 @@ export const OPS_UI_CAPABILITY_REGISTRY: OpsUiCapabilityDefinition[] = [
       'choir.ops.view@choir',
       'choir.ops.manage@choir',
       'choir.ops.schedule@choir',
+      'choir.rehearsal.view@choir',
     ],
     mode: 'any',
   },

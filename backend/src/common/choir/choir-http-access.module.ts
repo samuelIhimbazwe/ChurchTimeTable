@@ -4,6 +4,7 @@ import { PlatformCapabilityModule } from '../platform/platform-capability.module
 import { FamilyHttpAccessService } from './family-http-access.service';
 import { ChoirReportsHttpAccessService } from './choir-reports-http-access.service';
 import { RolesHttpAccessService } from './roles-http-access.service';
+import { OpsHttpAccessService } from './ops-http-access.service';
 import { UiCapabilityGuard } from '../guards/ui-capability.guard';
 
 @Module({
@@ -12,12 +13,14 @@ import { UiCapabilityGuard } from '../guards/ui-capability.guard';
     FamilyHttpAccessService,
     ChoirReportsHttpAccessService,
     RolesHttpAccessService,
+    OpsHttpAccessService,
     UiCapabilityGuard,
   ],
   exports: [
     FamilyHttpAccessService,
     ChoirReportsHttpAccessService,
     RolesHttpAccessService,
+    OpsHttpAccessService,
     UiCapabilityGuard,
     PlatformCapabilityModule,
   ],

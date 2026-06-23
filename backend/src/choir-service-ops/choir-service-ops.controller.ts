@@ -20,9 +20,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
 import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { RequireAnyPermissions } from '../common/decorators/roles.decorator';
 import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
-import { PERMISSIONS } from '../common/constants/roles';
 import { ChurchServiceRequestsService } from './church-service-requests.service';
 import { ServicePreparationService } from './service-preparation.service';
 import { ChoirDissolutionService } from './choir-dissolution.service';
@@ -215,7 +213,7 @@ export class ChoirServiceOpsController {
   }
 
   @Get('choir/service-preparation')
-  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_VIEW, PERMISSIONS.CHOIR_REHEARSAL_VIEW)
+  @RequireUiCapability('ops-scheduling-hub')
   listPreparation(
     @CurrentUser('sub') userId: string,
     @Query('choirId') choirId: string,
@@ -231,7 +229,7 @@ export class ChoirServiceOpsController {
   }
 
   @Get('choir/service-preparation/:occurrenceId')
-  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_VIEW, PERMISSIONS.CHOIR_REHEARSAL_VIEW)
+  @RequireUiCapability('ops-scheduling-hub')
   getPreparation(
     @CurrentUser('sub') userId: string,
     @Query('choirId') choirId: string,
@@ -241,7 +239,7 @@ export class ChoirServiceOpsController {
   }
 
   @Post('choir/service-preparation')
-  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_MANAGE, PERMISSIONS.CHOIR_OPERATIONS_MANAGE)
+  @RequireUiCapability('ops-service-prep-manage')
   upsertPreparation(
     @CurrentUser('sub') userId: string,
     @Body()
