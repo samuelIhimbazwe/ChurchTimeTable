@@ -45,6 +45,10 @@ import {
   legacyBudgetHubLinkVisible,
   LEGACY_BUDGET_HUB_PATH,
 } from '@/lib/navigation/contribution-nav'
+import {
+  legacyRecordsHubLinkVisible,
+  LEGACY_RECORDS_HUB_PATH,
+} from '@/lib/navigation/records-hub-nav'
 
 const CHOIR_LEADERSHIP_ROLE_SET = CHOIR_LEADERSHIP
 
@@ -482,6 +486,9 @@ function officerHubLinkVisible(
   }
   if (link.path === LEGACY_BUDGET_HUB_PATH) {
     return legacyBudgetHubLinkVisible(permissions, capabilityCheck);
+  }
+  if (link.path === LEGACY_RECORDS_HUB_PATH) {
+    return legacyRecordsHubLinkVisible(permissions, capabilityCheck);
   }
   const required = HUB_PERMISSIONS[link.path];
   if (!required?.length) return false;

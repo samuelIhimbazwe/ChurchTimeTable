@@ -24,6 +24,7 @@ import { composeDevotionAwareNav } from '@/lib/navigation/devotion-nav'
 import { composeRolesAwareNav } from '@/lib/navigation/roles-nav'
 import { composeAdminHubAwareNav } from '@/lib/navigation/admin-hub-nav'
 import { composeCareHubAwareNav } from '@/lib/navigation/care-hub-nav'
+import { composeRecordsHubAwareNav } from '@/lib/navigation/records-hub-nav'
 import { useCapabilityRouter } from '@/lib/hooks/useCapability'
 import { getComposedProtocolNav } from '@/lib/navigation/protocol-nav'
 import { parseChoirIdFromPath } from '@/lib/choir/paths'
@@ -110,51 +111,55 @@ export default function Sidebar({
   const capabilityAwareSections = composeAdminHubAwareNav(
     composeCareHubAwareNav(
       composeRolesAwareNav(
-        composeDevotionAwareNav(
-          composeLogisticsAwareNav(
-            composeVoiceAwareNav(
-              composeCommsAwareNav(
-                composeRosterAwareNav(
-                  composeMusicAwareNav(
-                    composeSponsorAwareNav(
-                      composeJoinAwareNav(
-                        composeOpsAwareNav(
-                          composeDisciplineAwareNav(
-                            composeWelfareAwareNav(
-                              composeContributionAwareNav(
-                                rawSections,
+        composeRecordsHubAwareNav(
+          composeDevotionAwareNav(
+            composeLogisticsAwareNav(
+              composeVoiceAwareNav(
+                composeCommsAwareNav(
+                  composeRosterAwareNav(
+                    composeMusicAwareNav(
+                      composeSponsorAwareNav(
+                        composeJoinAwareNav(
+                          composeOpsAwareNav(
+                            composeDisciplineAwareNav(
+                              composeWelfareAwareNav(
+                                composeContributionAwareNav(
+                                  rawSections,
+                                  contextChoirId ?? choirId,
+                                  contributionAuth,
+                                ),
                                 contextChoirId ?? choirId,
-                                contributionAuth,
+                                welfareAuth,
                               ),
                               contextChoirId ?? choirId,
-                              welfareAuth,
+                              disciplineAuth,
                             ),
                             contextChoirId ?? choirId,
-                            disciplineAuth,
+                            opsAuth,
                           ),
                           contextChoirId ?? choirId,
-                          opsAuth,
+                          joinAuth,
                         ),
                         contextChoirId ?? choirId,
-                        joinAuth,
+                        sponsorAuth,
                       ),
                       contextChoirId ?? choirId,
-                      sponsorAuth,
+                      musicAuth,
                     ),
                     contextChoirId ?? choirId,
-                    musicAuth,
+                    rosterAuth,
                   ),
                   contextChoirId ?? choirId,
-                  rosterAuth,
+                  commsAuth,
                 ),
                 contextChoirId ?? choirId,
-                commsAuth,
+                voiceAuth,
               ),
               contextChoirId ?? choirId,
-              voiceAuth,
+              logisticsAuth,
             ),
             contextChoirId ?? choirId,
-            logisticsAuth,
+            capabilityCheck,
           ),
           contextChoirId ?? choirId,
           capabilityCheck,
