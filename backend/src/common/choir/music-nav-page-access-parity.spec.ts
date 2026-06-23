@@ -1,9 +1,15 @@
 import type { ResolvedAuth } from '../../../../web/lib/choir/capability.types';
+import { buildCapabilityRouterFromAuths } from '../../../../web/lib/choir/capability-router';
 import { choirPath } from '../../../../web/lib/choir/paths';
 import {
+  legacyMusicDirectionHubLinkVisible,
+  LEGACY_MUSIC_DIRECTION_HUB_PATH,
   musicNavItemVisible,
+  musicNavItemVisibleWithCheck,
   pageAccessForMusicRoute,
+  pageAccessForMusicRouteWithCheck,
 } from '../../../../web/lib/navigation/music-nav';
+import { getChoirNavForUser } from '../../../../web/lib/navigation/role-nav';
 
 const PILOT_CHOIR = '00000000-0000-0000-0000-000000000001';
 
@@ -73,5 +79,56 @@ describe('music nav ↔ page access parity', () => {
     expect(pageAccessForMusicRoute(routePath('music-direction'), noCapsAuth)).toBe(
       false,
     );
+  });
+
+  it('legacy and scoped music direction paths use same gate via capability router', () => {
+    const auths = { musicAuth: directorAuth };
+    const check = buildCapabilityRouterFromAuths(auths);
+    expect(musicNavItemVisibleWithCheck(LEGACY_MUSIC_DIRECTION_HUB_PATH, check)).toBe(
+      pageAccessForMusicRouteWithCheck(LEGACY_MUSIC_DIRECTION_HUB_PATH, check),
+    );
+    const scoped = choirPath(PILOT_CHOIR, 'music-direction');
+    expect(musicNavItemVisibleWithCheck(scoped, check)).toBe(
+      pageAccessForMusicRouteWithCheck(scoped, check),
+    );
+  });
+
+  it('music director sees legacy hub link via capability router', () => {
+    const check = buildCapabilityRouterFromAuths({ musicAuth: directorAuth });
+    expect(legacyMusicDirectionHubLinkVisible([], check)).toBe(true);
+  });
+
+  it('member without caps falls back to legacy permissions only', () => {
+    expect(legacyMusicDirectionHubLinkVisible(['choir.music.manage'])).toBe(true);
+    expect(legacyMusicDirectionHubLinkVisible(['choir.rehearsal.manage'])).toBe(true);
+    expect(legacyMusicDirectionHubLinkVisible([])).toBe(false);
+  });
+
+  it('getChoirNavForUser includes music direction hub when capability router grants access', () => {
+    const check = buildCapabilityRouterFromAuths({ musicAuth: directorAuth });
+    const sections = getChoirNavForUser(
+      'MEMBER',
+      { canAccessChoirArea: true, isChoirMember: true },
+      [],
+      check,
+    );
+    const roleSection = sections.find((s) => s.section === 'My choir role');
+    expect(
+      roleSection?.items.some((i) => i.path === LEGACY_MUSIC_DIRECTION_HUB_PATH),
+    ).toBe(true);
+  });
+
+  it('getChoirNavForUser omits music direction hub without caps or legacy permissions', () => {
+    const check = buildCapabilityRouterFromAuths({ musicAuth: noCapsAuth });
+    const sections = getChoirNavForUser(
+      'MEMBER',
+      { canAccessChoirArea: true, isChoirMember: true },
+      [],
+      check,
+    );
+    const roleSection = sections.find((s) => s.section === 'My choir role');
+    const hasMusicLink =
+      roleSection?.items.some((i) => i.path === LEGACY_MUSIC_DIRECTION_HUB_PATH) ?? false;
+    expect(hasMusicLink).toBe(false);
   });
 });

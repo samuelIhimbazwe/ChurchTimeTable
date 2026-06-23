@@ -11,6 +11,14 @@ const TAIL_TO_UI: Record<string, string> = {
   'music-direction': 'music-direction-hub',
 }
 
+/** Legacy permission fallback for `/choir/music-direction` (see role-nav HUB_PERMISSIONS). */
+export const LEGACY_MUSIC_DIRECTION_HUB_PERMISSIONS = [
+  'choir.music.manage',
+  'choir.rehearsal.manage',
+] as const
+
+export const LEGACY_MUSIC_DIRECTION_HUB_PATH = '/choir/music-direction'
+
 function navGateVisible(uiId: string, auth: ResolvedAuth | undefined): boolean {
   if (!auth) return false
   return uiCapabilityVisible(uiId, (capId) => can(auth, capId))
@@ -31,11 +39,38 @@ export function pageAccessForMusicRoute(
   return navGateVisible(uiId, auth)
 }
 
+export function pageAccessForMusicRouteWithCheck(
+  path: string,
+  check: (capabilityId: string) => boolean,
+): boolean {
+  const uiId = musicNavGateForPath(path)
+  if (!uiId) return true
+  return uiCapabilityVisible(uiId, check)
+}
+
+/** Legacy `/choir/music-direction` hub link — capability router when available. */
+export function legacyMusicDirectionHubLinkVisible(
+  permissions: string[],
+  capabilityCheck?: (capId: string) => boolean,
+): boolean {
+  if (capabilityCheck) {
+    return uiCapabilityVisible('music-direction-hub', capabilityCheck)
+  }
+  return LEGACY_MUSIC_DIRECTION_HUB_PERMISSIONS.some((p) => permissions.includes(p))
+}
+
 export function musicNavItemVisible(
   path: string,
   auth: ResolvedAuth | undefined,
 ): boolean {
   return pageAccessForMusicRoute(path, auth)
+}
+
+export function musicNavItemVisibleWithCheck(
+  path: string,
+  check: (capabilityId: string) => boolean,
+): boolean {
+  return pageAccessForMusicRouteWithCheck(path, check)
 }
 
 function filterItems(items: NavItem[], auth: ResolvedAuth | undefined): NavItem[] {
