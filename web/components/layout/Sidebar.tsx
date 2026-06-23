@@ -23,6 +23,7 @@ import { composeLogisticsAwareNav } from '@/lib/navigation/logistics-nav'
 import { composeDevotionAwareNav } from '@/lib/navigation/devotion-nav'
 import { composeRolesAwareNav } from '@/lib/navigation/roles-nav'
 import { composeAdminHubAwareNav } from '@/lib/navigation/admin-hub-nav'
+import { composeCareHubAwareNav } from '@/lib/navigation/care-hub-nav'
 import { useCapabilityRouter } from '@/lib/hooks/useCapability'
 import { getComposedProtocolNav } from '@/lib/navigation/protocol-nav'
 import { parseChoirIdFromPath } from '@/lib/choir/paths'
@@ -97,62 +98,73 @@ export default function Sidebar({
     if (inProtocolArea && protocolCtx?.canAccess) {
       return getComposedProtocolNav(protocolCtx.ministry.name, protocolCtx.permissions)
     }
-    return getNavForContext(pathname, authRole, { canAccessChoirArea, isChoirMember }, permissions, activeChoirMemberships)
+    return getNavForContext(
+      pathname,
+      authRole,
+      { canAccessChoirArea, isChoirMember },
+      permissions,
+      activeChoirMemberships,
+      choirCtx ? capabilityCheck : undefined,
+    )
   })()
 
   const capabilityAwareSections = composeAdminHubAwareNav(
-    composeRolesAwareNav(
-      composeDevotionAwareNav(
-        composeLogisticsAwareNav(
-          composeVoiceAwareNav(
-            composeCommsAwareNav(
-              composeRosterAwareNav(
-                composeMusicAwareNav(
-                  composeSponsorAwareNav(
-                    composeJoinAwareNav(
-                      composeOpsAwareNav(
-                        composeDisciplineAwareNav(
-                          composeWelfareAwareNav(
-                            composeContributionAwareNav(
-                              rawSections,
+    composeCareHubAwareNav(
+      composeRolesAwareNav(
+        composeDevotionAwareNav(
+          composeLogisticsAwareNav(
+            composeVoiceAwareNav(
+              composeCommsAwareNav(
+                composeRosterAwareNav(
+                  composeMusicAwareNav(
+                    composeSponsorAwareNav(
+                      composeJoinAwareNav(
+                        composeOpsAwareNav(
+                          composeDisciplineAwareNav(
+                            composeWelfareAwareNav(
+                              composeContributionAwareNav(
+                                rawSections,
+                                contextChoirId ?? choirId,
+                                contributionAuth,
+                              ),
                               contextChoirId ?? choirId,
-                              contributionAuth,
+                              welfareAuth,
                             ),
                             contextChoirId ?? choirId,
-                            welfareAuth,
+                            disciplineAuth,
                           ),
                           contextChoirId ?? choirId,
-                          disciplineAuth,
+                          opsAuth,
                         ),
                         contextChoirId ?? choirId,
-                        opsAuth,
+                        joinAuth,
                       ),
                       contextChoirId ?? choirId,
-                      joinAuth,
+                      sponsorAuth,
                     ),
                     contextChoirId ?? choirId,
-                    sponsorAuth,
+                    musicAuth,
                   ),
                   contextChoirId ?? choirId,
-                  musicAuth,
+                  rosterAuth,
                 ),
                 contextChoirId ?? choirId,
-                rosterAuth,
+                commsAuth,
               ),
               contextChoirId ?? choirId,
-              commsAuth,
+              voiceAuth,
             ),
             contextChoirId ?? choirId,
-            voiceAuth,
+            logisticsAuth,
           ),
           contextChoirId ?? choirId,
-          logisticsAuth,
+          devotionAuth,
         ),
         contextChoirId ?? choirId,
-        devotionAuth,
+        rolesAuth,
       ),
       contextChoirId ?? choirId,
-      rolesAuth,
+      capabilityCheck,
     ),
     contextChoirId ?? choirId,
     capabilityCheck,

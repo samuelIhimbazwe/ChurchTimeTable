@@ -33,6 +33,10 @@ import type { ActiveChoirMembership } from '@/lib/choir/membership-display'
 import { choirMemberHome } from '@/lib/choir/paths'
 import { parseChoirIdFromPath } from '@/lib/choir/paths'
 import { CHOIR_LEADERSHIP } from '@/lib/roles'
+import {
+  legacyCareHubLinkVisible,
+  LEGACY_CARE_HUB_PATH,
+} from '@/lib/navigation/care-hub-nav'
 
 const CHOIR_LEADERSHIP_ROLE_SET = CHOIR_LEADERSHIP
 
@@ -457,12 +461,26 @@ const HUB_PERMISSIONS: Record<string, string[]> = {
   '/choir/records': ['choir.records.view', 'audit:read', 'choir.document.manage'],
 }
 
-function officerHubsForPermissions(permissions: string[]): NavItem[] {
-  return CHOIR_POSITION_HUB_LINKS.filter((link) => {
-    const required = HUB_PERMISSIONS[link.path]
-    if (!required?.length) return false
-    return required.some((p) => permissions.includes(p))
-  })
+function officerHubLinkVisible(
+  link: NavItem,
+  permissions: string[],
+  capabilityCheck?: (capId: string) => boolean,
+): boolean {
+  if (link.path === LEGACY_CARE_HUB_PATH) {
+    return legacyCareHubLinkVisible(permissions, capabilityCheck);
+  }
+  const required = HUB_PERMISSIONS[link.path];
+  if (!required?.length) return false;
+  return required.some((p) => permissions.includes(p));
+}
+
+function officerHubsForPermissions(
+  permissions: string[],
+  capabilityCheck?: (capId: string) => boolean,
+): NavItem[] {
+  return CHOIR_POSITION_HUB_LINKS.filter((link) =>
+    officerHubLinkVisible(link, permissions, capabilityCheck),
+  );
 }
 
 const CHOIR_DASHBOARD_ENTRY = (choir: ActiveChoirMembership): NavSection => ({
@@ -509,6 +527,7 @@ export function getChoirNavForUser(
   role: string | undefined,
   choirAccess: Pick<ChoirAccessState, 'canAccessChoirArea' | 'isChoirMember'>,
   permissions: string[] = [],
+  capabilityCheck?: (capId: string) => boolean,
 ): NavSection[] {
   const sections: NavSection[] = [BACK_TO_PORTAL]
 
@@ -525,7 +544,7 @@ export function getChoirNavForUser(
     sections.push(CHOIR_MEMBER_HUB)
   }
 
-  const hubs = officerHubsForPermissions(permissions)
+  const hubs = officerHubsForPermissions(permissions, capabilityCheck)
   if (hubs.length > 0) {
     sections.push({ section: 'My choir role', items: hubs })
   }
@@ -545,10 +564,11 @@ export function getNavForContext(
   choirAccess: Pick<ChoirAccessState, 'canAccessChoirArea' | 'isChoirMember'>,
   permissions: string[] = [],
   activeChoirMemberships: ActiveChoirMembership[] = [],
+  capabilityCheck?: (capId: string) => boolean,
 ): NavSection[] {
   const choirId = parseChoirIdFromPath(pathname)
   if (choirId && choirAccess.canAccessChoirArea) {
-    return getChoirNavForUser(role, choirAccess, permissions)
+    return getChoirNavForUser(role, choirAccess, permissions, capabilityCheck)
   }
 
   if (
@@ -575,6 +595,14 @@ export function getNavForUser(
   permissions: string[] = [],
   pathname = '/portal',
   activeChoirMemberships: ActiveChoirMembership[] = [],
+  capabilityCheck?: (capId: string) => boolean,
 ): NavSection[] {
-  return getNavForContext(pathname, role, choirAccess, permissions, activeChoirMemberships)
+  return getNavForContext(
+    pathname,
+    role,
+    choirAccess,
+    permissions,
+    activeChoirMemberships,
+    capabilityCheck,
+  )
 }
