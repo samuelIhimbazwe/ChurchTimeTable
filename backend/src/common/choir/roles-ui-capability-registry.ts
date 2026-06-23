@@ -32,6 +32,27 @@ export const ROLES_UI_CAPABILITY_REGISTRY: RolesUiCapabilityDefinition[] = [
     mode: 'any',
   },
   {
+    id: 'roles-committee-member-manage',
+    label: 'Manage committee member assignments',
+    routeSegments: ['members'],
+    requireAnyOf: ['choir.committee_member.manage@choir'],
+    mode: 'any',
+  },
+  {
+    id: 'roles-committee-view',
+    label: 'View choir committee context',
+    routeSegments: ['roles', 'dashboard'],
+    requireAnyOf: [
+      'choir.ops.view@choir',
+      'choir.rehearsal.view@choir',
+      'choir.voice.view@choir',
+      'choir.custom_role.manage@choir',
+      'choir.committee_role.manage@choir',
+      'choir.committee_member.manage@choir',
+    ],
+    mode: 'any',
+  },
+  {
     id: 'roles-committee-assign',
     label: 'Assign committee seats',
     routeSegments: ['members', 'join-requests'],

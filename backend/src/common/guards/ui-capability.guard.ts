@@ -9,7 +9,9 @@ import { UI_CAPABILITY_KEY } from '../decorators/ui-capability.decorator';
 import { JwtPayload } from '../decorators/current-user.decorator';
 import { FamilyHttpAccessService } from '../choir/family-http-access.service';
 import { ChoirReportsHttpAccessService } from '../choir/choir-reports-http-access.service';
+import { RolesHttpAccessService } from '../choir/roles-http-access.service';
 import { PlatformHttpAccessService } from '../platform/platform-http-access.service';
+import { getActiveChoirId } from '../choir/choir-context.storage';
 
 @Injectable()
 export class UiCapabilityGuard implements CanActivate {
@@ -17,6 +19,7 @@ export class UiCapabilityGuard implements CanActivate {
     private reflector: Reflector,
     private familyHttpAccess: FamilyHttpAccessService,
     private choirReportsHttpAccess: ChoirReportsHttpAccessService,
+    private rolesHttpAccess: RolesHttpAccessService,
     private platformHttpAccess: PlatformHttpAccessService,
   ) {}
 
@@ -30,6 +33,8 @@ export class UiCapabilityGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<{
       user?: JwtPayload;
       query?: { choirId?: string };
+      params?: { scopeId?: string };
+      activeChoirId?: string;
     }>();
     const user = request.user;
     if (!user) {
@@ -39,7 +44,9 @@ export class UiCapabilityGuard implements CanActivate {
     const choirId =
       typeof request.query?.choirId === 'string'
         ? request.query.choirId
-        : undefined;
+        : typeof request.params?.scopeId === 'string'
+          ? request.params.scopeId
+          : request.activeChoirId ?? getActiveChoirId() ?? undefined;
 
     const allowed = await this.checkUi(
       uiId,
@@ -77,6 +84,14 @@ export class UiCapabilityGuard implements CanActivate {
           choirId,
         );
       default:
+        if (uiId.startsWith('roles-')) {
+          return this.rolesHttpAccess.canRolesUi(
+            userId,
+            uiId,
+            permissions,
+            choirId,
+          );
+        }
         return this.platformHttpAccess.canPlatformUi(
           userId,
           uiId,

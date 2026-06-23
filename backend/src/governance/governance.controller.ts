@@ -3,12 +3,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
-import {
-  RequireAnyPermissions,
-  RequirePermissions,
-} from '../common/decorators/roles.decorator';
 import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
-import { PERMISSIONS } from '../common/constants/roles';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/decorators/current-user.decorator';
 import { GovernanceService } from './governance.service';
@@ -29,13 +24,13 @@ export class GovernanceController {
   ) {}
 
   @Post('choir/roles')
-  @RequirePermissions(PERMISSIONS.COMMITTEE_ROLE_MANAGE_SCOPE)
+  @RequireUiCapability('roles-committee-manage')
   upsertChoirRole(@Body() dto: UpsertCommitteeRoleDto, @CurrentUser() user: JwtPayload) {
     return this.governance.upsertChoirCommitteeRole(dto, user.sub);
   }
 
   @Post('choir/sod-check')
-  @RequirePermissions(PERMISSIONS.COMMITTEE_ROLE_MANAGE_SCOPE)
+  @RequireUiCapability('roles-committee-manage')
   checkChoirSod(
     @CurrentUser() user: JwtPayload,
     @Body() dto: ChoirSodCheckDto,
@@ -50,7 +45,7 @@ export class GovernanceController {
   }
 
   @Post('choir/members')
-  @RequirePermissions(PERMISSIONS.COMMITTEE_MEMBER_MANAGE_SCOPE)
+  @RequireUiCapability('roles-committee-member-manage')
   assignChoirMember(
     @Body() dto: AssignCommitteeMemberDto,
     @CurrentUser() user: JwtPayload,
@@ -59,7 +54,7 @@ export class GovernanceController {
   }
 
   @Delete('choir/members/:assignmentId')
-  @RequirePermissions(PERMISSIONS.COMMITTEE_MEMBER_MANAGE_SCOPE)
+  @RequireUiCapability('roles-committee-member-manage')
   revokeChoirMember(
     @Param('assignmentId') assignmentId: string,
     @CurrentUser() user: JwtPayload,
@@ -73,7 +68,7 @@ export class GovernanceController {
   }
 
   @Get('choir/role-templates')
-  @RequirePermissions(PERMISSIONS.COMMITTEE_ROLE_MANAGE_SCOPE)
+  @RequireUiCapability('roles-committee-manage')
   listChoirRoleTemplates(
     @CurrentUser() user: JwtPayload,
     @Query('choirId') choirId?: string,
@@ -82,7 +77,7 @@ export class GovernanceController {
   }
 
   @Post('choir/role-templates/:templateId/apply')
-  @RequirePermissions(PERMISSIONS.COMMITTEE_ROLE_MANAGE_SCOPE)
+  @RequireUiCapability('roles-committee-manage')
   applyChoirRoleTemplate(
     @Param('templateId') templateId: string,
     @Body() dto: ApplyChoirRoleTemplateDto,
@@ -92,7 +87,7 @@ export class GovernanceController {
   }
 
   @Post('choir/advisor-elevations')
-  @RequirePermissions(PERMISSIONS.COMMITTEE_ROLE_MANAGE_SCOPE)
+  @RequireUiCapability('roles-committee-manage')
   createAdvisorElevation(
     @Body() dto: CreateAdvisorElevationDto,
     @CurrentUser() user: JwtPayload,
@@ -101,7 +96,7 @@ export class GovernanceController {
   }
 
   @Delete('choir/advisor-elevations/:elevationId')
-  @RequirePermissions(PERMISSIONS.COMMITTEE_ROLE_MANAGE_SCOPE)
+  @RequireUiCapability('roles-committee-manage')
   revokeAdvisorElevation(
     @Param('elevationId') elevationId: string,
     @CurrentUser() user: JwtPayload,
@@ -110,7 +105,7 @@ export class GovernanceController {
   }
 
   @Get('choir/:scopeId/advisor-elevations')
-  @RequirePermissions(PERMISSIONS.EVENT_READ)
+  @RequireUiCapability('roles-committee-view')
   listAdvisorElevations(
     @Param('scopeId') scopeId: string,
     @Query('activeOnly') activeOnly?: string,
@@ -122,7 +117,7 @@ export class GovernanceController {
   }
 
   @Get('choir/:scopeId')
-  @RequirePermissions(PERMISSIONS.EVENT_READ)
+  @RequireUiCapability('roles-committee-view')
   listChoirCommittee(@Param('scopeId') scopeId: string) {
     return this.governance.listChoirCommittee(scopeId);
   }

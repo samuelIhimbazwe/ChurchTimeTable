@@ -7,9 +7,10 @@ import { ChoirCustomRolesController } from './choir-custom-roles.controller';
 import { ChoirCustomRolesService } from './choir-custom-roles.service';
 import { ChoirRolesAccessService } from './choir-roles-access.service';
 import { AuditModule } from '../audit/audit.module';
+import { ChoirHttpAccessModule } from '../common/choir/choir-http-access.module';
 
 @Module({
-  imports: [AuthModule, MemberPhoneEnforcementModule, AuditModule, RolesCapabilityModule, JoinCapabilityModule],
+  imports: [AuthModule, MemberPhoneEnforcementModule, AuditModule, RolesCapabilityModule, JoinCapabilityModule, ChoirHttpAccessModule],
   controllers: [ChoirCustomRolesController],
   providers: [ChoirCustomRolesService, ChoirRolesAccessService],
   exports: [ChoirCustomRolesService, ChoirRolesAccessService],

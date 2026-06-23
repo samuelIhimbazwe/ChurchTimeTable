@@ -12,8 +12,8 @@ import {
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
-import { RequirePermissions } from '../common/decorators/roles.decorator';
-import { PERMISSIONS } from '../common/constants/roles';
+import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
+import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/decorators/current-user.decorator';
 import { ChoirId } from '../common/decorators/choir-id.decorator';
@@ -25,12 +25,12 @@ import {
 } from './dto/custom-role.dto';
 
 @Controller('choir/custom-roles')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class ChoirCustomRolesController {
   constructor(private roles: ChoirCustomRolesService) {}
 
   @Get()
-  @RequirePermissions(PERMISSIONS.CHOIR_CUSTOM_ROLE_MANAGE)
+  @RequireUiCapability('roles-custom-manage')
   list(
     @CurrentUser() user: JwtPayload,
     @ChoirId() choirId: string,
@@ -40,7 +40,7 @@ export class ChoirCustomRolesController {
   }
 
   @Get(':id')
-  @RequirePermissions(PERMISSIONS.CHOIR_CUSTOM_ROLE_MANAGE)
+  @RequireUiCapability('roles-custom-manage')
   getOne(
     @CurrentUser() user: JwtPayload,
     @ChoirId() choirId: string,
@@ -50,7 +50,7 @@ export class ChoirCustomRolesController {
   }
 
   @Get(':id/audit')
-  @RequirePermissions(PERMISSIONS.CHOIR_CUSTOM_ROLE_MANAGE)
+  @RequireUiCapability('roles-custom-manage')
   audit(
     @CurrentUser() user: JwtPayload,
     @ChoirId() choirId: string,
@@ -60,7 +60,7 @@ export class ChoirCustomRolesController {
   }
 
   @Post()
-  @RequirePermissions(PERMISSIONS.CHOIR_CUSTOM_ROLE_MANAGE)
+  @RequireUiCapability('roles-custom-manage')
   create(
     @CurrentUser() user: JwtPayload,
     @ChoirId() choirId: string,
@@ -70,7 +70,7 @@ export class ChoirCustomRolesController {
   }
 
   @Patch(':id')
-  @RequirePermissions(PERMISSIONS.CHOIR_CUSTOM_ROLE_MANAGE)
+  @RequireUiCapability('roles-custom-manage')
   update(
     @CurrentUser() user: JwtPayload,
     @ChoirId() choirId: string,
@@ -81,7 +81,7 @@ export class ChoirCustomRolesController {
   }
 
   @Post(':id/assign')
-  @RequirePermissions(PERMISSIONS.CHOIR_CUSTOM_ROLE_MANAGE)
+  @RequireUiCapability('roles-custom-manage')
   assign(
     @CurrentUser() user: JwtPayload,
     @ChoirId() choirId: string,
@@ -92,7 +92,7 @@ export class ChoirCustomRolesController {
   }
 
   @Delete(':id/members/:memberId')
-  @RequirePermissions(PERMISSIONS.CHOIR_CUSTOM_ROLE_MANAGE)
+  @RequireUiCapability('roles-custom-manage')
   unassign(
     @CurrentUser() user: JwtPayload,
     @ChoirId() choirId: string,
