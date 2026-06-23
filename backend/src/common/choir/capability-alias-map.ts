@@ -71,7 +71,6 @@ export const LEGACY_PERMISSION_ALIASES: Record<string, readonly string[]> = {
   'choir.ops.report': ['choir.ops.view@choir'],
   'choir.reports.view': ['choir.ops.view@choir'],
   'report:export': ['choir.report.export@choir'],
-  'choir.events.manage': ['choir.ops.manage@choir'],
   'event:write': ['choir.ops.manage@choir'],
   'event:read': ['choir.ops.view@choir', 'choir.rehearsal.view@choir', 'choir.voice.view@choir'],
   'attendance.mark': ['choir.ops.attendance@choir', 'choir.member.view@choir'],

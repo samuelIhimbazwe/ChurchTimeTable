@@ -9,7 +9,7 @@ import { choirSchedulingApi } from '@/lib/api'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { useFormDraft } from '@/lib/hooks/useFormDraft'
 import { toast } from '@/components/shared/Toast'
-import { Card, CardHeader, CardTitle, PermissionGate } from '@/components/shared'
+import { Card, CardHeader, CardTitle, CapabilityGate } from '@/components/shared'
 import { FormField, Input, Select, Textarea } from '@/components/shared/form'
 import { FormWizard } from '@/components/shared/form/FormWizard'
 import { activityFormSchema, type ActivityFormValues } from '@/lib/validation/schemas'
@@ -78,8 +78,8 @@ export default function NewActivityPage() {
   }
 
   return (
-    <PermissionGate
-      anyOf={['choir.events.manage', 'event:write']}
+    <CapabilityGate
+      uiCapability="ops-activities-manage"
       fallback={
         <div className="flex items-center justify-center h-64">
           <p className="text-text-muted">You do not have permission to create activities.</p>
@@ -156,6 +156,6 @@ export default function NewActivityPage() {
           </FormWizard>
         </Card>
       </div>
-    </PermissionGate>
+    </CapabilityGate>
   )
 }
