@@ -31,7 +31,11 @@ export const OPS_UI_CAPABILITY_REGISTRY: OpsUiCapabilityDefinition[] = [
     id: 'ops-activities-hub',
     label: 'Choir activities',
     routeSegments: ['activities'],
-    requireAnyOf: ['choir.ops.view@choir', 'choir.ops.manage@choir'],
+    requireAnyOf: [
+      'choir.ops.view@choir',
+      'choir.ops.manage@choir',
+      'choir.rehearsal.view@choir',
+    ],
     mode: 'any',
   },
   {
@@ -65,6 +69,38 @@ export const OPS_UI_CAPABILITY_REGISTRY: OpsUiCapabilityDefinition[] = [
     label: 'Export choir reports',
     routeSegments: ['reports'],
     requireAnyOf: ['choir.report.export@choir', 'choir.ops.view@choir'],
+    mode: 'any',
+  },
+  {
+    id: 'ops-member-scheduling',
+    label: 'Member scheduling self-service',
+    routeSegments: ['scheduling', 'activities', 'attendance'],
+    requireAnyOf: [
+      'choir.ops.view@choir',
+      'choir.rehearsal.view@choir',
+      'choir.member.view@choir',
+    ],
+    mode: 'any',
+  },
+  {
+    id: 'ops-attendance-manage',
+    label: 'Record choir attendance',
+    routeSegments: ['activities', 'scheduling'],
+    requireAnyOf: ['choir.ops.attendance@choir'],
+    mode: 'any',
+  },
+  {
+    id: 'ops-attendance-view',
+    label: 'View choir attendance',
+    routeSegments: ['activities', 'scheduling'],
+    requireAnyOf: ['choir.ops.attendance@choir', 'choir.ops.view@choir'],
+    mode: 'any',
+  },
+  {
+    id: 'ops-rankings-view',
+    label: 'View choir rankings',
+    routeSegments: ['scheduling', 'rankings'],
+    requireAnyOf: ['choir.ops.view@choir'],
     mode: 'any',
   },
 ];

@@ -22,6 +22,7 @@ import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
 import { FinanceModule } from '../finance/finance.module';
 import { ChoirMemberRecognitionService } from './choir-member-recognition.service';
 import { OpsCapabilityModule } from '../common/choir/ops-capability.module';
+import { ChoirHttpAccessModule } from '../common/choir/choir-http-access.module';
 import { ChoirOpsAccessService } from './choir-ops-access.service';
 
 @Module({
@@ -29,6 +30,7 @@ import { ChoirOpsAccessService } from './choir-ops-access.service';
     AuditModule,
     AuthModule,
     OpsCapabilityModule,
+    ChoirHttpAccessModule,
     NotificationsModule,
     MemberPhoneEnforcementModule,
     PilotReadyModule,

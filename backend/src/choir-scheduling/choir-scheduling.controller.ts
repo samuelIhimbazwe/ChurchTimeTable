@@ -18,9 +18,9 @@ import {
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
+import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { RequireAnyPermissions } from '../common/decorators/roles.decorator';
-import { PERMISSIONS } from '../common/constants/roles';
+import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
 import { ChoirActivitiesService } from './choir-activities.service';
 import { ChoirServiceAssignmentsService } from './choir-service-assignments.service';
 import { ChoirAttendanceService } from './choir-attendance.service';
@@ -35,7 +35,7 @@ import { ChoirServiceRulesService } from './choir-service-rules.service';
 import { ChoirMemberRecognitionService } from './choir-member-recognition.service';
 
 @Controller('choir/scheduling')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class ChoirSchedulingController {
   constructor(
     private activities: ChoirActivitiesService,
@@ -53,11 +53,7 @@ export class ChoirSchedulingController {
   ) {}
 
   @Get('dashboard')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHOIR_OPS_VIEW,
-    PERMISSIONS.CHOIR_OPS_MANAGE,
-    PERMISSIONS.CHOIR_OVERSIGHT,
-  )
+  @RequireUiCapability('ops-scheduling-hub')
   leaderDashboard(
     @CurrentUser('sub') userId: string,
     @Query('choirId') choirId?: string,
@@ -66,11 +62,7 @@ export class ChoirSchedulingController {
   }
 
   @Get('dashboard/me')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHOIR_OPS_VIEW,
-    PERMISSIONS.CHOIR_REHEARSAL_VIEW,
-    PERMISSIONS.MEMBER_READ,
-  )
+  @RequireUiCapability('ops-member-scheduling')
   memberDashboard(
     @CurrentUser('sub') userId: string,
     @Query('choirId') choirId?: string,
@@ -79,11 +71,7 @@ export class ChoirSchedulingController {
   }
 
   @Get('calendar')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHOIR_OPS_VIEW,
-    PERMISSIONS.OPERATIONS_VIEW,
-    PERMISSIONS.CHOIR_OVERSIGHT,
-  )
+  @RequireUiCapability('ops-scheduling-hub')
   calendarView(
     @CurrentUser('sub') userId: string,
     @Query('from') from: string,
@@ -99,10 +87,7 @@ export class ChoirSchedulingController {
   }
 
   @Post('activities')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHOIR_OPS_MANAGE,
-    PERMISSIONS.CHOIR_OPERATIONS_MANAGE,
-  )
+  @RequireUiCapability('ops-activities-manage')
   createActivity(
     @CurrentUser('sub') userId: string,
     @Body()
@@ -122,10 +107,7 @@ export class ChoirSchedulingController {
   }
 
   @Get('activities')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHOIR_OPS_VIEW,
-    PERMISSIONS.CHOIR_REHEARSAL_VIEW,
-  )
+  @RequireUiCapability('ops-activities-hub')
   listActivities(
     @CurrentUser('sub') userId: string,
     @Query('choirId') choirId?: string,
@@ -142,7 +124,7 @@ export class ChoirSchedulingController {
   }
 
   @Get('occurrences/:occurrenceId/recommendations')
-  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_SCHEDULE, PERMISSIONS.CHOIR_OPS_VIEW)
+  @RequireUiCapability('ops-schedule-manage')
   recommend(
     @CurrentUser('sub') userId: string,
     @Param('occurrenceId') occurrenceId: string,
@@ -151,7 +133,7 @@ export class ChoirSchedulingController {
   }
 
   @Get('assignments/pending-acceptance')
-  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_SCHEDULE, PERMISSIONS.CHOIR_OPS_MANAGE)
+  @RequireUiCapability('ops-schedule-manage')
   listPendingAcceptance(
     @CurrentUser('sub') userId: string,
     @Query('choirId') choirId: string,
@@ -160,7 +142,7 @@ export class ChoirSchedulingController {
   }
 
   @Get('assignments')
-  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_VIEW, PERMISSIONS.CHOIR_OPS_SCHEDULE)
+  @RequireUiCapability('ops-scheduling-hub')
   listChoirAssignments(
     @CurrentUser('sub') userId: string,
     @Query('choirId') choirId: string,
@@ -169,7 +151,7 @@ export class ChoirSchedulingController {
   }
 
   @Get('occurrences/:occurrenceId/assignments')
-  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_VIEW, PERMISSIONS.CHOIR_OPS_SCHEDULE)
+  @RequireUiCapability('ops-scheduling-hub')
   listAssignments(
     @CurrentUser('sub') userId: string,
     @Param('occurrenceId') occurrenceId: string,
@@ -178,7 +160,7 @@ export class ChoirSchedulingController {
   }
 
   @Post('assignments/:id/accept')
-  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_SCHEDULE, PERMISSIONS.CHOIR_OPS_MANAGE)
+  @RequireUiCapability('ops-schedule-manage')
   acceptAssignment(
     @CurrentUser('sub') userId: string,
     @Param('id') id: string,
@@ -188,7 +170,7 @@ export class ChoirSchedulingController {
   }
 
   @Post('assignments/:id/decline')
-  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_SCHEDULE, PERMISSIONS.CHOIR_OPS_MANAGE)
+  @RequireUiCapability('ops-schedule-manage')
   declineAssignment(
     @CurrentUser('sub') userId: string,
     @Param('id') id: string,
@@ -198,11 +180,7 @@ export class ChoirSchedulingController {
   }
 
   @Post('assignments')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHURCH_SCHEDULE_MANAGE,
-    PERMISSIONS.CHURCH_SCHEDULE_RESOLVE,
-    PERMISSIONS.CHURCH_GOVERNANCE_MANAGE,
-  )
+  @RequireUiCapability('church-service-request-schedule')
   assign(
     @CurrentUser('sub') userId: string,
     @Body()
@@ -218,11 +196,7 @@ export class ChoirSchedulingController {
   }
 
   @Post('occurrences/:occurrenceId/auto-assign')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHURCH_SCHEDULE_MANAGE,
-    PERMISSIONS.CHURCH_SCHEDULE_RESOLVE,
-    PERMISSIONS.CHURCH_GOVERNANCE_MANAGE,
-  )
+  @RequireUiCapability('church-service-request-schedule')
   autoAssign(
     @CurrentUser('sub') userId: string,
     @Param('occurrenceId') occurrenceId: string,
@@ -231,7 +205,7 @@ export class ChoirSchedulingController {
   }
 
   @Post('adjustments')
-  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_SCHEDULE, PERMISSIONS.CHOIR_OPS_MANAGE)
+  @RequireUiCapability('ops-schedule-manage')
   adjust(
     @CurrentUser('sub') userId: string,
     @Body()
@@ -248,7 +222,7 @@ export class ChoirSchedulingController {
   }
 
   @Get('adjustments')
-  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_SCHEDULE, PERMISSIONS.CHOIR_OPS_VIEW)
+  @RequireUiCapability('ops-scheduling-hub')
   listAdjustments(
     @CurrentUser('sub') userId: string,
     @Query('occurrenceId') occurrenceId?: string,
@@ -257,7 +231,7 @@ export class ChoirSchedulingController {
   }
 
   @Post('plans/generate')
-  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_SCHEDULE, PERMISSIONS.CHOIR_OPS_MANAGE)
+  @RequireUiCapability('ops-schedule-manage')
   generatePlan(
     @CurrentUser('sub') userId: string,
     @Body()
@@ -275,22 +249,19 @@ export class ChoirSchedulingController {
   }
 
   @Get('plans')
-  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_SCHEDULE, PERMISSIONS.CHOIR_OPS_VIEW)
+  @RequireUiCapability('ops-scheduling-hub')
   listPlans(@CurrentUser('sub') userId: string) {
     return this.plans.list(userId);
   }
 
   @Get('plans/:id')
-  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_SCHEDULE, PERMISSIONS.CHOIR_OPS_VIEW)
+  @RequireUiCapability('ops-scheduling-hub')
   getPlan(@Param('id') id: string) {
     return this.plans.get(id);
   }
 
   @Post('attendance')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHOIR_OPS_ATTENDANCE,
-    PERMISSIONS.CHOIR_ATTENDANCE_MANAGE,
-  )
+  @RequireUiCapability('ops-attendance-manage')
   recordAttendance(
     @CurrentUser('sub') userId: string,
     @Body()
@@ -305,7 +276,7 @@ export class ChoirSchedulingController {
   }
 
   @Get('activities/:activityId/attendance')
-  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_VIEW, PERMISSIONS.CHOIR_OPS_ATTENDANCE)
+  @RequireUiCapability('ops-attendance-view')
   listAttendance(
     @CurrentUser('sub') userId: string,
     @Param('activityId') activityId: string,
@@ -314,7 +285,7 @@ export class ChoirSchedulingController {
   }
 
   @Get('attendance/me')
-  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_VIEW, PERMISSIONS.MEMBER_READ)
+  @RequireUiCapability('ops-member-scheduling')
   myAttendance(
     @CurrentUser('sub') userId: string,
     @Query('choirId') choirId?: string,
@@ -323,12 +294,7 @@ export class ChoirSchedulingController {
   }
 
   @Get('recognition/me')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHOIR_OPS_VIEW,
-    PERMISSIONS.MEMBER_READ,
-    PERMISSIONS.MEMBER_PORTAL_VIEW,
-    PERMISSIONS.CHOIR_REHEARSAL_VIEW,
-  )
+  @RequireUiCapability('ops-member-scheduling')
   myRecognition(
     @CurrentUser('sub') userId: string,
     @Query('choirId') choirId: string,
@@ -337,10 +303,7 @@ export class ChoirSchedulingController {
   }
 
   @Post('rankings/generate')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHOIR_OPS_RANKING_VIEW,
-    PERMISSIONS.CHOIR_OPS_MANAGE,
-  )
+  @RequireUiCapability('ops-rankings-view')
   generateRankings(
     @CurrentUser('sub') userId: string,
     @Body() body: { choirId: string; year: number; month?: number },
@@ -349,10 +312,7 @@ export class ChoirSchedulingController {
   }
 
   @Get('rankings')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHOIR_OPS_RANKING_VIEW,
-    PERMISSIONS.CHOIR_OPS_MANAGE,
-  )
+  @RequireUiCapability('ops-rankings-view')
   listRankings(
     @CurrentUser('sub') userId: string,
     @Query('choirId') choirId: string,
@@ -370,7 +330,7 @@ export class ChoirSchedulingController {
   }
 
   @Get('rankings/me')
-  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_VIEW, PERMISSIONS.MEMBER_READ)
+  @RequireUiCapability('ops-member-scheduling')
   myRanking(
     @CurrentUser('sub') userId: string,
     @Query('choirId') choirId: string,
@@ -386,7 +346,7 @@ export class ChoirSchedulingController {
   }
 
   @Get('reports/participation')
-  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_REPORT, PERMISSIONS.CHOIR_REPORTS_VIEW)
+  @RequireUiCapability('ops-reports-hub')
   participationReport(
     @CurrentUser('sub') userId: string,
     @Query('choirId') choirId: string,
@@ -395,7 +355,7 @@ export class ChoirSchedulingController {
   }
 
   @Get('reports/health')
-  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_REPORT, PERMISSIONS.CHOIR_REPORTS_VIEW)
+  @RequireUiCapability('ops-reports-hub')
   healthReport(
     @CurrentUser('sub') userId: string,
     @Query('choirId') choirId: string,
@@ -404,7 +364,7 @@ export class ChoirSchedulingController {
   }
 
   @Get('reports/attendance')
-  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_REPORT, PERMISSIONS.CHOIR_REPORTS_VIEW)
+  @RequireUiCapability('ops-reports-hub')
   attendanceReport(
     @CurrentUser('sub') userId: string,
     @Query('choirId') choirId: string,
@@ -414,13 +374,13 @@ export class ChoirSchedulingController {
   }
 
   @Get('search')
-  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_VIEW, PERMISSIONS.CHOIR_OVERSIGHT)
+  @RequireUiCapability('ops-scheduling-hub')
   choirSearch(@CurrentUser('sub') userId: string, @Query('q') q: string) {
     return this.search.search(userId, q);
   }
 
   @Get('service-rules/slots')
-  @RequireAnyPermissions(PERMISSIONS.CHOIR_OPS_VIEW, PERMISSIONS.CHOIR_OPS_SCHEDULE)
+  @RequireUiCapability('ops-scheduling-hub')
   slotRules(
     @Query('templateCode') templateCode: string,
     @Query('startAt') startAt: string,

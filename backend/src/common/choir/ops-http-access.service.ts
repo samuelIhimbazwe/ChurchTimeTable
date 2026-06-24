@@ -46,11 +46,17 @@ export class OpsHttpAccessService {
           PERMISSIONS.CHOIR_OPS_MANAGE,
           PERMISSIONS.CHOIR_OPS_SCHEDULE,
           PERMISSIONS.CHOIR_REHEARSAL_VIEW,
+          PERMISSIONS.CHOIR_OVERSIGHT,
+          PERMISSIONS.OPERATIONS_VIEW,
         );
       case 'ops-schedule-manage':
         return has(PERMISSIONS.CHOIR_OPS_SCHEDULE, PERMISSIONS.CHOIR_OPS_MANAGE);
       case 'ops-activities-hub':
-        return has(PERMISSIONS.CHOIR_OPS_VIEW, PERMISSIONS.CHOIR_OPS_MANAGE);
+        return has(
+          PERMISSIONS.CHOIR_OPS_VIEW,
+          PERMISSIONS.CHOIR_OPS_MANAGE,
+          PERMISSIONS.CHOIR_REHEARSAL_VIEW,
+        );
       case 'ops-activities-manage':
         return has(
           PERMISSIONS.CHOIR_OPS_MANAGE,
@@ -60,6 +66,28 @@ export class OpsHttpAccessService {
         return has(
           PERMISSIONS.CHOIR_OPS_MANAGE,
           PERMISSIONS.CHOIR_OPERATIONS_MANAGE,
+        );
+      case 'ops-member-scheduling':
+        return has(
+          PERMISSIONS.CHOIR_OPS_VIEW,
+          PERMISSIONS.CHOIR_REHEARSAL_VIEW,
+          PERMISSIONS.MEMBER_READ,
+          PERMISSIONS.MEMBER_PORTAL_VIEW,
+        );
+      case 'ops-attendance-manage':
+        return has(
+          PERMISSIONS.CHOIR_OPS_ATTENDANCE,
+          PERMISSIONS.CHOIR_ATTENDANCE_MANAGE,
+        );
+      case 'ops-attendance-view':
+        return has(
+          PERMISSIONS.CHOIR_OPS_VIEW,
+          PERMISSIONS.CHOIR_OPS_ATTENDANCE,
+        );
+      case 'ops-rankings-view':
+        return has(
+          PERMISSIONS.CHOIR_OPS_RANKING_VIEW,
+          PERMISSIONS.CHOIR_OPS_MANAGE,
         );
       default:
         return false;

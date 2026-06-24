@@ -73,4 +73,38 @@ describe('ops HTTP access', () => {
     });
     expect(uiCapabilityVisible('ops-scheduling-hub', check)).toBe(true);
   });
+
+  it('member scheduling via legacy member read', async () => {
+    const opsAuth: ResolvedAuth = {
+      userId: 'u1',
+      choirId,
+      capabilities: [],
+    };
+    const musicAuth: ResolvedAuth = {
+      userId: 'u1',
+      choirId,
+      capabilities: [],
+    };
+    const service = mockOpsAccess(opsAuth, musicAuth);
+    await expect(
+      service.canOpsUi('u1', 'ops-member-scheduling', ['member:read'], choirId),
+    ).resolves.toBe(true);
+  });
+
+  it('attendance manage via scoped capability', async () => {
+    const opsAuth: ResolvedAuth = {
+      userId: 'u1',
+      choirId,
+      capabilities: [{ id: 'choir.ops.attendance@choir' }],
+    };
+    const musicAuth: ResolvedAuth = {
+      userId: 'u1',
+      choirId,
+      capabilities: [],
+    };
+    const service = mockOpsAccess(opsAuth, musicAuth);
+    await expect(
+      service.canOpsUi('u1', 'ops-attendance-manage', [], choirId),
+    ).resolves.toBe(true);
+  });
 });
