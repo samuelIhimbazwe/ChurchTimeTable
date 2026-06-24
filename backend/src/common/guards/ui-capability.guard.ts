@@ -11,6 +11,8 @@ import { FamilyHttpAccessService } from '../choir/family-http-access.service';
 import { ChoirReportsHttpAccessService } from '../choir/choir-reports-http-access.service';
 import { RolesHttpAccessService } from '../choir/roles-http-access.service';
 import { OpsHttpAccessService } from '../choir/ops-http-access.service';
+import { WelfareHttpAccessService } from '../choir/welfare-http-access.service';
+import { MusicHttpAccessService } from '../choir/music-http-access.service';
 import { PlatformHttpAccessService } from '../platform/platform-http-access.service';
 import { getActiveChoirId } from '../choir/choir-context.storage';
 
@@ -22,6 +24,8 @@ export class UiCapabilityGuard implements CanActivate {
     private choirReportsHttpAccess: ChoirReportsHttpAccessService,
     private rolesHttpAccess: RolesHttpAccessService,
     private opsHttpAccess: OpsHttpAccessService,
+    private welfareHttpAccess: WelfareHttpAccessService,
+    private musicHttpAccess: MusicHttpAccessService,
     private platformHttpAccess: PlatformHttpAccessService,
   ) {}
 
@@ -96,6 +100,22 @@ export class UiCapabilityGuard implements CanActivate {
         }
         if (uiId.startsWith('ops-')) {
           return this.opsHttpAccess.canOpsUi(
+            userId,
+            uiId,
+            permissions,
+            choirId,
+          );
+        }
+        if (uiId.startsWith('welfare-')) {
+          return this.welfareHttpAccess.canWelfareUi(
+            userId,
+            uiId,
+            permissions,
+            choirId,
+          );
+        }
+        if (uiId.startsWith('music-')) {
+          return this.musicHttpAccess.canMusicUi(
             userId,
             uiId,
             permissions,

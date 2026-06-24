@@ -5,6 +5,8 @@ import { FamilyHttpAccessService } from './family-http-access.service';
 import { ChoirReportsHttpAccessService } from './choir-reports-http-access.service';
 import { RolesHttpAccessService } from './roles-http-access.service';
 import { OpsHttpAccessService } from './ops-http-access.service';
+import { WelfareHttpAccessService } from './welfare-http-access.service';
+import { MusicHttpAccessService } from './music-http-access.service';
 import { UiCapabilityGuard } from '../guards/ui-capability.guard';
 
 @Module({
@@ -14,6 +16,8 @@ import { UiCapabilityGuard } from '../guards/ui-capability.guard';
     ChoirReportsHttpAccessService,
     RolesHttpAccessService,
     OpsHttpAccessService,
+    WelfareHttpAccessService,
+    MusicHttpAccessService,
     UiCapabilityGuard,
   ],
   exports: [
@@ -21,6 +25,8 @@ import { UiCapabilityGuard } from '../guards/ui-capability.guard';
     ChoirReportsHttpAccessService,
     RolesHttpAccessService,
     OpsHttpAccessService,
+    WelfareHttpAccessService,
+    MusicHttpAccessService,
     UiCapabilityGuard,
     PlatformCapabilityModule,
   ],

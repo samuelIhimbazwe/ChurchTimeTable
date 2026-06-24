@@ -5,6 +5,7 @@ import { AuditModule } from '../audit/audit.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ReportsModule } from '../reports/reports.module';
 import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
+import { ChoirHttpAccessModule } from '../common/choir/choir-http-access.module';
 import { WelfareController } from './welfare.controller';
 import { WelfareService } from './welfare.service';
 import { WelfareSeedService } from './welfare-seed.service';
@@ -17,6 +18,7 @@ import { WelfareSeedService } from './welfare-seed.service';
     NotificationsModule,
     ReportsModule,
     MemberPhoneEnforcementModule,
+    ChoirHttpAccessModule,
   ],
   controllers: [WelfareController],
   providers: [WelfareService, WelfareSeedService],

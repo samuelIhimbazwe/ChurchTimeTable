@@ -12,11 +12,8 @@ import { MusicService } from './music.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
-import {
-  RequireAnyPermissions,
-  RequirePermissions,
-} from '../common/decorators/roles.decorator';
-import { PERMISSIONS } from '../common/constants/roles';
+import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
+import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/decorators/current-user.decorator';
 import { ListSongsQueryDto } from './dto/list-songs-query.dto';
@@ -25,39 +22,34 @@ import { CreateSongDto } from './dto/create-song.dto';
 import { UpdateSongDto } from './dto/update-song.dto';
 import { CreateSongAssetDto } from './dto/create-song-asset.dto';
 
-const MUSIC_VIEW_ANY = [
-  PERMISSIONS.CHOIR_MUSIC_VIEW,
-  PERMISSIONS.CHOIR_MUSIC_MANAGE,
-] as const;
-
 @Controller('choir/music')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class MusicController {
   constructor(private music: MusicService) {}
 
   @Get('categories')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(...MUSIC_VIEW_ANY)
+  @RequireUiCapability('music-library-hub')
   listCategories() {
     return this.music.listCategories();
   }
 
   @Get('analytics')
-  @RequireAnyPermissions(...MUSIC_VIEW_ANY)
+  @RequireUiCapability('music-library-hub')
   analytics(@CurrentUser() user: JwtPayload) {
     return this.music.analytics(user.sub);
   }
 
   @Get('favorites')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(...MUSIC_VIEW_ANY)
+  @RequireUiCapability('music-library-hub')
   favorites(@CurrentUser() user: JwtPayload) {
     return this.music.listFavorites(user.sub);
   }
 
   @Get('songs')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(...MUSIC_VIEW_ANY)
+  @RequireUiCapability('music-library-hub')
   listSongs(
     @CurrentUser() user: JwtPayload,
     @Query() query: ListSongsQueryDto,
@@ -75,19 +67,19 @@ export class MusicController {
 
   @Get('songs/:id')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(...MUSIC_VIEW_ANY)
+  @RequireUiCapability('music-library-hub')
   getSong(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.music.getSong(user.sub, id);
   }
 
   @Post('songs')
-  @RequirePermissions(PERMISSIONS.CHOIR_MUSIC_MANAGE)
+  @RequireUiCapability('music-library-manage')
   createSong(@CurrentUser() user: JwtPayload, @Body() dto: CreateSongDto) {
     return this.music.createSong(user.sub, dto);
   }
 
   @Patch('songs/:id')
-  @RequirePermissions(PERMISSIONS.CHOIR_MUSIC_MANAGE)
+  @RequireUiCapability('music-library-manage')
   updateSong(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
@@ -97,7 +89,7 @@ export class MusicController {
   }
 
   @Post('songs/:id/assets')
-  @RequirePermissions(PERMISSIONS.CHOIR_MUSIC_MANAGE)
+  @RequireUiCapability('music-library-manage')
   addAsset(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
@@ -108,7 +100,7 @@ export class MusicController {
 
   @Post('songs/:id/favorite')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(...MUSIC_VIEW_ANY)
+  @RequireUiCapability('music-library-hub')
   toggleFavorite(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.music.toggleFavorite(user.sub, id);
   }

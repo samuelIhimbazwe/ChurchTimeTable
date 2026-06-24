@@ -12,14 +12,14 @@ export const WELFARE_UI_CAPABILITY_REGISTRY: WelfareUiCapabilityDefinition[] = [
     id: 'welfare-desk',
     label: 'Welfare cases',
     routeSegments: ['welfare'],
-    requireAnyOf: ['choir.welfare.view@choir'],
+    requireAnyOf: ['choir.welfare.view@choir', 'choir.welfare.manage@choir'],
     mode: 'any',
   },
   {
     id: 'welfare-case-detail',
     label: 'Welfare case detail',
     routeSegments: ['welfare', 'cases'],
-    requireAnyOf: ['choir.welfare.view@choir'],
+    requireAnyOf: ['choir.welfare.view@choir', 'choir.welfare.manage@choir'],
     mode: 'any',
   },
   {
@@ -33,7 +33,7 @@ export const WELFARE_UI_CAPABILITY_REGISTRY: WelfareUiCapabilityDefinition[] = [
     id: 'welfare-care-inbox',
     label: 'Care desk inbox',
     routeSegments: ['care', 'desk'],
-    requireAnyOf: ['choir.welfare.view@choir'],
+    requireAnyOf: ['choir.welfare.view@choir', 'choir.welfare.manage@choir'],
     mode: 'any',
   },
 ];

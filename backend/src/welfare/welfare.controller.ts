@@ -16,11 +16,8 @@ import { WelfareService } from './welfare.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
-import {
-  RequireAnyPermissions,
-  RequirePermissions,
-} from '../common/decorators/roles.decorator';
-import { PERMISSIONS } from '../common/constants/roles';
+import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
+import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/decorators/current-user.decorator';
 import { PaginationDto } from '../common/dto/pagination.dto';
@@ -34,25 +31,20 @@ import { ReviewWelfareCaseDto } from './dto/review-welfare-case.dto';
 import { TransitionWelfareCaseDto } from './dto/transition-welfare-case.dto';
 import { SkipPhoneEnforcement } from '../common/decorators/skip-phone-enforcement.decorator';
 
-const WELFARE_VIEW_ANY = [
-  PERMISSIONS.CHOIR_WELFARE_VIEW,
-  PERMISSIONS.CHOIR_WELFARE_MANAGE,
-] as const;
-
 @Controller('choir/welfare')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class WelfareController {
   constructor(private welfare: WelfareService) {}
 
   @Get('categories')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(...WELFARE_VIEW_ANY)
+  @RequireUiCapability('welfare-desk')
   listCategories() {
     return this.welfare.listCategories();
   }
 
   @Put('categories')
-  @RequirePermissions(PERMISSIONS.CHOIR_WELFARE_MANAGE)
+  @RequireUiCapability('welfare-manage')
   upsertCategory(
     @CurrentUser() user: JwtPayload,
     @Body() dto: UpsertWelfareCategoryDto,
@@ -62,19 +54,19 @@ export class WelfareController {
 
   @Get('dashboard')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(...WELFARE_VIEW_ANY)
+  @RequireUiCapability('welfare-desk')
   dashboard(@CurrentUser() user: JwtPayload) {
     return this.welfare.dashboard(user.sub);
   }
 
   @Get('reports')
-  @RequireAnyPermissions(...WELFARE_VIEW_ANY)
+  @RequireUiCapability('welfare-desk')
   reports(@CurrentUser() user: JwtPayload) {
     return this.welfare.getReports(user.sub);
   }
 
   @Get('reports/summary.pdf')
-  @RequireAnyPermissions(...WELFARE_VIEW_ANY)
+  @RequireUiCapability('welfare-desk')
   async exportReportsPdf(
     @CurrentUser() user: JwtPayload,
     @Res() res: Response,
@@ -89,7 +81,7 @@ export class WelfareController {
   }
 
   @Get('reports/cases.pdf')
-  @RequireAnyPermissions(...WELFARE_VIEW_ANY)
+  @RequireUiCapability('welfare-desk')
   async exportCasesPdf(
     @CurrentUser() user: JwtPayload,
     @Query('status') status: WelfareCaseStatus | undefined,
@@ -105,7 +97,7 @@ export class WelfareController {
   }
 
   @Get('reports/cases.csv')
-  @RequireAnyPermissions(...WELFARE_VIEW_ANY)
+  @RequireUiCapability('welfare-desk')
   async exportCasesCsv(
     @CurrentUser() user: JwtPayload,
     @Query('status') status: WelfareCaseStatus | undefined,
@@ -122,14 +114,14 @@ export class WelfareController {
 
   @Get('care/dashboard')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(...WELFARE_VIEW_ANY)
+  @RequireUiCapability('welfare-care-inbox')
   careDashboard(@CurrentUser() user: JwtPayload) {
     return this.welfare.getCareDashboard(user.sub);
   }
 
   @Get('care/inbox')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(...WELFARE_VIEW_ANY)
+  @RequireUiCapability('welfare-care-inbox')
   careInbox(
     @CurrentUser() user: JwtPayload,
     @Query('limit') limit?: string,
@@ -139,7 +131,7 @@ export class WelfareController {
 
   @Get('cases')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(...WELFARE_VIEW_ANY)
+  @RequireUiCapability('welfare-desk')
   listCases(
     @CurrentUser() user: JwtPayload,
     @Query() pagination: PaginationDto,
@@ -154,32 +146,32 @@ export class WelfareController {
 
   @Get('cases/:id')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(...WELFARE_VIEW_ANY)
+  @RequireUiCapability('welfare-case-detail')
   getCase(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.welfare.getCase(user.sub, id);
   }
 
   @Get('cases/:id/timeline')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(...WELFARE_VIEW_ANY)
+  @RequireUiCapability('welfare-case-detail')
   getCaseTimeline(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.welfare.getCaseTimeline(user.sub, id);
   }
 
   @Get('cases/:id/audit')
-  @RequireAnyPermissions(...WELFARE_VIEW_ANY)
+  @RequireUiCapability('welfare-case-detail')
   getCaseAudit(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.welfare.getCaseAudit(user.sub, id);
   }
 
   @Post('cases')
-  @RequirePermissions(PERMISSIONS.CHOIR_WELFARE_MANAGE)
+  @RequireUiCapability('welfare-manage')
   createCase(@CurrentUser() user: JwtPayload, @Body() dto: CreateWelfareCaseDto) {
     return this.welfare.createCase(user.sub, dto);
   }
 
   @Post('cases/:id/review')
-  @RequirePermissions(PERMISSIONS.CHOIR_WELFARE_MANAGE)
+  @RequireUiCapability('welfare-manage')
   reviewCase(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
@@ -189,7 +181,7 @@ export class WelfareController {
   }
 
   @Post('cases/:id/transition')
-  @RequirePermissions(PERMISSIONS.CHOIR_WELFARE_MANAGE)
+  @RequireUiCapability('welfare-manage')
   transitionCase(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
@@ -199,7 +191,7 @@ export class WelfareController {
   }
 
   @Patch('cases/:id')
-  @RequirePermissions(PERMISSIONS.CHOIR_WELFARE_MANAGE)
+  @RequireUiCapability('welfare-manage')
   updateCase(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
@@ -209,7 +201,7 @@ export class WelfareController {
   }
 
   @Post('contributions')
-  @RequirePermissions(PERMISSIONS.CHOIR_WELFARE_MANAGE)
+  @RequireUiCapability('welfare-manage')
   recordContribution(
     @CurrentUser() user: JwtPayload,
     @Body() dto: RecordWelfareContributionDto,
@@ -219,7 +211,7 @@ export class WelfareController {
 
   @Post('my-contributions')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(...WELFARE_VIEW_ANY)
+  @RequireUiCapability('welfare-desk')
   submitMemberContribution(
     @CurrentUser() user: JwtPayload,
     @Body() dto: SubmitMemberWelfareContributionDto,
@@ -228,7 +220,7 @@ export class WelfareController {
   }
 
   @Post('assistance')
-  @RequirePermissions(PERMISSIONS.CHOIR_WELFARE_MANAGE)
+  @RequireUiCapability('welfare-manage')
   recordAssistance(
     @CurrentUser() user: JwtPayload,
     @Body() dto: RecordWelfareAssistanceDto,
