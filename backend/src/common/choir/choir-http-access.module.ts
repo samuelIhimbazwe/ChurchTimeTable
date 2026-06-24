@@ -7,6 +7,7 @@ import { RolesHttpAccessService } from './roles-http-access.service';
 import { OpsHttpAccessService } from './ops-http-access.service';
 import { WelfareHttpAccessService } from './welfare-http-access.service';
 import { MusicHttpAccessService } from './music-http-access.service';
+import { ContributionHttpAccessService } from './contribution-http-access.service';
 import { UiCapabilityGuard } from '../guards/ui-capability.guard';
 
 @Module({
@@ -18,6 +19,7 @@ import { UiCapabilityGuard } from '../guards/ui-capability.guard';
     OpsHttpAccessService,
     WelfareHttpAccessService,
     MusicHttpAccessService,
+    ContributionHttpAccessService,
     UiCapabilityGuard,
   ],
   exports: [
@@ -27,6 +29,7 @@ import { UiCapabilityGuard } from '../guards/ui-capability.guard';
     OpsHttpAccessService,
     WelfareHttpAccessService,
     MusicHttpAccessService,
+    ContributionHttpAccessService,
     UiCapabilityGuard,
     PlatformCapabilityModule,
   ],

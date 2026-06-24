@@ -34,6 +34,19 @@ export const PLATFORM_UI_CAPABILITY_REGISTRY: PlatformUiCapabilityDefinition[] =
     ],
   },
   {
+    id: 'protocol-contribution-submit',
+    label: 'Protocol contribution submit',
+    requireAnyOf: ['protocol.contribution.submit@ministry'],
+  },
+  {
+    id: 'protocol-finance-inbox',
+    label: 'Protocol finance inbox',
+    requireAnyOf: [
+      'protocol.finance.approve@ministry',
+      'protocol.finance.manage@ministry',
+    ],
+  },
+  {
     id: 'protocol-team-manage',
     label: 'Protocol team manage',
     requireAnyOf: ['protocol.team.manage@ministry', 'protocol.manage@ministry'],

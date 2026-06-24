@@ -63,60 +63,15 @@ import { MemberContributionsQueryDto } from './dto/member-contributions-query.dt
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
-import {
-  RequireAnyPermissions,
-  RequirePermissions,
-} from '../common/decorators/roles.decorator';
+import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
+import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
 import { SkipPhoneEnforcement } from '../common/decorators/skip-phone-enforcement.decorator';
-import {
-  ADMIN_AUDIT_ACCESS,
-  FINANCE_MANAGE_PERMISSIONS,
-  FINANCE_VIEW_PERMISSIONS,
-  PERMISSIONS,
-} from '../common/constants/roles';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/decorators/current-user.decorator';
 import { PaginationDto } from '../common/dto/pagination.dto';
 
-const FINANCE_VIEW_ANY = FINANCE_VIEW_PERMISSIONS;
-const FINANCE_MANAGE_ANY = FINANCE_MANAGE_PERMISSIONS;
-
-/** Choir treasurer / family coordinator contribution stewardship (Sprint 10) */
-const CONTRIBUTION_RECORD_WRITE_ANY = [
-  ...FINANCE_MANAGE_PERMISSIONS,
-  PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
-  PERMISSIONS.PROTOCOL_CONTRIBUTION_ADJUST,
-] as const;
-
-const STEWARDSHIP_ANALYTICS_ANY = [
-  ...FINANCE_VIEW_PERMISSIONS,
-  PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
-  PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
-  PERMISSIONS.PROTOCOL_CONTRIBUTION_VIEW_ALL,
-  PERMISSIONS.PROTOCOL_CONTRIBUTION_ADJUST,
-] as const;
-
-const CONTRIBUTION_LIST_VIEW_ANY = [
-  PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
-  PERMISSIONS.CHOIR_FINANCE_VIEW,
-  PERMISSIONS.CHOIR_FINANCE_MANAGE,
-  PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
-  PERMISSIONS.PROTOCOL_CONTRIBUTION_VIEW_ALL,
-  PERMISSIONS.PROTOCOL_FINANCE_VIEW,
-  PERMISSIONS.PROTOCOL_FINANCE_MANAGE,
-  PERMISSIONS.PROTOCOL_CONTRIBUTION_ADJUST,
-] as const;
-
-const MEMBER_CONTRIBUTION_ACCESS = [
-  PERMISSIONS.CHOIR_CONTRIBUTION_SUBMIT,
-  PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_FAMILY,
-  PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
-  PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
-  ...FINANCE_VIEW_ANY,
-] as const;
-
 @Controller('finance')
-@UseGuards(JwtAuthGuard, RolesGuard, PhoneOperationalGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class FinanceController {
   constructor(
     private financeService: FinanceService,
@@ -142,7 +97,7 @@ export class FinanceController {
   ) {}
 
   @Post('contributions/submit')
-  @RequirePermissions(PERMISSIONS.CHOIR_CONTRIBUTION_SUBMIT)
+  @RequireUiCapability('contribution-submit')
   submitMemberContribution(
     @Body() dto: SubmitContributionDto,
     @CurrentUser() user: JwtPayload,
@@ -151,7 +106,7 @@ export class FinanceController {
   }
 
   @Get('contributions/submit-options')
-  @RequirePermissions(PERMISSIONS.CHOIR_CONTRIBUTION_SUBMIT)
+  @RequireUiCapability('contribution-submit')
   @SkipPhoneEnforcement()
   contributionSubmitOptions(
     @CurrentUser() user: JwtPayload,
@@ -161,7 +116,7 @@ export class FinanceController {
   }
 
   @Post('contributions/protocol/submit')
-  @RequirePermissions(PERMISSIONS.PROTOCOL_CONTRIBUTION_SUBMIT)
+  @RequireUiCapability('protocol-contribution-submit')
   submitProtocolContribution(
     @Body() dto: SubmitContributionDto,
     @CurrentUser() user: JwtPayload,
@@ -170,7 +125,7 @@ export class FinanceController {
   }
 
   @Get('contributions/protocol/submit-options')
-  @RequirePermissions(PERMISSIONS.PROTOCOL_CONTRIBUTION_SUBMIT)
+  @RequireUiCapability('protocol-contribution-submit')
   @SkipPhoneEnforcement()
   protocolContributionSubmitOptions(@CurrentUser() user: JwtPayload) {
     return this.contributionProtocol.getSubmitOptions(user.sub);
@@ -244,12 +199,7 @@ export class FinanceController {
 
   @Get('contributions/sponsor/inbox')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(
-    PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
-    PERMISSIONS.CHOIR_FINANCE_MANAGE,
-    PERMISSIONS.CHOIR_FINANCE_APPROVE,
-    PERMISSIONS.CHOIR_CONTRIBUTION_ADJUST,
-  )
+  @RequireUiCapability('contribution-sponsor-inbox')
   sponsorContributionInbox(
     @CurrentUser() user: JwtPayload,
     @Query('choirId') choirId: string,
@@ -266,10 +216,7 @@ export class FinanceController {
 
   @Get('contributions/protocol/inbox')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(
-    PERMISSIONS.PROTOCOL_FINANCE_APPROVE,
-    PERMISSIONS.PROTOCOL_FINANCE_MANAGE,
-  )
+  @RequireUiCapability('protocol-finance-inbox')
   protocolContributionInbox(
     @CurrentUser() user: JwtPayload,
     @Query('status') status?: ContributionStatus,
@@ -284,7 +231,7 @@ export class FinanceController {
 
   @Get('contributions')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(...CONTRIBUTION_LIST_VIEW_ANY)
+  @RequireUiCapability('contribution-list-view')
   listContributions(
     @CurrentUser() user: JwtPayload,
     @Query('limit') limit?: string,
@@ -360,13 +307,13 @@ export class FinanceController {
   }
 
   @Get('contributions/queue')
-  @RequireAnyPermissions(...FINANCE_VIEW_ANY)
+  @RequireUiCapability('contribution-finance-view')
   contributionQueue(@CurrentUser() user: JwtPayload) {
     return this.contributionService.getConfirmationQueue(user.sub);
   }
 
   @Post('contributions')
-  @RequireAnyPermissions(...CONTRIBUTION_RECORD_WRITE_ANY)
+  @RequireUiCapability('contribution-record-write')
   createContribution(
     @Body() dto: CreateContributionDto,
     @CurrentUser() user: JwtPayload,
@@ -409,11 +356,7 @@ export class FinanceController {
 
   @Get('contributions/treasury/dashboard')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(
-    PERMISSIONS.CHOIR_FINANCE_APPROVE,
-    PERMISSIONS.CHOIR_FINANCE_MANAGE,
-    PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
-  )
+  @RequireUiCapability('contribution-treasury-operations')
   treasuryContributionDashboard(
     @CurrentUser() user: JwtPayload,
     @Query('choirId') choirId: string,
@@ -423,11 +366,7 @@ export class FinanceController {
 
   @Get('contributions/treasury/inbox')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(
-    PERMISSIONS.CHOIR_FINANCE_APPROVE,
-    PERMISSIONS.CHOIR_FINANCE_MANAGE,
-    PERMISSIONS.CHOIR_CONTRIBUTION_VIEW_ALL,
-  )
+  @RequireUiCapability('contribution-treasury-operations')
   treasuryContributionInbox(
     @CurrentUser() user: JwtPayload,
     @Query('choirId') choirId: string,
@@ -442,10 +381,7 @@ export class FinanceController {
 
   @Get('contributions/treasury/export/pdf')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(
-    PERMISSIONS.CHOIR_FINANCE_APPROVE,
-    PERMISSIONS.CHOIR_FINANCE_MANAGE,
-  )
+  @RequireUiCapability('contribution-treasury-operations')
   async treasuryPeriodExportPdf(
     @CurrentUser() user: JwtPayload,
     @Query('choirId') choirId: string,
@@ -467,10 +403,7 @@ export class FinanceController {
 
   @Post('contributions/treasury/period-close')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(
-    PERMISSIONS.CHOIR_FINANCE_APPROVE,
-    PERMISSIONS.CHOIR_FINANCE_MANAGE,
-  )
+  @RequireUiCapability('contribution-treasury-operations')
   closeTreasuryPeriod(
     @CurrentUser() user: JwtPayload,
     @Query('choirId') choirId: string,
@@ -551,10 +484,7 @@ export class FinanceController {
 
   @Post('contributions/:id/treasury/verify')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(
-    PERMISSIONS.CHOIR_FINANCE_APPROVE,
-    PERMISSIONS.CHOIR_FINANCE_MANAGE,
-  )
+  @RequireUiCapability('contribution-treasury-operations')
   verifyTreasuryContribution(
     @Param('id') id: string,
     @CurrentUser() user: JwtPayload,
@@ -564,10 +494,7 @@ export class FinanceController {
 
   @Post('contributions/:id/treasury/reject')
   @SkipPhoneEnforcement()
-  @RequireAnyPermissions(
-    PERMISSIONS.CHOIR_FINANCE_APPROVE,
-    PERMISSIONS.CHOIR_FINANCE_MANAGE,
-  )
+  @RequireUiCapability('contribution-treasury-operations')
   rejectTreasuryContribution(
     @Param('id') id: string,
     @Body() dto: RejectFamilyContributionDto,
@@ -607,7 +534,7 @@ export class FinanceController {
   }
 
   @Get('stewardship/analytics')
-  @RequireAnyPermissions(...STEWARDSHIP_ANALYTICS_ANY)
+  @RequireUiCapability('contribution-stewardship-analytics')
   stewardshipAnalytics(
     @CurrentUser() user: JwtPayload,
     @Query('ministryScope') ministryScope?: MinistryScope,
@@ -624,7 +551,7 @@ export class FinanceController {
   }
 
   @Post('contributions/:id/confirm')
-  @RequireAnyPermissions(...CONTRIBUTION_RECORD_WRITE_ANY)
+  @RequireUiCapability('contribution-record-write')
   confirmContribution(
     @Param('id') id: string,
     @CurrentUser() user: JwtPayload,
@@ -633,7 +560,7 @@ export class FinanceController {
   }
 
   @Post('contributions/:id/reject')
-  @RequireAnyPermissions(...CONTRIBUTION_RECORD_WRITE_ANY)
+  @RequireUiCapability('contribution-record-write')
   rejectContribution(
     @Param('id') id: string,
     @Body() dto: RejectContributionDto,
@@ -643,7 +570,7 @@ export class FinanceController {
   }
 
   @Post('contributions/:id/resend-thank-you')
-  @RequireAnyPermissions(...CONTRIBUTION_RECORD_WRITE_ANY)
+  @RequireUiCapability('contribution-record-write')
   resendThankYou(
     @Param('id') id: string,
     @CurrentUser() user: JwtPayload,
@@ -652,7 +579,7 @@ export class FinanceController {
   }
 
   @Get('export/csv')
-  @RequireAnyPermissions(...FINANCE_VIEW_ANY)
+  @RequireUiCapability('contribution-finance-view')
   async ministryExportCsv(
     @CurrentUser() user: JwtPayload,
     @Query('ministryScope') ministryScope?: MinistryScope,
@@ -676,7 +603,7 @@ export class FinanceController {
   }
 
   @Get('export/pdf')
-  @RequireAnyPermissions(...FINANCE_VIEW_ANY)
+  @RequireUiCapability('contribution-finance-view')
   async ministryExportPdf(
     @CurrentUser() user: JwtPayload,
     @Query('ministryScope') ministryScope?: MinistryScope,
@@ -700,7 +627,7 @@ export class FinanceController {
   }
 
   @Post('receipts/prepare-upload')
-  @RequireAnyPermissions(...FINANCE_MANAGE_ANY)
+  @RequireUiCapability('contribution-finance-manage')
   prepareReceiptUpload(
     @Body()
     body: {
@@ -714,7 +641,7 @@ export class FinanceController {
   }
 
   @Post('transactions')
-  @RequireAnyPermissions(...FINANCE_MANAGE_ANY)
+  @RequireUiCapability('contribution-finance-manage')
   createTransaction(
     @Body() dto: CreateTransactionDto,
     @CurrentUser() user: JwtPayload,
@@ -723,7 +650,7 @@ export class FinanceController {
   }
 
   @Get('transactions')
-  @RequireAnyPermissions(...FINANCE_VIEW_ANY)
+  @RequireUiCapability('contribution-finance-view')
   list(
     @CurrentUser() user: JwtPayload,
     @Query() query: PaginationDto & { ministryScope?: MinistryScope },
@@ -737,7 +664,7 @@ export class FinanceController {
   }
 
   @Get('summary')
-  @RequireAnyPermissions(...FINANCE_VIEW_ANY)
+  @RequireUiCapability('contribution-finance-view')
   summary(
     @CurrentUser() user: JwtPayload,
     @Query('ministryScope') ministryScope?: MinistryScope,
@@ -746,12 +673,7 @@ export class FinanceController {
   }
 
   @Post('transactions/:id/approve')
-  @RequireAnyPermissions(
-    PERMISSIONS.CHOIR_FINANCE_APPROVE,
-    PERMISSIONS.PROTOCOL_FINANCE_APPROVE,
-    PERMISSIONS.CHOIR_FINANCE_MANAGE,
-    PERMISSIONS.PROTOCOL_FINANCE_MANAGE,
-  )
+  @RequireUiCapability('contribution-finance-approve')
   approveTransaction(
     @Param('id') id: string,
     @Body('approve') approve: boolean,
@@ -761,7 +683,7 @@ export class FinanceController {
   }
 
   @Patch('transactions/:id/receipt')
-  @RequireAnyPermissions(...FINANCE_MANAGE_ANY)
+  @RequireUiCapability('contribution-finance-manage')
   attachReceipt(
     @Param('id') id: string,
     @Body('receiptUrl') receiptUrl: string,
@@ -771,7 +693,7 @@ export class FinanceController {
   }
 
   @Post('budgets')
-  @RequireAnyPermissions(...FINANCE_MANAGE_ANY)
+  @RequireUiCapability('contribution-finance-manage')
   createBudget(
     @Body() dto: CreateBudgetDto,
     @CurrentUser() user: JwtPayload,
@@ -780,7 +702,7 @@ export class FinanceController {
   }
 
   @Get('budgets')
-  @RequireAnyPermissions(...FINANCE_VIEW_ANY)
+  @RequireUiCapability('contribution-finance-view')
   listBudgets(
     @CurrentUser() user: JwtPayload,
     @Query() query: PaginationDto & { ministryScope?: MinistryScope },
@@ -794,7 +716,7 @@ export class FinanceController {
   }
 
   @Patch('budgets/:id')
-  @RequireAnyPermissions(...FINANCE_MANAGE_ANY)
+  @RequireUiCapability('contribution-finance-manage')
   updateBudget(
     @Param('id') id: string,
     @Body() dto: Partial<CreateBudgetDto>,
@@ -804,19 +726,19 @@ export class FinanceController {
   }
 
   @Delete('budgets/:id')
-  @RequireAnyPermissions(...FINANCE_MANAGE_ANY)
+  @RequireUiCapability('contribution-finance-manage')
   deleteBudget(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.financeService.deleteBudget(id, user.sub);
   }
 
   @Post('dues')
-  @RequireAnyPermissions(...FINANCE_MANAGE_ANY)
+  @RequireUiCapability('contribution-finance-manage')
   dues(@Body() dto: UpsertMemberDuesDto, @CurrentUser() user: JwtPayload) {
     return this.financeService.upsertMemberDues(dto, user.sub);
   }
 
   @Post('dues/mark-paid')
-  @RequireAnyPermissions(...FINANCE_MANAGE_ANY)
+  @RequireUiCapability('contribution-finance-manage')
   markDuesPaid(
     @Body()
     body: {
@@ -838,7 +760,7 @@ export class FinanceController {
 
   @Get('contributions/admin/catalog')
   @SkipPhoneEnforcement()
-  @RequirePermissions(PERMISSIONS.CHOIR_CONTRIBUTION_TYPE_MANAGE)
+  @RequireUiCapability('contribution-catalog')
   listContributionCatalog(
     @CurrentUser() user: JwtPayload,
     @Query('choirId') choirId: string,
@@ -847,7 +769,7 @@ export class FinanceController {
   }
 
   @Post('contributions/admin/catalog')
-  @RequirePermissions(PERMISSIONS.CHOIR_CONTRIBUTION_TYPE_MANAGE)
+  @RequireUiCapability('contribution-catalog')
   createContributionCatalog(
     @CurrentUser() user: JwtPayload,
     @Query('choirId') choirId: string,
@@ -857,7 +779,7 @@ export class FinanceController {
   }
 
   @Patch('contributions/admin/catalog/:id')
-  @RequirePermissions(PERMISSIONS.CHOIR_CONTRIBUTION_TYPE_MANAGE)
+  @RequireUiCapability('contribution-catalog')
   updateContributionCatalog(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
@@ -868,7 +790,7 @@ export class FinanceController {
 
   @Get('contributions/admin/campaigns')
   @SkipPhoneEnforcement()
-  @RequirePermissions(PERMISSIONS.CHOIR_CONTRIBUTION_CAMPAIGN_MANAGE)
+  @RequireUiCapability('contribution-catalog')
   listContributionCampaigns(
     @CurrentUser() user: JwtPayload,
     @Query('choirId') choirId: string,
@@ -877,7 +799,7 @@ export class FinanceController {
   }
 
   @Post('contributions/admin/campaigns')
-  @RequirePermissions(PERMISSIONS.CHOIR_CONTRIBUTION_CAMPAIGN_MANAGE)
+  @RequireUiCapability('contribution-catalog')
   createContributionCampaign(
     @CurrentUser() user: JwtPayload,
     @Query('choirId') choirId: string,
@@ -887,7 +809,7 @@ export class FinanceController {
   }
 
   @Patch('contributions/admin/campaigns/:id')
-  @RequirePermissions(PERMISSIONS.CHOIR_CONTRIBUTION_CAMPAIGN_MANAGE)
+  @RequireUiCapability('contribution-catalog')
   updateContributionCampaign(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
@@ -898,7 +820,7 @@ export class FinanceController {
 
   /** Platform finance audit — requires admin audit visibility */
   @Get('admin/audit-summary')
-  @RequireAnyPermissions(...ADMIN_AUDIT_ACCESS)
+  @RequireUiCapability('admin-audit-view')
   async adminFinanceAudit(@CurrentUser() user: JwtPayload) {
     const data = await this.financeGovernance.analytics(user.sub);
     return {

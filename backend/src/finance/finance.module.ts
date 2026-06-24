@@ -26,6 +26,7 @@ import { ContributionSmsChannel } from './contribution-sms.channel';
 import { FinanceController } from './finance.controller';
 import { ReceiptUploadService } from './receipt/receipt-upload.service';
 import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
+import { ChoirHttpAccessModule } from '../common/choir/choir-http-access.module';
 import { AuthUxModule } from '../auth-ux/auth-ux.module';
 import { ContributionProtocolService } from './contribution-protocol.service';
 import { ContributionWorkflowNotificationsService } from './contribution-workflow-notifications.service';
@@ -42,6 +43,7 @@ import { ContributionQuickActionService } from './contribution-quick-action.serv
     AuditModule,
     NotificationsModule,
     MemberPhoneEnforcementModule,
+    ChoirHttpAccessModule,
   ],
   controllers: [FinanceController],
   providers: [

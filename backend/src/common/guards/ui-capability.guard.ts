@@ -13,6 +13,7 @@ import { RolesHttpAccessService } from '../choir/roles-http-access.service';
 import { OpsHttpAccessService } from '../choir/ops-http-access.service';
 import { WelfareHttpAccessService } from '../choir/welfare-http-access.service';
 import { MusicHttpAccessService } from '../choir/music-http-access.service';
+import { ContributionHttpAccessService } from '../choir/contribution-http-access.service';
 import { PlatformHttpAccessService } from '../platform/platform-http-access.service';
 import { getActiveChoirId } from '../choir/choir-context.storage';
 
@@ -26,6 +27,7 @@ export class UiCapabilityGuard implements CanActivate {
     private opsHttpAccess: OpsHttpAccessService,
     private welfareHttpAccess: WelfareHttpAccessService,
     private musicHttpAccess: MusicHttpAccessService,
+    private contributionHttpAccess: ContributionHttpAccessService,
     private platformHttpAccess: PlatformHttpAccessService,
   ) {}
 
@@ -116,6 +118,14 @@ export class UiCapabilityGuard implements CanActivate {
         }
         if (uiId.startsWith('music-')) {
           return this.musicHttpAccess.canMusicUi(
+            userId,
+            uiId,
+            permissions,
+            choirId,
+          );
+        }
+        if (uiId.startsWith('contribution-')) {
+          return this.contributionHttpAccess.canContributionUi(
             userId,
             uiId,
             permissions,
