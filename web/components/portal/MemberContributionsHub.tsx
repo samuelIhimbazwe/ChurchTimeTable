@@ -9,6 +9,7 @@ import { ContributeClaimForm } from '@/components/choir/ContributeClaimForm'
 import { FamilyPaymentInstructionsCard } from '@/components/choir/FamilyPaymentInstructionsCard'
 import { HubTabs } from '@/components/shared/HubTabs'
 import { Card, Badge, SkeletonCard } from '@/components/shared'
+import { ResponsiveDataView, TableScroll } from '@/components/shared/TableScroll'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
 import {
   familyReviewLabel,
@@ -18,6 +19,7 @@ import {
   resolveMemberDisplayStatus,
 } from '@/lib/contribution/member-display'
 import { ChevronRight, X } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 const TABS = [
   { id: 'overview', label: 'Summary' },
@@ -574,7 +576,7 @@ export function MemberContributionsHub({
 
       {state.tab === 'history' && (
         <div className="space-y-4">
-          <div className="flex flex-wrap gap-2">
+          <div className="responsive-form-row">
             <select
               value={historyTypeId || state.typeId || ''}
               onChange={(e) => {
@@ -626,59 +628,123 @@ export function MemberContributionsHub({
               <p className="text-sm text-text-muted text-center py-4">No matching claims.</p>
             </Card>
           ) : (
-            <Card padding="none" className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[640px]">
-                <thead>
-                  <tr className="border-b border-border bg-surface-raised text-left text-xs text-text-muted">
-                    <th className="px-4 py-3 font-semibold">Ref #</th>
-                    <th className="px-4 py-3 font-semibold">Type</th>
-                    <th className="px-4 py-3 font-semibold">Date</th>
-                    <th className="px-4 py-3 font-semibold text-right">Claimed</th>
-                    <th className="px-4 py-3 font-semibold text-right">Confirmed</th>
-                    <th className="px-4 py-3 font-semibold">Status</th>
-                    <th className="px-4 py-3 font-semibold">Family</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {claims.map((claim) => {
-                    const display = resolveMemberDisplayStatus(claim)
-                    return (
-                      <tr
-                        key={claim.id}
-                        onClick={() => openDetail(claim.id)}
-                        className="border-b border-border last:border-0 cursor-pointer hover:bg-primary-50/40 dark:hover:bg-primary-100/10"
-                      >
-                        <td className="px-4 py-3 font-medium">{claim.referenceNumber ?? '—'}</td>
-                        <td className="px-4 py-3">{claim.typeName ?? '—'}</td>
-                        <td className="px-4 py-3 text-text-muted">
+            <ResponsiveDataView
+              items={claims}
+              keyFn={(claim) => claim.id}
+              mobileRow={(claim) => {
+                const display = resolveMemberDisplayStatus(claim)
+                return (
+                  <button
+                    key={claim.id}
+                    type="button"
+                    onClick={() => openDetail(claim.id)}
+                    className="w-full text-left rounded-xl border border-border bg-surface p-4 hover:bg-surface-raised transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-text-primary truncate">
+                          {claim.referenceNumber ?? '—'}
+                        </p>
+                        <p className="text-xs text-text-muted mt-0.5">{claim.typeName ?? '—'}</p>
+                      </div>
+                      <StatusBadge claim={claim} />
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <p className="text-text-muted">Date</p>
+                        <p className="font-medium text-text-primary">
                           {claim.paymentAt
                             ? formatDate(claim.paymentAt)
                             : claim.createdAt
                               ? formatDate(claim.createdAt)
                               : '—'}
-                        </td>
-                        <td className="px-4 py-3 text-right">{formatCurrency(claim.claimedAmount)}</td>
-                        <td className="px-4 py-3 text-right">
-                          {claim.confirmedAmount != null ? (
-                            <span className={display === 'partial' ? 'text-warning font-medium' : ''}>
-                              {formatCurrency(claim.confirmedAmount)}
-                            </span>
-                          ) : (
-                            '—'
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <StatusBadge claim={claim} />
-                        </td>
-                        <td className="px-4 py-3 text-text-muted">
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-text-muted">Claimed</p>
+                        <p className="font-medium text-text-primary">
+                          {formatCurrency(claim.claimedAmount)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-text-muted">Confirmed</p>
+                        <p className={cn(
+                          'font-medium',
+                          display === 'partial' ? 'text-warning' : 'text-text-primary',
+                        )}>
+                          {claim.confirmedAmount != null
+                            ? formatCurrency(claim.confirmedAmount)
+                            : '—'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-text-muted">Family</p>
+                        <p className="font-medium text-text-primary truncate">
                           {familyReviewLabel(display)}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </Card>
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                )
+              }}
+              table={
+                <Card padding="none">
+                  <TableScroll minWidth={640}>
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border bg-surface-raised text-left text-xs text-text-muted">
+                          <th className="px-4 py-3 font-semibold">Ref #</th>
+                          <th className="px-4 py-3 font-semibold">Type</th>
+                          <th className="px-4 py-3 font-semibold">Date</th>
+                          <th className="px-4 py-3 font-semibold text-right">Claimed</th>
+                          <th className="px-4 py-3 font-semibold text-right">Confirmed</th>
+                          <th className="px-4 py-3 font-semibold">Status</th>
+                          <th className="px-4 py-3 font-semibold">Family</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {claims.map((claim) => {
+                          const display = resolveMemberDisplayStatus(claim)
+                          return (
+                            <tr
+                              key={claim.id}
+                              onClick={() => openDetail(claim.id)}
+                              className="border-b border-border last:border-0 cursor-pointer hover:bg-primary-50/40 dark:hover:bg-primary-100/10"
+                            >
+                              <td className="px-4 py-3 font-medium">{claim.referenceNumber ?? '—'}</td>
+                              <td className="px-4 py-3">{claim.typeName ?? '—'}</td>
+                              <td className="px-4 py-3 text-text-muted">
+                                {claim.paymentAt
+                                  ? formatDate(claim.paymentAt)
+                                  : claim.createdAt
+                                    ? formatDate(claim.createdAt)
+                                    : '—'}
+                              </td>
+                              <td className="px-4 py-3 text-right">{formatCurrency(claim.claimedAmount)}</td>
+                              <td className="px-4 py-3 text-right">
+                                {claim.confirmedAmount != null ? (
+                                  <span className={display === 'partial' ? 'text-warning font-medium' : ''}>
+                                    {formatCurrency(claim.confirmedAmount)}
+                                  </span>
+                                ) : (
+                                  '—'
+                                )}
+                              </td>
+                              <td className="px-4 py-3">
+                                <StatusBadge claim={claim} />
+                              </td>
+                              <td className="px-4 py-3 text-text-muted">
+                                {familyReviewLabel(display)}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </TableScroll>
+                </Card>
+              }
+            />
           )}
         </div>
       )}

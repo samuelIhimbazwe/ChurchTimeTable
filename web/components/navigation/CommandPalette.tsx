@@ -186,8 +186,6 @@ export function CommandPalette({ open, onClose, onOpenNotifications }: Props) {
 
         label: p.label,
 
-        subtitle: p.path,
-
         href: p.path,
 
         icon: ArrowRight,
@@ -435,7 +433,7 @@ export function CommandPalette({ open, onClose, onOpenNotifications }: Props) {
 
   return (
 
-    <div className="fixed inset-0 z-[200] flex items-start justify-center pt-[8vh] sm:pt-[10vh] px-3 sm:px-4">
+    <div className="fixed inset-0 z-[200] flex items-end sm:items-start justify-center pt-0 sm:pt-[10vh] px-0 sm:px-4 safe-overlay">
 
       <div
 
@@ -459,7 +457,7 @@ export function CommandPalette({ open, onClose, onOpenNotifications }: Props) {
 
         aria-label="Command palette"
 
-        className="relative w-full max-w-xl bg-surface rounded-xl shadow-modal border border-border overflow-hidden animate-page-enter"
+        className="relative w-full max-w-xl bg-surface rounded-t-xl sm:rounded-xl shadow-modal border border-border overflow-hidden animate-page-enter max-h-[min(90dvh,calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)))] flex flex-col"
 
       >
 
@@ -583,7 +581,7 @@ export function CommandPalette({ open, onClose, onOpenNotifications }: Props) {
 
 
 
-        <ul ref={listRef} className="max-h-80 overflow-y-auto py-2">
+        <ul ref={listRef} className="max-h-[50dvh] sm:max-h-80 overflow-y-auto py-2 flex-1 min-h-0">
 
           {baseItems.length === 0 ? (
 

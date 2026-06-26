@@ -87,7 +87,7 @@ function Highlight({
           {value}
         </Badge>
       ) : (
-        <p className={`font-semibold text-sm mt-1 ${warn ? 'text-amber-700 dark:text-amber-300' : ''}`}>
+        <p className={`font-semibold text-sm mt-1 ${warn ? 'text-warning' : ''}`}>
           {value}
         </p>
       )}

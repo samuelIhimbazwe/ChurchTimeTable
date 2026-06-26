@@ -29,6 +29,7 @@ export class ChoirSchedulePlansService {
     },
   ) {
     await this.opsAccess.requireSchedule(actorUserId);
+    const plan = await this.prisma.choirSchedulePlan.create({
       data: {
         label: data.label,
         periodType: data.periodType,

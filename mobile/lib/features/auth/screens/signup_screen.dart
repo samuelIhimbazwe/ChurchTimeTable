@@ -70,7 +70,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         );
     if (!mounted) return;
     if (ok) {
-      Navigator.pushReplacementNamed(context, AppRouter.pendingApproval);
+      Navigator.pushReplacementNamed(context, AppRouter.memberHome);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

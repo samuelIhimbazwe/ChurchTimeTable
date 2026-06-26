@@ -214,12 +214,12 @@ export default function LoginPage() {
                 />
                 <span className="text-sm text-text-secondary">{t.rememberMe}</span>
               </label>
-              <button
-                type="button"
+              <Link
+                href="/forgot-password"
                 className="text-sm font-medium text-primary-600 hover:text-primary-800 transition-colors"
               >
                 {t.forgotPassword}
-              </button>
+              </Link>
             </div>
 
             <button

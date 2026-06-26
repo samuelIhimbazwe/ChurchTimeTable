@@ -101,7 +101,7 @@ export function ChoirQuickActions({ choirId, todoCount = 0, className }: Props) 
               <div
                 className={cn(
                   'w-10 h-10 rounded-lg flex items-center justify-center shrink-0',
-                  'bg-accent-choir-soft text-emerald-700 dark:text-emerald-300',
+                  'bg-accent-choir-soft text-success',
                 )}
               >
                 <Icon size={20} />

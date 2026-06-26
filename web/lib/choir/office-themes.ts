@@ -46,7 +46,7 @@ export const OFFICE_THEMES: Record<OfficeThemeKey, OfficeTheme> = {
     icon: UserCircle,
     iconColor: 'text-primary-700',
     navActive: 'bg-primary-700 text-white shadow-md',
-    navInactive: 'text-text-secondary hover:bg-surface-raised',
+    navInactive: 'text-text-secondary bg-surface-raised border border-border hover:border-primary-300 hover:bg-primary-50',
     contentBg: 'bg-surface',
     badge: 'bg-surface-raised text-text-secondary border border-border',
     portalLink: 'text-primary-700 hover:text-primary-900',
@@ -62,11 +62,11 @@ export const OFFICE_THEMES: Record<OfficeThemeKey, OfficeTheme> = {
     iconWrap: 'bg-gold-50 border border-gold-100 shadow-sm',
     icon: LayoutDashboard,
     iconColor: 'text-gold-800',
-    navActive: 'bg-primary-700 text-white shadow-md',
-    navInactive: 'text-text-secondary hover:bg-surface-raised',
+    navActive: 'bg-gold-600 text-primary-950 shadow-md',
+    navInactive: 'text-text-secondary bg-surface-raised border border-border hover:border-gold-300 hover:bg-gold-50',
     contentBg: 'bg-surface',
-    badge: 'bg-surface-raised text-text-secondary border border-border',
-    portalLink: 'text-primary-700 hover:text-primary-900',
+    badge: 'bg-gold-50 text-gold-900 border border-gold-200',
+    portalLink: 'text-gold-700 hover:text-gold-800',
   },
   'family-leadership': {
     key: 'family-leadership',
@@ -80,7 +80,7 @@ export const OFFICE_THEMES: Record<OfficeThemeKey, OfficeTheme> = {
     icon: Shield,
     iconColor: 'text-gold-400',
     navActive: 'bg-gold-500 text-primary-950 shadow-md font-bold',
-    navInactive: 'text-primary-100 hover:bg-white/10',
+    navInactive: 'text-text-secondary bg-surface-raised border border-border hover:border-gold-300 hover:bg-gold-50',
     contentBg: 'bg-surface',
     badge: 'bg-white/10 text-gold-300 border border-white/20',
     portalLink: 'text-gold-300 hover:text-gold-200',
@@ -97,7 +97,7 @@ export const OFFICE_THEMES: Record<OfficeThemeKey, OfficeTheme> = {
     icon: UserCog,
     iconColor: 'text-primary-700',
     navActive: 'bg-primary-700 text-white shadow-md',
-    navInactive: 'text-text-secondary hover:bg-surface-raised',
+    navInactive: 'text-text-secondary bg-surface-raised border border-border hover:border-primary-300 hover:bg-primary-50',
     contentBg: 'bg-surface',
     badge: 'bg-surface-raised text-text-secondary border border-border',
     portalLink: 'text-primary-700 hover:text-primary-900',
@@ -114,7 +114,7 @@ export const OFFICE_THEMES: Record<OfficeThemeKey, OfficeTheme> = {
     icon: ClipboardList,
     iconColor: 'text-text-secondary',
     navActive: 'bg-primary-800 text-white shadow-sm',
-    navInactive: 'text-text-secondary hover:bg-surface-overlay',
+    navInactive: 'text-text-secondary bg-surface-raised border border-border hover:bg-surface-overlay',
     contentBg: 'bg-[linear-gradient(to_bottom,var(--color-surface-overlay)_0%,var(--color-surface)_120px)]',
     badge: 'bg-surface-overlay text-text-secondary border border-border',
     portalLink: 'text-primary-700 hover:text-primary-900',
@@ -137,5 +137,7 @@ export function isSovereignOfficePath(pathname: string): boolean {
     || /\/choir\/[^/]+\/attendance\//.test(pathname)
     || /\/choir\/(members|scheduling|service-preparation|activities)(\/|$)/.test(pathname)
     || /\/choir\/attendance\//.test(pathname)
+    || /\/choir\/(analytics|welfare|reports|finance|music)(\/|$)/.test(pathname)
+    || /\/choir\/[^/]+\/(analytics|welfare|reports|finance|music)(\/|$)/.test(pathname)
   )
 }

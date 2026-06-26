@@ -4,7 +4,10 @@
 
 | User type | Post-login destination |
 |-----------|------------------------|
-| Pending (`NEW_MEMBER`, `PENDING`) | `/pending-approval` |
+| New registration | `/portal` (immediate) |
+| Choir join pending | Join request status on `/portal/choirs` |
+| Protocol pending | Invitation or claim status on portal |
+| Legacy `NEW_MEMBER` (import/admin) | Mobile may show pending screen; some APIs gated |
 | Platform admin / operational leader | `/dashboard` (leader experience) |
 | Approved church member | `/dashboard/member` |
 

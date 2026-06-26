@@ -44,5 +44,54 @@ describe('Auth UX (e2e)', () => {
       );
     expect(res.status).toBe(201);
     expect(res.body.data.accessToken).toBeDefined();
+
+    const me = await request(app.getHttpServer())
+      .get('/api/v1/auth/me')
+      .set('Authorization', `Bearer ${res.body.data.accessToken}`);
+    expect(me.status).toBe(200);
+    expect(me.body.data.member.status).toBe('ACTIVE');
+  });
+
+  it('supports forgot-password and reset-password flow', async () => {
+    const stamp = Date.now();
+    const email = `reset-flow-${stamp}@test.local`;
+    const register = await request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .send(
+        buildRegisterPayload({
+          email,
+          firstName: 'Reset',
+          lastName: 'Flow',
+          phone: `078${String(stamp).slice(-7)}`,
+          nationalId: `2${String(stamp).padStart(15, '0').slice(-15)}`,
+        }),
+      );
+    expect(register.status).toBe(201);
+
+    const forgot = await request(app.getHttpServer())
+      .post('/api/v1/auth/forgot-password')
+      .send({ email });
+    expect(forgot.status).toBe(201);
+    expect(forgot.body.data.ok).toBe(true);
+    expect(forgot.body.data.devResetUrl).toMatch(/token=/);
+
+    const token = new URL(forgot.body.data.devResetUrl).searchParams.get('token');
+    expect(token).toBeTruthy();
+
+    const reset = await request(app.getHttpServer())
+      .post('/api/v1/auth/reset-password')
+      .send({ token, password: 'NewPass@123' });
+    expect(reset.status).toBe(201);
+    expect(reset.body.data.ok).toBe(true);
+
+    const oldLogin = await request(app.getHttpServer())
+      .post('/api/v1/auth/login')
+      .send({ email, password: 'TestPass1' });
+    expect(oldLogin.status).toBe(401);
+
+    const newLogin = await request(app.getHttpServer())
+      .post('/api/v1/auth/login')
+      .send({ email, password: 'NewPass@123' });
+    expect(newLogin.status).toBe(201);
   });
 });

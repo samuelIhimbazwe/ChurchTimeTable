@@ -13,10 +13,12 @@ import { ChoirSponsorRequestsService } from '../member-portal/choir-sponsor-requ
 import { ChoirMembershipRulesService } from '../member-portal/choir-membership-rules.service';
 import { MemberPortalNotificationsService } from '../member-portal/member-portal-notifications.service';
 import { ChoirMembersService } from './choir-members.service';
+import { ChoirRosterAccessService } from './choir-roster-access.service';
 import { ChoirGovernanceService } from './choir-governance.service';
 import { ChoirExecutiveDashboardService } from './choir-executive-dashboard.service';
 import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
 import { ProtocolMembershipService } from '../member-portal/protocol-membership.service';
+import { MemberMinistryScopeService } from '../member-portal/member-ministry-scope.service';
 import { RosterCapabilityModule } from '../common/choir/roster-capability.module';
 import { ChoirCustomRolesModule } from '../choir-custom-roles/choir-custom-roles.module';
 

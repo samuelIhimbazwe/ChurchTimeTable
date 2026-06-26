@@ -31,6 +31,8 @@ export class ChoirScheduleAdjustmentsService {
   ) {
     await this.opsAccess.requireSchedule(actorUserId, data.choirId ?? data.newChoirId);
 
+    let assignmentId: string | undefined;
+
     if (data.action === 'REPLACE' && data.choirId && data.newChoirId) {
       const isChurch = await this.assignments.isChurchScheduler(actorUserId);
       if (!isChurch) {

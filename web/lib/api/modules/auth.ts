@@ -146,6 +146,15 @@ export const authApi = {
   completeOnboarding: () =>
     apiClient.patch<never, void>('/auth/onboarding-complete'),
 
+  forgotPassword: (email: string) =>
+    apiClient.post<
+      never,
+      { ok: boolean; message: string; devResetUrl?: string }
+    >('/auth/forgot-password', { email }),
+
+  resetPassword: (payload: { token: string; password: string }) =>
+    apiClient.post<never, { ok: boolean }>('/auth/reset-password', payload),
+
   updateLanguage: (preferredLanguage: string) =>
     apiClient.post<never, { preferredLanguage: string }>('/users/language', {
       preferredLanguage,

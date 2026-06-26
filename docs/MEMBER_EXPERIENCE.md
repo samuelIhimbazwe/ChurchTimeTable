@@ -14,6 +14,6 @@ After approval, members land on `/dashboard/member` (not choir/protocol dashboar
 
 `FirstLoginWelcome` modal on first approved login with skip option. Completes via `PATCH /auth/onboarding-complete`.
 
-## Pending members
+## Registration vs ministry approval
 
-`NEW_MEMBER` and `PENDING` statuses route to `/pending-approval` until a leader activates the account.
+New accounts are `ACTIVE` after registration and land on the member portal. Approval is required only when joining a **choir** (join request reviewed by choir admin) or **protocol** (invitation accept or claim review). Legacy `NEW_MEMBER` records may still exist from imports or admin workflows.

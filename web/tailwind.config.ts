@@ -75,6 +75,16 @@ const config: Config = {
           'protocol-soft': 'var(--color-accent-protocol-soft)',
           'leader-soft': 'var(--color-accent-leader-soft)',
         },
+        chart: {
+          1: 'var(--color-chart-1)',
+          2: 'var(--color-chart-2)',
+          3: 'var(--color-chart-3)',
+          4: 'var(--color-chart-4)',
+          5: 'var(--color-chart-5)',
+          6: 'var(--color-chart-6)',
+          grid: 'var(--color-chart-grid)',
+          axis: 'var(--color-chart-axis)',
+        },
       },
 
       /* ── TYPOGRAPHY ── */

@@ -48,6 +48,9 @@ export class ContributionSubmissionService {
 
   async submit(actorUserId: string, dto: SubmitContributionDto) {
     const ctx = await this.scope.resolveActor(actorUserId);
+    if (!dto.choirId) {
+      throw new BadRequestException('choirId is required');
+    }
     await this.scope.assertCanSubmit(ctx, dto.choirId);
 
     const { member, familyId, submissionMode } = await this.resolveSubmitter(
@@ -349,7 +352,6 @@ export class ContributionSubmissionService {
 
   async getSubmitOptions(actorUserId: string, choirId?: string) {
     const ctx = await this.scope.resolveActor(actorUserId);
-    await this.scope.assertCanSubmit(ctx, dto.choirId);
 
     const familyMember = ctx.memberId
       ? await this.prisma.familyMember.findUnique({
@@ -381,6 +383,10 @@ export class ContributionSubmissionService {
     const resolvedChoirId =
       choirId ??
       (familyMember ? undefined : sponsorChoirs[0]?.id);
+
+    if (resolvedChoirId) {
+      await this.scope.assertCanSubmit(ctx, resolvedChoirId);
+    }
 
     const submissionMode = familyMember
       ? 'family'

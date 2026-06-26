@@ -15,6 +15,10 @@ export class AppLinkService {
     return `${this.baseUrl()}/portal/contributions`;
   }
 
+  resetPassword(token: string): string {
+    return `${this.baseUrl()}/reset-password?token=${encodeURIComponent(token)}`;
+  }
+
   portalDevotion(): string {
     return `${this.baseUrl()}/portal/devotion`;
   }

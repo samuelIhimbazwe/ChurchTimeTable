@@ -7,6 +7,7 @@ export const UI_LABELS: Record<string, LabelEntry> = {
   /* Shell / top bar */
   Search: { en: 'Search', fr: 'Rechercher', rw: 'Shakisha' },
   Help: { en: 'Help', fr: 'Aide', rw: 'Ubufasha' },
+  Attention: { en: 'Attention', fr: 'À traiter', rw: 'Ibisabwa' },
   Notifications: { en: 'Notifications', fr: 'Notifications', rw: 'Amakuru' },
   'My Profile': { en: 'My Profile', fr: 'Mon profil', rw: 'Umwirondoro wanjye' },
   Preferences: { en: 'Preferences', fr: 'Préférences', rw: 'Igenamiterere' },

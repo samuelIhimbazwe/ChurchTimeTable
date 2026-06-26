@@ -11,7 +11,27 @@ Four-step signup (web):
 3. Interests only (choir, protocol, ministries — no membership granted)
 4. Review and create account
 
-API: `POST /auth/register` with `churchRelationship`, `interests[]`, optional `relationshipNotes`. Members default to `ministry: BOTH` with `NEW_MEMBER` status pending leader approval.
+## Registration
+
+Four-step signup (web):
+
+1. Account information (name, email, phone, password)
+2. Church relationship (existing, new, visitor, returning)
+3. Interests only (choir, protocol, ministries — no membership granted)
+4. Review and create account
+
+API: `POST /auth/register` with `churchRelationship`, `interests[]`, optional `relationshipNotes`. Members default to `ministry: BOTH` with `ACTIVE` status — full portal access immediately. Choir and protocol membership still require join-request, invitation, or claim approval.
+
+## Password reset
+
+| Method | Path | Notes |
+|--------|------|-------|
+| POST | `/auth/forgot-password` `{ email }` | Always returns success; creates 1-hour token |
+| POST | `/auth/reset-password` `{ token, password }` | Invalidates sessions; clears refresh tokens |
+
+Web: `/forgot-password`, `/reset-password?token=…`
+
+In local dev, the API logs the reset link and may return `devResetUrl` when `PASSWORD_RESET_EXPOSE_LINK=true` or `NODE_ENV` is not `production`.
 
 ## Public pages
 

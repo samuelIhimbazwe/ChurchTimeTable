@@ -273,7 +273,8 @@ export class MemberPortalDashboardService {
       welcomeMessage: branding.welcomeMessage,
       onboardingCompleted: member.onboardingCompleted,
       memberStatus: member.status,
-      pendingApproval: member.status === MemberStatus.NEW_MEMBER,
+      // Registration is immediately active; choir/protocol have their own approval flows.
+      pendingApproval: false,
     };
 
     const protocol = {

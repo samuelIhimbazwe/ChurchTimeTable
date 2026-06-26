@@ -107,7 +107,6 @@ export class ChoirDashboardService {
     const member = await this.prisma.member.findUniqueOrThrow({
       where: { userId: actorUserId },
     });
-    const cid = choirId ?? getActiveChoirId();
     const now = new Date();
 
     const profile = cid

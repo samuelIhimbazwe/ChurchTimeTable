@@ -15,7 +15,7 @@ interface CardProps {
 }
 
 const ACCENT_CLASSES = {
-  gold:    'border-l-[3px] border-l-primary-600 bg-surface-raised',
+  gold:    'border-l-4 border-l-gold-500 bg-gold-50/40',
   success: 'border-l-4 border-l-success bg-success-light',
   warning: 'border-l-4 border-l-warning bg-warning-light',
   danger:  'border-l-4 border-l-danger bg-danger-light',

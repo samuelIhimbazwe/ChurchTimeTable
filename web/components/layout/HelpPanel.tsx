@@ -48,7 +48,7 @@ export default function HelpPanel({ open, onClose, onOpenSearch }: HelpPanelProp
         role="dialog"
         aria-modal="true"
         aria-label={s.helpTitle}
-        className="fixed top-16 left-3 right-3 sm:left-auto sm:right-4 z-50 w-auto sm:w-96 max-w-[calc(100vw-1.5rem)] bg-surface rounded-xl border border-border shadow-overlay animate-page-enter overflow-hidden"
+        className="fixed top-below-topbar left-3 right-3 sm:left-auto sm:right-4 z-50 w-auto sm:w-96 max-w-[calc(100vw-1.5rem)] bg-surface rounded-xl border border-border shadow-overlay animate-page-enter overflow-hidden max-h-below-topbar"
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <div className="flex items-center gap-2">

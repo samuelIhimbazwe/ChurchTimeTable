@@ -149,6 +149,9 @@ export const enMessages: Record<string, string> = {
   NOTIFICATION_DUES_BODY: 'Remaining balance: {amount}',
 
   INVALID_CREDENTIALS: 'Invalid email or password.',
+
+  PASSWORD_RESET_TOKEN_INVALID:
+    'This reset link is invalid or has expired. Request a new one.',
   INVALID_SESSION: 'Your session has expired. Please sign in again.',
   EMAIL_ALREADY_REGISTERED: 'This email is already registered.',
   ACCOUNT_INACTIVE: 'This account is inactive. Contact your ministry leader.',

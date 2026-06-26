@@ -23,6 +23,7 @@ import {
 
 import { ChoirParticipationChart } from '@/components/choir/analytics/ChoirParticipationChart'
 import { AtRiskMembersPanel } from '@/components/choir/analytics/AtRiskMembersPanel'
+import { ChoirInsightsShell } from '@/components/choir/ChoirInsightsShell'
 import { ChoirHealthScore } from '@/components/dashboard/ChoirHealthScore'
 import { UnifiedAttentionInbox } from '@/components/dashboard/UnifiedAttentionInbox'
 
@@ -238,16 +239,11 @@ export default function AnalyticsPage() {
 
 
   return (
-
-    <div className="space-y-6 max-w-6xl mx-auto">
-
-      <div>
-
-        <h2 className="font-display text-3xl text-text-primary">Choir Analytics</h2>
-
-        <p className="text-text-secondary text-sm mt-1">Leader dashboard metrics</p>
-
-      </div>
+    <ChoirInsightsShell
+      title="Choir Analytics"
+      subtitle="Participation, health, and rankings for your choir."
+    >
+    <div className="space-y-6">
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {!isLoading && (
@@ -393,7 +389,7 @@ export default function AnalyticsPage() {
 
                       </div>
 
-                      <span className="font-display font-bold text-xl text-primary-600">{r.score ?? 0}</span>
+                      <span className="font-display font-bold text-xl text-gold-700">{r.score ?? 0}</span>
 
                     </Link>
 
@@ -412,8 +408,7 @@ export default function AnalyticsPage() {
       </div>
 
     </div>
-
+    </ChoirInsightsShell>
   )
-
 }
 

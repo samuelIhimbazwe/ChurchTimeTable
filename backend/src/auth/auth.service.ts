@@ -112,7 +112,7 @@ export class AuthService {
               phone: dto.phone.trim(),
               nationalId: dto.nationalId.trim(),
               ministry: 'BOTH',
-              status: MemberStatus.NEW_MEMBER,
+              status: MemberStatus.ACTIVE,
               onboardingCompleted: false,
               memberNumber,
               profile: {

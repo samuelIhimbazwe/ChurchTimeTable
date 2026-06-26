@@ -127,9 +127,7 @@ export function OfficeShellFrame({
                 aria-current={item.active ? 'page' : undefined}
                 className={cn(
                   'shrink-0 px-3 sm:px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors whitespace-nowrap',
-                  item.active
-                    ? 'bg-primary-700 text-white shadow-sm'
-                    : 'text-text-primary bg-surface-raised border border-border hover:border-primary-300 hover:bg-primary-50',
+                  item.active ? theme.navActive : theme.navInactive,
                 )}
               >
                 {item.label}
@@ -137,7 +135,11 @@ export function OfficeShellFrame({
                   <span
                     className={cn(
                       'ml-1.5 inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-bold',
-                      item.active ? 'bg-white/20 text-white' : 'bg-warning text-white',
+                      item.active
+                        ? themeKey === 'operations'
+                          ? 'bg-primary-950/15 text-primary-950'
+                          : 'bg-white/20 text-white'
+                        : 'bg-warning text-white',
                     )}
                   >
                     {item.badge > 99 ? '99+' : item.badge}

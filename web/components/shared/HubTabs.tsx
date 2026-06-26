@@ -14,13 +14,13 @@ export function HubTabs({ tabs, active, onChange }: Props) {
   const { tr } = useTranslations()
 
   return (
-    <div className="flex gap-2 border-b border-border pb-3 overflow-x-auto -mx-1 px-1 scrollbar-none">
+    <div className="scroll-strip gap-2 border-b border-border pb-3 -mx-1 px-1">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           type="button"
           onClick={() => onChange(tab.id)}
-          className={`px-3 py-1.5 text-sm font-semibold rounded-lg transition-colors shrink-0 ${
+          className={`px-3 py-2 min-h-[2.75rem] text-sm font-semibold rounded-lg transition-colors shrink-0 touch-target ${
             active === tab.id
               ? 'bg-primary-700 text-white'
               : 'text-text-secondary hover:bg-surface-raised'

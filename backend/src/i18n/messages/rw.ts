@@ -145,6 +145,9 @@ export const rwMessages: Record<string, string> = {
   NOTIFICATION_DUES_BODY: 'Asigaye: {amount}',
 
   INVALID_CREDENTIALS: 'Imeri cyangwa ijambo banga siyo.',
+
+  PASSWORD_RESET_TOKEN_INVALID:
+    'Ihuza ryo gusubiramo ijambo banga si ryo cyangwa ryarangiye. Saba indi.',
   INVALID_SESSION: 'Session yawe yarangiye. Ongera winjire.',
   EMAIL_ALREADY_REGISTERED: 'Iyi imeri isanzwe yanditswe.',
   ACCOUNT_INACTIVE: 'Konti yawe ntabwo ikora. Vugana n\'umuyobozi w\'umurimo.',

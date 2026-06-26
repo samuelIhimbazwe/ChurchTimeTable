@@ -10,6 +10,7 @@ import { Heart } from 'lucide-react'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { WelfareCasesWorkspace } from '@/components/choir/welfare/WelfareCasesWorkspace'
 import { WelfareCreateWizard } from '@/components/choir/welfare/WelfareCreateWizard'
+import { ChoirInsightsShell } from '@/components/choir/ChoirInsightsShell'
 
 type StatusFilter = 'all' | 'active' | 'OPEN' | 'IN_PROGRESS' | 'RESOLVED'
 
@@ -49,19 +50,17 @@ export default function WelfarePage() {
         </div>
       }
     >
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h2 className="font-display text-3xl text-text-primary">Welfare Cases</h2>
-          <p className="text-text-secondary text-sm mt-1">
-            {active.length} active · table, board, or full care desk queue
-          </p>
-        </div>
+    <ChoirInsightsShell
+      title="Welfare Cases"
+      subtitle={`${active.length} active · table, board, or full care desk queue`}
+    >
+    <div className="space-y-6">
+      <div className="flex justify-end responsive-actions">
         <CapabilityGate uiCapability="welfare-manage">
           <button
             type="button"
             onClick={() => setShowCreate((v) => !v)}
-            className="px-4 py-2 text-sm font-semibold bg-gold-500 text-primary-900 rounded-lg hover:bg-gold-400 transition-colors"
+            className="px-4 py-2 text-sm font-semibold bg-gold-600 text-primary-950 rounded-lg hover:bg-gold-500 transition-colors"
           >
             + New Case
           </button>
@@ -96,6 +95,7 @@ export default function WelfarePage() {
         />
       )}
     </div>
+    </ChoirInsightsShell>
     </CapabilityGate>
   )
 }

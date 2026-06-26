@@ -42,7 +42,7 @@ export default function CareDeskPage() {
         ← Back to care command
       </Link>
       {breaches > 0 && (
-        <div className="mb-4 rounded-xl border border-amber-300/40 bg-amber-50/50 dark:bg-amber-950/20 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
+        <div className="mb-4 rounded-xl border border-warning/30 bg-warning-light px-4 py-3 text-sm text-warning">
           {breaches} case{breaches === 1 ? '' : 's'} past SLA — prioritize triage today.
         </div>
       )}

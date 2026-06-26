@@ -46,6 +46,18 @@
     --color-accent-protocol-soft: rgba(8, 145, 178, 0.08);
     --color-accent-leader-soft: rgba(184, 134, 11, 0.1);
 
+    /* === CHART / DATA VIZ (choir analytics, finance, health) === */
+    --color-chart-1: var(--color-primary-600);
+    --color-chart-2: var(--color-gold-500);
+    --color-chart-3: var(--color-success);
+    --color-chart-4: var(--color-info);
+    --color-chart-5: var(--color-warning);
+    --color-chart-6: var(--color-primary-400);
+    --color-chart-grid: var(--color-border);
+    --color-chart-axis: var(--color-text-muted);
+    --color-chart-tooltip-bg: var(--color-surface);
+    --color-chart-tooltip-border: var(--color-border);
+
     /* === SURFACES === */
     --color-surface:         #FFFFFF;
     --color-surface-raised:  #F8F9FC;
@@ -368,6 +380,15 @@
     padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   }
 
+  /* Fixed panels/dropdowns below the top bar (includes notch safe area) */
+  .top-below-topbar {
+    top: calc(4rem + env(safe-area-inset-top, 0px));
+  }
+
+  .max-h-below-topbar {
+    max-height: calc(100dvh - 5rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  }
+
   /* Horizontal scroll tabs / nav strips */
   .scroll-strip {
     display: flex;
@@ -481,6 +502,13 @@
   main h3 {
     overflow-wrap: anywhere;
     word-break: break-word;
+  }
+
+  /* Touch-friendly form controls on phones */
+  main select,
+  main input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
+  main textarea {
+    min-height: 2.75rem;
   }
 
   /* Modal / card padding on phones */

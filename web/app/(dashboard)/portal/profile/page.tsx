@@ -71,11 +71,11 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
-      <h2 className="font-display text-3xl text-text-primary">My Profile</h2>
+      <h2 className="font-display page-heading text-text-primary">My Profile</h2>
 
       {/* Avatar + summary */}
       <Card padding="md">
-        <div className="flex items-center gap-6 pb-6 mb-6 border-b border-border">
+        <div className="flex flex-col xs:flex-row items-center xs:items-start gap-4 sm:gap-6 pb-6 mb-6 border-b border-border text-center xs:text-left">
           <div className="relative">
             <Avatar name={user?.name ?? 'U'} size="xl" />
             <button
@@ -102,7 +102,7 @@ export default function ProfilePage() {
 
         {/* Participation score */}
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-1 xs:grid-cols-2 gap-4 mb-6">
             <SkeletonStatTile />
             <SkeletonStatTile />
           </div>
@@ -111,7 +111,7 @@ export default function ProfilePage() {
             <p className="text-sm font-semibold text-text-primary flex items-center gap-2">
               <Star size={15} className="text-gold-600" /> Participation Score
             </p>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 xs:grid-cols-2 gap-4">
               <StatTile
                 label="Score"
                 value={Math.round(Number(attendanceScore.weightedPoints ?? attendanceScore.score ?? 0))}
@@ -222,7 +222,7 @@ export default function ProfilePage() {
             <p className="text-sm font-semibold text-text-primary flex items-center gap-2 mb-3">
               <CheckCircle2 size={15} className="text-success" /> Attendance Summary
             </p>
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 text-sm">
               <div className="rounded-lg bg-surface-raised p-3">
                 <p className="text-xs text-text-muted">Rate</p>
                 <p className="font-semibold text-text-primary">
@@ -262,11 +262,11 @@ export default function ProfilePage() {
             <Input type="tel" {...form.register('phone')} />
           </FormField>
 
-          <div className="flex justify-end pt-2">
+          <div className="flex flex-col-reverse xs:flex-row xs:justify-end gap-2 pt-2">
             <button
               type="submit"
               disabled={save.isPending}
-              className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold bg-primary-700 text-white rounded-lg hover:bg-primary-800 transition-colors disabled:opacity-60"
+              className="flex items-center justify-center gap-2 w-full xs:w-auto px-5 py-2.5 text-sm font-semibold bg-primary-700 text-white rounded-lg hover:bg-primary-800 transition-colors disabled:opacity-60 min-h-[2.75rem]"
             >
               <Save size={15} />
               {save.isPending ? 'Saving…' : 'Save changes'}

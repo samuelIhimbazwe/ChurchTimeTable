@@ -2,6 +2,7 @@
 
 import { Card } from '@/components/shared'
 import { cn } from '@/lib/utils'
+import { scoreBandTailwind, scoreBarTailwind } from '@/lib/chart/colors'
 import { Activity } from 'lucide-react'
 
 type Driver = {
@@ -19,17 +20,11 @@ type Props = {
 }
 
 function scoreTone(score: number) {
-  if (score >= 80) return 'text-success'
-  if (score >= 60) return 'text-primary-600'
-  if (score >= 40) return 'text-warning'
-  return 'text-danger'
+  return scoreBandTailwind(score)
 }
 
 function scoreBar(score: number) {
-  if (score >= 80) return 'bg-success'
-  if (score >= 60) return 'bg-primary-600'
-  if (score >= 40) return 'bg-warning'
-  return 'bg-danger'
+  return scoreBarTailwind(score)
 }
 
 export function ChoirHealthScore({

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const PUBLIC_PATHS = ['/login', '/register', '/terms']
+const PUBLIC_PATHS = ['/login', '/register', '/terms', '/forgot-password', '/reset-password']
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -33,6 +33,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|login|register).*)',
+    '/((?!_next/static|_next/image|favicon.ico|login|register|forgot-password|reset-password).*)',
   ],
 }

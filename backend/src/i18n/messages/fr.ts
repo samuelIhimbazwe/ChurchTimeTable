@@ -151,6 +151,9 @@ export const frMessages: Record<string, string> = {
   NOTIFICATION_DUES_BODY: 'Solde restant : {amount}',
 
   INVALID_CREDENTIALS: 'E-mail ou mot de passe incorrect.',
+
+  PASSWORD_RESET_TOKEN_INVALID:
+    'Ce lien de réinitialisation est invalide ou expiré. Demandez-en un nouveau.',
   INVALID_SESSION: 'Votre session a expiré. Veuillez vous reconnecter.',
   EMAIL_ALREADY_REGISTERED: 'Cet e-mail est déjà enregistré.',
   ACCOUNT_INACTIVE:

@@ -51,14 +51,14 @@ export default function MembersDirectoryPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
-          <h2 className="font-display text-3xl text-text-primary">Members</h2>
+          <h2 className="font-display page-heading text-text-primary">Members</h2>
           <p className="text-text-secondary text-sm mt-1">
             {data?.total ?? '—'} members total
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 responsive-actions">
           <CapabilityGate platformUiCapability="report-export">
             <button className="flex items-center gap-2 px-3 py-2 text-sm border border-border rounded-lg hover:bg-surface-raised transition-colors text-text-secondary">
               <Download size={15} /> Export
@@ -72,8 +72,8 @@ export default function MembersDirectoryPage() {
         </div>
       </div>
 
-      <div className="flex gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-48">
+      <div className="responsive-form-row">
+        <div className="relative flex-1 min-w-0 w-full sm:min-w-48">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
           <input
             type="text"
@@ -119,30 +119,37 @@ export default function MembersDirectoryPage() {
         ) : (
           <ul className="divide-y divide-border">
             {data?.items?.map((m) => (
-              <li key={m.id} className="flex items-center gap-4 px-5 py-3 hover:bg-surface-raised transition-colors">
-                <Avatar name={m.name} size="sm" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-text-primary truncate">{m.name}</p>
-                  <p className="text-xs text-text-muted truncate">{m.email}</p>
+              <li
+                key={m.id}
+                className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-4 sm:px-5 py-3 hover:bg-surface-raised transition-colors"
+              >
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <Avatar name={m.name} size="sm" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-text-primary truncate">{m.name}</p>
+                    <p className="text-xs text-text-muted truncate">{m.email}</p>
+                  </div>
                 </div>
-                <Badge variant={MINISTRY_BADGE[m.ministry]}>{m.ministry}</Badge>
-                <Badge variant={STATUS_BADGE[m.status]}>{m.status}</Badge>
-                {m.attendanceRate != null && (
-                  <span className="text-xs text-text-muted hidden md:block w-14 text-right">
-                    {m.attendanceRate}%
-                  </span>
-                )}
-                <CapabilityGate platformUiCapability="member-manage">
-                  <select
-                    value={m.status}
-                    onChange={(e) => updateStatus.mutate({ id: m.id, status: e.target.value as MemberStatus })}
-                    className="text-xs border border-border rounded px-2 py-1 bg-surface focus:outline-none focus:ring-1 focus:ring-gold-500"
-                  >
-                    <option value="ACTIVE">Active</option>
-                    <option value="INACTIVE">Inactive</option>
-                    <option value="SUSPENDED">Suspended</option>
-                  </select>
-                </CapabilityGate>
+                <div className="flex flex-wrap items-center gap-2 pl-11 sm:pl-0">
+                  <Badge variant={MINISTRY_BADGE[m.ministry]}>{m.ministry}</Badge>
+                  <Badge variant={STATUS_BADGE[m.status]}>{m.status}</Badge>
+                  {m.attendanceRate != null && (
+                    <span className="text-xs text-text-muted sm:w-14 sm:text-right">
+                      {m.attendanceRate}%
+                    </span>
+                  )}
+                  <CapabilityGate platformUiCapability="member-manage">
+                    <select
+                      value={m.status}
+                      onChange={(e) => updateStatus.mutate({ id: m.id, status: e.target.value as MemberStatus })}
+                      className="text-xs border border-border rounded px-2 py-1.5 bg-surface focus:outline-none focus:ring-1 focus:ring-gold-500 min-h-[2.75rem] sm:min-h-0"
+                    >
+                      <option value="ACTIVE">Active</option>
+                      <option value="INACTIVE">Inactive</option>
+                      <option value="SUSPENDED">Suspended</option>
+                    </select>
+                  </CapabilityGate>
+                </div>
               </li>
             ))}
           </ul>

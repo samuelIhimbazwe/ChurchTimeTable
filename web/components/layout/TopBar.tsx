@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import {
   Bell, Search, HelpCircle, ChevronDown,
-  LogOut, User, Settings, Menu, Inbox,
+  LogOut, User, Settings, Menu, Inbox, MoreHorizontal,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores/index'
@@ -50,6 +50,7 @@ export default function TopBar({
 }: TopBarProps) {
   const collapsed = useUIStore((s) => s.sidebarCollapsed)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [overflowOpen, setOverflowOpen] = useState(false)
   const { tr } = useTranslations()
   const pathname = usePathname()
   const showTopBarBack =
@@ -116,7 +117,7 @@ export default function TopBar({
           <Search size={18} />
         </button>
 
-        <AppearanceControls compact className="hidden xs:flex" />
+        <AppearanceControls compact className="hidden sm:flex" />
 
         {onAttentionClick && (
           <button
@@ -124,7 +125,7 @@ export default function TopBar({
             aria-label={`Attention inbox${attentionCount ? `, ${attentionCount} items` : ''}`}
             aria-expanded={attentionOpen}
             className={cn(
-              'relative p-2 rounded-md transition-colors duration-fast',
+              'relative hidden sm:flex p-2 rounded-md transition-colors duration-fast touch-target',
               attentionOpen
                 ? 'bg-surface-overlay text-text-primary'
                 : 'text-text-muted hover:text-text-primary hover:bg-surface-raised',
@@ -144,7 +145,7 @@ export default function TopBar({
           aria-label="Help and support"
           aria-expanded={helpOpen}
           className={cn(
-            'p-2 rounded-md transition-colors duration-fast',
+            'hidden sm:flex p-2 rounded-md transition-colors duration-fast touch-target',
             helpOpen
               ? 'bg-surface-overlay text-text-primary'
               : 'text-text-muted hover:text-text-primary hover:bg-surface-raised',
@@ -153,11 +154,56 @@ export default function TopBar({
           <HelpCircle size={18} />
         </button>
 
+        <div className="relative sm:hidden">
+          <button
+            type="button"
+            onClick={() => setOverflowOpen((v) => !v)}
+            aria-label="More actions"
+            aria-expanded={overflowOpen}
+            className="p-2 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors touch-target"
+          >
+            <MoreHorizontal size={18} />
+          </button>
+          {overflowOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setOverflowOpen(false)} />
+              <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-surface rounded-lg border border-border shadow-overlay py-1 animate-page-enter">
+                {onAttentionClick && (
+                  <button
+                    type="button"
+                    onClick={() => { setOverflowOpen(false); onAttentionClick() }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:bg-surface-raised hover:text-text-primary transition-colors"
+                  >
+                    <Inbox size={15} />
+                    {tr('Attention')}
+                    {attentionCount > 0 && (
+                      <span className="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-warning text-white text-[10px] font-semibold flex items-center justify-center">
+                        {attentionCount > 9 ? '9+' : attentionCount}
+                      </span>
+                    )}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => { setOverflowOpen(false); onHelpClick?.() }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:bg-surface-raised hover:text-text-primary transition-colors"
+                >
+                  <HelpCircle size={15} />
+                  {tr('Help')}
+                </button>
+                <div className="px-4 py-2 border-t border-border">
+                  <AppearanceControls compact />
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
         <button
           onClick={onNotifClick}
           aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ''}`}
           className={cn(
-            'relative p-2 rounded-md transition-colors duration-fast',
+            'relative p-2 rounded-md transition-colors duration-fast touch-target',
             notifOpen
               ? 'bg-surface-overlay text-text-primary'
               : 'text-text-muted hover:text-text-primary hover:bg-surface-raised',

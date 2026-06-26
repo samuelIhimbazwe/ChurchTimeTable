@@ -201,7 +201,7 @@ export function PresidentDecisionConsole({
             </Badge>
           </div>
           {actingForPresident && (
-            <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 mt-2">
+            <p className="text-xs font-semibold text-warning mt-2">
               Acting for president
             </p>
           )}

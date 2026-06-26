@@ -21,7 +21,7 @@ export function ChoirSodWarningsPanel({ warnings }: Props) {
                 warning.severity === 'high'
                   ? 'font-semibold text-danger'
                   : warning.severity === 'medium'
-                    ? 'font-semibold text-amber-700 dark:text-amber-300'
+                    ? 'font-semibold text-warning'
                     : 'font-medium text-text-primary'
               }
             >

@@ -59,13 +59,28 @@ type AuthUiStrings = {
   connectionError: string
   emailPlaceholder: string
   contactAdmin: string
+  forgotPasswordTitle: string
+  forgotPasswordSubtitle: string
+  sendResetLink: string
+  sendingResetLink: string
+  forgotPasswordSuccess: string
+  forgotPasswordDevHint: string
+  backToSignIn: string
+  resetPasswordTitle: string
+  resetPasswordSubtitle: string
+  newPassword: string
+  resetPasswordAction: string
+  resettingPassword: string
+  resetPasswordSuccess: string
+  resetPasswordInvalid: string
+  resetPasswordMissingToken: string
 }
 
 export const authUi: Record<AppLocale, AuthUiStrings> = {
   en: {
     registerTitle: 'Create your account',
     registerSubtitle:
-      'Register for church membership. A leader will approve your access to ministries.',
+      'Create your church account. You can explore the portal right away; choir and protocol access require separate approval.',
     signInTitle: 'Sign in to your account',
     signInSubtitle: 'Enter your credentials to access the system.',
     firstName: 'First name *',
@@ -81,7 +96,7 @@ export const authUi: Record<AppLocale, AuthUiStrings> = {
     notes: 'Anything else we should know?',
     notesPlaceholder: 'Optional',
     approvalNote:
-      'After you register, church leaders will review your account before full ministry access is granted.',
+      'Choir and protocol membership are approved separately after you submit a join request or invitation.',
     createAccount: 'Create account',
     creatingAccount: 'Creating account…',
     alreadyHaveAccount: 'Already have an account?',
@@ -111,6 +126,23 @@ export const authUi: Record<AppLocale, AuthUiStrings> = {
     connectionError: 'Unable to reach the server. Please check your connection.',
     emailPlaceholder: 'you@church.local',
     contactAdmin: "Don't have an account? Contact your church administrator.",
+    forgotPasswordTitle: 'Reset your password',
+    forgotPasswordSubtitle:
+      'Enter your email and we will send instructions to reset your password.',
+    sendResetLink: 'Send reset link',
+    sendingResetLink: 'Sending…',
+    forgotPasswordSuccess:
+      'If an account exists for that email, reset instructions have been sent. Check your inbox.',
+    forgotPasswordDevHint: 'Development reset link:',
+    backToSignIn: 'Back to sign in',
+    resetPasswordTitle: 'Choose a new password',
+    resetPasswordSubtitle: 'Enter a new password for your account.',
+    newPassword: 'New password',
+    resetPasswordAction: 'Update password',
+    resettingPassword: 'Updating…',
+    resetPasswordSuccess: 'Your password has been updated. You can sign in now.',
+    resetPasswordInvalid: 'This reset link is invalid or has expired.',
+    resetPasswordMissingToken: 'No reset token was provided. Request a new link.',
   },
   fr: {
     registerTitle: 'Créer votre compte',
@@ -160,6 +192,23 @@ export const authUi: Record<AppLocale, AuthUiStrings> = {
     connectionError: 'Impossible de joindre le serveur. Vérifiez votre connexion.',
     emailPlaceholder: 'vous@eglise.local',
     contactAdmin: 'Pas de compte ? Contactez l’administrateur de votre église.',
+    forgotPasswordTitle: 'Réinitialiser le mot de passe',
+    forgotPasswordSubtitle:
+      'Entrez votre e-mail et nous vous enverrons les instructions.',
+    sendResetLink: 'Envoyer le lien',
+    sendingResetLink: 'Envoi…',
+    forgotPasswordSuccess:
+      'Si un compte existe pour cet e-mail, les instructions ont été envoyées.',
+    forgotPasswordDevHint: 'Lien de développement :',
+    backToSignIn: 'Retour à la connexion',
+    resetPasswordTitle: 'Nouveau mot de passe',
+    resetPasswordSubtitle: 'Choisissez un nouveau mot de passe.',
+    newPassword: 'Nouveau mot de passe',
+    resetPasswordAction: 'Mettre à jour',
+    resettingPassword: 'Mise à jour…',
+    resetPasswordSuccess: 'Mot de passe mis à jour. Vous pouvez vous connecter.',
+    resetPasswordInvalid: 'Ce lien est invalide ou expiré.',
+    resetPasswordMissingToken: 'Aucun jeton de réinitialisation. Demandez un nouveau lien.',
   },
   rw: {
     registerTitle: 'Fungura konti yawe',
@@ -208,6 +257,23 @@ export const authUi: Record<AppLocale, AuthUiStrings> = {
     connectionError: 'Seriveri ntishobora kugerwaho. Reba umurongo wawe.',
     emailPlaceholder: 'wowe@itorero.local',
     contactAdmin: 'Nta konti ? Vugana n’umuyobozi w’itorero.',
+    forgotPasswordTitle: 'Subiramo ijambo ry’ibanga',
+    forgotPasswordSubtitle:
+      'Andika email yawe tuzohereze uburyo bwo gusubiramo ijambo ry’ibanga.',
+    sendResetLink: 'Ohereza ihuza',
+    sendingResetLink: 'Kohereza…',
+    forgotPasswordSuccess:
+      'Niba hari konti kuri iyo email, ubutumwa bwoherejwe. Reba inbox yawe.',
+    forgotPasswordDevHint: 'Ihuza ryo mu iterambere:',
+    backToSignIn: 'Subira ku kwinjira',
+    resetPasswordTitle: 'Shyiraho ijambo ry’ibanga rishya',
+    resetPasswordSubtitle: 'Andika ijambo ry’ibanga rishya kuri konti yawe.',
+    newPassword: 'Ijambo ry’ibanga rishya',
+    resetPasswordAction: 'Hindura ijambo ry’ibanga',
+    resettingPassword: 'Guhindura…',
+    resetPasswordSuccess: 'Ijambo ry’ibanga ryahinduwe. Ushobora kwinjira ubu.',
+    resetPasswordInvalid: 'Ihuza si ryo cyangwa ryarangiye.',
+    resetPasswordMissingToken: 'Nta token yo gusubiramo. Saba ihuza rishya.',
   },
 }
 

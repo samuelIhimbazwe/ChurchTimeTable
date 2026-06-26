@@ -13,9 +13,12 @@ import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
+import { PasswordResetService } from './password-reset.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RefreshDto } from './dto/refresh.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import {
   CurrentUser,
@@ -26,6 +29,7 @@ import { REFRESH_COOKIE_NAME } from './auth.constants';
 export class AuthController {
   constructor(
     private authService: AuthService,
+    private passwordReset: PasswordResetService,
     private config: ConfigService,
   ) {}
 
@@ -75,6 +79,18 @@ export class AuthController {
     await this.authService.logout(refreshToken);
     res.clearCookie(REFRESH_COOKIE_NAME, this.cookieOptions());
     return { loggedOut: true };
+  }
+
+  @Post('forgot-password')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.passwordReset.requestReset(dto.email);
+  }
+
+  @Post('reset-password')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.passwordReset.resetPassword(dto.token, dto.password);
   }
 
   @Get('me')

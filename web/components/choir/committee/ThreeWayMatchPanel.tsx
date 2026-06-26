@@ -49,7 +49,7 @@ export function ThreeWayMatchPanel({ claim }: Props) {
         />
       </div>
       {hasDiscrepancy && claim.discrepancyReason && (
-        <p className="text-xs text-amber-700 dark:text-amber-300 mt-3">
+        <p className="text-xs text-warning mt-3">
           Family noted: {claim.discrepancyReason}
         </p>
       )}
