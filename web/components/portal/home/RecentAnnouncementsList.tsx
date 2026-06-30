@@ -7,6 +7,7 @@ import {
 } from '@/components/shared'
 import { formatDate } from '@/lib/utils/format'
 import { useTranslations } from '@/lib/i18n'
+import { cn } from '@/lib/utils'
 
 export type PortalAnnouncement = {
   id: string
@@ -52,7 +53,7 @@ export function RecentAnnouncementsList({
       ) : (
         <ul className="divide-y divide-border flex-1">
           {items.map((a) => {
-            const href = itemHref?.(a)
+            const href = itemHref?.(a) ?? allHref
             const row = (
               <>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -69,14 +70,17 @@ export function RecentAnnouncementsList({
               </>
             )
             return (
-              <li key={`${a.source}-${a.id}`} className={compact ? 'px-4 py-3' : 'px-5 py-4'}>
-                {href ? (
-                  <Link href={href} className="block hover:text-primary-600 transition-colors">
-                    {row}
-                  </Link>
-                ) : (
-                  row
-                )}
+              <li key={`${a.source}-${a.id}`} className={compact ? '' : ''}>
+                <Link
+                  href={href}
+                  className={cn(
+                    'interactive-link block',
+                    compact ? 'px-4 py-3' : 'px-5 py-4',
+                    'hover:text-primary-600',
+                  )}
+                >
+                  {row}
+                </Link>
               </li>
             )
           })}

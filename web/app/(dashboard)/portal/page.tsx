@@ -31,6 +31,12 @@ import {
   resolveChoirPortalActions,
 } from '@/lib/choir/membership-display'
 import { useChoirAccess } from '@/lib/hooks/useChoirAccess'
+import { clearWelcomeDeferral, isWelcomeDeferred } from '@/lib/tour/storage'
+import { useTourStore } from '@/stores/tour'
+import { tourUi } from '@/lib/tour/tour-ui'
+import { isAppLocale } from '@/lib/i18n/auth-ui'
+import { useUIStore, useAuthStore } from '@/stores'
+import { resolveTourPersona } from '@/lib/tour/personas'
 import { ChoirDashboardEntryButton } from '@/components/choir/ChoirDashboardEntryButton'
 import { ProtocolDashboardEntryButton } from '@/components/protocol/ProtocolDashboardEntryButton'
 import { ProtocolMyInvitationsCard } from '@/components/protocol/ProtocolMyInvitationsCard'
@@ -122,6 +128,11 @@ export default function MemberPortalPage() {
   const [joinRequestType, setJoinRequestType] = useState('PERMANENT_MEMBER')
   const [dismissedOnboarding, setDismissedOnboarding] = useState(false)
   const [showPrayerForm, setShowPrayerForm] = useState(false)
+  const startTour = useTourStore((s) => s.startTour)
+  const storedLocale = useUIStore((s) => s.locale)
+  const tourLocale = isAppLocale(storedLocale) ? storedLocale : 'en'
+  const tourStrings = tourUi[tourLocale]
+  const authUser = useAuthStore((s) => s.user)
 
   const joinChoir = useMutation({
     mutationFn: ({
@@ -170,6 +181,8 @@ export default function MemberPortalPage() {
     mutationFn: () => authApi.completeOnboarding(),
     onSuccess: () => {
       setDismissedOnboarding(true)
+      clearWelcomeDeferral()
+      useAuthStore.getState().setOnboardingComplete(true)
       qc.invalidateQueries({ queryKey: ['member-portal'] })
       qc.invalidateQueries({ queryKey: ['auth'] })
     },
@@ -219,7 +232,7 @@ export default function MemberPortalPage() {
   const visibleChoirs = filterVisiblePortalChoirs(activeChoirMemberships, choirs)
   const previewChoirs = visibleChoirs.slice(0, 5)
   const mapInfo = mapPreviewUrl(location)
-  const showOnboarding = onboarding.showPrompt && !dismissedOnboarding
+  const showTourResume = onboarding.showPrompt && isWelcomeDeferred() && !dismissedOnboarding
   const verse = spiritual.verseOfDay
   const primaryChoirId = activeChoirMemberships[0]?.id
   const ministryMemberCount = ministries.filter((m) => m.isMember).length
@@ -229,6 +242,7 @@ export default function MemberPortalPage() {
   return (
     <div className="space-y-8 max-w-5xl mx-auto pb-8">
 
+      <div data-tour="portal-hero">
       <RoleHeroBand
         accent="member"
         churchName={welcome.churchName}
@@ -248,6 +262,7 @@ export default function MemberPortalPage() {
         />
         <PortalVerseGlance verse={verse} />
       </RoleHeroBand>
+      </div>
 
       {welcome.pendingApproval && (
         <Card accent="warning" padding="md">
@@ -299,6 +314,7 @@ export default function MemberPortalPage() {
       )}
 
       <div
+        data-tour="portal-participation"
         className={
           participation
             ? 'grid lg:grid-cols-2 gap-6 items-start'
@@ -324,41 +340,49 @@ export default function MemberPortalPage() {
         </div>
       </div>
 
-      {showOnboarding && (
+      {showTourResume && (
         <Card accent="gold" padding="md">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Sparkles size={18} className="text-gold-700" />
-                <p className="font-semibold text-text-primary">Welcome to our church family</p>
+                <p className="font-semibold text-text-primary">{tourStrings.welcomeTitle}</p>
               </div>
               <p className="text-sm text-text-secondary">
-                Browse services, ministries, and ways to serve. When you are ready,
-                request to join a choir or claim protocol membership if you already serve.
+                {tourStrings.welcomeBody}
               </p>
               <div className="flex flex-wrap gap-2 pt-1">
                 <button
-                  onClick={() => completeOnboarding.mutate()}
-                  disabled={completeOnboarding.isPending}
+                  type="button"
+                  onClick={() => {
+                    if (!authUser) return
+                    clearWelcomeDeferral()
+                    startTour(
+                      resolveTourPersona(authUser.role, authUser.permissions),
+                    )
+                  }}
                   className="px-3 py-1.5 text-xs font-semibold bg-gold-500 text-primary-900 rounded-lg hover:bg-gold-400"
                 >
-                  Got it
+                  {tourStrings.startTour}
                 </button>
                 <button
-                  onClick={() => setDismissedOnboarding(true)}
+                  type="button"
+                  onClick={() => completeOnboarding.mutate()}
+                  disabled={completeOnboarding.isPending}
                   className="px-3 py-1.5 text-xs font-semibold border border-border rounded-lg hover:bg-surface-raised"
                 >
-                  Remind me later
+                  {tourStrings.skipTour}
                 </button>
               </div>
             </div>
             <button
+              type="button"
               onClick={() => setDismissedOnboarding(true)}
               className="text-text-muted hover:text-text-primary"
-              aria-label="Dismiss"
+              aria-label={tr('Close')}
             >
               <X size={16} />
-              </button>
+            </button>
           </div>
         </Card>
       )}
@@ -436,11 +460,16 @@ export default function MemberPortalPage() {
           ) : (
             <ul className="divide-y divide-border">
               {events.slice(0, 5).map((e) => (
-                <li key={e.id} className="px-5 py-3">
-                  <p className="text-sm font-medium text-text-primary">{e.title}</p>
-                  <p className="text-xs text-text-muted mt-0.5">
-                    {formatDate(e.startAt)} · {formatTime(e.startAt)}
-                  </p>
+                <li key={e.id}>
+                  <Link
+                    href="/events"
+                    className="interactive-link block px-5 py-3"
+                  >
+                    <p className="text-sm font-medium text-text-primary">{e.title}</p>
+                    <p className="text-xs text-text-muted mt-0.5">
+                      {formatDate(e.startAt)} · {formatTime(e.startAt)}
+                    </p>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -472,7 +501,7 @@ export default function MemberPortalPage() {
                 <li key={a.id}>
                   <Link
                     href="/portal/activities"
-                    className="block px-5 py-3 hover:bg-surface-raised transition-colors"
+                    className="interactive-link block px-5 py-3"
                   >
                     <p className="text-sm font-medium text-text-primary">{a.title}</p>
                     <p className="text-xs text-text-muted mt-0.5">
@@ -509,7 +538,7 @@ export default function MemberPortalPage() {
           {ministries.length === 0 ? (
             <EmptyState icon={Building2} title="No ministries listed yet" className="col-span-full py-8" />
           ) : ministries.map((m) => (
-            <Card key={m.id} padding="md">
+            <Card key={m.id} padding="md" href="/portal/ministries">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-lg bg-surface-overlay flex items-center justify-center shrink-0">
                   <Building2 size={18} className="text-primary-600" />
@@ -533,7 +562,7 @@ export default function MemberPortalPage() {
 
       {/* Choirs + Protocol */}
       <div className="grid lg:grid-cols-2 gap-6">
-        <Card padding="md">
+        <Card padding="md" data-tour="portal-choir-entry">
           <CardHeader className="p-0 mb-4">
             <CardTitle className="flex items-center gap-2">
               <Music size={18} /> Choirs
@@ -621,7 +650,7 @@ export default function MemberPortalPage() {
           )}
         </Card>
 
-        <Card padding="md">
+        <Card padding="md" data-tour="portal-protocol">
           <CardHeader className="p-0 mb-4">
             <CardTitle className="flex items-center gap-2">
               <Shield size={18} /> Protocol

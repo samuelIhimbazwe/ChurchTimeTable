@@ -39,40 +39,53 @@ export default function Card({
   onClick,
   id,
 }: CardProps) {
-  const interactive = !!href || !!onClick
-
-  const body = (
-    <div
-      id={id}
-      role={onClick && !href ? 'button' : undefined}
-      tabIndex={onClick && !href ? 0 : undefined}
-      onKeyDown={onClick && !href ? (e) => e.key === 'Enter' && onClick() : undefined}
-      onClick={href ? undefined : onClick}
-      className={cn(
-        'bg-surface rounded-lg border border-border',
-        elevated ? 'shadow-raised' : 'shadow-card',
-        accent && ACCENT_CLASSES[accent],
-        PADDING_CLASSES[padding],
-        interactive && 'cursor-pointer hover:shadow-raised hover:-translate-y-0.5 transition-all duration-fast',
-        className,
-      )}
-    >
-      {children}
-    </div>
+  const surfaceClass = cn(
+    'bg-surface rounded-lg border border-border',
+    elevated ? 'shadow-raised' : 'shadow-card',
+    accent && ACCENT_CLASSES[accent],
+    PADDING_CLASSES[padding],
+    className,
   )
 
   if (href) {
     return (
       <Link
         href={href}
-        className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+        id={id}
+        className={cn(
+          surfaceClass,
+          'block cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
+          'hover:shadow-raised hover:-translate-y-0.5 transition-all duration-fast',
+        )}
       >
-        {body}
+        {children}
       </Link>
     )
   }
 
-  return body
+  if (onClick) {
+    return (
+      <div
+        id={id}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => e.key === 'Enter' && onClick()}
+        onClick={onClick}
+        className={cn(
+          surfaceClass,
+          'cursor-pointer hover:shadow-raised hover:-translate-y-0.5 transition-all duration-fast',
+        )}
+      >
+        {children}
+      </div>
+    )
+  }
+
+  return (
+    <div id={id} className={surfaceClass}>
+      {children}
+    </div>
+  )
 }
 
 export function CardHeader({

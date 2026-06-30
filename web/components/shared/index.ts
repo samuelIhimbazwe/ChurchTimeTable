@@ -22,6 +22,8 @@ export type { BreadcrumbItem } from './PageBreadcrumbs'
 export { SheetModal } from './SheetModal'
 export { FormField, Input, Select, Textarea, FormWizard } from './form'
 export { TableScroll, ResponsiveDataView } from './TableScroll'
+export { InteractiveListLink } from './InteractiveListLink'
+export { stopRowClickProps } from '@/lib/clickability'
 export {
   DataTable,
   DataTableSearch,

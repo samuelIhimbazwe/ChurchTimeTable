@@ -78,6 +78,7 @@ export default function TopBar({
         <button
           onClick={onMenuClick}
           aria-label="Open menu"
+          data-tour="nav-sidebar"
           className="lg:hidden p-2 -ml-1 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors shrink-0 touch-target"
         >
           <Menu size={20} />
@@ -95,6 +96,7 @@ export default function TopBar({
         <button
           onClick={onSearchClick}
           aria-label="Open search"
+          data-tour="topbar-search"
           className={cn(
             'hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-md',
             'bg-surface-raised border border-border',
@@ -112,6 +114,7 @@ export default function TopBar({
         <button
           onClick={onSearchClick}
           aria-label="Search"
+          data-tour="topbar-search"
           className="sm:hidden p-2 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors"
         >
           <Search size={18} />
@@ -124,6 +127,7 @@ export default function TopBar({
             onClick={onAttentionClick}
             aria-label={`Attention inbox${attentionCount ? `, ${attentionCount} items` : ''}`}
             aria-expanded={attentionOpen}
+            data-tour="topbar-attention"
             className={cn(
               'relative hidden sm:flex p-2 rounded-md transition-colors duration-fast touch-target',
               attentionOpen
@@ -144,6 +148,7 @@ export default function TopBar({
           onClick={onHelpClick}
           aria-label="Help and support"
           aria-expanded={helpOpen}
+          data-tour="topbar-help"
           className={cn(
             'hidden sm:flex p-2 rounded-md transition-colors duration-fast touch-target',
             helpOpen
@@ -202,6 +207,7 @@ export default function TopBar({
         <button
           onClick={onNotifClick}
           aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ''}`}
+          data-tour="topbar-notifications"
           className={cn(
             'relative p-2 rounded-md transition-colors duration-fast touch-target',
             notifOpen

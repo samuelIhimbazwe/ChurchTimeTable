@@ -89,7 +89,11 @@ export function PortalMyWeekCard({ isDualMember, thisWeek, conflicts }: Props) {
         ) : (
           <ul className="divide-y divide-border">
             {thisWeek.map((item) => (
-              <li key={item.id} className="flex items-start gap-3 px-5 py-3">
+              <li key={item.id}>
+                <Link
+                  href="/portal/schedule"
+                  className="interactive-link flex items-start gap-3 px-5 py-3"
+                >
                 {item.ministry === 'CHOIR' ? (
                   <Music size={16} className="text-primary-600 shrink-0 mt-0.5" />
                 ) : (
@@ -108,6 +112,7 @@ export function PortalMyWeekCard({ isDualMember, thisWeek, conflicts }: Props) {
                     {item.subtitle ? ` · ${item.subtitle}` : ''}
                   </p>
                 </div>
+                </Link>
               </li>
             ))}
           </ul>

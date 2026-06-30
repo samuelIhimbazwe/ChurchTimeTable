@@ -69,6 +69,7 @@ interface User {
   email: string
   role: string
   permissions: string[]
+  onboardingComplete?: boolean
 }
 
 interface AuthStore {
@@ -76,6 +77,7 @@ interface AuthStore {
   isAuthenticated: boolean
   login: (user: User) => void
   logout: () => void
+  setOnboardingComplete: (complete: boolean) => void
   hasPermission: (permission: string) => boolean
   hasAnyPermission: (permissions: string[]) => boolean
 }
@@ -85,6 +87,12 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
   isAuthenticated: false,
   login: (user) => set({ user, isAuthenticated: true }),
   logout: () => set({ user: null, isAuthenticated: false }),
+  setOnboardingComplete: (complete) =>
+    set((s) =>
+      s.user
+        ? { user: { ...s.user, onboardingComplete: complete } }
+        : {},
+    ),
   hasPermission: (permission) =>
     get().user?.permissions.includes(permission) ?? false,
   hasAnyPermission: (permissions) =>

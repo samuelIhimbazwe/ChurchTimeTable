@@ -12,7 +12,14 @@ After approval, members land on `/dashboard/member` (not choir/protocol dashboar
 
 ## First login
 
-`FirstLoginWelcome` modal on first approved login with skip option. Completes via `PATCH /auth/onboarding-complete`.
+After the first approved login, a **welcome modal** invites users to start a short **interactive guided tour**. The tour highlights key UI areas (portal home, quick actions, navigation, search, notifications, help) with role-specific copy for members, choir leaders, treasurers, and protocol coordinators.
+
+- **Start tour** — step-by-step spotlight walkthrough on the live interface
+- **Remind me later** — defers until next session; a resume card appears on the portal
+- **Skip for now** — marks onboarding complete via `PATCH /auth/onboarding-complete`
+- **Replay** — Help menu (? or Help icon) → **Replay product tour**
+
+Tour definitions live in `web/lib/tour/` (steps, personas, copy). Targets use `data-tour` attributes on shell and portal components.
 
 ## Registration vs ministry approval
 

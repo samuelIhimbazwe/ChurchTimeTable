@@ -88,8 +88,11 @@ export default function ProtocolMemberHomePage() {
           ) : (
             <ul className="divide-y divide-border">
               {occurrences?.items?.map((o) => (
-                <li key={o.id} className="hover:bg-surface-raised transition-colors">
-                  <Link href={`/protocol/teams/${o.id}`} className="flex items-center gap-4 px-5 py-3">
+                <li key={o.id}>
+                  <Link
+                    href={`/protocol/teams/${o.id}`}
+                    className="interactive-link flex items-center gap-4 px-5 py-3"
+                  >
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-text-primary truncate">{o.title}</p>
                       <p className="text-xs text-text-muted">

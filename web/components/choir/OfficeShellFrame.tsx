@@ -126,7 +126,7 @@ export function OfficeShellFrame({
                 href={item.href}
                 aria-current={item.active ? 'page' : undefined}
                 className={cn(
-                  'shrink-0 px-3 sm:px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors whitespace-nowrap',
+                  'interactive-tile shrink-0 px-3 sm:px-3.5 py-2 min-h-[2.75rem] text-xs sm:text-sm font-semibold rounded-lg whitespace-nowrap',
                   item.active ? theme.navActive : theme.navInactive,
                 )}
               >

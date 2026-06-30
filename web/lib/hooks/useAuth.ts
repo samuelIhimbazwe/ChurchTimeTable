@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { authApi, setAccessToken, LoginPayload, RegisterPayload } from '../api'
 import { useAuthStore } from '@/stores'
+import { clearWelcomeDeferral } from '@/lib/tour/storage'
 
 export function useAuth() {
   const { isAuthenticated, user } = useAuthStore()
@@ -19,6 +20,7 @@ export function useAuth() {
         email:       user.email,
         role:        user.role,
         permissions: user.permissions,
+        onboardingComplete: user.onboardingComplete,
       })
       return user
     },
@@ -45,6 +47,7 @@ export function useLogin() {
         email:       data.user.email,
         role:        data.user.role,
         permissions: data.user.permissions,
+        onboardingComplete: data.user.onboardingComplete,
       })
       /* Redirect to original destination or dashboard */
       const from = searchParams.get('from') ?? '/dashboard'
@@ -67,6 +70,7 @@ export function useRegister() {
         email:       data.user.email,
         role:        data.user.role,
         permissions: data.user.permissions,
+        onboardingComplete: data.user.onboardingComplete,
       })
       router.push('/portal')
     },
@@ -86,6 +90,7 @@ export function useLogout() {
         document.cookie = 'cmms_session=; path=/; max-age=0'
       }
       storeLogout()
+      clearWelcomeDeferral()
       qc.clear()
       router.push('/login')
     },

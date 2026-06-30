@@ -140,35 +140,39 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
                 const Icon  = TYPE_ICON[n.type]
                 const color = TYPE_COLOR[n.type]
                 return (
-                  <li
-                    key={n.id}
-                    onClick={() => openNotification(n)}
-                    className={cn(
-                      'flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors',
-                      n.read ? 'hover:bg-surface-raised' : 'bg-primary-50 hover:bg-primary-100',
-                    )}
-                  >
-                    <div className={cn(
-                      'flex items-center justify-center w-8 h-8 rounded-full shrink-0 mt-0.5',
-                      'bg-surface-overlay',
-                    )}>
-                      <Icon size={15} className={color} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={cn('text-sm leading-snug', n.read ? 'text-text-secondary' : 'font-semibold text-text-primary')}>
-                        {n.title}
-                      </p>
-                      <p className="text-xs text-text-muted mt-0.5 line-clamp-2">{n.body}</p>
-                      <p className="text-xs text-text-muted mt-1">{relTime(n.createdAt)}</p>
-                      <NotificationInlineActions
-                        notification={n}
-                        compact
-                        onAction={() => !n.read && markRead.mutate(n.id)}
-                      />
-                    </div>
-                    {!n.read && (
-                      <div className="w-2 h-2 rounded-full bg-primary-500 shrink-0 mt-2" />
-                    )}
+                  <li key={n.id}>
+                    <button
+                      type="button"
+                      onClick={() => openNotification(n)}
+                      className={cn(
+                        'interactive-link w-full flex items-start gap-3 px-4 py-3 text-left',
+                        n.read ? '' : 'bg-primary-50 hover:bg-primary-100',
+                      )}
+                    >
+                      <div className={cn(
+                        'flex items-center justify-center w-8 h-8 rounded-full shrink-0 mt-0.5',
+                        'bg-surface-overlay',
+                      )}>
+                        <Icon size={15} className={color} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={cn('text-sm leading-snug', n.read ? 'text-text-secondary' : 'font-semibold text-text-primary')}>
+                          {n.title}
+                        </p>
+                        <p className="text-xs text-text-muted mt-0.5 line-clamp-2">{n.body}</p>
+                        <p className="text-xs text-text-muted mt-1">{relTime(n.createdAt)}</p>
+                        <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                          <NotificationInlineActions
+                            notification={n}
+                            compact
+                            onAction={() => !n.read && markRead.mutate(n.id)}
+                          />
+                        </div>
+                      </div>
+                      {!n.read && (
+                        <div className="w-2 h-2 rounded-full bg-primary-500 shrink-0 mt-2" />
+                      )}
+                    </button>
                   </li>
                 )
               })}

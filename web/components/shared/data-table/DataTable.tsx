@@ -16,6 +16,7 @@ import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, ChevronRight } from 'luci
 import Card from '@/components/shared/Card'
 import { TableScroll, ResponsiveDataView } from '@/components/shared/TableScroll'
 import { cn } from '@/lib/utils'
+import { isNestedInteractiveClick } from '@/lib/clickability'
 import { DataTablePagination } from './DataTablePagination'
 import { DataTableBulkBar } from './DataTableBulkBar'
 import type {
@@ -409,7 +410,14 @@ export function DataTable<T>({
             return (
               <Fragment key={row.id}>
               <tr
-                onClick={clickable ? () => onRowClick(original) : undefined}
+                onClick={
+                  clickable
+                    ? (e) => {
+                        if (isNestedInteractiveClick(e.target)) return
+                        onRowClick(original)
+                      }
+                    : undefined
+                }
                 onKeyDown={
                   clickable
                     ? (e) => {
@@ -420,12 +428,12 @@ export function DataTable<T>({
                       }
                     : undefined
                 }
+                role={clickable ? 'button' : undefined}
                 tabIndex={clickable ? 0 : undefined}
                 className={cn(
                   'border-b border-border last:border-0 transition-colors',
-                  clickable && 'cursor-pointer hover:bg-primary-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold-500',
-                  !clickable && 'hover:bg-surface-raised/70',
-                  rowIndex === focusedRowIndex && 'bg-primary-50/40',
+                  clickable && 'interactive-row cursor-pointer hover:bg-primary-50/50',
+                  rowIndex === focusedRowIndex && clickable && 'bg-primary-50/40',
                   rowClassName?.(original),
                   row.getIsSelected() && 'bg-primary-50/60',
                 )}

@@ -42,7 +42,7 @@ export const shellUi: Record<AppLocale, ShellUiStrings> = {
     tipContact:
       'For account or access issues, contact your church administrator or choir/protocol leader.',
     helpFooter:
-      'CMMS Church Management System — pilot edition. More guided help is coming soon.',
+      'CMMS Church Management System — use Help to replay the guided tour anytime.',
     searchPlaceholder: 'Search members, services, choirs…',
     searchMinChars: 'Type at least 2 characters to search…',
     searching: 'Searching…',
@@ -71,7 +71,7 @@ export const shellUi: Record<AppLocale, ShellUiStrings> = {
     tipContact:
       'Pour l’accès au compte, contactez l’administrateur ou le responsable chorale/protocol.',
     helpFooter:
-      'CMMS — Système de gestion d’église. Aide guidée complète à venir.',
+      'CMMS — Système de gestion d’église. Relancez la visite guidée depuis Aide.',
     searchPlaceholder: 'Rechercher membres, cultes, chorales…',
     searchMinChars: 'Saisissez au moins 2 caractères…',
     searching: 'Recherche…',
@@ -97,7 +97,7 @@ export const shellUi: Record<AppLocale, ShellUiStrings> = {
     tipBell: 'Reba agaciro k’amatangazo n’ibibutsa.',
     tipContact:
       'Ikibazo cy’uburenganzira ? Vugana n’umuyobozi w’itorero cyangwa umuyobozi wa korali/protocol.',
-    helpFooter: 'CMMS — Sisitemu y’itorero. Ubufasha bwuzuye buzaza vuba.',
+    helpFooter: 'CMMS — Sisitemu y’itorero. Subiramo urugendo uhereye ku Bufasha.',
     searchPlaceholder: 'Shakisha abanyamuryango, serivisi, korali…',
     searchMinChars: 'Andika nibura inyuguti 2…',
     searching: 'Gushakisha…',

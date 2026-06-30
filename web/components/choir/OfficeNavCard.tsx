@@ -27,14 +27,14 @@ export function OfficeNavCard({
     <Link
       href={href}
       className={cn(
-        'block group rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
+        'block group rounded-lg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
         className,
       )}
     >
       <Card
         padding={padding}
         accent={accent}
-        className="transition-all duration-fast group-hover:shadow-raised group-hover:-translate-y-0.5 h-full"
+        className="transition-all duration-fast group-hover:shadow-raised group-hover:-translate-y-0.5 h-full cursor-pointer"
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">{children}</div>

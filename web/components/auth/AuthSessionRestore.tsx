@@ -25,6 +25,7 @@ export function AuthSessionRestore() {
           email: user.email,
           role: user.role,
           permissions: user.permissions,
+          onboardingComplete: user.onboardingComplete,
         })
       })
       .catch(() => {

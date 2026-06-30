@@ -201,6 +201,7 @@ export default function Sidebar({
 
   return (
     <aside
+      data-tour="nav-sidebar"
       className={cn(
         'fixed inset-y-0 left-0 z-40 flex flex-col',
         'bg-primary-900 text-text-inverse',

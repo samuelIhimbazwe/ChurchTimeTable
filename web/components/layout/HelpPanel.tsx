@@ -4,12 +4,14 @@ import Link from 'next/link'
 import { useRef } from 'react'
 import {
   X, HelpCircle, Search, Home, User, Bell, Menu,
-  Keyboard, Smartphone,
+  Keyboard, Smartphone, Compass,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTranslations } from '@/lib/i18n'
+import { tourUi } from '@/lib/tour/tour-ui'
 import { KEYBOARD_SHORTCUTS } from '@/lib/accessibility/keyboard-shortcuts'
 import { useFocusTrap } from '@/lib/hooks/useFocusTrap'
+import { startProductTourReplay } from '@/components/tour/ProductTourProvider'
 
 interface HelpPanelProps {
   open:    boolean
@@ -20,7 +22,8 @@ interface HelpPanelProps {
 export default function HelpPanel({ open, onClose, onOpenSearch }: HelpPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   useFocusTrap(panelRef, open)
-  const { shell: s, tr } = useTranslations()
+  const { shell: s, tr, locale } = useTranslations()
+  const tourStrings = tourUi[locale]
 
   if (!open) return null
 
@@ -87,6 +90,26 @@ export default function HelpPanel({ open, onClose, onOpenSearch }: HelpPanelProp
                 </div>
               ))}
             </div>
+          </section>
+
+          <section>
+            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-2">
+              {tourStrings.replayTour}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                onClose()
+                startProductTourReplay()
+              }}
+              className="w-full flex items-start gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-raised transition-colors text-left"
+            >
+              <Compass size={16} className="text-primary-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-text-primary">{tourStrings.replayTour}</p>
+                <p className="text-xs text-text-muted">{tourStrings.replayTourDesc}</p>
+              </div>
+            </button>
           </section>
 
           <section>

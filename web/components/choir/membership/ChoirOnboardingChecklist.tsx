@@ -177,11 +177,9 @@ export function ChoirOnboardingChecklist({ choirId }: Props) {
               <li key={step.id}>
                 <Link
                   href={step.href}
-                  className={cn(
-                    'flex items-start gap-2.5 rounded-lg px-2 py-1.5 -mx-2 transition-colors',
-                    step.done
-                      ? 'opacity-70'
-                      : 'hover:bg-surface-raised',
+                    className={cn(
+                    'interactive-link flex items-start gap-2.5 rounded-lg px-2 py-1.5 -mx-2',
+                    step.done ? 'opacity-70' : '',
                   )}
                 >
                   {step.done ? (

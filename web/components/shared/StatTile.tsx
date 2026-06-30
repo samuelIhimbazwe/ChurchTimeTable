@@ -125,7 +125,14 @@ export default function StatTile({
 
   if (href) {
     return (
-      <Link href={href} className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
+      <Link
+        href={href}
+        className={cn(
+          'block rounded-lg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
+          'hover:shadow-raised hover:-translate-y-0.5 transition-all duration-fast',
+          className,
+        )}
+      >
         {body}
       </Link>
     )

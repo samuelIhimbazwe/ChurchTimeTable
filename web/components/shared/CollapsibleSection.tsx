@@ -26,7 +26,7 @@ export function CollapsibleSection({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-start justify-between gap-3 text-left group"
+        className="w-full flex items-start justify-between gap-3 text-left group cursor-pointer rounded-md py-1 -my-1 touch-target min-h-[2.75rem]"
       >
         <div>
           <h2 className="font-display text-2xl text-text-primary group-hover:text-primary-700 transition-colors">

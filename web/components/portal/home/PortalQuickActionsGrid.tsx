@@ -66,7 +66,7 @@ export function PortalQuickActionsGrid({
   ]
 
   return (
-    <section className={cn('space-y-3', className)}>
+    <section data-tour="portal-quick-actions" className={cn('space-y-3', className)}>
       <h2 className="font-display text-xl text-text-primary">{tr('Quick actions')}</h2>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {actions.map((action) => {
@@ -95,11 +95,10 @@ export function PortalQuickActionsGrid({
           )
 
           const tileClass = cn(
-            'flex items-center gap-3 p-3 rounded-lg border border-border bg-surface',
-            'shadow-card transition-colors min-h-[72px]',
-            action.disabled
-              ? 'opacity-50 pointer-events-none'
-              : 'hover:bg-surface-raised hover:border-primary-200 dark:hover:border-primary-700',
+            'interactive-tile flex items-center gap-3 p-3 rounded-lg border border-border bg-surface',
+            'shadow-card min-h-[72px] text-left w-full',
+            action.disabled && 'opacity-50 pointer-events-none',
+            !action.disabled && 'hover:border-primary-200 dark:hover:border-primary-700',
           )
 
           if (action.href) {

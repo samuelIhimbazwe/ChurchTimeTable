@@ -15,6 +15,7 @@ import HelpPanel from './HelpPanel'
 import PreferencesPanel from './PreferencesPanel'
 import NotificationPanel from './NotificationPanel'
 import { useNotifications } from '@/lib/hooks'
+import { ProductTourProvider } from '@/components/tour/ProductTourProvider'
 import { UnifiedAttentionDrawer } from '@/components/dashboard/UnifiedAttentionDrawer'
 import { useAttentionItems } from '@/lib/dashboard/useAttentionItems'
 
@@ -130,6 +131,8 @@ export default function Shell({
       />
 
       <NavigationTracker />
+
+      <ProductTourProvider />
 
       <main
         id="main-content"
