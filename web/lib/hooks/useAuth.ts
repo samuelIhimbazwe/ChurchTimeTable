@@ -49,9 +49,9 @@ export function useLogin() {
         permissions: data.user.permissions,
         onboardingComplete: data.user.onboardingComplete,
       })
-      /* Redirect to original destination or dashboard */
-      const from = searchParams.get('from') ?? '/dashboard'
-      router.push(from)
+      const from = searchParams.get('from')
+      const home = data.user.homePath ?? from ?? '/dashboard'
+      router.push(home)
     },
   })
 }

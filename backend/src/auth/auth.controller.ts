@@ -19,6 +19,8 @@ import { RegisterDto } from './dto/register.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { AcceptInviteDto } from '../account-invites/dto/accept-invite.dto';
+import { AccountInvitesService } from '../account-invites/account-invites.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import {
   CurrentUser,
@@ -30,6 +32,7 @@ export class AuthController {
   constructor(
     private authService: AuthService,
     private passwordReset: PasswordResetService,
+    private accountInvites: AccountInvitesService,
     private config: ConfigService,
   ) {}
 
@@ -91,6 +94,23 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.passwordReset.resetPassword(dto.token, dto.password);
+  }
+
+  @Get('invite')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  previewInvite(@Query('token') token: string) {
+    return this.accountInvites.previewToken(token ?? '');
+  }
+
+  @Post('accept-invite')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async acceptInvite(
+    @Body() dto: AcceptInviteDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const session = await this.authService.acceptInvite(dto);
+    this.setRefreshCookie(res, session.refreshToken, session.refreshTokenExpiresAt);
+    return session.response;
   }
 
   @Get('me')

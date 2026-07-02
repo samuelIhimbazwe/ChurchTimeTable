@@ -116,14 +116,14 @@ async function upsertPilotUser(
     create: {
       email,
       passwordHash,
-      preferredLanguage: 'rw',
+      preferredLanguage: 'en',
       member: {
         create: memberData,
       },
     },
     update: {
       passwordHash,
-      preferredLanguage: 'rw',
+      preferredLanguage: 'en',
       member: {
         upsert: {
           create: memberData,

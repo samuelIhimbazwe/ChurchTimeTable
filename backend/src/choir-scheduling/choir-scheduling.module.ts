@@ -55,6 +55,13 @@ import { ChoirOpsAccessService } from './choir-ops-access.service';
     ChoirMemberRecognitionService,
     ChoirOpsAccessService,
   ],
-  exports: [ChoirCalendarService, ChoirServiceAssignmentsService, ChoirScheduleConflictService, ChoirOpsAccessService],
+  exports: [
+    ChoirCalendarService,
+    ChoirServiceAssignmentsService,
+    ChoirScheduleConflictService,
+    ChoirOpsAccessService,
+    ChoirServiceRulesService,
+    ChoirSchedulingNotificationsService,
+  ],
 })
 export class ChoirSchedulingModule {}

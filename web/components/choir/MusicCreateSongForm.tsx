@@ -23,7 +23,7 @@ export function MusicCreateSongForm({ onCreated }: Props) {
     defaultValues: {
       title: '',
       composer: '',
-      language: 'Kinyarwanda',
+      language: 'English',
       lyrics: '',
     },
   })

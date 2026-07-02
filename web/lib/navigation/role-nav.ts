@@ -183,6 +183,7 @@ const PROTOCOL_DASHBOARD: NavSection = {
 const PROTOCOL_OPS: NavSection = {
   section: 'Protocol',
   items: [
+    { label: 'Monthly schedule', icon: Calendar, path: '/protocol/scheduling' },
     { label: 'Teams',        icon: Shield,         path: '/protocol/teams' },
     { label: 'Replacements', icon: ArrowLeftRight, path: '/protocol/replacements' },
     { label: 'Rankings',     icon: Trophy,         path: '/protocol/rankings' },

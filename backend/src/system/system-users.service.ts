@@ -124,7 +124,7 @@ export class SystemUsersService {
         data: {
           email,
           passwordHash,
-          preferredLanguage: dto.preferredLanguage ?? 'rw',
+          preferredLanguage: dto.preferredLanguage ?? 'en',
           member: {
             create: {
               firstName: dto.firstName.trim(),

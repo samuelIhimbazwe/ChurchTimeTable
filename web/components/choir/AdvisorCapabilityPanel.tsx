@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useAuthStore } from '@/stores/index'
+import { useAuthStore, EMPTY_PERMISSIONS } from '@/stores/index'
 import { ComposableCapabilityDesk } from '@/components/shared/office/ComposableCapabilityDesk'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { useOptionalChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
@@ -16,7 +16,7 @@ import {
 
 export function AdvisorCapabilityPanel() {
   const hasAnyPermission = useAuthStore((s) => s.hasAnyPermission)
-  const permissions = useAuthStore((s) => s.user?.permissions ?? [])
+  const permissions = useAuthStore((s) => s.user?.permissions ?? EMPTY_PERMISSIONS)
   const { choirId, choirLink } = useResolvedChoirScope()
   const choirCtx = useOptionalChoirDashboardCtx()
   const customRoleLabels =

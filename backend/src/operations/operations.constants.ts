@@ -54,6 +54,16 @@ export const SYSTEM_OPERATION_TEMPLATES: Array<{
     type: 'SERVICE',
     description: 'Tuesday mid-week service',
     requirements: [
+      { assignmentType: 'MAIN_CHOIR', quantity: 2 },
+      { assignmentType: 'PROTOCOL_TEAM', quantity: 1 },
+    ],
+  },
+  {
+    code: 'FRIDAY_SERVICE',
+    name: 'Friday Service',
+    type: 'SERVICE',
+    description: 'Friday evening service',
+    requirements: [
       { assignmentType: 'MAIN_CHOIR', quantity: 1 },
       { assignmentType: 'PROTOCOL_TEAM', quantity: 1 },
     ],
@@ -64,7 +74,7 @@ export const SYSTEM_OPERATION_TEMPLATES: Array<{
     type: 'SERVICE',
     description: 'IGABURO service',
     requirements: [
-      { assignmentType: 'MAIN_CHOIR', quantity: 1 },
+      { assignmentType: 'MAIN_CHOIR', quantity: 2 },
       { assignmentType: 'PROTOCOL_TEAM', quantity: 1 },
     ],
   },

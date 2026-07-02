@@ -294,6 +294,6 @@ export class ContributionProtocolService {
       where: { id: userId },
       select: { preferredLanguage: true },
     });
-    return this.i18n.resolveLocale(user?.preferredLanguage ?? 'rw');
+    return this.i18n.resolveLocale(user?.preferredLanguage ?? 'en');
   }
 }

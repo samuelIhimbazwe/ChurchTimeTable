@@ -19,6 +19,10 @@ export class AppLinkService {
     return `${this.baseUrl()}/reset-password?token=${encodeURIComponent(token)}`;
   }
 
+  acceptInvite(token: string): string {
+    return `${this.baseUrl()}/accept-invite?token=${encodeURIComponent(token)}`;
+  }
+
   portalDevotion(): string {
     return `${this.baseUrl()}/portal/devotion`;
   }

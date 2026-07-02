@@ -7,6 +7,7 @@ export type ChurchServiceSlotCode =
   | 'SUNDAY_SERVICE_1'
   | 'SUNDAY_SERVICE_2'
   | 'TUESDAY_SERVICE'
+  | 'FRIDAY_SERVICE'
   | 'IGABURO'
   | 'OTHER';
 
@@ -14,6 +15,7 @@ const SLOT_LABELS: Record<Exclude<ChurchServiceSlotCode, 'OTHER'>, string> = {
   SUNDAY_SERVICE_1: 'Sunday Service I',
   SUNDAY_SERVICE_2: 'Sunday Service II',
   TUESDAY_SERVICE: 'Tuesday Service',
+  FRIDAY_SERVICE: 'Friday Service',
   IGABURO: 'Igaburo',
 };
 

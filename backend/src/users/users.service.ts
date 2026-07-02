@@ -84,8 +84,7 @@ export class UsersService {
   }
 
   async updateLanguage(userId: string, preferredLanguage: string) {
-    const allowed = ['rw', 'en', 'fr'];
-    const lang = allowed.includes(preferredLanguage) ? preferredLanguage : 'rw';
+    const lang = preferredLanguage === 'fr' ? 'fr' : 'en';
     return this.prisma.user.update({
       where: { id: userId },
       data: { preferredLanguage: lang },

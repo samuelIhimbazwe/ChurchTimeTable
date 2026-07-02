@@ -24,12 +24,6 @@ class LanguageSettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           _LanguageTile(
-            label: l10n.language_kinyarwanda,
-            code: 'rw',
-            groupValue: locale.languageCode,
-            onSelect: (code) => _select(ref, userId, code),
-          ),
-          _LanguageTile(
             label: l10n.language_english,
             code: 'en',
             groupValue: locale.languageCode,

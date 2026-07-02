@@ -382,4 +382,117 @@ export const protocolApi = {
 
   submitClaim: (message?: string) =>
     apiClient.post<never, Record<string, unknown>>('/protocol/claims', { message }),
+
+  listMonthlySchedules: () =>
+    apiClient.get<never, ProtocolMonthlySchedulePlan[]>('/protocol/scheduling/plans'),
+
+  generateMonthlySchedule: (data: { year: number; month: number }) =>
+    apiClient.post<never, ProtocolMonthlySchedulePlanDetail>(
+      '/protocol/scheduling/plans/generate',
+      data,
+    ),
+
+  getMonthlySchedule: (id: string) =>
+    apiClient.get<never, ProtocolMonthlySchedulePlanDetail>(
+      `/protocol/scheduling/plans/${id}`,
+    ),
+
+  getMonthlySchedulePrint: (id: string) =>
+    apiClient.get<never, ProtocolMonthlySchedulePrintGrid>(
+      `/protocol/scheduling/plans/${id}/print`,
+    ),
+
+  updateScheduleEntry: (
+    planId: string,
+    entryId: string,
+    data: { choirId: string; role?: string; reason?: string },
+  ) =>
+    apiClient.patch<never, ProtocolSchedulePlanEntry>(
+      `/protocol/scheduling/plans/${planId}/entries/${entryId}`,
+      data,
+    ),
+
+  addScheduleEntry: (
+    planId: string,
+    data: { occurrenceId: string; choirId: string; role?: string; reason?: string },
+  ) =>
+    apiClient.post<never, ProtocolSchedulePlanEntry>(
+      `/protocol/scheduling/plans/${planId}/entries`,
+      data,
+    ),
+
+  removeScheduleEntry: (planId: string, entryId: string) =>
+    apiClient.post<never, { ok: boolean }>(
+      `/protocol/scheduling/plans/${planId}/entries/${entryId}/remove`,
+    ),
+
+  approveMonthlySchedule: (id: string) =>
+    apiClient.post<never, ProtocolMonthlySchedulePlan>(
+      `/protocol/scheduling/plans/${id}/approve`,
+    ),
+
+  publishMonthlySchedule: (id: string) =>
+    apiClient.post<never, ProtocolMonthlySchedulePlan>(
+      `/protocol/scheduling/plans/${id}/publish`,
+    ),
+}
+
+export type ProtocolMonthlySchedulePlan = {
+  id: string
+  label: string
+  year: number
+  month: number | null
+  status: 'DRAFT' | 'GENERATED' | 'APPROVED' | 'PUBLISHED' | 'ARCHIVED'
+  startAt: string
+  endAt: string
+  generatedAt?: string | null
+  approvedAt?: string | null
+  publishedAt?: string | null
+}
+
+export type ProtocolSchedulePlanEntry = {
+  id: string
+  occurrenceId: string
+  choirId: string
+  role: string
+  isOverride?: boolean
+  overrideReason?: string | null
+  choir?: { id: string; name: string; code: string }
+  occurrence?: {
+    id: string
+    title: string
+    startAt: string
+    endAt?: string
+    template?: { code?: string; name?: string } | null
+  }
+}
+
+export type ProtocolMonthlySchedulePlanDetail = ProtocolMonthlySchedulePlan & {
+  entries: ProtocolSchedulePlanEntry[]
+}
+
+export type ProtocolMonthlySchedulePrintGrid = {
+  plan: Pick<ProtocolMonthlySchedulePlan, 'id' | 'label' | 'year' | 'month' | 'status'>
+  weeks: Array<{
+    weekIndex: number
+    startDate: string
+    endDate: string
+    services: Array<{
+      occurrenceId: string
+      templateCode: string | null
+      labelRw: string
+      labelEn: string
+      date: string
+      choirs: string[]
+    }>
+  }>
+  igaburo: Array<{
+    occurrenceId: string
+    templateCode: string | null
+    labelRw: string
+    labelEn: string
+    date: string
+    choirs: string[]
+  }>
+  preparedBy: string
 }

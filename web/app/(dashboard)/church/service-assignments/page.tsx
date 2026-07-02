@@ -14,12 +14,13 @@ import { formatDate, formatTime } from '@/lib/utils/format'
 import { Calendar, Check, Music, Plus, X } from 'lucide-react'
 import type { ChurchServiceAssignment } from '@/lib/api/modules/choirServiceOps'
 
-type ServiceCode = 'SUNDAY_SERVICE_1' | 'SUNDAY_SERVICE_2' | 'TUESDAY_SERVICE' | 'IGABURO' | 'OTHER'
+type ServiceCode = 'SUNDAY_SERVICE_1' | 'SUNDAY_SERVICE_2' | 'TUESDAY_SERVICE' | 'FRIDAY_SERVICE' | 'IGABURO' | 'OTHER'
 
 const SERVICE_OPTIONS: Array<{ value: ServiceCode; label: string }> = [
   { value: 'SUNDAY_SERVICE_1', label: 'Sunday Service I' },
   { value: 'SUNDAY_SERVICE_2', label: 'Sunday Service II' },
   { value: 'TUESDAY_SERVICE', label: 'Tuesday Service' },
+  { value: 'FRIDAY_SERVICE', label: 'Friday Service' },
   { value: 'IGABURO', label: 'Igaburo' },
   { value: 'OTHER', label: 'Other' },
 ]
@@ -28,6 +29,7 @@ const DEFAULT_TIMES: Record<Exclude<ServiceCode, 'OTHER'>, { start: string; end:
   SUNDAY_SERVICE_1: { start: '08:00', end: '10:00' },
   SUNDAY_SERVICE_2: { start: '10:30', end: '12:30' },
   TUESDAY_SERVICE: { start: '18:00', end: '20:00' },
+  FRIDAY_SERVICE: { start: '18:00', end: '20:00' },
   IGABURO: { start: '17:00', end: '19:00' },
 }
 

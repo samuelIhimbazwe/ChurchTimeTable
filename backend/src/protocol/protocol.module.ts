@@ -7,6 +7,7 @@ import { ReportsModule } from '../reports/reports.module';
 import { PilotReadyModule } from '../pilot-ready/pilot-ready.module';
 import { FinanceModule } from '../finance/finance.module';
 import { ChoirHttpAccessModule } from '../common/choir/choir-http-access.module';
+import { ChoirSchedulingModule } from '../choir-scheduling/choir-scheduling.module';
 import { ProtocolController } from './protocol.controller';
 import { ProtocolTeamsService } from './protocol-teams.service';
 import { ProtocolAssignmentEngine } from './protocol-assignment.engine';
@@ -28,6 +29,7 @@ import { ProtocolNotificationsService } from './protocol-notifications.service';
 import { ProtocolOfficerSlaService } from './protocol-officer-sla.service';
 import { ProtocolDocumentsService } from './protocol-documents.service';
 import { ProtocolMemberRecognitionService } from './protocol-member-recognition.service';
+import { ProtocolMonthlyScheduleService } from './protocol-monthly-schedule.service';
 
 @Module({
   imports: [
@@ -39,6 +41,7 @@ import { ProtocolMemberRecognitionService } from './protocol-member-recognition.
     PilotReadyModule,
     FinanceModule,
     ChoirHttpAccessModule,
+    ChoirSchedulingModule,
   ],
   controllers: [ProtocolController],
   providers: [
@@ -62,6 +65,7 @@ import { ProtocolMemberRecognitionService } from './protocol-member-recognition.
     ProtocolOfficerSlaService,
     ProtocolDocumentsService,
     ProtocolMemberRecognitionService,
+    ProtocolMonthlyScheduleService,
   ],
   exports: [ProtocolTeamsService, ProtocolDashboardService],
 })

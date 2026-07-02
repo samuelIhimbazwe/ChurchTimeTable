@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   X, HelpCircle, Search, Home, User, Bell, Menu,
   Keyboard, Smartphone, Compass,
@@ -20,6 +21,7 @@ interface HelpPanelProps {
 }
 
 export default function HelpPanel({ open, onClose, onOpenSearch }: HelpPanelProps) {
+  const router = useRouter()
   const panelRef = useRef<HTMLDivElement>(null)
   useFocusTrap(panelRef, open)
   const { shell: s, tr, locale } = useTranslations()
@@ -100,7 +102,7 @@ export default function HelpPanel({ open, onClose, onOpenSearch }: HelpPanelProp
               type="button"
               onClick={() => {
                 onClose()
-                startProductTourReplay()
+                startProductTourReplay(router.push)
               }}
               className="w-full flex items-start gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-raised transition-colors text-left"
             >

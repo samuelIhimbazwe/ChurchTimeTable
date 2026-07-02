@@ -156,6 +156,14 @@ export const frMessages: Record<string, string> = {
     'Ce lien de réinitialisation est invalide ou expiré. Demandez-en un nouveau.',
   INVALID_SESSION: 'Votre session a expiré. Veuillez vous reconnecter.',
   EMAIL_ALREADY_REGISTERED: 'Cet e-mail est déjà enregistré.',
+  PUBLIC_REGISTRATION_DISABLED:
+    'L\'inscription publique est désactivée. Demandez un lien d\'invitation à un administrateur.',
+  INVITE_TOKEN_INVALID:
+    'Ce lien d\'invitation est invalide ou expiré. Contactez votre administrateur.',
+  INVITE_ALREADY_PENDING:
+    'Une invitation en attente existe déjà pour cet e-mail.',
+  TERMS_NOT_ACCEPTED:
+    'Vous devez accepter les conditions d\'utilisation pour continuer.',
   ACCOUNT_INACTIVE:
     'Ce compte est inactif. Contactez votre responsable de ministère.',
   MEMBER_PENDING_APPROVAL:

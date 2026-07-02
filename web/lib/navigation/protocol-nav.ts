@@ -120,8 +120,8 @@ function opsItemsForPermissions(permissions: string[]): NavItem[] {
 
   if (permissions.some((p) => ['protocol.team.manage', 'protocol.oversight', 'protocol.manage'].includes(p))) {
 
+    items.push({ label: 'Monthly schedule', icon: Calendar, path: protocolPath('scheduling') })
     items.push({ label: 'Teams', icon: Shield, path: protocolPath('teams') })
-
     items.push({ label: 'Build teams', icon: Calendar, path: protocolPath('teams/generate') })
 
   }

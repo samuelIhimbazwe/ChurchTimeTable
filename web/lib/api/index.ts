@@ -1,6 +1,7 @@
 export { apiClient, setAccessToken, getAccessToken } from './client'
 export { ApiError, ConflictError, AuthError, ValidationError } from './client'
 export { authApi }              from './modules/auth'
+export { invitesApi }           from './modules/invites'
 export { membersApi }           from './modules/members'
 export { occurrencesApi }         from './modules/occurrences'
 export { choirActivityApi }     from './modules/choirActivity'
@@ -37,8 +38,9 @@ export { devotionsApi }         from './modules/devotions'
 export { pilotApi }             from './modules/pilot'
 
 export type {
-  LoginPayload, RegisterPayload, LoginResponse, AuthUser,
+  LoginPayload, RegisterPayload, LoginResponse, AuthUser, AccessRouting,
 } from './modules/auth'
+export type { AccountInvite, CreateAccountInvitePayload } from './modules/invites'
 export type { ContributionClaim } from './modules/contributions'
 export type { ImportJobRecord, DataQualityMetrics } from './modules/system'
 export type { MinistrySettings } from './modules/ministries'

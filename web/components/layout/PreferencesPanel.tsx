@@ -4,8 +4,7 @@ import Link from 'next/link'
 import { useRef } from 'react'
 import { X, Settings, Sun, Moon, PanelLeft, User, Languages, Contrast, Type, Eye } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useUIStore, type AppTheme, type FontScale, type ReducedMotionPref } from '@/stores/index'
-import { useAuthStore } from '@/stores/index'
+import { useUIStore, type AppTheme, type FontScale, type ReducedMotionPref, useAuthStore, EMPTY_PERMISSIONS } from '@/stores/index'
 import { useSetAppLocale, useTranslations, APP_LOCALES, LOCALE_NAMES, type AppLocale } from '@/lib/i18n'
 import { useFocusTrap } from '@/lib/hooks/useFocusTrap'
 import { useViewAsStore } from '@/lib/governance/view-as-store'
@@ -45,7 +44,7 @@ export default function PreferencesPanel({ open, onClose }: PreferencesPanelProp
   const toggleSidebar = useUIStore((s) => s.toggleSidebar)
   const viewAsMember = useViewAsStore((s) => s.viewAsMember)
   const setViewAsMember = useViewAsStore((s) => s.setViewAsMember)
-  const permissions = useAuthStore((s) => s.user?.permissions ?? [])
+  const permissions = useAuthStore((s) => s.user?.permissions ?? EMPTY_PERMISSIONS)
   const showMemberPreview = canUseMemberPreview(permissions)
   const { tr } = useTranslations()
 

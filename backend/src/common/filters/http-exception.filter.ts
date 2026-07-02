@@ -21,7 +21,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<LocaleRequest>();
-    const locale = request.locale ?? 'rw';
+    const locale = request.locale ?? 'en';
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let code = 'INTERNAL_ERROR';

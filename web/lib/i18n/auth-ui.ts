@@ -1,17 +1,20 @@
-export type AppLocale = 'rw' | 'en' | 'fr'
+export type AppLocale = 'en' | 'fr'
 
-export const APP_LOCALES: AppLocale[] = ['rw', 'en', 'fr']
+export const APP_LOCALES: AppLocale[] = ['en', 'fr']
 
 export const LOCALE_SHORT: Record<AppLocale, string> = {
-  rw: 'RW',
   en: 'EN',
   fr: 'FR',
 }
 
 export const LOCALE_NAMES: Record<AppLocale, string> = {
-  rw: 'Ikinyarwanda',
   en: 'English',
   fr: 'Français',
+}
+
+/** Map legacy `rw` and unknown values to a supported locale. */
+export function normalizeAppLocale(value?: string | null): AppLocale {
+  return value === 'fr' ? 'fr' : 'en'
 }
 
 type AuthUiStrings = {
@@ -74,6 +77,16 @@ type AuthUiStrings = {
   resetPasswordSuccess: string
   resetPasswordInvalid: string
   resetPasswordMissingToken: string
+  acceptInviteTitle: string
+  acceptInviteSubtitle: string
+  acceptInviteAction: string
+  acceptingInvite: string
+  acceptInviteSuccess: string
+  acceptInviteInvalid: string
+  acceptInviteMissingToken: string
+  inviteWelcome: string
+  registerInviteOnlyTitle: string
+  registerInviteOnlyBody: string
 }
 
 export const authUi: Record<AppLocale, AuthUiStrings> = {
@@ -143,6 +156,17 @@ export const authUi: Record<AppLocale, AuthUiStrings> = {
     resetPasswordSuccess: 'Your password has been updated. You can sign in now.',
     resetPasswordInvalid: 'This reset link is invalid or has expired.',
     resetPasswordMissingToken: 'No reset token was provided. Request a new link.',
+    acceptInviteTitle: 'Set up your account',
+    acceptInviteSubtitle: 'Create a password to accept your invitation.',
+    acceptInviteAction: 'Accept invite',
+    acceptingInvite: 'Setting up…',
+    acceptInviteSuccess: 'Your account is ready. Redirecting…',
+    acceptInviteInvalid: 'This invite link is invalid or has expired.',
+    acceptInviteMissingToken: 'No invite token was provided.',
+    inviteWelcome: 'Welcome',
+    registerInviteOnlyTitle: 'Accounts are invite-only',
+    registerInviteOnlyBody:
+      'New members join through a one-time invite link from a church administrator. Check your email or WhatsApp for the link, or ask your choir or protocol leader to send one.',
   },
   fr: {
     registerTitle: 'Créer votre compte',
@@ -209,71 +233,17 @@ export const authUi: Record<AppLocale, AuthUiStrings> = {
     resetPasswordSuccess: 'Mot de passe mis à jour. Vous pouvez vous connecter.',
     resetPasswordInvalid: 'Ce lien est invalide ou expiré.',
     resetPasswordMissingToken: 'Aucun jeton de réinitialisation. Demandez un nouveau lien.',
-  },
-  rw: {
-    registerTitle: 'Fungura konti yawe',
-    registerSubtitle:
-      'Iyandikishe kuba umuryango w’itorero. Umuyobozi azemeza uburenganzira bwo kwinjira mu ministère.',
-    signInTitle: 'Injira kuri konti yawe',
-    signInSubtitle: 'Andika email n’ijambo ry’ibanga kugira ngo winjire.',
-    firstName: 'Izina ry’ibanze *',
-    lastName: 'Izina ry’umuryango *',
-    email: 'Email *',
-    phone: 'Telefone *',
-    nationalId: 'Indangamuntu *',
-    nationalIdHint: 'Nomero y’indangamuntu y’u Rwanda (imibare 16)',
-    password: 'Ijambo ry’ibanga *',
-    confirmPassword: 'Emeza ijambo ry’ibanga *',
-    churchConnection: 'Uko uhuza n’itorero',
-    interests: 'Ministère ushaka',
-    notes: 'Hari ikintu utubwira ?',
-    notesPlaceholder: 'Bishobora kuba ubusa',
-    approvalNote:
-      'Nyuma yo kwiyandikisha, abayobozi bazasuzuma konti yawe mbere yo guha uburenganzira bujyeje.',
-    createAccount: 'Fungura konti',
-    creatingAccount: 'Gufungura konti…',
-    alreadyHaveAccount: 'Usanzwe ufite konti ?',
-    signIn: 'Injira',
-    termsLabel: 'Nemera amategeko n’amabwiriza',
-    termsRequired: 'Ugomba kwemera amategeko kugira ngo wiyandikishe.',
-    requiredFields: 'Uzuza ibisabwa byose.',
-    passwordMin: 'Ijambo ry’ibanga rigomba nibura inyuguti 6.',
-    passwordMismatch: 'Ijambo ry’ibanga ntirihura.',
-    phoneRequired: 'Telefone irakenewe.',
-    nationalIdRequired: 'Indangamuntu irakenewe (imibare 16).',
-    loginEmailLabel: 'Aderesi ya email',
-    loginPasswordLabel: 'Ijambo ry’ibanga',
-    rememberMe: 'Nyibuka',
-    forgotPassword: 'Wibagiwe ijambo ry’ibanga ?',
-    signingIn: 'Kwinjira…',
-    noAccountPrompt: 'Nta konti ufite ?',
-    createAccountLink: 'Fungura konti',
-    showPassword: 'Erekana ijambo ry’ibanga',
-    hidePassword: 'Hisha ijambo ry’ibanga',
-    loginFieldsError: 'Andika email n’ijambo ry’ibanga.',
-    invalidCredentials: 'Email cyangwa ijambo ry’ibanga sibyo.',
-    serverUnreachable: 'Seriveri ntishobora kugerwaho. Reba ko backend ikora.',
-    serverUnavailable: 'Seriveri ntiboneka by’agateganyo.',
-    connectionError: 'Seriveri ntishobora kugerwaho. Reba umurongo wawe.',
-    emailPlaceholder: 'wowe@itorero.local',
-    contactAdmin: 'Nta konti ? Vugana n’umuyobozi w’itorero.',
-    forgotPasswordTitle: 'Subiramo ijambo ry’ibanga',
-    forgotPasswordSubtitle:
-      'Andika email yawe tuzohereze uburyo bwo gusubiramo ijambo ry’ibanga.',
-    sendResetLink: 'Ohereza ihuza',
-    sendingResetLink: 'Kohereza…',
-    forgotPasswordSuccess:
-      'Niba hari konti kuri iyo email, ubutumwa bwoherejwe. Reba inbox yawe.',
-    forgotPasswordDevHint: 'Ihuza ryo mu iterambere:',
-    backToSignIn: 'Subira ku kwinjira',
-    resetPasswordTitle: 'Shyiraho ijambo ry’ibanga rishya',
-    resetPasswordSubtitle: 'Andika ijambo ry’ibanga rishya kuri konti yawe.',
-    newPassword: 'Ijambo ry’ibanga rishya',
-    resetPasswordAction: 'Hindura ijambo ry’ibanga',
-    resettingPassword: 'Guhindura…',
-    resetPasswordSuccess: 'Ijambo ry’ibanga ryahinduwe. Ushobora kwinjira ubu.',
-    resetPasswordInvalid: 'Ihuza si ryo cyangwa ryarangiye.',
-    resetPasswordMissingToken: 'Nta token yo gusubiramo. Saba ihuza rishya.',
+    acceptInviteTitle: 'Configurer votre compte',
+    acceptInviteSubtitle: 'Créez un mot de passe pour accepter l’invitation.',
+    acceptInviteAction: 'Accepter l’invitation',
+    acceptingInvite: 'Configuration…',
+    acceptInviteSuccess: 'Votre compte est prêt. Redirection…',
+    acceptInviteInvalid: 'Ce lien d’invitation est invalide ou expiré.',
+    acceptInviteMissingToken: 'Aucun jeton d’invitation fourni.',
+    inviteWelcome: 'Bienvenue',
+    registerInviteOnlyTitle: 'Comptes sur invitation uniquement',
+    registerInviteOnlyBody:
+      'Les nouveaux membres rejoignent via un lien d’invitation envoyé par un administrateur. Vérifiez votre e-mail ou WhatsApp, ou demandez un lien à votre responsable.',
   },
 }
 
@@ -302,19 +272,9 @@ export const loginQuotes: Record<AppLocale, LoginQuote[]> = {
       ref: '1 Pi 4:10',
     },
   ],
-  rw: [
-    { text: 'Ibintu byose bikorwe mu buryo bukwiye kandi mu mutekano.', ref: '1 Kor 14:40' },
-    { text: 'Nimukorane akorera abandi mu rukundo.', ref: 'Abagal 5:13' },
-    { text: 'Aho abantu babiri cyangwa batatu bahuriweko mu izina ryanjye, ndi hagati yabo.', ref: 'Mat 18:20' },
-    {
-      text: 'Umwe umwe akoreshe impano yahawe n’Imana mu gukorera abandi.',
-      ref: '1 Pet 4:10',
-    },
-  ],
 }
 
 export function localeToBcp47(locale: AppLocale): string {
   if (locale === 'fr') return 'fr-FR'
-  if (locale === 'rw') return 'rw-RW'
   return 'en-GB'
 }

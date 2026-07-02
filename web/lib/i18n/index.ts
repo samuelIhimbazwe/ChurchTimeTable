@@ -4,6 +4,7 @@ export {
   LOCALE_SHORT,
   authUi,
   isAppLocale,
+  normalizeAppLocale,
   type AppLocale,
 } from './auth-ui'
 export { translateLabel, UI_LABELS } from './labels'

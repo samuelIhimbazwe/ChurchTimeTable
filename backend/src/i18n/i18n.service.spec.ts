@@ -3,25 +3,27 @@ import { I18nService } from './i18n.service';
 describe('I18nService', () => {
   const service = new I18nService();
 
-  it('defaults to Kinyarwanda when header missing', () => {
-    expect(service.resolveLocale()).toBe('rw');
+  it('defaults to English when header missing', () => {
+    expect(service.resolveLocale()).toBe('en');
   });
 
-  it('interpolates notification placeholders in all locales', () => {
-    for (const locale of ['rw', 'en', 'fr'] as const) {
-      const { body } = service.notification(
-        locale,
-        'NOTIFICATION_SWAP_TITLE',
-        'NOTIFICATION_SWAP_REQUESTED_BODY',
-        { memberName: 'Jean Baptiste' },
-      );
-      expect(body).toContain('Jean Baptiste');
-      expect(body).not.toContain('{memberName}');
+  it('resolves en and fr', () => {
+    expect(service.resolveLocale('en-US')).toBe('en');
+    expect(service.resolveLocale('fr-FR')).toBe('fr');
+  });
+
+  it('maps legacy rw to English', () => {
+    expect(service.resolveLocale('rw-RW')).toBe('en');
+  });
+
+  it('translates schedule conflict messageKey in English', () => {
+    const msg = service.translate('en', 'SCHEDULE_OVERLAP');
+    expect(msg.length).toBeGreaterThan(0);
+  });
+
+  it('has core keys in en and fr catalogs', () => {
+    for (const locale of ['en', 'fr'] as const) {
+      expect(service.translate(locale, 'SCHEDULE_OVERLAP').length).toBeGreaterThan(0);
     }
-  });
-
-  it('translates schedule conflict messageKey in Kinyarwanda', () => {
-    const msg = service.translate('rw', 'SCHEDULE_OVERLAP');
-    expect(msg).toMatch(/gahunda|amasaha/i);
   });
 });

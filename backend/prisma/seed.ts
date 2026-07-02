@@ -602,13 +602,25 @@ async function main() {
     name: string;
     choirKind: 'PRIMARY' | 'SPECIAL' | 'CHILDREN';
     leaderDisplayName?: string;
+    eligibility?: {
+      eligibleForFriday?: boolean;
+      isChildrenChoir?: boolean;
+      isFifthSundayChoir?: boolean;
+      eligibleForSunday2?: boolean;
+    };
   }> = [
     { code: 'IJWI_RY_UMWAMI', name: "Ijwi ry'Umwami Yesu", choirKind: 'PRIMARY' },
     { code: 'ELIM', name: 'Elim', choirKind: 'PRIMARY', leaderDisplayName: 'Choir Leader' },
     { code: 'INTEGUZA', name: 'Integuza', choirKind: 'PRIMARY' },
     { code: 'EL_BETHEL', name: 'El-Bethel', choirKind: 'PRIMARY' },
     { code: 'BEULAH', name: 'Beulah', choirKind: 'PRIMARY' },
-    { code: 'CHILDREN_CHOIR', name: "Children's Choir", choirKind: 'CHILDREN' },
+    {
+      code: 'CHILDREN_CHOIR',
+      name: 'Hope',
+      choirKind: 'CHILDREN',
+      eligibility: { isChildrenChoir: true, eligibleForSunday2: false },
+    },
+    { code: 'WORSHIP_TEAM', name: 'Worship Team', choirKind: 'SPECIAL', eligibility: { eligibleForSunday2: false, isFifthSundayChoir: false } },
     { code: 'YERUSALEMU', name: 'Yerusalemu', choirKind: 'SPECIAL', leaderDisplayName: 'Morning Service' },
   ];
 
@@ -634,29 +646,41 @@ async function main() {
     });
   }
 
+  // Legacy mistaken duplicate — Hope is CHILDREN_CHOIR, not a separate choir.
+  await prisma.choir.updateMany({
+    where: { code: 'HOPE' },
+    data: { isActive: false },
+  });
+
   for (const choir of await prisma.choir.findMany({ where: { isActive: true } })) {
-    const isChildren = choir.code.includes('CHILDREN');
+    const portalEntry = portalChoirs.find((p) => p.code === choir.code);
+    const isChildren = portalEntry?.eligibility?.isChildrenChoir ?? choir.code.includes('CHILDREN');
     const isFifth =
-      choir.code.includes('FIFTH') ||
+      portalEntry?.eligibility?.isFifthSundayChoir ??
+      (choir.code.includes('FIFTH') ||
       choir.code.includes('5TH') ||
-      choir.code === 'BEULAH';
+      choir.code === 'BEULAH');
     await prisma.choirServiceEligibility.upsert({
       where: { choirId: choir.id },
       create: {
         choirId: choir.id,
         eligibleForMainServices: !isChildren || isChildren,
         eligibleForSunday1: true,
-        eligibleForSunday2: !isChildren,
+        eligibleForSunday2: portalEntry?.eligibility?.eligibleForSunday2 ?? !isChildren,
         eligibleForTuesday: !isChildren,
+        eligibleForFriday: portalEntry?.eligibility?.eligibleForFriday ?? !isChildren,
         eligibleForIgaburo: !isChildren,
         eligibleForSpecialEvents: true,
         isChildrenChoir: isChildren,
         isFifthSundayChoir: isFifth,
-        priority: isChildren ? 10 : isFifth ? 5 : 0,
+        priority: isChildren ? 10 : choir.code === 'WORSHIP_TEAM' ? 8 : isFifth ? 5 : 0,
       },
       update: {
         isChildrenChoir: isChildren,
         isFifthSundayChoir: isFifth,
+        eligibleForSunday2: portalEntry?.eligibility?.eligibleForSunday2 ?? !isChildren,
+        eligibleForFriday: portalEntry?.eligibility?.eligibleForFriday ?? !isChildren,
+        priority: isChildren ? 10 : choir.code === 'WORSHIP_TEAM' ? 8 : isFifth ? 5 : 0,
       },
     });
   }

@@ -13,6 +13,7 @@ import {
   deferWelcome,
   isWelcomeDeferred,
 } from '@/lib/tour/storage'
+import { markTourProgrammaticNav, tourProgrammaticNavRef } from '@/lib/tour/navigation'
 import { WelcomeTourModal } from './WelcomeTourModal'
 import { GuidedTour } from './GuidedTour'
 
@@ -27,12 +28,13 @@ export function ProductTourProvider() {
 
   const active = useTourStore((s) => s.active)
   const persona = useTourStore((s) => s.persona)
+  const stepIndex = useTourStore((s) => s.stepIndex)
   const startTour = useTourStore((s) => s.startTour)
-  const setStepIndex = useTourStore((s) => s.setStepIndex)
+  const endTour = useTourStore((s) => s.endTour)
 
   const [welcomeOpen, setWelcomeOpen] = useState(false)
-  const pendingStartRef = useRef(false)
-  const navigatedRef = useRef(false)
+  const prevPathnameRef = useRef(pathname)
+  const welcomePromptedRef = useRef(false)
 
   const resolvedPersona = user
     ? resolveTourPersona(user.role, user.permissions)
@@ -53,12 +55,12 @@ export function ProductTourProvider() {
     }
   }, [user?.onboardingComplete, completeOnboarding])
 
-  const navigateForStep = useCallback(
+  const goToStepRoute = useCallback(
     (index: number, p: typeof resolvedPersona) => {
       const steps = stepsForPersona(p)
       const step = steps[index]
       if (step?.route && pathname !== step.route) {
-        navigatedRef.current = true
+        markTourProgrammaticNav()
         router.push(step.route)
       }
     },
@@ -66,49 +68,43 @@ export function ProductTourProvider() {
   )
 
   useEffect(() => {
-    if (!isAuthenticated || !user) return
-    if (active) return
+    if (!isAuthenticated || !user || active || welcomePromptedRef.current) return
 
-    if (
-      !user.onboardingComplete
-      && !isWelcomeDeferred()
-      && !welcomeOpen
-    ) {
+    if (!user.onboardingComplete && !isWelcomeDeferred()) {
+      welcomePromptedRef.current = true
       setWelcomeOpen(true)
     }
-  }, [isAuthenticated, user, active, welcomeOpen])
+  }, [isAuthenticated, user?.id, user?.onboardingComplete, active])
 
+  /* End the tour when the user navigates away manually (e.g. opens Monthly schedule). */
   useEffect(() => {
-    if (!active || !persona || !pendingStartRef.current) return
-    if (navigatedRef.current) {
-      const steps = stepsForPersona(persona)
-      const step = steps[0]
-      if (step?.route && pathname === step.route) {
-        pendingStartRef.current = false
-        navigatedRef.current = false
-        setStepIndex(0)
-      }
+    if (!active) {
+      prevPathnameRef.current = pathname
       return
     }
-    pendingStartRef.current = false
-  }, [active, persona, pathname, setStepIndex])
 
-  useEffect(() => {
-    if (!active || !persona) return
-    const steps = stepsForPersona(persona)
-    const stepIndex = useTourStore.getState().stepIndex
+    if (pathname !== prevPathnameRef.current) {
+      if (tourProgrammaticNavRef.current) {
+        tourProgrammaticNavRef.current = false
+      } else {
+        endTour()
+      }
+      prevPathnameRef.current = pathname
+      return
+    }
+
+    const steps = persona ? stepsForPersona(persona) : []
     const step = steps[stepIndex]
     if (step?.route && pathname !== step.route) {
-      router.push(step.route)
+      endTour()
     }
-  }, [active, persona, pathname, router])
+  }, [active, persona, stepIndex, pathname, endTour])
 
   const handleStart = () => {
     setWelcomeOpen(false)
     clearWelcomeDeferral()
-    pendingStartRef.current = true
     startTour(resolvedPersona)
-    navigateForStep(0, resolvedPersona)
+    goToStepRoute(0, resolvedPersona)
   }
 
   const handleDefer = () => {
@@ -129,6 +125,10 @@ export function ProductTourProvider() {
     /* User ended early — do not mark onboarding complete unless they skipped welcome */
   }
 
+  const steps = persona ? stepsForPersona(persona) : []
+  const currentStep = steps[stepIndex]
+  const tourRouteReady = !currentStep?.route || pathname === currentStep.route
+
   if (!isAuthenticated || !user) return null
 
   return (
@@ -141,7 +141,7 @@ export function ProductTourProvider() {
         onDefer={handleDefer}
         onSkip={handleSkipWelcome}
       />
-      {active && persona && (
+      {active && persona && tourRouteReady && (
         <GuidedTour
           persona={persona}
           onComplete={handleTourComplete}
@@ -153,10 +153,17 @@ export function ProductTourProvider() {
 }
 
 /** Call from Help panel to replay the guided tour. */
-export function startProductTourReplay() {
+export function startProductTourReplay(push?: (path: string) => void) {
   const user = useAuthStore.getState().user
   if (!user) return
   const persona = resolveTourPersona(user.role, user.permissions)
+  const steps = stepsForPersona(persona)
   clearWelcomeDeferral()
   useTourStore.getState().startTour(persona, true)
+  const firstRoute = steps[0]?.route
+  if (firstRoute) {
+    markTourProgrammaticNav()
+    if (push) push(firstRoute)
+    else window.location.assign(firstRoute)
+  }
 }

@@ -7,7 +7,6 @@ class AppLocalizations {
   final Locale locale;
 
   static const supportedLocales = [
-    Locale('rw'),
     Locale('en'),
     Locale('fr'),
   ];
@@ -1290,7 +1289,7 @@ class AppLocalizations {
 
   String _t(String key) {
     final lang = locale.languageCode;
-    return _catalog[lang]?[key] ?? _catalog['rw']![key] ?? key;
+    return _catalog[lang]?[key] ?? _catalog['en']?[key] ?? key;
   }
 
   String _p(String key, Map<String, String> params) {
@@ -1806,7 +1805,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      ['rw', 'en', 'fr'].contains(locale.languageCode);
+      ['en', 'fr'].contains(locale.languageCode);
 
   @override
   Future<AppLocalizations> load(Locale locale) {

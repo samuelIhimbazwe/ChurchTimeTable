@@ -28,6 +28,16 @@ export interface AuthUser {
   role: string
   permissions: string[]
   onboardingComplete: boolean
+  homePath?: string
+}
+
+export interface AccessRouting {
+  homePath: string
+  ministryScope: string | null
+  isDualMember: boolean
+  hasChoirMembership: boolean
+  hasProtocolMembership: boolean
+  primaryChoirId: string | null
 }
 
 export interface LoginResponse {
@@ -50,6 +60,7 @@ interface MeResponse {
   protocolAuth?: ResolvedAuth
   churchAuth?: ResolvedAuth
   platformAuth?: ResolvedAuth
+  accessRouting?: AccessRouting
 }
 
 function syncPlatformAuthsFromMe(me: MeResponse) {
@@ -71,6 +82,7 @@ function mapMeToAuthUser(me: MeResponse): AuthUser {
     role: me.roles[0] ?? 'MEMBER',
     permissions: me.permissions,
     onboardingComplete: me.onboardingCompleted,
+    homePath: me.accessRouting?.homePath,
   }
 }
 
@@ -154,6 +166,41 @@ export const authApi = {
 
   resetPassword: (payload: { token: string; password: string }) =>
     apiClient.post<never, { ok: boolean }>('/auth/reset-password', payload),
+
+  previewInvite: (token: string) =>
+    apiClient.get<
+      never,
+      {
+        valid: boolean
+        email: string
+        firstName: string
+        lastName: string
+        inviteType: string
+        choir?: { id: string; name: string; code: string } | null
+        expiresAt: string
+      }
+    >('/auth/invite', { params: { token } }),
+
+  acceptInvite: async (payload: {
+    token: string
+    password: string
+    acceptedTerms: boolean
+  }): Promise<LoginResponse> => {
+    const tokens = await apiClient.post<never, { accessToken: string }>(
+      '/auth/accept-invite',
+      payload,
+    )
+    setAccessToken(tokens.accessToken)
+    if (typeof window !== 'undefined') {
+      setSessionCookie('1')
+    }
+    const profile = await apiClient.get<never, MeResponse>('/auth/me')
+    syncPlatformAuthsFromMe(profile)
+    return {
+      accessToken: tokens.accessToken,
+      user: mapMeToAuthUser(profile),
+    }
+  },
 
   updateLanguage: (preferredLanguage: string) =>
     apiClient.post<never, { preferredLanguage: string }>('/users/language', {

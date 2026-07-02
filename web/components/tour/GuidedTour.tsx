@@ -1,7 +1,8 @@
 'use client'
 
-import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { usePathname, useRouter } from 'next/navigation'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTourStore } from '@/stores/tour'
@@ -9,10 +10,13 @@ import { stepsForPersona } from '@/lib/tour/steps'
 import { tourUi, getStepCopy } from '@/lib/tour/tour-ui'
 import { useUIStore } from '@/stores'
 import { isAppLocale } from '@/lib/i18n/auth-ui'
+import { markTourProgrammaticNav } from '@/lib/tour/navigation'
 import type { TourPersona } from '@/lib/tour/types'
 
 const PADDING = 8
 const TOOLTIP_GAP = 12
+const TOOLTIP_W = 360
+const TOOLTIP_H = 220
 
 type Rect = { top: number; left: number; width: number; height: number }
 
@@ -46,6 +50,16 @@ function tooltipPosition(
   return { top, left }
 }
 
+function rectsEqual(a: Rect | null, b: Rect | null): boolean {
+  if (!a || !b) return a === b
+  return (
+    a.top === b.top
+    && a.left === b.left
+    && a.width === b.width
+    && a.height === b.height
+  )
+}
+
 type Props = {
   persona: TourPersona
   onComplete: () => void
@@ -53,6 +67,8 @@ type Props = {
 }
 
 export function GuidedTour({ persona, onComplete, onSkip }: Props) {
+  const router = useRouter()
+  const pathname = usePathname()
   const stepIndex = useTourStore((s) => s.stepIndex)
   const nextStep = useTourStore((s) => s.nextStep)
   const prevStep = useTourStore((s) => s.prevStep)
@@ -64,45 +80,73 @@ export function GuidedTour({ persona, onComplete, onSkip }: Props) {
 
   const steps = stepsForPersona(persona)
   const current = steps[stepIndex]
+  const targetSelector = current?.target ?? ''
   const copy = current
     ? getStepCopy(strings, current.id, persona)
     : { title: '', body: '' }
 
   const [rect, setRect] = useState<Rect | null>(null)
   const [mounted, setMounted] = useState(false)
-  const [tooltipSize, setTooltipSize] = useState({ w: 320, h: 200 })
+  const [targetMissing, setTargetMissing] = useState(false)
+  const rafRef = useRef<number>(0)
+  const endedForMissingRef = useRef(false)
 
   const refresh = useCallback(() => {
-    if (!current) return
-    setRect(measureTarget(current.target))
-  }, [current])
+    if (!targetSelector) return
+    const next = measureTarget(targetSelector)
+    setRect((prev) => (rectsEqual(prev, next) ? prev : next))
+  }, [targetSelector])
+
+  const scheduleRefresh = useCallback(() => {
+    if (rafRef.current) return
+    rafRef.current = window.requestAnimationFrame(() => {
+      rafRef.current = 0
+      refresh()
+    })
+  }, [refresh])
 
   useEffect(() => setMounted(true), [])
 
   useLayoutEffect(() => {
+    if (!targetSelector) return
+
+    const measured = measureTarget(targetSelector)
+    setTargetMissing(!measured)
     refresh()
-    const nodes = document.querySelectorAll(`[data-tour="${current.target}"]`)
-    let scrolled = false
+    if (!measured) return
+
+    const nodes = document.querySelectorAll(`[data-tour="${targetSelector}"]`)
     for (const candidate of nodes) {
       const r = candidate.getBoundingClientRect()
       if (r.width < 1 || r.height < 1) continue
-      candidate.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-      scrolled = true
+      candidate.scrollIntoView({ block: 'nearest', behavior: 'auto' })
       break
     }
-    if (!scrolled) {
-      nodes[0]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-    }
 
-    window.addEventListener('resize', refresh)
-    window.addEventListener('scroll', refresh, true)
+    window.addEventListener('resize', scheduleRefresh)
+    window.addEventListener('scroll', scheduleRefresh, true)
     return () => {
-      window.removeEventListener('resize', refresh)
-      window.removeEventListener('scroll', refresh, true)
+      window.removeEventListener('resize', scheduleRefresh)
+      window.removeEventListener('scroll', scheduleRefresh, true)
+      if (rafRef.current) {
+        window.cancelAnimationFrame(rafRef.current)
+        rafRef.current = 0
+      }
     }
-  }, [current, refresh, stepIndex])
+  }, [targetSelector, refresh, scheduleRefresh, stepIndex])
 
-  if (!mounted || !current) return null
+  useEffect(() => {
+    endedForMissingRef.current = false
+  }, [stepIndex, targetSelector])
+
+  useEffect(() => {
+    if (!mounted || !targetMissing || endedForMissingRef.current) return
+    endedForMissingRef.current = true
+    endTour()
+    onSkip()
+  }, [mounted, targetMissing, endTour, onSkip])
+
+  if (!mounted || !current || targetMissing) return null
 
   const isLast = stepIndex >= steps.length - 1
   const stepLabel = strings.tourStepOf
@@ -110,16 +154,26 @@ export function GuidedTour({ persona, onComplete, onSkip }: Props) {
     .replace('{total}', String(steps.length))
 
   const tooltipPos = rect
-    ? tooltipPosition(rect, tooltipSize.w, tooltipSize.h)
+    ? tooltipPosition(rect, TOOLTIP_W, TOOLTIP_H)
     : { top: window.innerHeight / 2 - 100, left: window.innerWidth / 2 - 160 }
 
   const handleNext = () => {
     if (isLast) {
       endTour()
       onComplete()
-    } else {
-      nextStep(steps.length - 1)
+      return
     }
+    const nextIndex = stepIndex + 1
+    const next = steps[nextIndex]
+    if (next?.route && pathname !== next.route) {
+      markTourProgrammaticNav()
+      router.push(next.route)
+    }
+    nextStep(steps.length - 1)
+  }
+
+  const handleBackdropClick = () => {
+    handleNext()
   }
 
   return createPortal(
@@ -148,7 +202,7 @@ export function GuidedTour({ persona, onComplete, onSkip }: Props) {
           fill="rgba(15, 23, 42, 0.55)"
           mask="url(#tour-spotlight-mask)"
           className="pointer-events-auto"
-          onClick={handleNext}
+          onClick={handleBackdropClick}
         />
       </svg>
 
@@ -165,24 +219,13 @@ export function GuidedTour({ persona, onComplete, onSkip }: Props) {
       )}
 
       <div
-        ref={(node) => {
-          if (node) {
-            const { offsetWidth, offsetHeight } = node
-            if (
-              offsetWidth !== tooltipSize.w
-              || offsetHeight !== tooltipSize.h
-            ) {
-              setTooltipSize({ w: offsetWidth, h: offsetHeight })
-            }
-          }
-        }}
         role="dialog"
         aria-modal="true"
         aria-labelledby="tour-step-title"
         className={cn(
           'absolute z-[101] w-[min(360px,calc(100vw-2rem))]',
           'bg-surface border border-border rounded-xl shadow-overlay',
-          'pointer-events-auto animate-page-enter',
+          'pointer-events-auto',
         )}
         style={{ top: tooltipPos.top, left: tooltipPos.left }}
       >

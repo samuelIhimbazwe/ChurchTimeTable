@@ -1,10 +1,13 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { type AppLocale, isAppLocale } from '@/lib/i18n/auth-ui'
+import { type AppLocale, isAppLocale, normalizeAppLocale } from '@/lib/i18n/auth-ui'
 
 export type AppTheme = 'light' | 'dark' | 'high-contrast'
 export type FontScale = 'small' | 'default' | 'large' | 'xlarge'
 export type ReducedMotionPref = 'system' | 'reduce' | 'no-preference'
+
+/** Stable fallback for Zustand selectors — never use inline `?? []`. */
+export const EMPTY_PERMISSIONS: string[] = []
 
 /* ── UI Store ── */
 interface UIStore {
@@ -25,13 +28,14 @@ export const useUIStore = create<UIStore>()(
     (set) => ({
       sidebarCollapsed: false,
       theme: 'light',
-      locale: 'rw',
+      locale: 'en',
       fontScale: 'default',
       reducedMotion: 'system',
       toggleSidebar: () =>
         set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setTheme: (theme) => set({ theme }),
-      setLocale: (locale) => set({ locale }),
+      setLocale: (locale) =>
+        set((s) => (s.locale === locale ? s : { locale })),
       setFontScale: (fontScale) => set({ fontScale }),
       setReducedMotion: (reducedMotion) => set({ reducedMotion }),
     }),
@@ -47,7 +51,11 @@ export const useUIStore = create<UIStore>()(
       merge: (persisted, current) => {
         const saved = persisted as Partial<UIStore> | undefined
         const locale =
-          saved?.locale && isAppLocale(saved.locale) ? saved.locale : current.locale
+          saved?.locale && isAppLocale(saved.locale)
+            ? saved.locale
+            : saved?.locale
+              ? normalizeAppLocale(String(saved.locale))
+              : current.locale
         const fontScale = saved?.fontScale ?? current.fontScale
         const reducedMotion = saved?.reducedMotion ?? current.reducedMotion
         return {
@@ -85,14 +93,29 @@ interface AuthStore {
 export const useAuthStore = create<AuthStore>()((set, get) => ({
   user: null,
   isAuthenticated: false,
-  login: (user) => set({ user, isAuthenticated: true }),
+  login: (user) =>
+    set((s) => {
+      if (
+        s.isAuthenticated
+        && s.user
+        && s.user.id === user.id
+        && s.user.name === user.name
+        && s.user.email === user.email
+        && s.user.role === user.role
+        && s.user.onboardingComplete === user.onboardingComplete
+        && s.user.permissions.length === user.permissions.length
+        && s.user.permissions.every((p, i) => p === user.permissions[i])
+      ) {
+        return s
+      }
+      return { user, isAuthenticated: true }
+    }),
   logout: () => set({ user: null, isAuthenticated: false }),
   setOnboardingComplete: (complete) =>
-    set((s) =>
-      s.user
-        ? { user: { ...s.user, onboardingComplete: complete } }
-        : {},
-    ),
+    set((s) => {
+      if (!s.user || s.user.onboardingComplete === complete) return s
+      return { user: { ...s.user, onboardingComplete: complete } }
+    }),
   hasPermission: (permission) =>
     get().user?.permissions.includes(permission) ?? false,
   hasAnyPermission: (permissions) =>

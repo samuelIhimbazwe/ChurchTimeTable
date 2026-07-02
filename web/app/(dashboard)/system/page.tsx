@@ -87,6 +87,7 @@ export default function SystemPage() {
             {[
               { label: 'System Status',      href: '/system/status',     icon: Activity,   platformUiCapability: 'admin-settings-manage' },
               { label: 'User Management',    href: '/system/users',      icon: Users,    platformUiCapability: 'admin-users-manage' },
+              { label: 'Member Invites',     href: '/system/invites',    icon: Users,    platformUiCapability: 'admin-users-manage' },
               { label: 'Role Management',    href: '/system/roles',      icon: Shield,   platformUiCapability: 'admin-roles-manage' },
               { label: 'Audit Log',          href: '/system/audit',      icon: Database, platformUiCapability: 'admin-audit-view'   },
               { label: 'Notification rules', href: '/system/notification-rules', icon: Activity, platformUiCapability: 'admin-settings-manage' },

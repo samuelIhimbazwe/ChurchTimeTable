@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -28,6 +29,9 @@ import { LogisticsCapabilityResolverService } from '../common/choir/logistics-ca
 import { DevotionCapabilityResolverService } from '../common/choir/devotion-capability-resolver.service';
 import { RolesCapabilityResolverService } from '../common/choir/roles-capability-resolver.service';
 import { PlatformCapabilityResolverService } from '../common/platform/platform-capability-resolver.service';
+import { AccessRoutingService } from './access-routing.service';
+import { AccountInvitesService } from '../account-invites/account-invites.service';
+import { AcceptInviteDto } from '../account-invites/dto/accept-invite.dto';
 import { durationToMs } from './auth.constants';
 import {
   AccountInactiveException,
@@ -72,9 +76,23 @@ export class AuthService {
     private devotionCapabilities: DevotionCapabilityResolverService,
     private rolesCapabilities: RolesCapabilityResolverService,
     private platformCapabilities: PlatformCapabilityResolverService,
+    private accessRouting: AccessRoutingService,
+    private accountInvites: AccountInvitesService,
   ) {}
 
+  private get inviteOnlyRegistration(): boolean {
+    if (process.env.INVITE_ONLY_REGISTRATION === 'true') return true;
+    if (process.env.INVITE_ONLY_REGISTRATION === 'false') return false;
+    return process.env.NODE_ENV === 'production';
+  }
+
   async register(dto: RegisterDto) {
+    if (this.inviteOnlyRegistration) {
+      throw new ForbiddenException({
+        code: 'FORBIDDEN',
+        messageKey: 'PUBLIC_REGISTRATION_DISABLED',
+      });
+    }
     const existing = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
@@ -103,7 +121,7 @@ export class AuthService {
         data: {
           email: dto.email,
           passwordHash,
-          preferredLanguage: dto.preferredLanguage ?? 'rw',
+          preferredLanguage: dto.preferredLanguage ?? 'en',
           termsAcceptedAt: new Date(),
           member: {
             create: {
@@ -133,6 +151,25 @@ export class AuthService {
       return created;
     });
 
+    return this.issueSession(user.id, user.email);
+  }
+
+  async acceptInvite(dto: AcceptInviteDto) {
+    const { userId } = await this.accountInvites.acceptInvite(
+      dto.token,
+      dto.password,
+      dto.acceptedTerms,
+    );
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, isActive: true },
+    });
+    if (!user?.isActive) {
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED',
+        messageKey: 'ACCOUNT_INACTIVE',
+      });
+    }
     return this.issueSession(user.id, user.email);
   }
 
@@ -363,6 +400,11 @@ export class AuthService {
     const platformAuth =
       await this.platformCapabilities.resolvePlatformAuth(userId);
 
+    const accessRouting = await this.accessRouting.resolveForUser(
+      userId,
+      roles,
+    );
+
     return {
       id: user.id,
       email: user.email,
@@ -372,6 +414,7 @@ export class AuthService {
       permissions,
       onboardingCompleted: user.member?.onboardingCompleted ?? false,
       phoneEnforcement: phoneEnforcementState,
+      accessRouting,
       contributionAuth,
       welfareAuth,
       disciplineAuth,

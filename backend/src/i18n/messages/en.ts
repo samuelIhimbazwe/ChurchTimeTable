@@ -154,6 +154,14 @@ export const enMessages: Record<string, string> = {
     'This reset link is invalid or has expired. Request a new one.',
   INVALID_SESSION: 'Your session has expired. Please sign in again.',
   EMAIL_ALREADY_REGISTERED: 'This email is already registered.',
+  PUBLIC_REGISTRATION_DISABLED:
+    'Public registration is disabled. Ask an admin for an invite link.',
+  INVITE_TOKEN_INVALID:
+    'This invite link is invalid or has expired. Contact your admin for a new invite.',
+  INVITE_ALREADY_PENDING:
+    'A pending invite already exists for this email.',
+  TERMS_NOT_ACCEPTED:
+    'You must accept the terms and conditions to continue.',
   ACCOUNT_INACTIVE: 'This account is inactive. Contact your ministry leader.',
   MEMBER_PENDING_APPROVAL:
     'Your registration is awaiting leader approval.',

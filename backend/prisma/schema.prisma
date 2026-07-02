@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -559,7 +559,7 @@ model User {
   fcmToken           String?
   refreshTokenHash   String?
   refreshTokenExpiresAt DateTime?
-  preferredLanguage  String     @default("rw")
+  preferredLanguage  String     @default("en")
   termsAcceptedAt    DateTime?
   createdAt          DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
@@ -600,6 +600,7 @@ model User {
   prayerRequestsSubmitted           PrayerRequest[]           @relation("PrayerRequestSubmitter")
   servicePreparationAcks            ServicePreparationAcknowledgment[]
   passwordResetTokens               PasswordResetToken[]
+  accountInvitesSent                AccountInvite[]      @relation("AccountInvitesSent")
 
   @@index([email])
 }
@@ -1226,6 +1227,7 @@ model Choir {
   protocolTeamLeaders   ProtocolTeamLeader[]
   activities            ChoirActivity[]
   serviceAssignments    ChoirServiceAssignment[]
+  schedulePlanEntries   ChoirSchedulePlanEntry[]
   serviceEligibility    ChoirServiceEligibility?
   participationProfiles ChoirMemberParticipationProfile[]
   servicePreparationPlans ServicePreparationPlan[]
@@ -1233,8 +1235,47 @@ model Choir {
   churchServiceRequestsAssigned  ChurchServiceRequest[] @relation("ChurchServiceRequestAssigned")
   dissolutionTransfersSource ChoirDissolutionTransfer[] @relation("DissolutionSource")
   dissolutionTransfersTarget ChoirDissolutionTransfer[] @relation("DissolutionTarget")
+  accountInvites           AccountInvite[]
 
   @@index([isActive])
+}
+
+enum AccountInviteType {
+  CHOIR
+  PROTOCOL
+  DUAL
+}
+
+enum AccountInviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+model AccountInvite {
+  id              String              @id @default(uuid())
+  email           String
+  firstName       String
+  lastName        String
+  phone           String?
+  inviteType      AccountInviteType
+  choirId         String?
+  tokenHash       String              @unique
+  status          AccountInviteStatus @default(PENDING)
+  expiresAt       DateTime
+  acceptedAt      DateTime?
+  revokedAt       DateTime?
+  invitedByUserId String
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  invitedBy User   @relation("AccountInvitesSent", fields: [invitedByUserId], references: [id], onDelete: Restrict)
+  choir     Choir? @relation(fields: [choirId], references: [id], onDelete: Restrict)
+
+  @@index([email, status])
+  @@index([status, expiresAt])
+  @@index([choirId])
 }
 
 model ChoirMembership {
@@ -2746,6 +2787,7 @@ model OperationOccurrence {
   notifications OperationNotification[]
   protocolTeam  ProtocolOccurrenceTeam?
   choirServiceAssignments ChoirServiceAssignment[]
+  schedulePlanEntries     ChoirSchedulePlanEntry[]
   choirActivities ChoirActivity[]
   churchServiceRequests ChurchServiceRequest[]
   servicePreparationPlans ServicePreparationPlan[]
@@ -3183,8 +3225,14 @@ enum ChoirSchedulePlanPeriod {
 enum ChoirSchedulePlanStatus {
   DRAFT
   GENERATED
+  APPROVED
   PUBLISHED
   ARCHIVED
+}
+
+enum ChoirSchedulePlanOwner {
+  CHURCH
+  PROTOCOL
 }
 
 enum ChoirScheduleAdjustmentAction {
@@ -3239,6 +3287,7 @@ model ChoirServiceEligibility {
   eligibleForSunday1      Boolean @default(true)
   eligibleForSunday2      Boolean @default(true)
   eligibleForTuesday      Boolean @default(true)
+  eligibleForFriday       Boolean @default(true)
   eligibleForIgaburo      Boolean @default(true)
   eligibleForSpecialEvents Boolean @default(true)
   isChildrenChoir         Boolean @default(false)
@@ -3592,9 +3641,13 @@ model ChoirSchedulePlan {
   startAt         DateTime
   endAt           DateTime
   status          ChoirSchedulePlanStatus @default(DRAFT)
+  ownerScope      ChoirSchedulePlanOwner  @default(CHURCH)
   generatedAt     DateTime?
   generatedById   String?
+  approvedAt      DateTime?
+  approvedById    String?
   publishedAt     DateTime?
+  publishedById   String?
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
 
@@ -3602,6 +3655,7 @@ model ChoirSchedulePlan {
 
   @@index([year, month])
   @@index([status])
+  @@index([ownerScope])
 }
 
 model ChoirSchedulePlanEntry {
@@ -3615,10 +3669,13 @@ model ChoirSchedulePlanEntry {
   sortOrder      Int                        @default(0)
 
   plan        ChoirSchedulePlan        @relation(fields: [planId], references: [id], onDelete: Cascade)
+  occurrence  OperationOccurrence      @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
+  choir       Choir                    @relation(fields: [choirId], references: [id], onDelete: Cascade)
   assignments ChoirServiceAssignment[]
 
   @@unique([planId, occurrenceId, choirId, role])
   @@index([occurrenceId])
+  @@index([choirId])
 }
 
 model ChoirScheduleAdjustment {

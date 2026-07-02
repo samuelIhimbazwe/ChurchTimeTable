@@ -248,10 +248,7 @@ export default function LoginPage() {
           </form>
 
           <p className="text-center text-sm text-text-muted">
-            {t.noAccountPrompt}{' '}
-            <Link href="/register" className="font-semibold text-primary-600 hover:underline">
-              {t.createAccountLink}
-            </Link>
+            {t.contactAdmin}
           </p>
 
         </div>

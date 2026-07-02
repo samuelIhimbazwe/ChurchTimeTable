@@ -19,7 +19,7 @@ const ROLE_HOME: Record<string, string> = {
   CHOIR_COMMITTEE:          '/portal',
   PROTOCOL_LEADER:          '/protocol',
   PROTOCOL_VICE_PRESIDENT:   '/protocol',
-  PROTOCOL_COORDINATOR:     '/protocol',
+  PROTOCOL_COORDINATOR:     '/protocol/coordinator',
   PROTOCOL_TEAM_LEADER:     '/protocol/team-leader',
   PROTOCOL_ADVISOR:         '/protocol',
   CHURCH_ADMIN:             '/church',

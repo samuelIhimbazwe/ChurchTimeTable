@@ -16,6 +16,7 @@ const HUB_PATHS = new Set([
   '/register',
   '/forgot-password',
   '/reset-password',
+  '/accept-invite',
 ])
 
 function normalizePath(pathname: string): string {

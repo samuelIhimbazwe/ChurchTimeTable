@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api/api_client.dart';
 import 'locale_storage_service.dart';
 
-const defaultLocale = Locale('rw');
+const defaultLocale = Locale('en');
 
 final localeStorageProvider = Provider((ref) => LocaleStorageService());
 
@@ -19,44 +19,51 @@ class LocaleNotifier extends StateNotifier<Locale> {
 
   Future<void> _bootstrap() async {
     final saved = await _storage.read();
-    if (saved != null && _isSupported(saved)) {
-      state = Locale(saved);
+    if (saved != null) {
+      state = _normalize(Locale(saved));
+      await _storage.write(state.languageCode);
     } else {
       state = defaultLocale;
-      await _storage.write('rw');
+      await _storage.write('en');
     }
     await _api.setLanguage(state.languageCode);
   }
 
-  bool _isSupported(String code) => ['rw', 'en', 'fr'].contains(code);
+  Locale _normalize(Locale locale) {
+    if (locale.languageCode == 'fr') return const Locale('fr');
+    return const Locale('en');
+  }
+
+  bool _isSupported(String code) => code == 'en' || code == 'fr';
 
   Future<void> setLocale(
     Locale locale, {
     String? userId,
     bool syncBackend = true,
   }) async {
-    if (!_isSupported(locale.languageCode)) return;
-    state = locale;
-    await _storage.write(locale.languageCode);
-    await _api.setLanguage(locale.languageCode);
+    final normalized = _normalize(locale);
+    if (!_isSupported(normalized.languageCode)) return;
+    state = normalized;
+    await _storage.write(normalized.languageCode);
+    await _api.setLanguage(normalized.languageCode);
 
     if (syncBackend && userId != null) {
       try {
         await _api.loadToken();
         await _api.dio.post(
           '/users/language',
-          data: {'preferredLanguage': locale.languageCode},
+          data: {'preferredLanguage': normalized.languageCode},
         );
       } catch (_) {}
     }
   }
 
   Future<void> syncFromProfile(String? preferredLanguage) async {
-    if (preferredLanguage != null && _isSupported(preferredLanguage)) {
-      state = Locale(preferredLanguage);
-      await _storage.write(preferredLanguage);
-      await _api.setLanguage(preferredLanguage);
-    }
+    if (preferredLanguage == null) return;
+    final normalized = preferredLanguage == 'fr' ? 'fr' : 'en';
+    state = Locale(normalized);
+    await _storage.write(normalized);
+    await _api.setLanguage(normalized);
   }
 }
 

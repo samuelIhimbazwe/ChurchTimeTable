@@ -150,6 +150,14 @@ export const rwMessages: Record<string, string> = {
     'Ihuza ryo gusubiramo ijambo banga si ryo cyangwa ryarangiye. Saba indi.',
   INVALID_SESSION: 'Session yawe yarangiye. Ongera winjire.',
   EMAIL_ALREADY_REGISTERED: 'Iyi imeri isanzwe yanditswe.',
+  PUBLIC_REGISTRATION_DISABLED:
+    'Kwiyandikisha ku rubuga byahagaritswe. Saba umuyobozi link yo gutumira.',
+  INVITE_TOKEN_INVALID:
+    'Iyi link yo gutumira itemewe cyangwa yarangiye. Vugana n\'umuyobozi.',
+  INVITE_ALREADY_PENDING:
+    'Ubutumire butegereje burahari kuri iyi imeri.',
+  TERMS_NOT_ACCEPTED:
+    'Ugomba kwemera amategeko n\'amabwiriza kugira ngo ukomeze.',
   ACCOUNT_INACTIVE: 'Konti yawe ntabwo ikora. Vugana n\'umuyobozi w\'umurimo.',
   MEMBER_PENDING_APPROVAL:
     'Kwiyandikisha kwawe gutegereje kwemezwa n\'umuyobozi.',

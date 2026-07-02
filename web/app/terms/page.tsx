@@ -9,8 +9,8 @@ export default function TermsPage() {
     <div className="min-h-screen bg-surface-raised px-6 py-12">
       <div className="mx-auto max-w-2xl space-y-6">
         <div>
-          <Link href="/register" className="text-sm text-primary-600 hover:underline">
-            ← Back to registration
+          <Link href="/login" className="text-sm text-primary-600 hover:underline">
+            ← Back to sign in
           </Link>
         </div>
 
@@ -23,9 +23,9 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-semibold text-text-primary">1. Acceptance</h2>
             <p>
-              By creating an account in the Church Management &amp; Coordination System (CMMS),
-              you agree to use the platform responsibly and in accordance with your church&apos;s
-              policies and applicable law.
+              By accepting an invite or signing in to the Church Management &amp; Coordination System
+              (CMMS), you agree to use the platform responsibly and in accordance with your
+              church&apos;s policies and applicable law.
             </p>
           </section>
 
@@ -41,9 +41,8 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-semibold text-text-primary">3. Ministry access</h2>
             <p>
-              Registration does not automatically grant leadership or ministry officer access.
-              Church leaders review new accounts and ministry interests before granting elevated
-              permissions.
+              Registration is by administrator invite only. Church leaders grant choir and protocol
+              access when sending your invite. Elevated officer roles are assigned separately.
             </p>
           </section>
 

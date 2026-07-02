@@ -61,7 +61,7 @@ class CmmsApp extends ConsumerWidget {
             if (s.languageCode == deviceLocale.languageCode) return s;
           }
         }
-        return const Locale('rw');
+        return const Locale('en');
       },
       onGenerateRoute: AppRouter.onGenerateRoute,
       initialRoute: AppRouter.initialRouteForPlatform(),

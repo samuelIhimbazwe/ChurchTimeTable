@@ -34,6 +34,8 @@ import { ProtocolTeamReportsService } from './protocol-team-reports.service';
 import { ProtocolOfficerSlaService } from './protocol-officer-sla.service';
 import { ProtocolDocumentsService } from './protocol-documents.service';
 import { ProtocolMemberRecognitionService } from './protocol-member-recognition.service';
+import { ProtocolMonthlyScheduleService } from './protocol-monthly-schedule.service';
+import { ChoirServiceAssignmentRole } from '@prisma/client';
 import { ProtocolRankingCategory } from '@prisma/client';
 
 @Controller('protocol')
@@ -54,6 +56,7 @@ export class ProtocolController {
     private officerSla: ProtocolOfficerSlaService,
     private documents: ProtocolDocumentsService,
     private recognition: ProtocolMemberRecognitionService,
+    private monthlySchedule: ProtocolMonthlyScheduleService,
   ) {}
 
   @Get('documents')
@@ -490,6 +493,99 @@ export class ProtocolController {
   @RequireUiCapability('protocol-view')
   search(@CurrentUser('sub') userId: string, @Query('q') q: string) {
     return this.protocolSearch.search(userId, q ?? '');
+  }
+
+  @Get('scheduling/plans')
+  @RequireUiCapability('protocol-view')
+  listMonthlySchedules(@CurrentUser('sub') userId: string) {
+    return this.monthlySchedule.list(userId);
+  }
+
+  @Post('scheduling/plans/generate')
+  @RequireUiCapability('protocol-team-manage')
+  generateMonthlySchedule(
+    @CurrentUser('sub') userId: string,
+    @Body() body: { year: number; month: number },
+  ) {
+    return this.monthlySchedule.generate(userId, body);
+  }
+
+  @Get('scheduling/plans/:id')
+  @RequireUiCapability('protocol-view')
+  getMonthlySchedule(
+    @CurrentUser('sub') userId: string,
+    @Param('id') id: string,
+  ) {
+    return this.monthlySchedule.get(userId, id);
+  }
+
+  @Get('scheduling/plans/:id/print')
+  @RequireUiCapability('protocol-view')
+  printMonthlySchedule(
+    @CurrentUser('sub') userId: string,
+    @Param('id') id: string,
+  ) {
+    return this.monthlySchedule.getPrintGrid(userId, id);
+  }
+
+  @Patch('scheduling/plans/:id/entries/:entryId')
+  @RequireUiCapability('protocol-team-manage')
+  updateScheduleEntry(
+    @CurrentUser('sub') userId: string,
+    @Param('id') planId: string,
+    @Param('entryId') entryId: string,
+    @Body()
+    body: {
+      choirId: string;
+      role?: ChoirServiceAssignmentRole;
+      reason?: string;
+    },
+  ) {
+    return this.monthlySchedule.updateEntry(userId, planId, entryId, body);
+  }
+
+  @Post('scheduling/plans/:id/entries')
+  @RequireUiCapability('protocol-team-manage')
+  addScheduleEntry(
+    @CurrentUser('sub') userId: string,
+    @Param('id') planId: string,
+    @Body()
+    body: {
+      occurrenceId: string;
+      choirId: string;
+      role?: ChoirServiceAssignmentRole;
+      reason?: string;
+    },
+  ) {
+    return this.monthlySchedule.addEntry(userId, planId, body);
+  }
+
+  @Post('scheduling/plans/:id/entries/:entryId/remove')
+  @RequireUiCapability('protocol-team-manage')
+  removeScheduleEntry(
+    @CurrentUser('sub') userId: string,
+    @Param('id') planId: string,
+    @Param('entryId') entryId: string,
+  ) {
+    return this.monthlySchedule.removeEntry(userId, planId, entryId);
+  }
+
+  @Post('scheduling/plans/:id/approve')
+  @RequireUiCapability('protocol-team-approve-publish')
+  approveMonthlySchedule(
+    @CurrentUser('sub') userId: string,
+    @Param('id') id: string,
+  ) {
+    return this.monthlySchedule.approve(userId, id);
+  }
+
+  @Post('scheduling/plans/:id/publish')
+  @RequireUiCapability('protocol-team-approve-publish')
+  publishMonthlySchedule(
+    @CurrentUser('sub') userId: string,
+    @Param('id') id: string,
+  ) {
+    return this.monthlySchedule.publish(userId, id);
   }
 
   @Get('reports/monthly-service')

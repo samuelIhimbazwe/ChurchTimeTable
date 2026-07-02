@@ -1,6 +1,6 @@
 import type { AppLocale } from './auth-ui'
 
-type LabelEntry = Record<AppLocale, string>
+type LabelEntry = { en: string; fr: string; rw?: string }
 
 /** English source string → localized label (nav, shell, common UI). */
 export const UI_LABELS: Record<string, LabelEntry> = {
@@ -418,5 +418,7 @@ export const UI_LABELS: Record<string, LabelEntry> = {
 }
 
 export function translateLabel(text: string, locale: AppLocale): string {
-  return UI_LABELS[text]?.[locale] ?? text
+  const entry = UI_LABELS[text]
+  if (!entry) return text
+  return entry[locale] ?? entry.en ?? text
 }

@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { authApi, getAccessToken } from '@/lib/api'
 import { useAuthStore, useUIStore } from '@/stores'
-import { isAppLocale } from '@/lib/i18n/auth-ui'
+import { isAppLocale, normalizeAppLocale } from '@/lib/i18n/auth-ui'
 
 /** Restores auth store from token after a full page reload (cookie + localStorage). */
 export function AuthSessionRestore() {
@@ -11,6 +11,7 @@ export function AuthSessionRestore() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const setLocale = useUIStore((s) => s.setLocale)
   const startedRef = useRef(false)
+  const profileSyncedRef = useRef(false)
 
   useEffect(() => {
     if (isAuthenticated || startedRef.current) return
@@ -34,16 +35,20 @@ export function AuthSessionRestore() {
   }, [isAuthenticated, login])
 
   useEffect(() => {
-    if (!isAuthenticated || !getAccessToken()) return
+    if (!isAuthenticated || !getAccessToken() || profileSyncedRef.current) return
+    profileSyncedRef.current = true
     authApi
       .getProfile()
       .then((profile) => {
         const lang = profile.preferredLanguage
-        if (lang && isAppLocale(lang)) {
-          setLocale(lang)
+        const next = isAppLocale(lang) ? lang : normalizeAppLocale(lang)
+        if (useUIStore.getState().locale !== next) {
+          setLocale(next)
         }
       })
-      .catch(() => {})
+      .catch(() => {
+        profileSyncedRef.current = false
+      })
   }, [isAuthenticated, setLocale])
 
   return null

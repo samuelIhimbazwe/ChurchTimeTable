@@ -347,7 +347,7 @@ export class ContributionSubmissionService {
       where: { id: userId },
       select: { preferredLanguage: true },
     });
-    return this.i18n.resolveLocale(user?.preferredLanguage ?? 'rw');
+    return this.i18n.resolveLocale(user?.preferredLanguage ?? 'en');
   }
 
   async getSubmitOptions(actorUserId: string, choirId?: string) {
