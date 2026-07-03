@@ -452,9 +452,9 @@ export class ProtocolTeamsService {
 
   /**
    * Build protocol teams for every service in a monthly choir schedule plan.
-   * Requires APPROVED or PUBLISHED plan. Processes services chronologically and
-   * applies assignment-engine rules (Sunday choir composition, monthly quota,
-   * same-day member exclusion).
+   * Requires a generated schedule (GENERATED / APPROVED / PUBLISHED).
+   * Processes services chronologically and applies assignment-engine rules
+   * (Sunday choir composition, monthly quota, same-day member exclusion).
    */
   async generateForPlan(
     actorUserId: string,
@@ -474,9 +474,9 @@ export class ProtocolTeamsService {
       where: { id: planId, ownerScope: 'PROTOCOL' },
     });
     if (!plan) throw new NotFoundException('Schedule plan not found');
-    if (!['PUBLISHED'].includes(plan.status)) {
+    if (!['GENERATED', 'APPROVED', 'PUBLISHED'].includes(plan.status)) {
       throw new BadRequestException(
-        'Publish the choir schedule before building protocol teams (Sunday teams need confirmed choir assignments)',
+        'Generate the monthly choir schedule before building protocol teams',
       );
     }
 

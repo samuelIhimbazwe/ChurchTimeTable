@@ -65,6 +65,10 @@ export default function ProtocolScheduleDetailPage() {
 
   const editable = (plan?.status === 'GENERATED' || plan?.status === 'DRAFT' || plan?.status === 'APPROVED') && !pdfExportMode
   const published = plan?.status === 'PUBLISHED'
+  const canBuildTeams =
+    plan?.status === 'GENERATED' ||
+    plan?.status === 'APPROVED' ||
+    plan?.status === 'PUBLISHED'
   const step = simpleScheduleStep(plan?.status ?? 'DRAFT', Boolean(plan))
 
   const serviceRows = useMemo(
@@ -203,9 +207,9 @@ export default function ProtocolScheduleDetailPage() {
         </div>
       )}
 
-      {published && violations.length === 0 && (
+      {canBuildTeams && violations.length === 0 && (
         <p className="text-xs text-text-muted px-0.5">
-          Choir schedule sent. Use <strong>Build protocol teams</strong> to auto-assign members per service, then review in Teams.
+          Schedule ready. Use <strong>Build protocol teams</strong> to auto-assign members per service from this generated monthly schedule, then review in Teams.
         </p>
       )}
 
@@ -304,14 +308,14 @@ export default function ProtocolScheduleDetailPage() {
             </button>
           </CapabilityGate>
 
-          {published ? (
+          {canBuildTeams ? (
             <CapabilityGate platformUiCapability="protocol-team-manage">
               <button
                 type="button"
                 className="inline-flex items-center gap-2 px-6 py-3 text-base font-bold rounded-xl bg-primary-700 text-white hover:bg-primary-800 disabled:opacity-60"
                 disabled={buildTeams.isPending || violations.length > 0}
                 onClick={() => buildTeams.mutate()}
-                title="Auto-build protocol teams from choir schedule and member rules"
+                title="Auto-build protocol teams from the generated monthly schedule and member rules"
               >
                 <Users size={18} />
                 {buildTeams.isPending ? 'Building teams…' : 'Build protocol teams'}
