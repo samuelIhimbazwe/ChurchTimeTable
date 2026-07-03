@@ -660,7 +660,7 @@ async function main() {
   if (mainChoirRow) {
     await prisma.choirSchedulePlanEntry.deleteMany({ where: { choirId: mainChoirRow.id } });
     await prisma.choirServiceAssignment.deleteMany({
-      where: { choirId: mainChoirRow.id, source: 'SCHEDULER_DIRECT' },
+      where: { choirId: mainChoirRow.id, source: 'CHURCH_DIRECT' },
     });
   }
 
