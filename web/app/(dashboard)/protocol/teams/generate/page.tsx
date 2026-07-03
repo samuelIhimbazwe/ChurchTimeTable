@@ -157,7 +157,7 @@ export default function GenerateTeamPage() {
                       }
                       className="inline-flex items-center gap-1 text-xs font-semibold text-primary-600 hover:text-primary-800 disabled:opacity-50"
                     >
-                      <Wand2 size={13} /> Auto-generate (10 + random leader)
+                      <Wand2 size={13} /> Auto-generate ({PROTOCOL_TEAM_AUTO_SIZE} + random leader)
                     </button>
                     <button
                       type="button"

@@ -1,5 +1,6 @@
 /** Mirrors backend PROTOCOL_TEAM_SIZING.TEAM_SIZE_TARGET */
-export const PROTOCOL_TEAM_AUTO_SIZE = 10
+export const PROTOCOL_TEAM_AUTO_SIZE =
+  process.env.NEXT_PUBLIC_DEMO_BUILD === '1' ? 3 : 10
 
 export function shuffle<T>(items: T[]): T[] {
   const copy = [...items]

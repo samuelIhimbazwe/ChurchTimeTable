@@ -6,7 +6,11 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ServiceQuotaEngine } from './service-quota.engine';
-import { PROTOCOL_TEAM_SIZING, PROTOCOL_UNIT_CODE } from './protocol.constants';
+import {
+  PROTOCOL_TEAM_SIZING,
+  PROTOCOL_UNIT_CODE,
+  resolveProtocolTeamTargetSize,
+} from './protocol.constants';
 import {
   mapMembersToAllChoirIds,
   mapMembersToSingingChoirs,
@@ -198,7 +202,7 @@ export class ProtocolAssignmentEngine {
       : scored;
 
     const targetSize =
-      params.teamSize ?? PROTOCOL_TEAM_SIZING.TEAM_SIZE_TARGET;
+      params.teamSize ?? resolveProtocolTeamTargetSize();
     const nonChoirLimit = params.nonChoirLimit ?? settings.maxNonChoirMembers;
 
     if (CHOIR_COMPOSED_MODES.has(params.mode)) {

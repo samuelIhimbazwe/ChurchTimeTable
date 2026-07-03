@@ -5,7 +5,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { choirApi, protocolApi } from '@/lib/api'
-import type { ProtocolBulletinOverrides, ProtocolSchedulePlanEntry } from '@/lib/api/modules/protocol'
+import type {
+  ProtocolBulletinOverrides,
+  ProtocolSchedulePlanEntry,
+} from '@/lib/api/modules/protocol'
 import { CapabilityGate, SkeletonCard } from '@/components/shared'
 import { toast } from '@/components/shared/Toast'
 import { ProtocolScheduleBulletinGrid } from '@/components/protocol/scheduling/ProtocolScheduleBulletinGrid'
@@ -17,7 +20,7 @@ import { flattenScheduleServices } from '@/lib/protocol/schedule-calendar'
 import { simpleScheduleStep } from '@/lib/protocol/schedule-simple-flow'
 import { monthNameRw } from '@/lib/protocol/schedule-bulletin'
 import { collectSameDayViolations } from '@/lib/protocol/schedule-violations'
-import { Eye, LayoutGrid, Send, Shuffle, Timeline, Users } from 'lucide-react'
+import { Eye, LayoutGrid, Send, Shuffle, Timeline } from 'lucide-react'
 
 function groupByOccurrence(entries: ProtocolSchedulePlanEntry[]) {
   const map = new Map<string, ProtocolSchedulePlanEntry[]>()
@@ -65,10 +68,6 @@ export default function ProtocolScheduleDetailPage() {
 
   const editable = (plan?.status === 'GENERATED' || plan?.status === 'DRAFT' || plan?.status === 'APPROVED') && !pdfExportMode
   const published = plan?.status === 'PUBLISHED'
-  const canBuildTeams =
-    plan?.status === 'GENERATED' ||
-    plan?.status === 'APPROVED' ||
-    plan?.status === 'PUBLISHED'
   const step = simpleScheduleStep(plan?.status ?? 'DRAFT', Boolean(plan))
 
   const serviceRows = useMemo(
@@ -116,25 +115,6 @@ export default function ProtocolScheduleDetailPage() {
       invalidate()
     },
     onError: (err: Error) => toast.error(err.message || 'Could not publish'),
-  })
-
-  const buildTeams = useMutation({
-    mutationFn: () =>
-      protocolApi.buildTeamsForMonthlySchedule(planId, { randomizeLeaders: true }),
-    onSuccess: (result) => {
-      const { builtCount, skippedCount, failedCount } = result.summary
-      if (failedCount > 0) {
-        toast.error(`Built ${builtCount} teams; ${failedCount} failed`)
-      } else {
-        toast.success(
-          `Built ${builtCount} protocol team${builtCount === 1 ? '' : 's'}` +
-            (skippedCount > 0 ? ` (${skippedCount} skipped)` : ''),
-        )
-      }
-      invalidate()
-      void qc.invalidateQueries({ queryKey: ['protocol-teams'] })
-    },
-    onError: (err: Error) => toast.error(err.message || 'Could not build teams'),
   })
 
   const redraw = useMutation({
@@ -207,9 +187,9 @@ export default function ProtocolScheduleDetailPage() {
         </div>
       )}
 
-      {canBuildTeams && violations.length === 0 && (
+      {(plan?.status === 'GENERATED' || plan?.status === 'APPROVED' || plan?.status === 'PUBLISHED') && violations.length === 0 && (
         <p className="text-xs text-text-muted px-0.5">
-          Schedule ready. Use <strong>Build protocol teams</strong> to auto-assign members per service from this generated monthly schedule, then review in Teams.
+          Schedule ready. Open <strong>Teams</strong> to build protocol teams from this generated monthly schedule.
         </p>
       )}
 
@@ -307,21 +287,6 @@ export default function ProtocolScheduleDetailPage() {
               {redraw.isPending ? 'Redrawing…' : published ? 'Unlock & redraw' : 'Redraw month'}
             </button>
           </CapabilityGate>
-
-          {canBuildTeams ? (
-            <CapabilityGate platformUiCapability="protocol-team-manage">
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 px-6 py-3 text-base font-bold rounded-xl bg-primary-700 text-white hover:bg-primary-800 disabled:opacity-60"
-                disabled={buildTeams.isPending || violations.length > 0}
-                onClick={() => buildTeams.mutate()}
-                title="Auto-build protocol teams from the generated monthly schedule and member rules"
-              >
-                <Users size={18} />
-                {buildTeams.isPending ? 'Building teams…' : 'Build protocol teams'}
-              </button>
-            </CapabilityGate>
-          ) : null}
 
           {published ? null : (
             <CapabilityGate platformUiCapability="protocol-team-approve-publish">

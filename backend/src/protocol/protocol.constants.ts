@@ -57,3 +57,12 @@ export const PROTOCOL_TEAM_SIZING = {
   ONE_SINGING_CHOIR_MAX: 7,
   TWO_SINGING_CHOIRS_EACH_MAX: 4,
 } as const;
+
+/** Small roster fallback for seeded demo environments only. */
+export const PROTOCOL_DEMO_TEAM_SIZE = 3;
+
+export function resolveProtocolTeamTargetSize() {
+  return process.env.SEED_DEMO === 'true'
+    ? PROTOCOL_DEMO_TEAM_SIZE
+    : PROTOCOL_TEAM_SIZING.TEAM_SIZE_TARGET;
+}

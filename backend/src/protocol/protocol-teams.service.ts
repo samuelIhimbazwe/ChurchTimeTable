@@ -104,7 +104,9 @@ export class ProtocolTeamsService {
 
     if (!memberIds.length) {
       throw new BadRequestException(
-        'Select at least one protocol member to build the team',
+        options?.memberIds?.length
+          ? 'Select at least one protocol member to build the team'
+          : 'No eligible protocol members are available for this service under the current roster rules; service left unassigned',
       );
     }
 
