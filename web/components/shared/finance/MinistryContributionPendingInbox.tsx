@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { ContributionClaim } from '@/lib/api'
-import { Card, Badge } from '@/components/shared'
+import { Card } from '@/components/shared'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
 import { ContributionReviewModal } from './ContributionReviewModal'
 

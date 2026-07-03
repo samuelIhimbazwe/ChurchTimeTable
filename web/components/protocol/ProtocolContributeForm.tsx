@@ -1,10 +1,9 @@
 'use client'
 
-import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { contributionsApi } from '@/lib/api'
+import { contributionsApi, type ProtocolSubmitContext } from '@/lib/api/modules/contributions'
 import { toast } from '@/components/shared/Toast'
 import { Card, EmptyState } from '@/components/shared'
 import { FormField, Input, Select, Textarea } from '@/components/shared/form'
@@ -31,7 +30,8 @@ export function ProtocolContributeForm() {
   const qc = useQueryClient()
   const { data: ctx, isLoading } = useQuery({
     queryKey: ['protocol-contribution-submit-context'],
-    queryFn: () => contributionsApi.getProtocolSubmitContext(),
+    queryFn: async (): Promise<ProtocolSubmitContext> =>
+      contributionsApi.getProtocolSubmitContext(),
   })
 
   const form = useForm<ContributeClaimFormValues>({

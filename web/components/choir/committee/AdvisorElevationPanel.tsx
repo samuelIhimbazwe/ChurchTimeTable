@@ -3,12 +3,9 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { choirApi, governanceApi } from '@/lib/api'
-import { Card, Badge } from '@/components/shared'
+import { Card } from '@/components/shared'
 import { toast } from '@/components/shared/Toast'
 import { useResolvedChoirScope } from '@/lib/hooks'
-import {
-  CHOIR_POSITION_PERMISSION_OPTIONS,
-} from '@/lib/constants/choir-positions'
 import { relativeTime } from '@/lib/utils/format'
 
 const ELEVATION_PRESETS: Record<string, string[]> = {

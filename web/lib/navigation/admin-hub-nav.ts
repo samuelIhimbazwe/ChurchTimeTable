@@ -1,5 +1,4 @@
 import { Shield } from 'lucide-react';
-import { can } from '../choir/capability-can';
 import type { ResolvedAuth } from '../choir/capability.types';
 import { uiCapabilityVisible } from '../choir/admin-hub-ui-capability-registry';
 import { adminHubRouteTailFromPath } from '../choir/admin-hub-routes';
@@ -9,11 +8,6 @@ import type { NavItem, NavSection } from './role-nav';
 const TAIL_TO_UI: Record<string, string> = {
   admin: 'admin-hub',
 };
-
-function navGateVisible(uiId: string, auth: ResolvedAuth | undefined): boolean {
-  if (!auth) return false;
-  return uiCapabilityVisible(uiId, (capId) => can(auth, capId));
-}
 
 export function adminHubNavGateForPath(path: string): string | null {
   const tail = adminHubRouteTailFromPath(path);

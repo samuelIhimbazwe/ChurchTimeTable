@@ -485,11 +485,13 @@ export function useUiCapability(uiId: string, scopeId?: string): boolean {
 }
 
 export function useSponsorCapability(capabilityId: string): boolean {
+  const joinAuth = useJoinAuth();
+  const sponsorAuth = useSponsorAuth();
+  const rosterAuth = useRosterAuth();
   if (isMemberManageCapabilityId(capabilityId)) {
-    return canMemberManage(useJoinAuth(), useSponsorAuth(), useRosterAuth());
+    return canMemberManage(joinAuth, sponsorAuth, rosterAuth);
   }
-  const auth = useSponsorAuth();
-  return can(auth, capabilityId);
+  return can(sponsorAuth, capabilityId);
 }
 
 export function useSponsorUiCapability(uiId: string): boolean {
@@ -504,11 +506,13 @@ export function useSponsorUiCapability(uiId: string): boolean {
 }
 
 export function useJoinCapability(capabilityId: string): boolean {
+  const joinAuth = useJoinAuth();
+  const sponsorAuth = useSponsorAuth();
+  const rosterAuth = useRosterAuth();
   if (isMemberManageCapabilityId(capabilityId)) {
-    return canMemberManage(useJoinAuth(), useSponsorAuth(), useRosterAuth());
+    return canMemberManage(joinAuth, sponsorAuth, rosterAuth);
   }
-  const auth = useJoinAuth();
-  return can(auth, capabilityId);
+  return can(joinAuth, capabilityId);
 }
 
 export function useJoinUiCapability(uiId: string): boolean {
@@ -549,19 +553,21 @@ export function useMusicCapability(capabilityId: string): boolean {
 
 export function useMusicUiCapability(uiId: string): boolean {
   const auth = useMusicAuth();
+  const routeCheck = useCapabilityRouter();
   if (uiId === 'music-notify-members') {
-    const routeCheck = useCapabilityRouter();
     return musicUiVisible(uiId, routeCheck);
   }
   return musicUiVisible(uiId, (capId) => can(auth, capId));
 }
 
 export function useRosterCapability(capabilityId: string): boolean {
+  const joinAuth = useJoinAuth();
+  const sponsorAuth = useSponsorAuth();
+  const rosterAuth = useRosterAuth();
   if (isMemberManageCapabilityId(capabilityId)) {
-    return canMemberManage(useJoinAuth(), useSponsorAuth(), useRosterAuth());
+    return canMemberManage(joinAuth, sponsorAuth, rosterAuth);
   }
-  const auth = useRosterAuth();
-  return can(auth, capabilityId);
+  return can(rosterAuth, capabilityId);
 }
 
 export function useRosterUiCapability(uiId: string): boolean {

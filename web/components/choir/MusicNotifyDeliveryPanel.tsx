@@ -71,7 +71,7 @@ export function MusicNotifyDeliveryPanel() {
                   <Badge variant="status-pending" dot>
                     {item.deliveredCount} delivered
                   </Badge>
-                  <Badge variant="status-approved" dot>
+                  <Badge variant="status-active" dot>
                     {item.readCount} read
                   </Badge>
                   {item.acknowledgedCount > 0 && (
@@ -80,7 +80,7 @@ export function MusicNotifyDeliveryPanel() {
                     </Badge>
                   )}
                   {item.deliveryRate !== null && (
-                    <Badge variant={item.deliveryRate >= 70 ? 'status-approved' : 'status-pending'}>
+                    <Badge variant={item.deliveryRate >= 70 ? 'status-active' : 'status-pending'}>
                       {item.deliveryRate}% read rate
                     </Badge>
                   )}

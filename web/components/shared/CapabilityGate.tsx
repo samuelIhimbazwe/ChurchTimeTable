@@ -9,7 +9,7 @@ import {
 interface CapabilityGateProps {
   /** Choir UI capability id from a choir UI capability registry */
   uiCapability?: string;
-  /** Platform UI capability id (protocol/church/system legacy permission bridge) */
+  /** Platform UI capability id (choir/protocol permission bridge) */
   platformUiCapability?: string;
   /** Legacy single permission — resolved via platform registry when mapped */
   platformPermission?: string;
@@ -31,15 +31,11 @@ export default function CapabilityGate({
   fallback = null,
   children,
 }: CapabilityGateProps) {
-  const uiAllowed = uiCapability ? useUiCapability(uiCapability, scopeId) : false;
-  const platformUiAllowed = platformUiCapability
-    ? usePlatformUiCapability(platformUiCapability)
-    : false;
-  const platformPermAllowed = platformPermission
-    ? usePlatformPermissionCapability(platformPermission)
-    : false;
-  const singleAllowed = capability ? useCapability(capability, scopeId) : false;
-  const anyAllowed = anyOf?.length ? useAnyCapability(anyOf, scopeId) : false;
+  const uiAllowed = useUiCapability(uiCapability ?? '', scopeId);
+  const platformUiAllowed = usePlatformUiCapability(platformUiCapability ?? '');
+  const platformPermAllowed = usePlatformPermissionCapability(platformPermission ?? '');
+  const singleAllowed = useCapability(capability ?? '', scopeId);
+  const anyAllowed = useAnyCapability(anyOf ?? [], scopeId);
 
   const allowed = uiCapability
     ? uiAllowed

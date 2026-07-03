@@ -28,9 +28,9 @@ export function ChoirAdminHub() {
   })
 
   const { data: serviceRequests } = useQuery({
-    queryKey: ['church-service-requests', 'PENDING', choirId],
+    queryKey: ['choir-service-requests', 'PENDING', choirId],
     queryFn: () =>
-      choirServiceOpsApi.listChurchRequests({ status: 'PENDING', choirId }),
+      choirServiceOpsApi.listServiceRequests({ status: 'PENDING', choirId }),
     enabled: !!choirId,
   })
 
@@ -81,7 +81,7 @@ export function ChoirAdminHub() {
           value={serviceRequests?.length ?? 0}
           icon={ClipboardList}
           animate
-          href="/church/service-requests"
+          href="/choir/service-requests"
         />
         <StatTile
           label="Prep plans due"
@@ -166,9 +166,9 @@ export function ChoirAdminHub() {
           />
           <CapabilityGate uiCapability="admin-service-requests-link">
             <HubQuickLink
-              href="/church/service-requests"
-              label="Church service requests"
-              desc="Review when the church requests choir presence"
+              href="/choir/service-requests"
+              label="Service requests"
+              desc="Review requests for choir presence at services"
               icon={ClipboardList}
               stat={
                 (serviceRequests?.length ?? 0) > 0

@@ -6,7 +6,6 @@ import { uiCapabilityVisible as disciplineUiVisible } from '../choir/discipline-
 import { uiCapabilityVisible as devotionUiVisible } from '../choir/devotion-ui-capability-registry';
 import { uiCapabilityVisible as joinUiVisible } from '../choir/join-ui-capability-registry';
 import { uiCapabilityVisible as logisticsUiVisible } from '../choir/logistics-ui-capability-registry';
-import { uiCapabilityVisible as musicUiVisible } from '../choir/music-ui-capability-registry';
 import { uiCapabilityVisible as opsUiVisible } from '../choir/ops-ui-capability-registry';
 import { uiCapabilityVisible as presidentUiVisible } from '../choir/president-hub-ui-capability-registry';
 import { uiCapabilityVisible as recordsUiVisible } from '../choir/records-hub-ui-capability-registry';

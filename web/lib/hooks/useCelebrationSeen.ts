@@ -39,8 +39,8 @@ export function useCelebrationSet(storageKey: string) {
   const markItems = useCallback(
     (ids: string[]) => {
       try {
-        const next = new Set([...readSet(), ...ids])
-        localStorage.setItem(storageKey, JSON.stringify([...next]))
+        const next = new Set([...Array.from(readSet()), ...ids])
+        localStorage.setItem(storageKey, JSON.stringify(Array.from(next)))
       } catch {
         /* ignore */
       }

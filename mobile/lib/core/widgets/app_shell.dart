@@ -43,8 +43,6 @@ class AppShell extends ConsumerWidget {
       case AppRouter.language:
       case AppRouter.members:
       case AppRouter.families:
-      case AppRouter.ministries:
-      case AppRouter.ministryDetail:
       case AppRouter.operationalUnits:
       case AppRouter.operationalUnitDetail:
       case AppRouter.welfare:
@@ -101,7 +99,7 @@ class AppShell extends ConsumerWidget {
                         ? const CmmsBrandLogo(
                             size: 36,
                             showWordmark: true,
-                            subtitle: 'Church System',
+                            subtitle: 'Choir & Protocol',
                             lightContext: true,
                           )
                         : const CmmsBrandLogo(size: 32, lightContext: true),

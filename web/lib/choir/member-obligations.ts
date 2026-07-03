@@ -2,7 +2,7 @@ import type { ContributionClaim } from '@/lib/api'
 import type { MemberContributionGoal } from '@/lib/api/modules/finance'
 import { membershipOfficePath } from '@/lib/choir/membership-office'
 import { resolveMemberDisplayStatus } from '@/lib/contribution/member-display'
-import { formatCurrency, formatDate, relativeTime } from '@/lib/utils/format'
+import { formatCurrency, relativeTime } from '@/lib/utils/format'
 
 export type MemberObligationTone = 'danger' | 'warning' | 'info' | 'neutral'
 

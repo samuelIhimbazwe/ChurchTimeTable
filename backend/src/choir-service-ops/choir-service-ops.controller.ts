@@ -21,39 +21,39 @@ import { PhoneOperationalGuard } from '../common/guards/phone-operational.guard'
 import { UiCapabilityGuard } from '../common/guards/ui-capability.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { RequireUiCapability } from '../common/decorators/ui-capability.decorator';
-import { ChurchServiceRequestsService } from './church-service-requests.service';
+import { ChoirServiceRequestsService } from './choir-service-requests.service';
 import { ServicePreparationService } from './service-preparation.service';
 import { ChoirDissolutionService } from './choir-dissolution.service';
 import { ChoirServiceAssignmentsService } from '../choir-scheduling/choir-service-assignments.service';
 import {
-  ChurchServiceOccurrenceService,
-  type ChurchServiceSlotCode,
-} from './church-service-occurrence.service';
+  ChoirServiceOccurrenceService,
+  type ChoirServiceSlotCode,
+} from './choir-service-occurrence.service';
 
 @Controller()
 @UseGuards(JwtAuthGuard, RolesGuard, UiCapabilityGuard, PhoneOperationalGuard)
 export class ChoirServiceOpsController {
   constructor(
-    private churchRequests: ChurchServiceRequestsService,
+    private serviceRequests: ChoirServiceRequestsService,
     private preparation: ServicePreparationService,
     private dissolution: ChoirDissolutionService,
     private assignments: ChoirServiceAssignmentsService,
-    private serviceOccurrences: ChurchServiceOccurrenceService,
+    private serviceOccurrences: ChoirServiceOccurrenceService,
   ) {}
 
-  @Get('church/service-requests')
-  @RequireUiCapability('church-service-requests-view')
-  listChurchRequests(
+  @Get('choir/service-requests')
+  @RequireUiCapability('choir-service-requests-view')
+  listServiceRequests(
     @CurrentUser('sub') userId: string,
     @Query('status') status?: ChurchServiceRequestStatus,
     @Query('choirId') choirId?: string,
   ) {
-    return this.churchRequests.list(userId, { status, choirId });
+    return this.serviceRequests.list(userId, { status, choirId });
   }
 
-  @Post('church/service-requests')
-  @RequireUiCapability('church-service-request-create')
-  createChurchRequest(
+  @Post('choir/service-requests')
+  @RequireUiCapability('choir-service-request-create')
+  createServiceRequest(
     @CurrentUser('sub') userId: string,
     @Body()
     body: {
@@ -64,11 +64,11 @@ export class ChoirServiceOpsController {
       notes?: string;
     },
   ) {
-    return this.churchRequests.create(userId, body);
+    return this.serviceRequests.create(userId, body);
   }
 
-  @Get('church/service-assignments/conflicts')
-  @RequireUiCapability('church-service-assignments-view')
+  @Get('choir/service-assignments/conflicts')
+  @RequireUiCapability('choir-service-assignments-view')
   checkAssignmentConflicts(
     @CurrentUser('sub') userId: string,
     @Query('choirId') choirId: string,
@@ -88,9 +88,9 @@ export class ChoirServiceOpsController {
     return this.assignments.checkConflictsForSlot(userId, choirId, startAt, endAt);
   }
 
-  @Get('church/service-assignments')
-  @RequireUiCapability('church-service-assignments-view')
-  listChurchAssignments(
+  @Get('choir/service-assignments')
+  @RequireUiCapability('choir-service-assignments-view')
+  listServiceAssignments(
     @CurrentUser('sub') userId: string,
     @Query('status') status?: ChoirServiceAssignmentStatus,
     @Query('pendingOnly') pendingOnly?: string,
@@ -98,24 +98,24 @@ export class ChoirServiceOpsController {
     @Query('to') to?: string,
   ) {
     if (pendingOnly === 'true') {
-      return this.assignments.listPendingForChurch(userId);
+      return this.assignments.listPendingForScheduler(userId);
     }
-    return this.assignments.listForChurch(userId, {
+    return this.assignments.listForScheduler(userId, {
       status,
       from: from ? new Date(from) : undefined,
       to: to ? new Date(to) : undefined,
     });
   }
 
-  @Post('church/service-assignments')
-  @RequireUiCapability('church-service-request-schedule')
-  async churchDirectAssign(
+  @Post('choir/service-assignments')
+  @RequireUiCapability('choir-service-request-schedule')
+  async directServiceAssign(
     @CurrentUser('sub') userId: string,
     @Body()
     body: {
       choirId: string;
       occurrenceId?: string;
-      serviceCode?: ChurchServiceSlotCode;
+      serviceCode?: ChoirServiceSlotCode;
       customServiceName?: string;
       serviceDate?: string;
       startTime?: string;
@@ -144,7 +144,7 @@ export class ChoirServiceOpsController {
       });
       occurrenceId = occurrence.id;
     }
-    return this.assignments.churchDirectAssign(userId, {
+    return this.assignments.directServiceAssign(userId, {
       choirId: body.choirId,
       occurrenceId,
       role: body.role,
@@ -153,9 +153,9 @@ export class ChoirServiceOpsController {
     });
   }
 
-  @Post('church/service-assignments/:id/confirm')
-  @RequireUiCapability('church-service-request-schedule')
-  confirmChurchAssignment(
+  @Post('choir/service-assignments/:id/confirm')
+  @RequireUiCapability('choir-service-request-schedule')
+  confirmServiceAssignment(
     @CurrentUser('sub') userId: string,
     @Param('id') id: string,
     @Body() body: { bypassRules?: boolean; overrideReason?: string },
@@ -163,9 +163,9 @@ export class ChoirServiceOpsController {
     return this.assignments.confirm(userId, id, body);
   }
 
-  @Post('church/service-assignments/:id/reject')
-  @RequireUiCapability('church-service-request-schedule')
-  rejectChurchAssignment(
+  @Post('choir/service-assignments/:id/reject')
+  @RequireUiCapability('choir-service-request-schedule')
+  rejectServiceAssignment(
     @CurrentUser('sub') userId: string,
     @Param('id') id: string,
     @Body() body: { reason?: string },
@@ -173,9 +173,9 @@ export class ChoirServiceOpsController {
     return this.assignments.reject(userId, id, body.reason);
   }
 
-  @Post('church/service-requests/:id/review')
-  @RequireUiCapability('church-service-request-schedule')
-  reviewChurchRequest(
+  @Post('choir/service-requests/:id/review')
+  @RequireUiCapability('choir-service-request-schedule')
+  reviewServiceRequest(
     @CurrentUser('sub') userId: string,
     @Param('id') id: string,
     @Body()
@@ -185,7 +185,7 @@ export class ChoirServiceOpsController {
       reviewNotes?: string;
     },
   ) {
-    return this.churchRequests.review(userId, id, body);
+    return this.serviceRequests.review(userId, id, body);
   }
 
   @Get('choir/member-service-preparation')
@@ -279,13 +279,13 @@ export class ChoirServiceOpsController {
   }
 
   @Get('choirs/dissolution-transfers')
-  @RequireUiCapability('church-governance-manage')
+  @RequireUiCapability('choir-governance-manage')
   listDissolutions(@CurrentUser('sub') userId: string) {
     return this.dissolution.list(userId);
   }
 
   @Get('choirs/:choirId/dissolution-preview')
-  @RequireUiCapability('church-governance-manage')
+  @RequireUiCapability('choir-governance-manage')
   previewDissolution(
     @CurrentUser('sub') userId: string,
     @Param('choirId') choirId: string,
@@ -294,7 +294,7 @@ export class ChoirServiceOpsController {
   }
 
   @Post('choirs/dissolution-transfer')
-  @RequireUiCapability('church-governance-manage')
+  @RequireUiCapability('choir-governance-manage')
   executeDissolution(
     @CurrentUser('sub') userId: string,
     @Body() body: { sourceChoirId: string; targetChoirId: string; reason?: string },

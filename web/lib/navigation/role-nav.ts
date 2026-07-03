@@ -8,17 +8,9 @@ import {
   FileText,
   Settings2,
   Home,
-  Clock,
   Heart,
   ArrowLeftRight,
   Trophy,
-  Upload,
-  Server,
-  Activity,
-  RefreshCw,
-  Building2,
-  Megaphone,
-  Scale,
   ClipboardCheck,
   UserCog,
   KeyRound,
@@ -26,7 +18,7 @@ import {
   UserPlus,
   Crown,
   Mic2,
-  AlertTriangle,
+  Scale,
 } from 'lucide-react'
 import type { ChoirAccessState } from '@/lib/choir/access'
 import type { ActiveChoirMembership } from '@/lib/choir/membership-display'
@@ -198,122 +190,30 @@ const PROTOCOL_TEAM_LEADER_NAV: NavSection = {
   ],
 }
 
-const CHURCH_OVERVIEW: NavSection = {
+const DUAL_SYSTEM_LINKS: NavSection = {
+  section: 'Systems',
   items: [
-    { label: 'Church Dashboard', icon: LayoutDashboard, path: '/church' },
-    { label: 'Members',          icon: Users,           path: '/members' },
+    { label: 'Choir',    icon: Music,  path: '/choir' },
+    { label: 'Protocol', icon: Shield, path: '/protocol' },
   ],
 }
 
-const CHURCH_SCHEDULE_SUBMIT_NAV: NavSection = {
-  section: 'Church schedule',
-  items: [
-    { label: 'Submit activity', icon: Calendar, path: '/church/schedule/submit' },
-    { label: 'My submissions',  icon: ClipboardCheck, path: '/church/schedule/mine' },
-  ],
-}
-
-const CHURCH_INTEL: NavSection = {
-  section: 'Church Leadership',
-  items: [
-    { label: 'Master Timetable',  icon: Clock,            path: '/church/timetable' },
-    { label: 'Schedule conflicts', icon: AlertTriangle,   path: '/church/schedule/conflicts' },
-    { label: 'Facilities',        icon: Building2,        path: '/church/facilities' },
-    { label: 'Activity Feed',     icon: Activity,         path: '/church/activity' },
-    { label: 'Calendar',          icon: Calendar,         path: '/church/calendar' },
-    { label: 'Service Requests',  icon: ClipboardCheck,   path: '/church/service-requests' },
-    { label: 'Service Assignments', icon: Music,            path: '/church/service-assignments' },
-    { label: 'Choir Transfers',   icon: ArrowLeftRight,   path: '/church/choir-transfers' },
-    { label: 'Finance',           icon: DollarSign,       path: '/church/finance' },
-    { label: 'Governance',        icon: Scale,            path: '/church/governance' },
-    { label: 'Announcements',     icon: Megaphone,        path: '/church/announcements' },
-  ],
-}
-
-const CHURCH_MINISTRIES: NavSection = {
-  section: 'Ministries',
-  items: [
-    { label: 'All Ministries', icon: Building2, path: '/ministries' },
-    { label: 'Choir',          icon: Music,     path: '/choir' },
-    { label: 'Protocol',       icon: Shield,    path: '/protocol' },
-  ],
-}
-
-const CHURCH_ADMIN_TOOLS: NavSection = {
-  section: 'Administration',
-  items: [
-    { label: 'Approvals',     icon: ClipboardCheck, path: '/admin/approvals' },
-    { label: 'Admin Tools',   icon: Settings2,      path: '/admin' },
-    { label: 'Import/Export', icon: Upload,         path: '/admin/import' },
-    { label: 'System Status', icon: Activity,       path: '/system/status' },
-    { label: 'Sync',          icon: RefreshCw,      path: '/system/sync' },
-    { label: 'Deployment',    icon: Server,         path: '/system/deployment' },
-  ],
-}
-
-const MEMBER_PORTAL: NavSection[] = [
+const DUAL_MEMBER_PORTAL: NavSection[] = [
   {
     items: [
-      { label: 'My Portal',   icon: Home,          path: '/portal' },
-      { label: 'Devotion',    icon: BookOpen,      path: '/portal/devotion' },
-      { label: 'Church giving', icon: DollarSign,  path: '/portal/church-giving' },
-      { label: 'Events',      icon: Calendar,      path: '/events' },
-      { label: 'Ministries',  icon: Building2,   path: '/portal/ministries' },
-      { label: 'Choirs',      icon: Music,       path: '/portal/choirs' },
-      { label: 'Announcements', icon: Megaphone, path: '/announcements' },
-      { label: 'My Schedule', icon: Clock,       path: '/portal/schedule' },
-      { label: 'Welfare',     icon: Heart,       path: '/portal/welfare' },
+      { label: 'My Portal', icon: Home, path: '/portal' },
+      { label: 'Choirs', icon: Music, path: '/portal/choirs' },
+      { label: 'Protocol', icon: Shield, path: '/portal/protocol' },
     ],
   },
+  DUAL_SYSTEM_LINKS,
 ]
 
-const SYSTEM_PLATFORM: NavSection[] = [
-  {
-    items: [
-      { label: 'System',  icon: Server, path: '/system' },
-      { label: 'Members', icon: Users,  path: '/members' },
-    ],
-  },
-  {
-    section: 'Ministries',
-    items: [
-      { label: 'Ministries', icon: Building2, path: '/ministries' },
-      { label: 'Choir',      icon: Music,     path: '/choir' },
-      { label: 'Protocol',   icon: Shield,    path: '/protocol' },
-    ],
-  },
-  {
-    section: 'Church',
-    items: [
-      { label: 'Church Dashboard', icon: LayoutDashboard, path: '/church' },
-      { label: 'Governance',       icon: Scale,           path: '/church/governance' },
-    ],
-  },
-  {
-    section: 'Platform',
-    items: [
-      { label: 'System Status', icon: Activity,    path: '/system/status' },
-      { label: 'Deployment',  icon: Server,    path: '/system/deployment' },
-      { label: 'Sync',        icon: RefreshCw, path: '/system/sync' },
-      { label: 'Notifications', icon: Megaphone, path: '/system/notification-rules' },
-      { label: 'Users',       icon: UserCog,   path: '/system/users' },
-      { label: 'Roles',       icon: KeyRound,  path: '/system/roles' },
-      { label: 'Audit Log',   icon: FileText,  path: '/system/audit' },
-      { label: 'Admin Tools', icon: Settings2, path: '/admin' },
-      { label: 'Import',      icon: Upload,    path: '/admin/import' },
-    ],
-  },
-]
+const MEMBER_PORTAL: NavSection[] = DUAL_MEMBER_PORTAL
 
 export const NAV_BY_ROLE: Record<string, NavSection[]> = {
-  SUPER_ADMIN: SYSTEM_PLATFORM,
-
-  CHURCH_ADMIN: [
-    CHURCH_OVERVIEW,
-    CHURCH_INTEL,
-    CHURCH_MINISTRIES,
-    CHURCH_ADMIN_TOOLS,
-  ],
+  SUPER_ADMIN: MEMBER_PORTAL,
+  CHURCH_ADMIN: MEMBER_PORTAL,
 
   CHOIR_ADMIN: [
     CHOIR_DASHBOARD,
@@ -325,7 +225,6 @@ export const NAV_BY_ROLE: Record<string, NavSection[]> = {
     CHOIR_FAMILY_COORD_HUB,
     CHOIR_ADVISOR_HUB,
     CHOIR_LEADERSHIP_NAV,
-    CHURCH_SCHEDULE_SUBMIT_NAV,
   ],
 
   CHOIR_PRESIDENT: [
@@ -335,7 +234,6 @@ export const NAV_BY_ROLE: Record<string, NavSection[]> = {
     CHOIR_ADMIN_TOOLS,
     CHOIR_OFFICER_HUBS,
     CHOIR_LEADERSHIP_NAV,
-    CHURCH_SCHEDULE_SUBMIT_NAV,
   ],
 
   CHOIR_VICE_PRESIDENT: [
@@ -426,21 +324,19 @@ export const NAV_BY_ROLE: Record<string, NavSection[]> = {
     PROTOCOL_DASHBOARD,
     PROTOCOL_OPS,
     { section: 'Administration', items: [{ label: 'Claims', icon: ClipboardCheck, path: '/protocol/claims' }] },
-    CHURCH_SCHEDULE_SUBMIT_NAV,
-    { section: 'Church', items: [{ label: 'Members', icon: Users, path: '/members' }] },
+    DUAL_SYSTEM_LINKS,
   ],
 
   PROTOCOL_LEADER: [
     PROTOCOL_DASHBOARD,
     PROTOCOL_OPS,
-    CHURCH_SCHEDULE_SUBMIT_NAV,
-    { section: 'Church', items: [{ label: 'Members', icon: Users, path: '/members' }] },
+    DUAL_SYSTEM_LINKS,
   ],
 
   PROTOCOL_VICE_PRESIDENT: [
     PROTOCOL_DASHBOARD,
     PROTOCOL_OPS,
-    { section: 'Church', items: [{ label: 'Members', icon: Users, path: '/members' }] },
+    DUAL_SYSTEM_LINKS,
   ],
 
   PROTOCOL_COORDINATOR: [
@@ -555,26 +451,26 @@ const BACK_TO_PORTAL: NavSection = {
   items: [{ label: 'Member portal', icon: Home, path: '/portal' }],
 }
 
+function backToPortalSection(isDualMember?: boolean): NavSection[] {
+  return isDualMember ? [BACK_TO_PORTAL] : []
+}
+
 function usesChoirRoleNav(role: string | undefined) {
   return !!role && (CHOIR_LEADERSHIP_ROLE_SET.has(role) || role === 'CHOIR_ADMIN')
 }
 
-/** Sidebar for /portal, /events, etc. — church member first; one link into choir when approved. */
-function hasChurchScheduleSubmit(permissions: string[]) {
-  return permissions.includes('church.schedule.submit')
-}
-
+/** Sidebar for /portal — dual members only (choir + protocol entry). */
 export function getPortalNavForUser(
-  role: string | undefined,
+  _role: string | undefined,
   choirAccess: Pick<ChoirAccessState, 'canAccessChoirArea' | 'isChoirMember'>,
-  permissions: string[] = [],
   activeChoirMemberships: ActiveChoirMembership[] = [],
+  options?: { isDualMember?: boolean },
 ): NavSection[] {
-  const sections: NavSection[] = [...MEMBER_PORTAL]
-
-  if (hasChurchScheduleSubmit(permissions)) {
-    sections.push(CHURCH_SCHEDULE_SUBMIT_NAV)
+  if (options?.isDualMember === false) {
+    return []
   }
+
+  const sections: NavSection[] = [...DUAL_MEMBER_PORTAL]
 
   if (choirAccess.canAccessChoirArea && choirAccess.isChoirMember) {
     for (const choir of activeChoirMemberships) {
@@ -591,8 +487,9 @@ export function getChoirNavForUser(
   choirAccess: Pick<ChoirAccessState, 'canAccessChoirArea' | 'isChoirMember'>,
   permissions: string[] = [],
   capabilityCheck?: (capId: string) => boolean,
+  options?: { isDualMember?: boolean },
 ): NavSection[] {
-  const sections: NavSection[] = [BACK_TO_PORTAL]
+  const sections: NavSection[] = backToPortalSection(options?.isDualMember)
 
   if (usesChoirRoleNav(role)) {
     const choirNav = NAV_BY_ROLE[role!] ?? []
@@ -622,7 +519,7 @@ export function getChoirNavForUser(
  * Context-aware navigation:
  * - Portal routes → member portal nav (+ choir entry when approved member)
  * - /choir/* → choir dashboard nav
- * - Church / protocol / system admin areas → role-specific admin nav
+ * - /protocol/* → protocol dashboard nav (composed in Sidebar)
  */
 export function getNavForContext(
   pathname: string,
@@ -631,27 +528,18 @@ export function getNavForContext(
   permissions: string[] = [],
   activeChoirMemberships: ActiveChoirMembership[] = [],
   capabilityCheck?: (capId: string) => boolean,
+  options?: { isDualMember?: boolean },
 ): NavSection[] {
   const choirId = parseChoirIdFromPath(pathname)
   if (choirId && choirAccess.canAccessChoirArea) {
-    return getChoirNavForUser(role, choirAccess, permissions, capabilityCheck)
+    return getChoirNavForUser(role, choirAccess, permissions, capabilityCheck, options)
   }
 
-  if (
-    pathname.startsWith('/church')
-    || pathname.startsWith('/admin')
-    || (role === 'CHURCH_ADMIN' && !pathname.startsWith('/portal'))
-  ) {
-    return getNavForRole(role === 'CHURCH_ADMIN' ? 'CHURCH_ADMIN' : role)
+  if (pathname.startsWith('/protocol')) {
+    return getNavForRole(role)
   }
 
-  // Protocol dashboard nav is composed from dashboard-context in Sidebar when on /protocol/*
-
-  if (pathname.startsWith('/system') && role === 'SUPER_ADMIN') {
-    return getNavForRole('SUPER_ADMIN')
-  }
-
-  return getPortalNavForUser(role, choirAccess, permissions, activeChoirMemberships)
+  return getPortalNavForUser(role, choirAccess, activeChoirMemberships, options)
 }
 
 /** @deprecated Use getNavForContext */

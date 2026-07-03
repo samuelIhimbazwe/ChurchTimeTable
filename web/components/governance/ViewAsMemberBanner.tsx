@@ -17,9 +17,8 @@ export function ViewAsMemberBanner({ className }: Props) {
   if (!viewAsMember) return null
 
   const isAdminContext =
-    pathname.startsWith('/admin') ||
-    pathname.startsWith('/system') ||
-    pathname.startsWith('/church/governance')
+    pathname.startsWith('/choir/admin') ||
+    pathname.startsWith('/protocol/admin')
 
   return (
     <div

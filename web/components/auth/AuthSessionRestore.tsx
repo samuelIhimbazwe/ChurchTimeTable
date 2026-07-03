@@ -27,6 +27,7 @@ export function AuthSessionRestore() {
           role: user.role,
           permissions: user.permissions,
           onboardingComplete: user.onboardingComplete,
+          homePath: user.homePath,
         })
       })
       .catch(() => {
@@ -41,7 +42,7 @@ export function AuthSessionRestore() {
       .getProfile()
       .then((profile) => {
         const lang = profile.preferredLanguage
-        const next = isAppLocale(lang) ? lang : normalizeAppLocale(lang)
+        const next = lang && isAppLocale(lang) ? lang : normalizeAppLocale(lang)
         if (useUIStore.getState().locale !== next) {
           setLocale(next)
         }

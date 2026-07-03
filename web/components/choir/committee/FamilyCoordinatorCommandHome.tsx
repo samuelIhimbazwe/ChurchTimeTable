@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { familiesApi, welfareApi, choirActivityApi } from '@/lib/api'
+import { familiesApi, welfareApi } from '@/lib/api'
 import { OfficeCommandHome } from '@/components/shared/office/OfficeCommandHome'
 import { Card, SkeletonCard } from '@/components/shared'
 import { useResolvedChoirScope } from '@/lib/hooks'
@@ -17,12 +17,6 @@ export function FamilyCoordinatorCommandHome() {
   const { data: welfare } = useQuery({
     queryKey: ['welfare'],
     queryFn: () => welfareApi.getAll(),
-  })
-
-  const { data: activities } = useQuery({
-    queryKey: ['choir-activities-coord-cmd', choirId],
-    queryFn: () => choirActivityApi.getAll({ choirId, limit: 5 }),
-    enabled: !!choirId,
   })
 
   if (!choirId) {

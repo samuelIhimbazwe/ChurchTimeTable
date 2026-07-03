@@ -23,10 +23,6 @@ import {
 import type { OperationalScopeContext } from '../governance/operational-scope.types';
 import { getActiveChoirId } from '../common/choir/choir-context.storage';
 import { MinistryAccessService } from '../ministries/ministry-access.service';
-import { AssetAccessService } from '../assets/asset-access.service';
-import { hasGlobalAssetView } from '../assets/asset-access.util';
-import { hasGlobalMinistryFinanceView } from '../ministry-finance/ministry-finance-access.util';
-import { hasChurchIntelligenceView } from '../church-intelligence/church-intelligence-access.util';
 
 export type SearchEntityType =
   | 'member'
@@ -283,19 +279,18 @@ export class SearchService {
     private familiesService: FamiliesService,
     private visibility: ResponseVisibilityService,
     private ministryAccess: MinistryAccessService,
-    private assetAccess: AssetAccessService,
   ) {}
 
-  private canSearchAssets(permissions: string[]): boolean {
-    return hasGlobalAssetView(permissions);
+  private canSearchAssets(_permissions: string[]): boolean {
+    return false;
   }
 
-  private canSearchMinistryFinance(permissions: string[]): boolean {
-    return hasGlobalMinistryFinanceView(permissions);
+  private canSearchMinistryFinance(_permissions: string[]): boolean {
+    return false;
   }
 
-  private canSearchChurchIntelligence(permissions: string[]): boolean {
-    return hasChurchIntelligenceView(permissions);
+  private canSearchChurchIntelligence(_permissions: string[]): boolean {
+    return false;
   }
 
   private normalizeQuery(query: string): string {
@@ -979,99 +974,11 @@ export class SearchService {
   }
 
   private async searchAssets(
-    actorUserId: string,
-    query: string,
-    limit: number,
+    _actorUserId: string,
+    _query: string,
+    _limit: number,
   ): Promise<AssetSearchResult[]> {
-    const scope = await this.assetAccess.visibleAssetWhere(actorUserId);
-    const text = { contains: query };
-
-    const [assetRows, categories, uniforms, instruments] = await Promise.all([
-      this.prisma.asset.findMany({
-        where: {
-          ...scope,
-          OR: [{ name: text }, { code: text }, { serialNumber: text }],
-        },
-        take: limit,
-        select: { id: true, name: true, code: true },
-      }),
-      this.prisma.assetCategory.findMany({
-        where: { OR: [{ name: text }, { code: text }] },
-        take: limit,
-        select: { id: true, name: true, code: true },
-      }),
-      this.prisma.uniformProfile.findMany({
-        where: {
-          asset: { ...scope, OR: [{ name: text }, { code: text }] },
-        },
-        take: limit,
-        select: { assetId: true, asset: { select: { name: true, code: true } } },
-      }),
-      this.prisma.instrumentProfile.findMany({
-        where: {
-          OR: [{ instrumentType: text }],
-          asset: { ...scope, OR: [{ name: text }, { code: text }] },
-        },
-        take: limit,
-        select: {
-          assetId: true,
-          instrumentType: true,
-          asset: { select: { name: true, code: true } },
-        },
-      }),
-    ]);
-
-    const results: AssetSearchResult[] = [
-      ...assetRows.map((r) => ({
-        type: 'asset' as const,
-        id: r.id,
-        title: r.name,
-        code: r.code,
-      })),
-      ...categories.map((r) => ({
-        type: 'assetCategory' as const,
-        id: r.id,
-        title: r.name,
-        code: r.code,
-      })),
-      ...uniforms.map((r) => ({
-        type: 'uniform' as const,
-        id: r.assetId,
-        title: r.asset.name,
-        code: r.asset.code,
-      })),
-      ...instruments.map((r) => ({
-        type: 'instrument' as const,
-        id: r.assetId,
-        title: `${r.asset.name} (${r.instrumentType})`,
-        code: r.asset.code,
-      })),
-    ];
-
-    const equipmentCategory = await this.prisma.assetCategory.findUnique({
-      where: { code: 'AUDIO' },
-    });
-    if (equipmentCategory) {
-      const equipment = await this.prisma.asset.findMany({
-        where: {
-          ...scope,
-          categoryId: { in: [equipmentCategory.id] },
-          OR: [{ name: text }, { code: text }],
-        },
-        take: limit,
-        select: { id: true, name: true, code: true },
-      });
-      for (const e of equipment) {
-        results.push({
-          type: 'equipment',
-          id: e.id,
-          title: e.name,
-          code: e.code,
-        });
-      }
-    }
-
-    return results.slice(0, limit);
+    return [];
   }
 
   private async searchMinistryContent(

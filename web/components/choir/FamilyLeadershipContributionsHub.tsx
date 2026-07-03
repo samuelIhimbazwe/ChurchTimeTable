@@ -54,7 +54,8 @@ function FamilyReviewModal({
   const [rejectReason, setRejectReason] = useState('')
 
   const partial =
-    confirmedAmount && parseFloat(confirmedAmount) !== item.claimedAmount
+    confirmedAmount.trim().length > 0 &&
+    parseFloat(confirmedAmount) !== item.claimedAmount
 
   const approve = useMutation({
     mutationFn: () =>
@@ -174,7 +175,7 @@ function FamilyReviewModal({
                 type="button"
                 disabled={
                   approve.isPending ||
-                  !confirmedAmount ||
+                  !confirmedAmount.trim() ||
                   (partial && discrepancyReason.trim().length < 3)
                 }
                 onClick={() => approve.mutate()}

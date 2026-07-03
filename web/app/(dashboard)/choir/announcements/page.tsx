@@ -277,7 +277,7 @@ export default function AnnouncementsPage() {
                       <Badge
                         variant={
                           stats.deliveryRate != null && stats.deliveryRate >= 70
-                            ? 'status-approved'
+                            ? 'status-active'
                             : 'status-pending'
                         }
                       >

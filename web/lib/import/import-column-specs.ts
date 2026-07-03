@@ -76,5 +76,5 @@ export function detectColumnsFromPreviewRows(
       if (k !== '__rowNumber') keys.add(k)
     }
   }
-  return [...keys]
+  return Array.from(keys)
 }

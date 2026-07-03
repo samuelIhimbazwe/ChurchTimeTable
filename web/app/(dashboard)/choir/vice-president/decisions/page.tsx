@@ -8,7 +8,7 @@ import { PresidentDecisionConsole } from '@/components/choir/committee/President
 import { CapabilityGate } from '@/components/shared'
 import { useResolvedChoirScope } from '@/lib/hooks'
 
-export function VicePresidentDecisionConsole() {
+function VicePresidentDecisionConsole() {
   const { choirId, choirLink } = useResolvedChoirScope()
 
   const { data: ctx, isLoading } = useQuery({

@@ -92,6 +92,47 @@ export class ChoirScheduleConflictService {
       });
     }
 
+    const dayStart = new Date(
+      serviceStart.getFullYear(),
+      serviceStart.getMonth(),
+      serviceStart.getDate(),
+    );
+    const dayEnd = new Date(dayStart);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    const sameDayServices = await this.prisma.choirServiceAssignment.findMany({
+      where: {
+        choirId,
+        occurrenceId: { not: occurrenceId },
+        cancelledAt: null,
+        status: {
+          in: [
+            ChoirServiceAssignmentStatus.CONFIRMED,
+            ChoirServiceAssignmentStatus.PENDING_CHOIR_ACCEPTANCE,
+          ],
+        },
+        occurrence: { startAt: { gte: dayStart, lte: dayEnd } },
+      },
+      include: {
+        occurrence: { select: { id: true, title: true, startAt: true, endAt: true } },
+      },
+    });
+
+    const seenIds = new Set(conflicts.map((c) => c.id));
+    for (const a of sameDayServices) {
+      if (seenIds.has(a.id)) continue;
+      const oStart = a.occurrence.startAt;
+      const oEnd = a.occurrence.endAt ?? a.occurrence.startAt;
+      conflicts.push({
+        kind: 'service_assignment',
+        id: a.id,
+        title: a.occurrence.title,
+        activityType: 'SERVICE',
+        startAt: oStart,
+        endAt: oEnd,
+      });
+    }
+
     return conflicts;
   }
 

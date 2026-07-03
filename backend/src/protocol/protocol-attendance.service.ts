@@ -193,7 +193,38 @@ export class ProtocolAttendanceService {
 
   }
 
-
+  async recordBulk(
+    actorUserId: string,
+    teamId: string,
+    records: Array<{
+      teamMemberId: string;
+      outcome: ProtocolAttendanceOutcome;
+      notes?: string;
+    }>,
+  ) {
+    if (!records.length) {
+      throw new BadRequestException('No attendance records provided');
+    }
+    const saved = [];
+    for (const row of records) {
+      const member = await this.prisma.protocolOccurrenceTeamMember.findUnique({
+        where: { id: row.teamMemberId },
+        select: { teamId: true },
+      });
+      if (!member || member.teamId !== teamId) {
+        throw new BadRequestException('Invalid team member for bulk attendance');
+      }
+      saved.push(
+        await this.record(
+          actorUserId,
+          row.teamMemberId,
+          row.outcome,
+          row.notes,
+        ),
+      );
+    }
+    return { saved: saved.length, records: saved };
+  }
 
   async listForTeam(actorUserId: string, teamId: string) {
 

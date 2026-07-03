@@ -8,7 +8,7 @@ import {
   musicApi,
   choirActivityApi,
   choirApi,
-  systemApi,
+  auditApi,
   assetsApi,
 } from '@/lib/api'
 import {
@@ -76,7 +76,7 @@ export default function RecordsHubPage() {
 
   const { data: audit, isLoading: loadingAudit } = useQuery({
     queryKey: ['choir-audit-log'],
-    queryFn: () => systemApi.getAuditLog({ limit: 20, page: 1 }),
+    queryFn: () => auditApi.getAuditLog({ limit: 20, page: 1 }),
     enabled: tab === 'audit' || tab === 'overview',
   })
 
@@ -221,8 +221,8 @@ export default function RecordsHubPage() {
               )}
             </ul>
           )}
-          <Link href="/system/audit" className="text-sm font-semibold text-primary-600">
-            Full platform audit (admin) →
+          <Link href="/choir/records" className="text-sm font-semibold text-primary-600">
+            Full choir audit log →
           </Link>
         </div>
       )}

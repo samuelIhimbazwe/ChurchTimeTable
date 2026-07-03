@@ -32,9 +32,9 @@ const OFFICER_LINKS: Record<string, string> = {
 }
 
 function statusVariant(status: OfficerSlaItem['status']) {
-  if (status === 'breach') return 'status-rejected' as const
+  if (status === 'breach') return 'status-inactive' as const
   if (status === 'attention') return 'status-pending' as const
-  return 'status-approved' as const
+  return 'status-active' as const
 }
 
 function statusLabel(status: OfficerSlaItem['status']) {
@@ -74,11 +74,11 @@ export function ProtocolOfficerSlaPanel() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Badge variant={dashboard.totals.breachCount > 0 ? 'status-rejected' : 'status-pending'} dot>
+          <Badge variant={dashboard.totals.breachCount > 0 ? 'status-inactive' : 'status-pending'} dot>
             {dashboard.totals.attentionCount} officer(s) need attention
           </Badge>
           {dashboard.totals.breachCount > 0 && (
-            <Badge variant="status-rejected" dot>
+            <Badge variant="status-inactive" dot>
               {dashboard.totals.breachCount} breach(es)
             </Badge>
           )}

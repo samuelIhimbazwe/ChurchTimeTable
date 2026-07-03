@@ -37,7 +37,7 @@ export default function ProtocolMemberHomePage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       <div>
-        <h2 className="font-display text-3xl text-text-primary">My Protocol</h2>
+        <h2 className="font-display text-3xl text-text-primary">Protocol service</h2>
         <p className="text-text-secondary text-sm mt-1">
           Your service stats, upcoming assignments, and team activity
         </p>

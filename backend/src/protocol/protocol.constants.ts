@@ -16,6 +16,7 @@ export const PROTOCOL_AUDIT = {
   TEAM_LEADER_UPDATED: 'PROTOCOL_TEAM_LEADER_UPDATED',
   TEAM_LEADER_ASSIGNED: 'PROTOCOL_TEAM_LEADER_ASSIGNED',
   TEAM_REPORT_SUBMITTED: 'PROTOCOL_TEAM_REPORT_SUBMITTED',
+  DOCUMENT_UPLOADED: 'PROTOCOL_DOCUMENT_UPLOADED',
 } as const;
 
 export const PROTOCOL_AUDIT_ENTITY = 'ProtocolOccurrenceTeam';
@@ -26,6 +27,7 @@ export const TEMPLATE_ASSIGNMENT_MODES: Record<string, ProtocolAssignmentMode> =
   SUNDAY_SERVICE_1: 'SUNDAY',
   SUNDAY_SERVICE_2: 'SUNDAY',
   TUESDAY_SERVICE: 'TUESDAY',
+  FRIDAY_SERVICE: 'TUESDAY',
   IGABURO: 'IGABURO',
 };
 
@@ -39,12 +41,19 @@ export function resolveAssignmentMode(
   return operationType === 'SPECIAL_EVENT' ? 'SPECIAL_EVENT' : 'TUESDAY';
 }
 
-/** Sunday protocol team composition (coordinator may override member picks). */
+export const PROTOCOL_MONTHLY_TEMPLATE_CODES = [
+  'TUESDAY_SERVICE',
+  'FRIDAY_SERVICE',
+  'SUNDAY_SERVICE_1',
+  'SUNDAY_SERVICE_2',
+  'IGABURO',
+] as const;
+
+/** Protocol team size and choir composition caps (10 members total). */
 export const PROTOCOL_TEAM_SIZING = {
+  TEAM_SIZE_TARGET: 10,
   TEAM_SIZE_MIN: 10,
-  TEAM_SIZE_MAX: 12,
-  ONE_SINGING_CHOIR_MIN: 6,
+  TEAM_SIZE_MAX: 10,
   ONE_SINGING_CHOIR_MAX: 7,
-  TWO_SINGING_CHOIRS_EACH_MIN: 3,
   TWO_SINGING_CHOIRS_EACH_MAX: 4,
 } as const;

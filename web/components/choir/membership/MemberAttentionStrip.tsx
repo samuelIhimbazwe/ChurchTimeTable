@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import {
   contributionsApi,
-  dashboardApi,
   financeApi,
   memberPortalApi,
 } from '@/lib/api'
@@ -33,14 +32,8 @@ export function MemberAttentionStrip({ choirId }: Props) {
     queryFn: memberPortalApi.getHome,
   })
 
-  const { data: summary } = useQuery({
-    queryKey: ['dashboard-member-summary'],
-    queryFn: () => dashboardApi.getMemberSummary(),
-  })
-
   const nextEventRaw = [
     ...(home?.participation?.thisWeek?.filter((e) => e.ministry === 'CHOIR') ?? []),
-    ...(summary?.upcomingSchedule?.filter((s) => s.source === 'CHOIR') ?? []),
   ][0] as { title?: string; startAt?: string; date?: string; startTime?: string } | undefined
 
   const nextEvent = nextEventRaw

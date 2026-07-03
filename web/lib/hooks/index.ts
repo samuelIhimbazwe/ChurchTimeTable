@@ -1,5 +1,4 @@
 export { useAuth, useLogin, useRegister, useLogout } from './useAuth'
-export { useDashboard }                 from './useDashboard'
 export { useMemberPortalHome }          from './useMemberPortalHome'
 export { useMembers, useMember }        from './useMembers'
 export { useOccurrences }               from './useOccurrences'

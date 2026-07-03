@@ -1,5 +1,9 @@
-import type { AppLocale } from './auth-ui'
+import type { AppLocale } from '@/lib/i18n/auth-ui'
 import type { TourPersona } from '@/lib/tour/types'
+
+type TourLocale = AppLocale | 'rw'
+
+export type { TourLocale }
 
 export type TourStepCopy = { title: string; body: string }
 
@@ -27,29 +31,29 @@ const enSteps: TourUiStrings['steps'] = {
     default: {
       title: 'Your member home',
       body:
-        'The Member Portal is your personal home — services, announcements, and ways to stay connected with church life.',
+        'The Member Portal is your personal home — schedule, giving, devotion, and your choir and protocol commitments.',
     },
     choir_leader: {
       title: 'Your starting point',
       body:
-        'Start here each day for church updates. When you need choir operations, use the choir dashboard from Participation or the sidebar.',
+        'Start here each day. When you need choir operations, open the choir dashboard from Participation or the sidebar.',
     },
     treasurer: {
       title: 'Your member home',
       body:
-        'The portal shows church life at a glance. Finance and contribution tools for your office are in the choir dashboard and sidebar.',
+        'The portal shows your week at a glance. Finance tools for your office are in the choir dashboard and sidebar.',
     },
     protocol_coordinator: {
       title: 'Your member home',
       body:
-        'Stay connected with church life here. Protocol scheduling and team tools live in the Protocol section and sidebar.',
+        'Stay connected here. Protocol scheduling and team tools live in the Protocol section and sidebar.',
     },
   },
   'quick-actions': {
     default: {
       title: 'Quick actions',
       body:
-        'Jump to schedule, giving, welfare, ministries, and more — the tasks members use most often.',
+        'Jump to schedule, giving, devotion, and more — the tasks members use most often.',
     },
     treasurer: {
       title: 'Quick actions',
@@ -61,7 +65,7 @@ const enSteps: TourUiStrings['steps'] = {
     default: {
       title: 'Participation',
       body:
-        'See your week at a glance and where you can serve — choir, protocol, and ministries. Discover new groups or open your dashboards.',
+        'See your week at a glance and where you can serve — choir and protocol. Open your dashboards from here.',
     },
     choir_leader: {
       title: 'Participation & your week',
@@ -71,7 +75,7 @@ const enSteps: TourUiStrings['steps'] = {
     protocol_coordinator: {
       title: 'Participation',
       body:
-        'View protocol duties alongside choir and ministry commitments. Open the protocol dashboard for team coordination.',
+        'View protocol duties alongside choir commitments. Open the protocol dashboard for team coordination.',
     },
   },
   'choir-office': {
@@ -132,11 +136,11 @@ const enSteps: TourUiStrings['steps'] = {
   },
 }
 
-export const tourUi: Record<AppLocale, TourUiStrings> = {
+export const tourUi: Record<TourLocale, TourUiStrings> = {
   en: {
     welcomeTitle: 'Welcome to CMMS',
     welcomeBody:
-      'Take a short interactive tour to learn where things are and how they fit your role. You can skip, finish later, or replay anytime from Help.',
+      'Take a short interactive tour to learn the member portal, choir system, and protocol system. You can skip, finish later, or replay anytime from Help.',
     welcomePersonaHint: 'Your tour is tailored for:',
     startTour: 'Start tour',
     remindLater: 'Remind me later',

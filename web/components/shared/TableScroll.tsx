@@ -52,7 +52,6 @@ type ResponsiveDataViewProps<T> = {
  */
 export function ResponsiveDataView<T>({
   items,
-  keyFn,
   mobileRow,
   table,
   empty,

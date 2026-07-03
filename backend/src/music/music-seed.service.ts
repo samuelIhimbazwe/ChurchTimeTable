@@ -38,7 +38,7 @@ export class MusicSeedService implements OnModuleInit {
         description: 'Default choir — all legacy MVP data belongs here.',
         isActive: true,
       },
-      update: { isActive: true },
+      update: { isActive: false },
     });
 
     for (const c of CATEGORIES) {

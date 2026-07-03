@@ -36,6 +36,7 @@ import { isProtocolDashboardPath } from '@/lib/protocol/paths'
 import { useChoirAccess } from '@/lib/hooks/useChoirAccess'
 import { useChoirDashboardContext } from '@/lib/hooks/useChoirDashboardContext'
 import { useProtocolDashboardContext } from '@/lib/hooks/useProtocolDashboardContext'
+import { useDualMemberPortalAccess } from '@/lib/portal/access'
 
 const EMPTY_PERMISSIONS: string[] = []
 
@@ -79,14 +80,15 @@ export default function Sidebar({
   const rolesAuth = choirCtx?.rolesAuth
   const capabilityCheck = useCapabilityRouter(contextChoirId ?? choirId ?? undefined)
   const { data: protocolCtx, isLoading: loadingProtocolCtx } = useProtocolDashboardContext(inProtocolArea)
+  const { isDualMember, isLoading: loadingPortalAccess } = useDualMemberPortalAccess()
 
   const membershipForPath = choirId
     ? activeChoirMemberships.find((m) => m.id === choirId)
     : undefined
 
   const rawSections = (() => {
-    if (loadingChoirAccess || (inProtocolArea && loadingProtocolCtx)) {
-      return getPortalNavForUser(authRole, { canAccessChoirArea: false, isChoirMember: false }, permissions)
+    if (loadingChoirAccess || loadingPortalAccess || (inProtocolArea && loadingProtocolCtx)) {
+      return getPortalNavForUser(authRole, { canAccessChoirArea: false, isChoirMember: false }, [], { isDualMember: false })
     }
     if (choirId && (choirCtx || membershipForPath)) {
       return getComposedChoirNav(
@@ -97,10 +99,16 @@ export default function Sidebar({
         choirCtx?.positions ?? [],
         contributionAuth,
         choirCtx ? capabilityCheck : undefined,
+        { isDualMember },
       )
     }
     if (inProtocolArea && protocolCtx?.canAccess) {
-      return getComposedProtocolNav(protocolCtx.ministry.name, protocolCtx.permissions)
+      return getComposedProtocolNav(
+        protocolCtx.ministry.name,
+        protocolCtx.permissions,
+        protocolCtx.positions,
+        { isDualMember },
+      )
     }
     return getNavForContext(
       pathname,
@@ -109,6 +117,7 @@ export default function Sidebar({
       permissions,
       activeChoirMemberships,
       choirCtx ? capabilityCheck : undefined,
+      { isDualMember },
     )
   })()
 
@@ -223,7 +232,7 @@ export default function Sidebar({
             <p className="font-display font-semibold text-base text-text-inverse leading-tight truncate">
               CMMS
             </p>
-            <p className="text-xs text-primary-300 truncate">{tr('Church System')}</p>
+            <p className="text-xs text-primary-300 truncate">{tr('Choir & Protocol')}</p>
           </div>
         )}
       </div>

@@ -22,7 +22,7 @@ type Rect = { top: number; left: number; width: number; height: number }
 
 function measureTarget(selector: string): Rect | null {
   const nodes = document.querySelectorAll(`[data-tour="${selector}"]`)
-  for (const el of nodes) {
+  for (const el of Array.from(nodes)) {
     const r = el.getBoundingClientRect()
     if (r.width < 1 || r.height < 1) continue
     return { top: r.top, left: r.left, width: r.width, height: r.height }
@@ -116,7 +116,7 @@ export function GuidedTour({ persona, onComplete, onSkip }: Props) {
     if (!measured) return
 
     const nodes = document.querySelectorAll(`[data-tour="${targetSelector}"]`)
-    for (const candidate of nodes) {
+    for (const candidate of Array.from(nodes)) {
       const r = candidate.getBoundingClientRect()
       if (r.width < 1 || r.height < 1) continue
       candidate.scrollIntoView({ block: 'nearest', behavior: 'auto' })

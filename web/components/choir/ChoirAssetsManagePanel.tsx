@@ -7,7 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { assetsApi, choirOperationsApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import { Card, CapabilityGate, SkeletonCard, EmptyState } from '@/components/shared'
-import { FormField, Input, Select, Textarea } from '@/components/shared/form'
+import { FormField, Input, Select } from '@/components/shared/form'
 import {
   maintenanceLogFormSchema,
   uniformTypeFormSchema,

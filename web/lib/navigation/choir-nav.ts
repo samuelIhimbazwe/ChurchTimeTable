@@ -205,8 +205,9 @@ export function getComposedChoirNav(
   positions: Array<{ roleKey: string }> = [],
   contributionAuth?: ResolvedAuth,
   capabilityCheck?: (capId: string) => boolean,
+  options?: { isDualMember?: boolean },
 ): NavSection[] {
-  const sections: NavSection[] = [BACK_TO_PORTAL]
+  const sections: NavSection[] = options?.isDualMember ? [BACK_TO_PORTAL] : []
   const familyOfficePaths = new Set(familyOffices.map((o) => o.officePath))
 
   sections.push({

@@ -20,7 +20,7 @@ import {
 import { formatCurrency, formatDate, formatTime } from '@/lib/utils/format'
 import { goalProgressBarClass } from '@/lib/contribution/member-display'
 import { CheckCircle2, Calendar, ChevronRight } from 'lucide-react'
-import { dashboardApi, memberPortalApi } from '@/lib/api'
+import { memberPortalApi } from '@/lib/api'
 
 type Props = {
   officeKind: FamilyOfficeKind
@@ -67,11 +67,6 @@ export function FamilyCommandHome({ officeKind }: Props) {
   const { data: home } = useQuery({
     queryKey: ['member-portal-home'],
     queryFn: memberPortalApi.getHome,
-  })
-
-  const { data: summary } = useQuery({
-    queryKey: ['dashboard-member-summary'],
-    queryFn: () => dashboardApi.getMemberSummary(),
   })
 
   const loading = loadingContext || loadingDashboard
@@ -121,7 +116,6 @@ export function FamilyCommandHome({ officeKind }: Props) {
 
   const nextEvent = [
     ...(home?.participation?.thisWeek?.filter((e) => e.ministry === 'CHOIR') ?? []),
-    ...(summary?.upcomingSchedule?.filter((s) => s.source === 'CHOIR') ?? []),
   ][0] as { id?: string; title?: string; startAt?: string; date?: string; startTime?: string } | undefined
 
   const behindCount =

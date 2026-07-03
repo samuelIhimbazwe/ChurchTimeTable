@@ -59,6 +59,25 @@ export class ServiceQuotaEngine {
     });
   }
 
+  /** All roster slots in the month (includes teams still in draft/review). */
+  async countAssignmentsInMonth(memberId: string, at: Date): Promise<number> {
+    const year = at.getFullYear();
+    const month = at.getMonth() + 1;
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 0, 23, 59, 59, 999);
+
+    return this.prisma.protocolOccurrenceTeamMember.count({
+      where: {
+        memberId,
+        assignmentType: 'OFFICIAL',
+        isExtraService: false,
+        team: {
+          occurrence: { startAt: { gte: start, lte: end } },
+        },
+      },
+    });
+  }
+
   async quotaStatus(
     memberId: string,
     at: Date,

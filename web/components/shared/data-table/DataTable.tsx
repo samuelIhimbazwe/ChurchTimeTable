@@ -164,18 +164,18 @@ export function DataTable<T>({
   bulkActions,
   summaryRow,
   visibleColumnIds: controlledVisibleIds,
-  onVisibleColumnIdsChange,
+  onVisibleColumnIdsChange: _onVisibleColumnIdsChange,
   renderExpandedRow,
   expandedRowIds: controlledExpandedIds,
   onExpandedRowIdsChange,
 }: DataTableProps<T>) {
   const tableRef = useRef<HTMLTableElement>(null)
   const [focusedRowIndex, setFocusedRowIndex] = useState(0)
-  const [internalVisibleIds, setInternalVisibleIds] = useState<string[]>(() =>
+  const [internalVisibleIds] = useState<string[]>(() =>
     columns.map((c) => c.id),
   )
   const visibleColumnIds = controlledVisibleIds ?? internalVisibleIds
-  const setVisibleColumnIds = onVisibleColumnIdsChange ?? setInternalVisibleIds
+  void _onVisibleColumnIdsChange
 
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [internalExpandedIds, setInternalExpandedIds] = useState<string[]>([])

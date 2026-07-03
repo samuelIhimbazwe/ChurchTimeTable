@@ -16,6 +16,7 @@ import {
   PROTOCOL_AUDIT,
   PROTOCOL_AUDIT_ENTITY,
   PROTOCOL_UNIT_CODE,
+  PROTOCOL_MONTHLY_TEMPLATE_CODES,
   resolveAssignmentMode,
 } from './protocol.constants';
 import {
@@ -29,6 +30,11 @@ import { ProtocolMembersService } from './protocol-members.service';
 import { ProtocolTeamLeadersService } from './protocol-team-leaders.service';
 import { ProtocolBackupsService } from './protocol-backups.service';
 import { ProtocolNotificationsService } from './protocol-notifications.service';
+import {
+  calendarDayBounds,
+  ensureProtocolTeamSlot,
+  membersAssignedOnCalendarDay,
+} from './protocol-occurrence-slots.util';
 
 @Injectable()
 export class ProtocolTeamsService {
@@ -54,7 +60,13 @@ export class ProtocolTeamsService {
   async generateForOccurrence(
     actorUserId: string | null,
     occurrenceId: string,
-    options?: { memberIds?: string[]; overrideReason?: string },
+    options?: {
+      memberIds?: string[];
+      overrideReason?: string;
+      randomizeLeader?: boolean;
+      excludeMemberIds?: string[];
+      monthBatchCounts?: Map<string, number>;
+    },
   ) {
     const occurrence = await this.prisma.operationOccurrence.findUniqueOrThrow({
       where: { id: occurrenceId },
@@ -76,13 +88,15 @@ export class ProtocolTeamsService {
       occurrence.template?.code,
       occurrence.type,
     );
+    const recommendOpts = {
+      occurrenceId,
+      excludeMemberIds: options?.excludeMemberIds,
+      monthBatchCounts: options?.monthBatchCounts,
+    };
     const recommendations =
       mode === 'SPECIAL_EVENT'
-        ? await this.assignmentEngine.recommendLowParticipation({ occurrenceId })
-        : await this.assignmentEngine.recommend({
-            occurrenceId,
-            mode,
-          });
+        ? await this.assignmentEngine.recommendLowParticipation(recommendOpts)
+        : await this.assignmentEngine.recommend({ ...recommendOpts, mode });
 
     const memberIds =
       options?.memberIds ??
@@ -137,16 +151,39 @@ export class ProtocolTeamsService {
       });
     }
 
-    await this.finalizeTeam(team.id, actorUserId);
+    await this.finalizeTeam(team.id, actorUserId, {
+      randomizeLeader: options?.randomizeLeader,
+      rosterMemberIds: memberIds,
+    });
 
     return this.getTeamInternal(team.id);
   }
 
-  private async finalizeTeam(teamId: string, actorUserId: string | null) {
+  private async finalizeTeam(
+    teamId: string,
+    actorUserId: string | null,
+    options?: { randomizeLeader?: boolean; rosterMemberIds?: string[] },
+  ) {
     try {
-      await this.teamLeaders.assignRecommendedLeaders(actorUserId, teamId);
+      if (options?.randomizeLeader) {
+        await this.teamLeaders.assignRandomLeader(
+          actorUserId,
+          teamId,
+          options.rosterMemberIds ?? [],
+        );
+      } else {
+        await this.teamLeaders.assignRecommendedLeaders(actorUserId, teamId);
+      }
     } catch {
-      await this.teamLeaders.assignRecommendedLeaders(null, teamId);
+      if (options?.randomizeLeader) {
+        await this.teamLeaders.assignRandomLeader(
+          null,
+          teamId,
+          options.rosterMemberIds ?? [],
+        );
+      } else {
+        await this.teamLeaders.assignRecommendedLeaders(null, teamId);
+      }
     }
     await this.backups.persistForTeam(teamId);
     const notifyPromise = this.notifications.notifyTeamAssigned(teamId);
@@ -411,5 +448,160 @@ export class ProtocolTeamsService {
       where: { code: PROTOCOL_UNIT_CODE, isActive: true },
     });
     return unit.id;
+  }
+
+  /**
+   * Build protocol teams for every service in a monthly choir schedule plan.
+   * Requires APPROVED or PUBLISHED plan. Processes services chronologically and
+   * applies assignment-engine rules (Sunday choir composition, monthly quota,
+   * same-day member exclusion).
+   */
+  async generateForPlan(
+    actorUserId: string,
+    planId: string,
+    options?: {
+      skipExisting?: boolean;
+      randomizeLeaders?: boolean;
+      occurrenceIds?: string[];
+    },
+  ) {
+    const { permissions } = await this.actor(actorUserId);
+    if (!hasProtocolManage(permissions)) {
+      throw new ForbiddenException('Coordinator permission required');
+    }
+
+    const plan = await this.prisma.choirSchedulePlan.findFirst({
+      where: { id: planId, ownerScope: 'PROTOCOL' },
+    });
+    if (!plan) throw new NotFoundException('Schedule plan not found');
+    if (!['PUBLISHED'].includes(plan.status)) {
+      throw new BadRequestException(
+        'Publish the choir schedule before building protocol teams (Sunday teams need confirmed choir assignments)',
+      );
+    }
+
+    const skipExisting = options?.skipExisting !== false;
+    const occurrenceFilter = options?.occurrenceIds?.length
+      ? new Set(options.occurrenceIds)
+      : null;
+
+    let occurrences = await this.prisma.operationOccurrence.findMany({
+      where: {
+        startAt: { gte: plan.startAt, lte: plan.endAt },
+        cancelledAt: null,
+        type: { in: ['SERVICE', 'SPECIAL_EVENT'] },
+        template: { code: { in: [...PROTOCOL_MONTHLY_TEMPLATE_CODES] } },
+      },
+      include: { template: true, protocolTeam: true },
+      orderBy: { startAt: 'asc' },
+    });
+    if (occurrenceFilter) {
+      occurrences = occurrences.filter((o) => occurrenceFilter.has(o.id));
+    }
+
+    const built: Array<{
+      occurrenceId: string;
+      teamId: string;
+      memberCount: number;
+      title: string;
+    }> = [];
+    const skipped: Array<{ occurrenceId: string; title: string; reason: string }> =
+      [];
+    const failed: Array<{ occurrenceId: string; title: string; reason: string }> =
+      [];
+
+    const batchDayMembers = new Map<string, Set<string>>();
+    const batchMonthCounts = new Map<string, number>();
+
+    for (const occurrence of occurrences) {
+      if (occurrence.protocolTeam && skipExisting) {
+        skipped.push({
+          occurrenceId: occurrence.id,
+          title: occurrence.title,
+          reason: 'Team already exists',
+        });
+        continue;
+      }
+      if (occurrence.protocolTeam && !skipExisting) {
+        skipped.push({
+          occurrenceId: occurrence.id,
+          title: occurrence.title,
+          reason: 'Team already exists — remove manually to rebuild',
+        });
+        continue;
+      }
+
+      await ensureProtocolTeamSlot(this.prisma, occurrence.id);
+
+      const dayKey = calendarDayBounds(occurrence.startAt).start.toISOString();
+      const busyFromDb = await membersAssignedOnCalendarDay(
+        this.prisma,
+        occurrence.startAt,
+        occurrence.id,
+      );
+      const busyFromBatch = batchDayMembers.get(dayKey) ?? new Set<string>();
+      const excludeMemberIds = [...busyFromDb, ...busyFromBatch];
+
+      try {
+        const team = await this.generateForOccurrence(
+          actorUserId,
+          occurrence.id,
+          {
+            excludeMemberIds,
+            monthBatchCounts: batchMonthCounts,
+            randomizeLeader: options?.randomizeLeaders,
+          },
+        );
+        const memberIds = team.members.map(
+          (m) => m.memberId ?? m.member.id,
+        );
+        const daySet = batchDayMembers.get(dayKey) ?? new Set<string>();
+        for (const id of memberIds) {
+          daySet.add(id);
+          batchMonthCounts.set(id, (batchMonthCounts.get(id) ?? 0) + 1);
+        }
+        batchDayMembers.set(dayKey, daySet);
+
+        built.push({
+          occurrenceId: occurrence.id,
+          teamId: team.id,
+          memberCount: memberIds.length,
+          title: occurrence.title,
+        });
+      } catch (err) {
+        failed.push({
+          occurrenceId: occurrence.id,
+          title: occurrence.title,
+          reason:
+            err instanceof Error ? err.message : 'Could not build team',
+        });
+      }
+    }
+
+    await this.audit.log({
+      userId: actorUserId,
+      action: PROTOCOL_AUDIT.TEAM_GENERATED,
+      entity: 'ChoirSchedulePlan',
+      entityId: planId,
+      newValue: {
+        built: built.length,
+        skipped: skipped.length,
+        failed: failed.length,
+      } as Prisma.InputJsonValue,
+    });
+
+    return {
+      planId,
+      year: plan.year,
+      month: plan.month,
+      built,
+      skipped,
+      failed,
+      summary: {
+        builtCount: built.length,
+        skippedCount: skipped.length,
+        failedCount: failed.length,
+      },
+    };
   }
 }

@@ -13,6 +13,7 @@ import { tourUi } from '@/lib/tour/tour-ui'
 import { KEYBOARD_SHORTCUTS } from '@/lib/accessibility/keyboard-shortcuts'
 import { useFocusTrap } from '@/lib/hooks/useFocusTrap'
 import { startProductTourReplay } from '@/components/tour/ProductTourProvider'
+import { useDualMemberPortalAccess } from '@/lib/portal/access'
 
 interface HelpPanelProps {
   open:    boolean
@@ -26,12 +27,17 @@ export default function HelpPanel({ open, onClose, onOpenSearch }: HelpPanelProp
   useFocusTrap(panelRef, open)
   const { shell: s, tr, locale } = useTranslations()
   const tourStrings = tourUi[locale]
+  const { isDualMember } = useDualMemberPortalAccess()
 
   if (!open) return null
 
   const quickLinks = [
-    { href: '/portal', label: tr('Member portal'), icon: Home, desc: s.memberPortalDesc },
-    { href: '/portal/profile', label: tr('My Profile'), icon: User, desc: s.myProfileDesc },
+    ...(isDualMember
+      ? [
+          { href: '/portal', label: tr('Member portal'), icon: Home, desc: s.memberPortalDesc },
+          { href: '/portal/profile', label: tr('My Profile'), icon: User, desc: s.myProfileDesc },
+        ]
+      : []),
     { href: '/dashboard', label: tr('Dashboard'), icon: Home, desc: s.dashboardDesc },
   ]
 

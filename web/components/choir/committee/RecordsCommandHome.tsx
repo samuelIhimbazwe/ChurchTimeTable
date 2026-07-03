@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { documentsApi, choirApi, systemApi } from '@/lib/api'
+import { documentsApi, choirApi, auditApi } from '@/lib/api'
 import { OfficeCommandHome } from '@/components/shared/office/OfficeCommandHome'
 import { Card, SkeletonCard } from '@/components/shared'
 import { useResolvedChoirScope } from '@/lib/hooks'
@@ -21,7 +21,7 @@ export function RecordsCommandHome() {
 
   const { data: audit } = useQuery({
     queryKey: ['choir-audit-recent'],
-    queryFn: () => systemApi.getAuditLog({ limit: 5, page: 1 }),
+    queryFn: () => auditApi.getAuditLog({ limit: 5, page: 1 }),
   })
 
   if (!choirId) {

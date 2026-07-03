@@ -26,7 +26,6 @@ export function resolveWorkspaceContext(
   else if (isSovereignOfficePath(pathname) && pathname.includes('/service-preparation')) office = 'Operations'
   else if (pathname.includes('/president')) office = 'President'
   else if (pathname.includes('/protocol')) office = 'Protocol'
-  else if (pathname.includes('/church')) office = 'Church'
   else if (pathname.startsWith('/portal')) office = 'Portal'
 
   return {

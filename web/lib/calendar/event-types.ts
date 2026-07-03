@@ -56,7 +56,7 @@ export const CALENDAR_EVENT_COLORS: Record<CalendarEventKind, CalendarEventColor
     dot: 'bg-info',
     bg: 'bg-info-light',
     ring: 'ring-info/40',
-    label: 'My protocol',
+    label: 'Protocol',
   },
   other: {
     dot: 'bg-text-muted',

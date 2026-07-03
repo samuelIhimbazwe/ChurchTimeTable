@@ -18,20 +18,20 @@ export interface AccessRouting {
 }
 
 const STAFF_ROLE_HOME: Partial<Record<string, string>> = {
-  [ROLES.SUPER_ADMIN]: '/system',
-  [ROLES.CHURCH_ADMIN]: '/church',
+  [ROLES.SUPER_ADMIN]: '/choir',
+  [ROLES.CHURCH_ADMIN]: '/choir',
   [ROLES.PROTOCOL_ADMIN]: '/protocol',
   [ROLES.PROTOCOL_LEADER]: '/protocol',
-  [ROLES.CHOIR_ADMIN]: '/portal',
-  [ROLES.CHOIR_PRESIDENT]: '/portal',
-  [ROLES.CHOIR_VICE_PRESIDENT]: '/portal',
-  [ROLES.CHOIR_SECRETARY]: '/portal',
-  [ROLES.CHOIR_TREASURER]: '/portal',
-  [ROLES.CHOIR_REHEARSAL_DIRECTOR]: '/portal',
-  [ROLES.CHOIR_LOGISTICS]: '/portal',
-  [ROLES.CHOIR_FAMILY_COORDINATOR]: '/portal',
-  [ROLES.CHOIR_COMMITTEE]: '/portal',
-  [ROLES.CHOIR_LEADER]: '/portal',
+  [ROLES.CHOIR_ADMIN]: '/choir',
+  [ROLES.CHOIR_PRESIDENT]: '/choir',
+  [ROLES.CHOIR_VICE_PRESIDENT]: '/choir',
+  [ROLES.CHOIR_SECRETARY]: '/choir',
+  [ROLES.CHOIR_TREASURER]: '/choir',
+  [ROLES.CHOIR_REHEARSAL_DIRECTOR]: '/choir',
+  [ROLES.CHOIR_LOGISTICS]: '/choir',
+  [ROLES.CHOIR_FAMILY_COORDINATOR]: '/choir',
+  [ROLES.CHOIR_COMMITTEE]: '/choir',
+  [ROLES.CHOIR_LEADER]: '/choir',
 };
 
 @Injectable()
@@ -128,7 +128,7 @@ export class AccessRoutingService {
     }
 
     return {
-      homePath: '/portal',
+      homePath: '/dashboard',
       ministryScope,
       isDualMember: false,
       hasChoirMembership,

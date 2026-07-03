@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
-import { financeApi, memberPortalApi, contributionsApi, dashboardApi } from '@/lib/api'
+import { financeApi, memberPortalApi, contributionsApi } from '@/lib/api'
 import { buildMemberObligations } from '@/lib/choir/member-obligations'
 import { useChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
 import {
@@ -55,14 +55,8 @@ export function MemberOfficeShell({ choirId, children }: Props) {
     queryFn: memberPortalApi.getHome,
   })
 
-  const { data: memberSummary } = useQuery({
-    queryKey: ['dashboard-member-summary'],
-    queryFn: () => dashboardApi.getMemberSummary(),
-  })
-
   const nextEventRaw = [
     ...(memberHome?.participation?.thisWeek?.filter((e) => e.ministry === 'CHOIR') ?? []),
-    ...(memberSummary?.upcomingSchedule?.filter((s) => s.source === 'CHOIR') ?? []),
   ][0] as { title?: string } | undefined
 
   const obligationCount = buildMemberObligations({
@@ -78,7 +72,6 @@ export function MemberOfficeShell({ choirId, children }: Props) {
       : undefined,
   }).length
 
-  const familyMeta = familyCtx?.families?.[0]
   const memberHeader = totals?.member
 
   const showOfficeTab = useMemo(

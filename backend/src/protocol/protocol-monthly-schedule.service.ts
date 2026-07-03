@@ -9,7 +9,7 @@ import {
   ChoirServiceAssignmentRole,
   ChoirServiceAssignmentStatus,
 } from '@prisma/client';
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { PermissionsResolver } from '../auth/permissions.resolver';
@@ -30,14 +30,21 @@ import {
   hasEffectivePermission,
 } from '../common/governance/governance-permissions.util';
 import { PERMISSIONS } from '../common/constants/roles';
+import {
+  mergeBulletinOverrides,
+  readPlanBulletinOverrides,
+  type ProtocolBulletinOverrides,
+} from './protocol-bulletin-overrides';
+import { ensureProtocolTeamSlot } from './protocol-occurrence-slots.util';
+import { ProtocolTeamsService } from './protocol-teams.service';
+import { PROTOCOL_MONTHLY_TEMPLATE_CODES } from './protocol.constants';
 
-const MONTHLY_TEMPLATE_CODES = [
-  'TUESDAY_SERVICE',
-  'FRIDAY_SERVICE',
-  'SUNDAY_SERVICE_1',
-  'SUNDAY_SERVICE_2',
-  'IGABURO',
-] as const;
+const MONTHLY_TEMPLATE_CODES = PROTOCOL_MONTHLY_TEMPLATE_CODES;
+
+/** Compare by calendar day — evening services must not fall outside week buckets. */
+function calendarDay(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
 
 @Injectable()
 export class ProtocolMonthlyScheduleService {
@@ -47,6 +54,7 @@ export class ProtocolMonthlyScheduleService {
     private permissions: PermissionsResolver,
     private rules: ChoirServiceRulesService,
     private notify: ChoirSchedulingNotificationsService,
+    private teams: ProtocolTeamsService,
   ) {}
 
   private async actor(userId: string) {
@@ -140,6 +148,94 @@ export class ProtocolMonthlyScheduleService {
     });
 
     await this.ensureMonthOccurrences(actorUserId, year, month);
+
+    await this.populatePlanEntries(actorUserId, plan.id, startAt, endAt, {
+      randomize: false,
+    });
+
+    await this.audit.log({
+      userId: actorUserId,
+      action: CHOIR_SCHEDULING_AUDIT.PLAN_GENERATED,
+      entity: 'ChoirSchedulePlan',
+      entityId: plan.id,
+      newValue: { year, month } as Prisma.InputJsonValue,
+    });
+
+    return this.loadPlan(plan.id);
+  }
+
+  async regenerate(actorUserId: string, planId: string) {
+    const { permissions } = await this.actor(actorUserId);
+    this.requireManage(permissions);
+
+    const plan = await this.prisma.choirSchedulePlan.findFirst({
+      where: { id: planId, ownerScope: 'PROTOCOL' },
+    });
+    if (!plan) throw new NotFoundException('Schedule plan not found');
+
+    if (plan.status === 'PUBLISHED') {
+      await this.revertPublishedAssignments(planId);
+    }
+
+    await this.prisma.choirSchedulePlanEntry.deleteMany({ where: { planId } });
+    await this.clearBulletinCellTexts(planId);
+    await this.prisma.choirSchedulePlan.update({
+      where: { id: planId },
+      data: {
+        status: 'GENERATED',
+        approvedAt: null,
+        approvedById: null,
+        publishedAt: null,
+        publishedById: null,
+        generatedAt: new Date(),
+        generatedById: actorUserId,
+      },
+    });
+
+    const occurrenceCount = await this.populatePlanEntries(
+      actorUserId,
+      planId,
+      plan.startAt,
+      plan.endAt,
+      { randomize: true },
+    );
+
+    await this.audit.log({
+      userId: actorUserId,
+      action: CHOIR_SCHEDULING_AUDIT.PLAN_GENERATED,
+      entity: 'ChoirSchedulePlan',
+      entityId: planId,
+      newValue: { regenerated: true, occurrenceCount } as Prisma.InputJsonValue,
+    });
+
+    return this.loadPlan(planId);
+  }
+
+  private async revertPublishedAssignments(planId: string) {
+    const entries = await this.prisma.choirSchedulePlanEntry.findMany({
+      where: { planId },
+      select: { id: true },
+    });
+    const entryIds = entries.map((e) => e.id);
+    if (entryIds.length === 0) return;
+
+    const now = new Date();
+    await this.prisma.choirServiceAssignment.updateMany({
+      where: {
+        planEntryId: { in: entryIds },
+        cancelledAt: null,
+      },
+      data: { cancelledAt: now },
+    });
+  }
+
+  private async populatePlanEntries(
+    actorUserId: string,
+    planId: string,
+    startAt: Date,
+    endAt: Date,
+    options: { randomize: boolean },
+  ) {
     const occurrences = await this.prisma.operationOccurrence.findMany({
       where: {
         startAt: { gte: startAt, lte: endAt },
@@ -153,17 +249,47 @@ export class ProtocolMonthlyScheduleService {
 
     const draftCounts = new Map<string, number>();
     const reservedPairs = new Set<string>();
+    const choirsByDay = new Map<string, Set<string>>();
     let sortOrder = 0;
 
     for (const occ of occurrences) {
+      const dayKey = this.calendarDayKey(occ.startAt);
+      const choirsOnSameDay = choirsByDay.get(dayKey) ?? new Set<string>();
       const recs = await this.rules.recommendForOccurrence(occ.id, {
         extraServeCounts: draftCounts,
         reservedPairs,
+        choirsOnSameDay,
+        randomize: options.randomize,
       });
-      for (const rec of recs) {
+
+      const slots = this.rules.resolveSlots(
+        occ.template?.code ?? null,
+        occ.startAt,
+      );
+      const targetCount = Math.max(
+        1,
+        slots.reduce((sum, slot) => sum + slot.count, 0),
+      );
+
+      const toAssign: typeof recs = [...recs];
+      while (toAssign.length < targetCount) {
+        const fallback = await this.rules.pickMandatoryAssignment(occ.id, {
+          extraServeCounts: draftCounts,
+          reservedPairs,
+          choirsOnSameDay,
+          randomize: options.randomize,
+        });
+        if (!fallback) break;
+        if (toAssign.some((r) => r.choirId === fallback.choirId && r.role === fallback.role)) {
+          break;
+        }
+        toAssign.push(fallback);
+      }
+
+      for (const rec of toAssign) {
         await this.prisma.choirSchedulePlanEntry.create({
           data: {
-            planId: plan.id,
+            planId,
             occurrenceId: occ.id,
             choirId: rec.choirId,
             role: rec.role,
@@ -172,18 +298,14 @@ export class ProtocolMonthlyScheduleService {
         });
         draftCounts.set(rec.choirId, (draftCounts.get(rec.choirId) ?? 0) + 1);
         reservedPairs.add(`${rec.choirId}:${rec.role}`);
+        choirsOnSameDay.add(rec.choirId);
+      }
+      if (choirsOnSameDay.size > 0) {
+        choirsByDay.set(dayKey, choirsOnSameDay);
       }
     }
 
-    await this.audit.log({
-      userId: actorUserId,
-      action: CHOIR_SCHEDULING_AUDIT.PLAN_GENERATED,
-      entity: 'ChoirSchedulePlan',
-      entityId: plan.id,
-      newValue: { year, month, occurrenceCount: occurrences.length } as Prisma.InputJsonValue,
-    });
-
-    return this.loadPlan(plan.id);
+    return occurrences.length;
   }
 
   async updateEntry(
@@ -200,6 +322,15 @@ export class ProtocolMonthlyScheduleService {
       where: { id: entryId, planId: plan.id },
     });
     if (!entry) throw new NotFoundException('Plan entry not found');
+
+    await this.assertChoirNotScheduledSameDay(
+      plan.id,
+      entry.occurrenceId,
+      data.choirId,
+      entryId,
+    );
+
+    await this.clearBulletinCellText(plan.id, entry.occurrenceId);
 
     return this.prisma.choirSchedulePlanEntry.update({
       where: { id: entryId },
@@ -233,6 +364,9 @@ export class ProtocolMonthlyScheduleService {
     const plan = await this.assertEditablePlan(planId);
 
     const role = data.role ?? 'PRIMARY';
+    await this.assertChoirNotScheduledSameDay(plan.id, data.occurrenceId, data.choirId);
+    await this.clearBulletinCellText(plan.id, data.occurrenceId);
+
     return this.prisma.choirSchedulePlanEntry.create({
       data: {
         planId: plan.id,
@@ -262,7 +396,30 @@ export class ProtocolMonthlyScheduleService {
     });
     if (!entry) throw new NotFoundException('Plan entry not found');
     await this.prisma.choirSchedulePlanEntry.delete({ where: { id: entryId } });
+    await this.clearBulletinCellText(planId, entry.occurrenceId);
     return { ok: true };
+  }
+
+  async updateBulletinOverrides(
+    actorUserId: string,
+    planId: string,
+    patch: ProtocolBulletinOverrides,
+  ) {
+    const { permissions } = await this.actor(actorUserId);
+    this.requireManage(permissions);
+    const plan = await this.assertEditablePlan(planId);
+
+    const current = readPlanBulletinOverrides(plan);
+    const merged = mergeBulletinOverrides(current, patch);
+
+    await this.prisma.choirSchedulePlan.update({
+      where: { id: planId },
+      data: {
+        bulletinOverrides: merged as Prisma.InputJsonValue,
+      } as Prisma.ChoirSchedulePlanUpdateInput,
+    });
+
+    return this.getPrintGrid(actorUserId, planId);
   }
 
   async approve(actorUserId: string, planId: string) {
@@ -276,6 +433,8 @@ export class ProtocolMonthlyScheduleService {
     if (plan.status !== 'GENERATED' && plan.status !== 'DRAFT') {
       throw new BadRequestException('Only generated drafts can be approved');
     }
+
+    await this.assertPlanNoSameDayChoirDuplicates(planId);
 
     const updated = await this.prisma.choirSchedulePlan.update({
       where: { id: planId },
@@ -296,7 +455,11 @@ export class ProtocolMonthlyScheduleService {
     return updated;
   }
 
-  async publish(actorUserId: string, planId: string) {
+  async publish(
+    actorUserId: string,
+    planId: string,
+    options?: { buildProtocolTeams?: boolean },
+  ) {
     const { permissions } = await this.actor(actorUserId);
     this.requirePublish(permissions);
 
@@ -315,6 +478,8 @@ export class ProtocolMonthlyScheduleService {
     if (plan.status !== 'APPROVED') {
       throw new BadRequestException('Approve the schedule before publishing');
     }
+
+    await this.assertPlanNoSameDayChoirDuplicates(planId);
 
     const now = new Date();
     for (const entry of plan.entries) {
@@ -379,7 +544,7 @@ export class ProtocolMonthlyScheduleService {
 
       void this.notify.notifyAssignment(
         entry.choirId,
-        assignment.occurrence.title,
+        entry.occurrence.title,
         entry.occurrenceId,
       );
     }
@@ -401,13 +566,38 @@ export class ProtocolMonthlyScheduleService {
       newValue: { entryCount: plan.entries.length } as Prisma.InputJsonValue,
     });
 
-    return published;
+    let teamBuild: Awaited<ReturnType<ProtocolTeamsService['generateForPlan']>> | null =
+      null;
+    if (options?.buildProtocolTeams) {
+      teamBuild = await this.teams.generateForPlan(actorUserId, planId, {
+        randomizeLeaders: true,
+      });
+    }
+
+    return { ...published, teamBuild };
   }
 
   async getPrintGrid(actorUserId: string, planId: string) {
     await this.actor(actorUserId);
     const plan = await this.loadPlan(planId);
-    const entries = plan.entries;
+
+    const occurrences = await this.prisma.operationOccurrence.findMany({
+      where: {
+        startAt: { gte: plan.startAt, lte: plan.endAt },
+        cancelledAt: null,
+        type: { in: ['SERVICE', 'SPECIAL_EVENT'] },
+        template: { code: { in: [...MONTHLY_TEMPLATE_CODES] } },
+      },
+      include: { template: true },
+      orderBy: { startAt: 'asc' },
+    });
+
+    const choirsByOccurrence = new Map<string, string[]>();
+    for (const entry of plan.entries) {
+      const list = choirsByOccurrence.get(entry.occurrenceId) ?? [];
+      list.push(entry.choir.name);
+      choirsByOccurrence.set(entry.occurrenceId, list);
+    }
 
     type GridService = {
       occurrenceId: string;
@@ -425,29 +615,18 @@ export class ProtocolMonthlyScheduleService {
       services: GridService[];
     };
 
-    const byOccurrence = new Map<string, GridService>();
-
-    for (const entry of entries) {
-      const occ = entry.occurrence;
+    const services: GridService[] = occurrences.map((occ) => {
       const code = occ.template?.code ?? null;
       const labels = code ? SERVICE_TEMPLATE_LABELS[code] : null;
-      const key = entry.occurrenceId;
-      if (!byOccurrence.has(key)) {
-        byOccurrence.set(key, {
-          occurrenceId: key,
-          templateCode: code,
-          labelRw: labels?.rw ?? occ.title,
-          labelEn: labels?.en ?? occ.title,
-          date: occ.startAt.toISOString(),
-          choirs: [],
-        });
-      }
-      byOccurrence.get(key)!.choirs.push(entry.choir.name);
-    }
-
-    const services = [...byOccurrence.values()].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-    );
+      return {
+        occurrenceId: occ.id,
+        templateCode: code,
+        labelRw: labels?.rw ?? occ.title,
+        labelEn: labels?.en ?? occ.title,
+        date: occ.startAt.toISOString(),
+        choirs: choirsByOccurrence.get(occ.id) ?? [],
+      };
+    });
 
     const weeks: GridWeek[] = [];
     if (services.length > 0) {
@@ -460,9 +639,12 @@ export class ProtocolMonthlyScheduleService {
         weekEnd.setDate(weekEnd.getDate() + 6);
         if (weekEnd > plan.endAt) weekEnd.setTime(plan.endAt.getTime());
 
+        const weekStartDay = calendarDay(weekStart);
+        const weekEndDay = calendarDay(weekEnd);
+
         const weekServices = services.filter((s) => {
-          const d = new Date(s.date);
-          return d >= weekStart && d <= weekEnd;
+          const d = calendarDay(new Date(s.date));
+          return d >= weekStartDay && d <= weekEndDay;
         });
 
         if (weekServices.length > 0) {
@@ -491,6 +673,7 @@ export class ProtocolMonthlyScheduleService {
       weeks,
       igaburo,
       preparedBy: 'Protocol Ministry',
+      bulletinOverrides: readPlanBulletinOverrides(plan),
     };
   }
 
@@ -524,10 +707,155 @@ export class ProtocolMonthlyScheduleService {
       where: { id: planId, ownerScope: 'PROTOCOL' },
     });
     if (!plan) throw new NotFoundException('Schedule plan not found');
-    if (plan.status !== 'GENERATED' && plan.status !== 'DRAFT') {
-      throw new BadRequestException('Published or approved schedules cannot be edited');
+    if (
+      plan.status !== 'GENERATED' &&
+      plan.status !== 'DRAFT' &&
+      plan.status !== 'APPROVED'
+    ) {
+      throw new BadRequestException('Published schedules cannot be edited');
     }
     return plan;
+  }
+
+  private async clearBulletinCellTexts(planId: string) {
+    const plan = (await this.prisma.choirSchedulePlan.findFirst({
+      where: { id: planId, ownerScope: 'PROTOCOL' },
+    })) as { bulletinOverrides?: unknown } | null;
+    if (!plan) return;
+
+    const current = readPlanBulletinOverrides(plan);
+    if (!current?.cellTexts) return;
+
+    const next: ProtocolBulletinOverrides = { ...current };
+    delete next.cellTexts;
+
+    await this.prisma.choirSchedulePlan.update({
+      where: { id: planId },
+      data: {
+        bulletinOverrides:
+          Object.keys(next).length > 0
+            ? (next as Prisma.InputJsonValue)
+            : Prisma.JsonNull,
+      } as Prisma.ChoirSchedulePlanUpdateInput,
+    });
+  }
+
+  private async clearBulletinCellText(planId: string, occurrenceId: string) {
+    const plan = (await this.prisma.choirSchedulePlan.findFirst({
+      where: { id: planId, ownerScope: 'PROTOCOL' },
+    })) as { bulletinOverrides?: unknown } | null;
+    if (!plan) return;
+
+    const current = readPlanBulletinOverrides(plan);
+    if (!current?.cellTexts?.[occurrenceId]) return;
+
+    const { [occurrenceId]: _removed, ...rest } = current.cellTexts;
+    const next: ProtocolBulletinOverrides = { ...current };
+    if (Object.keys(rest).length > 0) {
+      next.cellTexts = rest;
+    } else {
+      delete next.cellTexts;
+    }
+
+    await this.prisma.choirSchedulePlan.update({
+      where: { id: planId },
+      data: {
+        bulletinOverrides:
+          Object.keys(next).length > 0
+            ? (next as Prisma.InputJsonValue)
+            : Prisma.JsonNull,
+      } as Prisma.ChoirSchedulePlanUpdateInput,
+    });
+  }
+
+  private calendarDayKey(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  private async assertChoirNotScheduledSameDay(
+    planId: string,
+    occurrenceId: string,
+    choirId: string,
+    excludeEntryId?: string,
+  ) {
+    const [occurrence, choir] = await Promise.all([
+      this.prisma.operationOccurrence.findUniqueOrThrow({
+        where: { id: occurrenceId },
+        select: { startAt: true },
+      }),
+      this.prisma.choir.findUniqueOrThrow({
+        where: { id: choirId },
+        select: { name: true },
+      }),
+    ]);
+
+    const dayStart = calendarDay(occurrence.startAt);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    const planConflict = await this.prisma.choirSchedulePlanEntry.findFirst({
+      where: {
+        planId,
+        choirId,
+        id: excludeEntryId ? { not: excludeEntryId } : undefined,
+        occurrence: {
+          startAt: { gte: dayStart, lte: dayEnd },
+        },
+      },
+      include: { occurrence: { select: { title: true } } },
+    });
+
+    if (planConflict) {
+      throw new BadRequestException(
+        `${choir.name} is already on this day's schedule (${planConflict.occurrence.title}). A choir cannot serve twice on the same day.`,
+      );
+    }
+
+    const publishedConflict = await this.prisma.choirServiceAssignment.findFirst({
+      where: {
+        choirId,
+        cancelledAt: null,
+        occurrence: {
+          id: { not: occurrenceId },
+          startAt: { gte: dayStart, lte: dayEnd },
+        },
+      },
+      include: { occurrence: { select: { title: true } } },
+    });
+
+    if (publishedConflict) {
+      throw new BadRequestException(
+        `${choir.name} is already assigned on this day (${publishedConflict.occurrence.title}). A choir cannot serve twice on the same day.`,
+      );
+    }
+  }
+
+  private async assertPlanNoSameDayChoirDuplicates(planId: string) {
+    const entries = await this.prisma.choirSchedulePlanEntry.findMany({
+      where: { planId },
+      include: {
+        choir: { select: { name: true } },
+        occurrence: { select: { startAt: true, title: true } },
+      },
+    });
+
+    const seen = new Map<string, { choirName: string; serviceTitle: string }>();
+    for (const entry of entries) {
+      const key = `${this.calendarDayKey(entry.occurrence.startAt)}:${entry.choirId}`;
+      const existing = seen.get(key);
+      if (existing) {
+        throw new BadRequestException(
+          `${entry.choir.name} is scheduled twice on the same day (${existing.serviceTitle} and ${entry.occurrence.title}). A choir cannot serve twice on the same day.`,
+        );
+      }
+      seen.set(key, {
+        choirName: entry.choir.name,
+        serviceTitle: entry.occurrence.title,
+      });
+    }
   }
 
   private async ensureMonthOccurrences(actorUserId: string, year: number, month: number) {
@@ -579,9 +907,12 @@ export class ProtocolMonthlyScheduleService {
           status: { not: 'CANCELLED' },
         },
       });
-      if (existing) continue;
+      if (existing) {
+        await ensureProtocolTeamSlot(this.prisma, existing.id);
+        continue;
+      }
 
-      await this.prisma.operationOccurrence.create({
+      const created = await this.prisma.operationOccurrence.create({
         data: {
           templateId: template.id,
           type: 'SERVICE',
@@ -592,6 +923,7 @@ export class ProtocolMonthlyScheduleService {
           createdById: actorUserId,
         },
       });
+      await ensureProtocolTeamSlot(this.prisma, created.id);
     }
   }
 

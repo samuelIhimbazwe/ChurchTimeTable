@@ -131,6 +131,21 @@ export default function ProtocolTeamPage() {
   const markedCount = Object.values(records).filter(Boolean).length
   const nextStep = team ? NEXT_STATUS[team.status] : undefined
 
+  const bulkOutcomes: { label: string; outcome: ProtocolAttendanceOutcome }[] = [
+    { label: 'All present', outcome: 'PRESENT_FULL' },
+    { label: 'All excused', outcome: 'ABSENT_EXCUSED' },
+  ]
+
+  function applyBulk(outcome: ProtocolAttendanceOutcome) {
+    if (!team?.members?.length) return
+    const next: Record<string, ProtocolAttendanceOutcome> = {}
+    for (const m of team.members) {
+      next[m.id] = outcome
+    }
+    setRecords(next)
+    toast.success(`Marked all ${team.members.length} as ${outcomeLabel(outcome)}`)
+  }
+
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       <div>
@@ -208,6 +223,36 @@ export default function ProtocolTeamPage() {
         <CardHeader className="px-5 pt-5">
           <CardTitle>Team Members ({team?.members?.length ?? 0})</CardTitle>
         </CardHeader>
+        <CapabilityGate platformUiCapability="protocol-attendance-manage">
+          {team && team.members.length > 0 && (
+            <div className="px-5 pb-3 flex flex-wrap gap-2">
+              <span className="text-xs text-text-muted self-center mr-1">Bulk mark:</span>
+              {bulkOutcomes.map(({ label, outcome }) => (
+                <button
+                  key={outcome}
+                  type="button"
+                  onClick={() => applyBulk(outcome)}
+                  className={cn(
+                    'px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors',
+                    OUTCOME_BG[outcome],
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+              {ALL_OUTCOMES.slice(0, 4).map(({ label, outcome }) => (
+                <button
+                  key={`chip-${outcome}`}
+                  type="button"
+                  onClick={() => applyBulk(outcome)}
+                  className="px-2.5 py-1 rounded-full text-xs font-medium border border-border text-text-muted hover:bg-surface-raised"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+        </CapabilityGate>
         {isLoading ? (
           <div className="p-5 space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (

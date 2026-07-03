@@ -3648,6 +3648,7 @@ model ChoirSchedulePlan {
   approvedById    String?
   publishedAt     DateTime?
   publishedById   String?
+  bulletinOverrides Json?
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
 

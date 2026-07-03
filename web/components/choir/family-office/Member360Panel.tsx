@@ -54,6 +54,14 @@ export function Member360Panel({
     enabled: tab === 'attendance',
   })
 
+  const attendanceDetail = attendance as {
+    allowed?: boolean
+    score?: { percentage?: number }
+    latenessCount?: number
+    voluntaryServiceCount?: number
+    records?: unknown[]
+  } | undefined
+
   const row = progress?.items.find((item) => item.memberId === memberId)
   const claims = ledger?.items ?? []
 
@@ -179,7 +187,7 @@ export function Member360Panel({
           ) : tab === 'attendance' ? (
             loadingAttendance ? (
               <SkeletonCard rows={4} />
-            ) : !attendance?.allowed ? (
+            ) : !attendanceDetail?.allowed ? (
               <Card padding="md">
                 <p className="text-sm text-text-muted">
                   Attendance detail is not available for this member.
@@ -193,29 +201,29 @@ export function Member360Panel({
                 <div className="flex justify-between text-sm mb-3">
                   <span className="text-text-muted">Score</span>
                   <span className="font-semibold">
-                    {attendance.score?.percentage != null
-                      ? `${Math.round(attendance.score.percentage)}%`
+                    {attendanceDetail?.score?.percentage != null
+                      ? `${Math.round(attendanceDetail.score.percentage)}%`
                       : '—'}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <p className="text-text-muted text-xs">Late</p>
-                    <p className="font-semibold">{attendance.latenessCount ?? 0}</p>
+                    <p className="font-semibold">{attendanceDetail?.latenessCount ?? 0}</p>
                   </div>
                   <div>
                     <p className="text-text-muted text-xs">Extra service</p>
-                    <p className="font-semibold">{attendance.voluntaryServiceCount ?? 0}</p>
+                    <p className="font-semibold">{attendanceDetail?.voluntaryServiceCount ?? 0}</p>
                   </div>
                 </div>
-                {(attendance.records as Array<{
+                {(attendanceDetail?.records as Array<{
                   id?: string
                   date?: string
                   status?: string
                   eventTitle?: string
                 }>)?.length ? (
                   <ul className="mt-3 space-y-2 border-t border-border pt-3">
-                    {(attendance.records as Array<{
+                    {(attendanceDetail?.records as Array<{
                       id?: string
                       date?: string
                       status?: string

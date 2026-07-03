@@ -99,7 +99,7 @@ class _WebStyleDrawer extends ConsumerWidget {
               child: const CmmsBrandLogo(
                 size: 36,
                 showWordmark: true,
-                subtitle: 'Church System',
+                subtitle: 'Choir & Protocol',
                 lightContext: true,
               ),
             ),

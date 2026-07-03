@@ -7,9 +7,8 @@ import {
   disciplineApi,
   welfareApi,
   documentsApi,
-  announcementsApi,
-  ministriesApi,
   choirActivityApi,
+  choirOperationsApi,
 } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import {
@@ -50,12 +49,6 @@ export default function CareHubPage() {
   const [noticeTitle, setNoticeTitle] = useState('')
   const [noticeBody, setNoticeBody] = useState('')
   const [noticeKind, setNoticeKind] = useState('General')
-
-  const { data: ministries } = useQuery({
-    queryKey: ['ministries'],
-    queryFn: ministriesApi.getAll,
-  })
-  const choirMinistry = ministries?.find((m) => m.code === 'CHOIR')
 
   const { data: documents, isLoading: loadingDocs } = useQuery({
     queryKey: ['choir-documents'],
@@ -103,13 +96,15 @@ export default function CareHubPage() {
 
   const shareRules = useMutation({
     mutationFn: () => {
-      if (!choirMinistry?.id) throw new Error('No choir ministry')
+      if (!choirId) throw new Error('No choir selected')
       const body = ruleDocs?.length
         ? `Updated choir rules are available. Please review: ${ruleDocs.map((d) => d.title).join(', ')}`
         : ruleBody || 'Please review our choir rules and standards.'
-      return announcementsApi.createMinistry(choirMinistry.id, {
+      return choirOperationsApi.createAnnouncement({
+        choirId,
         title: '[Rules] Choir rules & standards',
         body,
+        publish: true,
       })
     },
     onSuccess: () => toast.success('Rules shared with all choir members'),
@@ -146,10 +141,12 @@ export default function CareHubPage() {
 
   const sendNotice = useMutation({
     mutationFn: () => {
-      if (!choirMinistry?.id) throw new Error('No choir ministry')
-      return announcementsApi.createMinistry(choirMinistry.id, {
+      if (!choirId) throw new Error('No choir selected')
+      return choirOperationsApi.createAnnouncement({
+        choirId,
         title: `[${noticeKind}] ${noticeTitle}`,
         body: noticeBody,
+        publish: true,
       })
     },
     onSuccess: () => {

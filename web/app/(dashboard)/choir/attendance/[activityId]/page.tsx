@@ -221,7 +221,7 @@ export default function AttendancePage() {
                   group.members.map((m) => ({
                     family: group.familyName,
                     name: m.memberName,
-                    present: m.outcome === 'PRESENT_FULL' || m.outcome === 'PRESENT_PARTIAL' ? '✓' : '',
+                    present: m.outcome != null && m.outcome.startsWith('PRESENT') ? '✓' : '',
                     absent: m.outcome === 'ABSENT_UNEXCUSED' || m.outcome === 'ABSENT_EXCUSED' ? '✓' : '',
                     notes: '',
                   })),

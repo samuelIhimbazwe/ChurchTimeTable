@@ -75,9 +75,10 @@ export default function AcceptInvitePage() {
         role: data.user.role,
         permissions: data.user.permissions,
         onboardingComplete: data.user.onboardingComplete,
+        homePath: data.user.homePath,
       })
       setSuccess(true)
-      const home = data.user.homePath ?? '/portal'
+      const home = data.user.homePath ?? '/dashboard'
       setTimeout(() => router.push(home), 1500)
     } catch (err) {
       if (err instanceof ValidationError) {

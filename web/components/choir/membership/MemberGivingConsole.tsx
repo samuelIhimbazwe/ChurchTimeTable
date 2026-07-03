@@ -1,10 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
-import { contributionsApi, financeApi, type ContributionClaim } from '@/lib/api'
+import { contributionsApi, type ContributionClaim } from '@/lib/api'
 import { ContributeClaimForm } from '@/components/choir/ContributeClaimForm'
 import { FamilyPaymentInstructionsCard } from '@/components/choir/FamilyPaymentInstructionsCard'
 import { membershipOfficePath } from '@/lib/choir/membership-office'

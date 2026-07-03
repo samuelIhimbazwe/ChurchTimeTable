@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   contributionsApi,
-  dashboardApi,
   financeApi,
   memberPortalApi,
   choirServiceOpsApi,
@@ -62,11 +61,6 @@ export function MemberWeekHome({ choirId }: Props) {
     queryFn: memberPortalApi.getHome,
   })
 
-  const { data: summary, isLoading: loadingSummary } = useQuery({
-    queryKey: ['dashboard-member-summary'],
-    queryFn: () => dashboardApi.getMemberSummary(),
-  })
-
   const { data: choirAnnouncements } = useQuery({
     queryKey: ['choir-announcements', choirId, 'home'],
     queryFn: () => choirOperationsApi.listAnnouncements(choirId),
@@ -79,14 +73,11 @@ export function MemberWeekHome({ choirId }: Props) {
     enabled: !!choirId,
   })
 
-  const loading = loadingTotals || loadingList || loadingHome || loadingSummary
+  const loading = loadingTotals || loadingList || loadingHome
 
   const choirWeekItems = useMemo(() => {
-    const fromHome = home?.participation?.thisWeek?.filter((e) => e.ministry === 'CHOIR') ?? []
-    const fromSummary =
-      summary?.upcomingSchedule?.filter((s) => s.source === 'CHOIR') ?? []
-    return [...fromHome, ...fromSummary]
-  }, [home, summary])
+    return home?.participation?.thisWeek?.filter((e) => e.ministry === 'CHOIR') ?? []
+  }, [home])
 
   const nextEventRaw = choirWeekItems[0] as
     | { title?: string; startAt?: string; date?: string; startTime?: string }
@@ -180,7 +171,7 @@ export function MemberWeekHome({ choirId }: Props) {
   return (
     <PullToRefresh onRefresh={handleRefresh}>
     <div className="space-y-5">
-      <ChoirMembershipWelcome choirId={choirId} />
+      <ChoirMembershipWelcome />
       <ChoirOnboardingChecklist choirId={choirId} />
 
       {showGoalCelebration && (

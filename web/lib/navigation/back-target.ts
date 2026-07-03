@@ -98,8 +98,6 @@ function labelForParent(path: string): string {
   if (choirId && path === `/choir/${choirId}`) return 'Portal'
   if (path === '/choir') return 'Portal'
   if (path.startsWith('/protocol')) return 'Protocol'
-  if (path.startsWith('/church')) return 'Church'
-  if (path.startsWith('/system')) return 'System'
   if (path.endsWith('/membership')) return 'Choir'
   const last = path.split('/').filter(Boolean).pop() ?? ''
   return last.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) || 'Back'

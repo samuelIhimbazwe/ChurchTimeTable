@@ -1,24 +1,28 @@
 'use client'
 
 import { useParams } from 'next/navigation'
-import Link from 'next/link'
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores'
-import { dashboardApi, membersApi } from '@/lib/api'
+import { membersApi } from '@/lib/api'
 import { membershipOfficePath } from '@/lib/choir/membership-office'
 import { Card, StatTile, SkeletonCard, SkeletonStatTile } from '@/components/shared'
 import { formatDate } from '@/lib/utils/format'
 import { CheckCircle2, Calendar } from 'lucide-react'
 
+function attendanceRateFromRecords(records: Array<Record<string, unknown>>) {
+  if (records.length === 0) return 0
+  const present = records.filter((row) => {
+    const status = String(row.status ?? row.outcome ?? '').toUpperCase()
+    return status.includes('PRESENT') || status.includes('ATTENDED')
+  }).length
+  return Math.round((present / records.length) * 100)
+}
+
 export default function MembershipAttendancePage() {
   const params = useParams()
   const choirId = String(params.choirId ?? '')
   const user = useAuthStore((s) => s.user)
-
-  const { data: summary, isLoading: loadingSummary } = useQuery({
-    queryKey: ['dashboard-member-summary'],
-    queryFn: () => dashboardApi.getMemberSummary(),
-  })
 
   const { data: attendance, isLoading: loadingAttendance } = useQuery({
     queryKey: ['member-attendance', user?.id],
@@ -26,13 +30,18 @@ export default function MembershipAttendancePage() {
     enabled: !!user?.id,
   })
 
-  const loading = loadingSummary || loadingAttendance
-  const rate = summary?.myAttendanceRate ?? 0
-  const records = Array.isArray(attendance?.records)
-    ? (attendance.records as Array<Record<string, unknown>>)
-    : Array.isArray(attendance?.items)
-      ? (attendance.items as Array<Record<string, unknown>>)
-      : []
+  const records = useMemo(() => {
+    if (Array.isArray(attendance?.records)) {
+      return attendance.records as Array<Record<string, unknown>>
+    }
+    if (Array.isArray(attendance?.items)) {
+      return attendance.items as Array<Record<string, unknown>>
+    }
+    return []
+  }, [attendance])
+
+  const loading = loadingAttendance
+  const rate = attendanceRateFromRecords(records)
 
   return (
     <div className="space-y-5">
@@ -53,7 +62,7 @@ export default function MembershipAttendancePage() {
           <>
             <StatTile
               label="Attendance rate"
-              value={Math.round(rate)}
+              value={rate}
               suffix="%"
               icon={CheckCircle2}
               animate

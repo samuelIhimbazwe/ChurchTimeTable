@@ -29,24 +29,24 @@ const NEXT_STATUS: Partial<Record<ProtocolTeamStatus, { status: ProtocolTeamStat
 const PUBLISH_STATUSES: ProtocolTeamStatus[] = ['GENERATED', 'REVIEWED', 'APPROVED']
 
 function normalizeTeams(raw: unknown[]): TeamRow[] {
-  return raw
-    .map((row) => {
-      const t = row as Record<string, unknown>
-      const occurrence = t.occurrence as Record<string, unknown> | undefined
-      const members = Array.isArray(t.members) ? t.members : []
-      const status = String(t.status ?? 'GENERATED') as ProtocolTeamStatus
-      const occurrenceId = String(occurrence?.id ?? t.occurrenceId ?? '')
-      if (!occurrenceId) return null
-      return {
-        id: String(t.id ?? ''),
-        status,
-        occurrenceId,
-        occurrenceTitle: String(occurrence?.title ?? 'Service team'),
-        startAt: occurrence?.startAt != null ? String(occurrence.startAt) : undefined,
-        memberCount: members.length,
-      }
+  const rows: TeamRow[] = []
+  for (const row of raw) {
+    const t = row as Record<string, unknown>
+    const occurrence = t.occurrence as Record<string, unknown> | undefined
+    const members = Array.isArray(t.members) ? t.members : []
+    const status = String(t.status ?? 'GENERATED') as ProtocolTeamStatus
+    const occurrenceId = String(occurrence?.id ?? t.occurrenceId ?? '')
+    if (!occurrenceId || !PUBLISH_STATUSES.includes(status)) continue
+    rows.push({
+      id: String(t.id ?? ''),
+      status,
+      occurrenceId,
+      occurrenceTitle: String(occurrence?.title ?? 'Service team'),
+      startAt: occurrence?.startAt != null ? String(occurrence.startAt) : undefined,
+      memberCount: members.length,
     })
-    .filter((row): row is TeamRow => row != null && PUBLISH_STATUSES.includes(row.status))
+  }
+  return rows
 }
 
 export function ProtocolTeamPublishConsole() {

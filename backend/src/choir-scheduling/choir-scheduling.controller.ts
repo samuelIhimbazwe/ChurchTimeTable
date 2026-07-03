@@ -180,7 +180,7 @@ export class ChoirSchedulingController {
   }
 
   @Post('assignments')
-  @RequireUiCapability('church-service-request-schedule')
+  @RequireUiCapability('choir-service-request-schedule')
   assign(
     @CurrentUser('sub') userId: string,
     @Body()
@@ -192,11 +192,11 @@ export class ChoirSchedulingController {
       bypassRules?: boolean;
     },
   ) {
-    return this.assignments.churchDirectAssign(userId, body);
+    return this.assignments.directServiceAssign(userId, body);
   }
 
   @Post('occurrences/:occurrenceId/auto-assign')
-  @RequireUiCapability('church-service-request-schedule')
+  @RequireUiCapability('choir-service-request-schedule')
   autoAssign(
     @CurrentUser('sub') userId: string,
     @Param('occurrenceId') occurrenceId: string,

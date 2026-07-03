@@ -12,7 +12,6 @@ import {
   PROTOCOL_ADMIN_PERMISSIONS,
   ROLES,
 } from '../src/common/constants/roles';
-import { DEFAULT_CHURCH_FACILITIES } from '../src/church-schedule/church-schedule.constants';
 import {
   DEFAULT_PHONE_ENFORCEMENT,
   PHONE_ENFORCEMENT_ENABLED_KEY,
@@ -575,13 +574,13 @@ async function main() {
       id: MAIN_CHOIR_ID,
       code: MAIN_CHOIR_CODE,
       name: 'Main Choir',
-      description: 'Default choir — all legacy MVP data belongs here.',
-      isActive: true,
+      description: 'Legacy container — not a singing choir; excluded from scheduling.',
+      isActive: false,
     },
     update: {
       code: MAIN_CHOIR_CODE,
       name: 'Main Choir',
-      isActive: true,
+      isActive: false,
     },
   });
 
@@ -651,6 +650,19 @@ async function main() {
     where: { code: 'HOPE' },
     data: { isActive: false },
   });
+
+  await prisma.choir.updateMany({
+    where: { code: 'CHILDREN_CHOIR' },
+    data: { name: 'Hope', isActive: true },
+  });
+
+  const mainChoirRow = await prisma.choir.findUnique({ where: { code: MAIN_CHOIR_CODE } });
+  if (mainChoirRow) {
+    await prisma.choirSchedulePlanEntry.deleteMany({ where: { choirId: mainChoirRow.id } });
+    await prisma.choirServiceAssignment.deleteMany({
+      where: { choirId: mainChoirRow.id, source: 'SCHEDULER_DIRECT' },
+    });
+  }
 
   for (const choir of await prisma.choir.findMany({ where: { isActive: true } })) {
     const portalEntry = portalChoirs.find((p) => p.code === choir.code);
@@ -846,29 +858,6 @@ async function main() {
         description: entry.description,
         sortOrder: entry.sortOrder,
         active: true,
-      },
-    });
-  }
-
-  for (const facility of DEFAULT_CHURCH_FACILITIES) {
-    await prisma.churchFacility.upsert({
-      where: { code: facility.code },
-      create: {
-        code: facility.code,
-        name: facility.name,
-        building: facility.building,
-        capacity: facility.capacity,
-        requiresAdminNotify: facility.requiresAdminNotify,
-        sortOrder: facility.sortOrder,
-        isActive: true,
-      },
-      update: {
-        name: facility.name,
-        building: facility.building,
-        capacity: facility.capacity,
-        requiresAdminNotify: facility.requiresAdminNotify,
-        sortOrder: facility.sortOrder,
-        isActive: true,
       },
     });
   }

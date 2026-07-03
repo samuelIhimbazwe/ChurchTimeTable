@@ -94,9 +94,9 @@ describe('platform UI capability registry', () => {
     expect(platformUiCapabilityVisible('protocol-team-manage', platformCheckFromPermissions([]))).toBe(false);
   });
 
-  it('church schedule submit via scoped capabilities', () => {
-    const check = platformCheckFromPermissions(['church.schedule.submit']);
-    expect(platformUiCapabilityVisible('church-schedule-submit', check)).toBe(true);
-    expect(platformUiCapabilityVisible('church-schedule-submit', platformCheckFromPermissions([]))).toBe(false);
+  it('choir service schedule via scoped capabilities', () => {
+    const check = platformCheckFromPermissions(['church.choir.ops.schedule']);
+    expect(platformUiCapabilityVisible('choir-service-request-schedule', check)).toBe(true);
+    expect(platformUiCapabilityVisible('choir-service-request-schedule', platformCheckFromPermissions([]))).toBe(false);
   });
 });

@@ -67,7 +67,7 @@ export function UnifiedAttentionDrawer({ open, onClose }: Props) {
               {items.map((item) => (
                 <li key={item.id}>
                   <Link
-                    href={item.href}
+                    href={item.href ?? '/portal'}
                     onClick={onClose}
                     className={cn(
                       'flex items-start gap-3 p-3 rounded-lg border transition-colors',

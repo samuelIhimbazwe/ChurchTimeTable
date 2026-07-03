@@ -83,10 +83,12 @@ export type ContributionClaim = {
   currency?: string
   paymentAt?: string | null
   paymentChannel?: string | null
+  receiptUrl?: string | null
   typeName?: string
   campaignName?: string | null
   createdAt?: string
   notes?: string | null
+  choirId?: string | null
 }
 
 export type SubmitContributionPayload = {
@@ -173,6 +175,11 @@ function normalizeClaims(raw: unknown): ContributionClaim[] {
     }
   }
   return []
+}
+
+export type ProtocolSubmitContext = Omit<SubmitContributionContext, 'mode'> & {
+  mode: 'protocol'
+  payment: FamilyPaymentInstructions
 }
 
 export const contributionsApi = {
@@ -267,10 +274,8 @@ export const contributionsApi = {
     }
   },
 
-  getProtocolSubmitContext: () =>
-    apiClient.get<never, SubmitContributionContext & { mode: 'protocol'; payment: FamilyPaymentInstructions }>(
-      '/finance/contributions/protocol/submit-options',
-    ),
+  getProtocolSubmitContext: (): Promise<ProtocolSubmitContext> =>
+    apiClient.get('/finance/contributions/protocol/submit-options'),
 
   submitProtocolClaim: (payload: Omit<SubmitContributionPayload, 'choirId'>) =>
     apiClient.post<never, ContributionClaim>(

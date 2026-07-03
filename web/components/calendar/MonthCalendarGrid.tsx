@@ -91,7 +91,7 @@ export function MonthCalendarGrid({
           <div className="grid grid-cols-7 gap-1">
             {cells.map((cell) => {
               const kinds = (eventsByDay.get(cell.key) ?? []).map((e) => e.kind)
-              const uniqueKinds = [...new Set(kinds)].slice(0, 3)
+              const uniqueKinds = Array.from(new Set(kinds)).slice(0, 3)
               const hasConflict = conflictDays?.has(cell.key)
               const isSelected = selectedDay === cell.key
               const isToday = cell.key === todayKey

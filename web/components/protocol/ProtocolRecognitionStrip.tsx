@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
-import { Award, ChevronRight, Heart, CalendarCheck } from 'lucide-react'
+import { Award, Heart, CalendarCheck } from 'lucide-react'
 import { Card } from '@/components/shared'
 import { protocolApi } from '@/lib/api'
 import { useTranslations } from '@/lib/i18n'
@@ -73,7 +73,7 @@ export function ProtocolRecognitionStrip() {
             const Icon =
               badge.category === 'contribution' ? Heart : CalendarCheck
             const href =
-              badge.category === 'contribution' ? '/portal/giving' : '/protocol/member'
+              badge.category === 'contribution' ? '/protocol/treasury' : '/protocol/member'
             return (
               <Link
                 key={badge.kind}
@@ -133,20 +133,6 @@ export function ProtocolRecognitionStrip() {
         </div>
       )}
 
-      <div className="mt-4 flex flex-wrap gap-4 text-xs font-semibold">
-        <Link
-          href="/protocol/member"
-          className="text-primary-600 hover:text-primary-800 inline-flex items-center gap-1"
-        >
-          {tr('My protocol')} <ChevronRight size={12} />
-        </Link>
-        <Link
-          href="/portal/giving"
-          className="text-primary-600 hover:text-primary-800 inline-flex items-center gap-1"
-        >
-          {tr('My giving')} <ChevronRight size={12} />
-        </Link>
-      </div>
     </Card>
   )
 }

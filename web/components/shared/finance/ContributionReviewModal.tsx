@@ -34,7 +34,8 @@ export function ContributionReviewModal({
   const [rejectReason, setRejectReason] = useState('')
 
   const partial =
-    confirmedAmount && parseFloat(confirmedAmount) !== item.claimedAmount
+    confirmedAmount.trim().length > 0 &&
+    parseFloat(confirmedAmount) !== item.claimedAmount
 
   function invalidateAll() {
     for (const key of invalidateQueryKeys) {
@@ -102,7 +103,7 @@ export function ContributionReviewModal({
               onClick={() => approve.mutate()}
               disabled={
                 approve.isPending ||
-                !confirmedAmount ||
+                !confirmedAmount.trim() ||
                 (partial && discrepancyReason.trim().length < 3)
               }
               className="flex-1 px-4 py-2.5 text-sm font-semibold bg-primary-700 text-white rounded-lg disabled:opacity-60 touch-target"

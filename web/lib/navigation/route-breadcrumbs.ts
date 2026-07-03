@@ -5,8 +5,6 @@ const SEGMENT_LABELS: Record<string, string> = {
   portal: 'Portal',
   choir: 'Choir',
   protocol: 'Protocol',
-  church: 'Church',
-  system: 'System',
   notifications: 'Notifications',
   members: 'Roster',
   activities: 'Activities',

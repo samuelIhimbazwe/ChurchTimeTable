@@ -37,9 +37,10 @@ describe('platform HTTP access (capability + legacy)', () => {
     expect(platformUiCapabilityVisible('protocol-invite', platformCheckFromPermissions([]))).toBe(false);
   });
 
-  it('church schedule submit via scoped capabilities', () => {
-    const check = platformCheckFromPermissions(['church.schedule.submit']);
-    expect(platformUiCapabilityVisible('church-schedule-submit', check)).toBe(true);
+  it('choir service schedule via scoped capabilities', () => {
+    const check = platformCheckFromPermissions(['church.choir.ops.schedule']);
+    expect(platformUiCapabilityVisible('choir-service-request-schedule', check)).toBe(true);
+    expect(platformUiCapabilityVisible('choir-service-request-schedule', platformCheckFromPermissions([]))).toBe(false);
   });
 
   it('member manage via legacy alias', () => {
@@ -59,9 +60,9 @@ describe('platform HTTP access (capability + legacy)', () => {
     expect(platformUiCapabilityVisible('protocol-report', report)).toBe(true);
   });
 
-  it('church intelligence and admin settings caps', () => {
-    const intel = platformCheckFromPermissions(['church.intelligence.view']);
-    expect(platformUiCapabilityVisible('church-intelligence-view', intel)).toBe(true);
+  it('choir governance and admin settings caps', () => {
+    const governance = platformCheckFromPermissions(['church.governance.manage']);
+    expect(platformUiCapabilityVisible('choir-governance-manage', governance)).toBe(true);
     const settingsView = platformCheckFromPermissions(['admin.settings.view']);
     expect(platformUiCapabilityVisible('admin-settings-manage', settingsView)).toBe(true);
   });
@@ -82,16 +83,10 @@ describe('platform HTTP access (capability + legacy)', () => {
     expect(platformUiCapabilityVisible('admin-users-manage', usersView)).toBe(true);
   });
 
-  it('church schedule read and service assignment view caps', () => {
-    const scheduleView = platformCheckFromPermissions(['church.schedule.view']);
-    expect(platformUiCapabilityVisible('church-schedule-view', scheduleView)).toBe(true);
-    const facilityView = platformCheckFromPermissions(['church.facility.view']);
-    expect(platformUiCapabilityVisible('church-facility-view', facilityView)).toBe(true);
-    const announcementView = platformCheckFromPermissions(['ministry.announcement.view']);
-    expect(platformUiCapabilityVisible('ministry-announcement-view', announcementView)).toBe(true);
+  it('choir service request caps', () => {
     const serviceRequests = platformCheckFromPermissions(['church.governance.view']);
-    expect(platformUiCapabilityVisible('church-service-requests-view', serviceRequests)).toBe(true);
-    const assignments = platformCheckFromPermissions(['church.schedule.view.queue']);
-    expect(platformUiCapabilityVisible('church-service-assignments-view', assignments)).toBe(true);
+    expect(platformUiCapabilityVisible('choir-service-requests-view', serviceRequests)).toBe(true);
+    const assignments = platformCheckFromPermissions(['church.choir.ops.schedule']);
+    expect(platformUiCapabilityVisible('choir-service-assignments-view', assignments)).toBe(true);
   });
 });

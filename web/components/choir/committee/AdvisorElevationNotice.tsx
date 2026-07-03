@@ -34,7 +34,7 @@ export function AdvisorElevationNotice() {
         {mine.map((row) => (
           <li key={row.id} className="text-sm text-text-secondary">
             <div className="flex flex-wrap gap-2 items-center">
-              <Badge variant="status-approved">Elevated</Badge>
+              <Badge variant="status-active">Elevated</Badge>
               <span>Expires {relativeTime(row.endsAt)}</span>
             </div>
             <p className="text-xs text-text-muted mt-1">

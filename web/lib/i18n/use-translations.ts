@@ -17,6 +17,7 @@ import { isProtocolDashboardPath } from '@/lib/protocol/paths'
 import { useChoirAccess } from '@/lib/hooks/useChoirAccess'
 import { useChoirDashboardContext } from '@/lib/hooks/useChoirDashboardContext'
 import { useProtocolDashboardContext } from '@/lib/hooks/useProtocolDashboardContext'
+import { useDualMemberPortalAccess } from '@/lib/portal/access'
 
 const EMPTY_PERMISSIONS: string[] = []
 
@@ -106,13 +107,14 @@ export function usePageTitle(fallback = 'CMMS'): string {
   const { data: choirCtx } = useChoirDashboardContext(choirId)
   const { data: protocolCtx, isLoading: loadingProtocolCtx } =
     useProtocolDashboardContext(inProtocolArea)
+  const { isDualMember, isLoading: loadingPortalAccess } = useDualMemberPortalAccess()
 
   const membershipForPath = choirId
     ? activeChoirMemberships.find((m) => m.id === choirId)
     : undefined
 
   return useMemo(() => {
-    if (loadingChoirAccess || (inProtocolArea && loadingProtocolCtx)) {
+    if (loadingChoirAccess || loadingPortalAccess || (inProtocolArea && loadingProtocolCtx)) {
       return translateLabel(fallback, locale)
     }
 
@@ -125,11 +127,23 @@ export function usePageTitle(fallback = 'CMMS'): string {
         choirCtx?.familyOffices ?? [],
         choirCtx?.positions ?? [],
         choirCtx?.contributionAuth,
+        undefined,
+        { isDualMember },
       )
     } else if (inProtocolArea && protocolCtx?.canAccess) {
-      sections = getComposedProtocolNav(protocolCtx.ministry.name, protocolCtx.permissions)
+      sections = getComposedProtocolNav(
+        protocolCtx.ministry.name,
+        protocolCtx.permissions,
+        protocolCtx.positions,
+        { isDualMember },
+      )
     } else if (pathname.startsWith('/portal')) {
-      sections = getPortalNavForUser(authRole, { canAccessChoirArea, isChoirMember }, permissions)
+      sections = getPortalNavForUser(
+        authRole,
+        { canAccessChoirArea, isChoirMember },
+        activeChoirMemberships,
+        { isDualMember },
+      )
     } else {
       sections = getNavForContext(
         pathname,
@@ -137,6 +151,8 @@ export function usePageTitle(fallback = 'CMMS'): string {
         { canAccessChoirArea, isChoirMember },
         permissions,
         activeChoirMemberships,
+        undefined,
+        { isDualMember },
       )
     }
 
@@ -157,6 +173,7 @@ export function usePageTitle(fallback = 'CMMS'): string {
     canAccessChoirArea,
     isChoirMember,
     loadingChoirAccess,
+    loadingPortalAccess,
     loadingProtocolCtx,
     inProtocolArea,
     choirId,
@@ -164,6 +181,7 @@ export function usePageTitle(fallback = 'CMMS'): string {
     choirCtx,
     membershipForPath,
     protocolCtx,
+    isDualMember,
     fallback,
   ])
 }

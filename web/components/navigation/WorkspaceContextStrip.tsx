@@ -18,9 +18,10 @@ type Props = {
 
 export function WorkspaceContextStrip({ choirName, className }: Props) {
   const pathname = usePathname()
-  if (isSovereignOfficePath(pathname)) return null
   const user = useAuthStore((s) => s.user)
   const pinnedPages = useNavStore((s) => s.pinnedPages)
+
+  if (isSovereignOfficePath(pathname)) return null
   const ctx = resolveWorkspaceContext(
     pathname,
     choirName,

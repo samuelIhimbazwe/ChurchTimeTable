@@ -5,6 +5,7 @@ import {
   UserCircle,
   UserCog,
   LayoutDashboard,
+  Calendar,
 } from 'lucide-react'
 import type { FamilyOfficeKind } from '@/lib/choir/family-office'
 
@@ -14,6 +15,7 @@ export type OfficeThemeKey =
   | 'family-leadership'
   | 'family-deputy'
   | 'family-coordination'
+  | 'protocol-scheduling'
 
 export type OfficeTheme = {
   key: OfficeThemeKey
@@ -118,6 +120,25 @@ export const OFFICE_THEMES: Record<OfficeThemeKey, OfficeTheme> = {
     contentBg: 'bg-[linear-gradient(to_bottom,var(--color-surface-overlay)_0%,var(--color-surface)_120px)]',
     badge: 'bg-surface-overlay text-text-secondary border border-border',
     portalLink: 'text-primary-700 hover:text-primary-900',
+  },
+  'protocol-scheduling': {
+    key: 'protocol-scheduling',
+    officeKindLabel: 'Protocol ministry',
+    accentBorder: 'border-l-gold-500',
+    hero: 'bg-gradient-to-br from-primary-950 via-primary-900 to-primary-800 border-b border-primary-700',
+    heroText: 'text-text-inverse',
+    heroMuted: 'text-primary-200',
+    eyebrow: 'text-gold-400',
+    iconWrap: 'bg-white/10 border border-white/15 shadow-inner',
+    icon: Calendar,
+    iconColor: 'text-gold-400',
+    navActive: 'bg-gold-500 text-primary-950 shadow-md font-bold',
+    navInactive:
+      'text-text-secondary bg-surface-raised border border-border hover:border-gold-300 hover:bg-gold-50',
+    contentBg:
+      'bg-[linear-gradient(to_bottom,var(--color-primary-50)_0%,var(--color-surface)_180px)] dark:bg-[linear-gradient(to_bottom,rgba(30,58,95,0.25)_0%,var(--color-surface)_180px)]',
+    badge: 'bg-white/10 text-gold-300 border border-white/20',
+    portalLink: 'text-gold-300 hover:text-gold-200',
   },
 }
 

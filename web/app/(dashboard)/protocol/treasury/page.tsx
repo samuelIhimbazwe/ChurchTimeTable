@@ -56,6 +56,8 @@ export default function ProtocolTreasuryHubPage() {
         )}
       </div>
 
+      <ProtocolContributionTreasuryPanel />
+
       <Card padding="md" accent="info">
         <p className="text-sm text-text-secondary">
           <strong className="text-text-primary">Scope:</strong> this treasury is for protocol unity
@@ -65,8 +67,6 @@ export default function ProtocolTreasuryHubPage() {
       </Card>
 
       <ProtocolTreasuryExportsCard />
-
-      <ProtocolContributionTreasuryPanel />
     </ProtocolPositionHubShell>
   )
 }

@@ -55,15 +55,13 @@ export function FamilyTeamPage() {
     )
   }
 
-  const headName = familyDetail.headMember
-    ? `${familyDetail.headMember.firstName ?? ''} ${familyDetail.headMember.lastName ?? ''}`.trim()
-    : '—'
+  const headName = familyDetail.headName || '—'
 
   return (
     <div className="space-y-4">
       <SplitQueueConsole
         title="My team"
-        subtitle={`${familyDetail.familyName} · Head: ${headName} · ${members.length} members`}
+        subtitle={`${familyDetail.name} · Head: ${headName} · ${members.length} members`}
         queueTitle="Family members"
         queueCount={members.length}
         items={members}

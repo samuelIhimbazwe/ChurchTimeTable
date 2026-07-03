@@ -60,19 +60,19 @@ const DISPLAY_TYPE: Record<string, SearchResult['type']> = {
   songCategory: 'activity',
 }
 
-function linkFor(type: string, id: string, title: string): string {
+function linkFor(type: string, id: string): string {
   switch (type) {
     case 'member':
-      return `/members?search=${encodeURIComponent(title)}`
+      return '/portal'
     case 'family':
       return '/choir/admin/families'
     case 'event':
     case 'assignment':
-      return '/events'
+      return '/portal/schedule'
     case 'choir':
       return `/portal/choirs/${id}`
     case 'ministry':
-      return `/ministries/${id}`
+      return id === 'PROTOCOL' ? '/protocol' : '/choir'
     case 'schedule':
     case 'rehearsal':
       return '/choir/scheduling'
@@ -85,21 +85,21 @@ function linkFor(type: string, id: string, title: string): string {
     case 'meetingActionItem':
       return '/choir/records'
     case 'contribution':
-      return '/choir/finance'
+      return '/portal/contributions'
     case 'welfareCase':
     case 'welfareCategory':
     case 'welfareAssistance':
       return '/choir/welfare'
     case 'broadcast':
-      return '/announcements'
+      return '/portal'
     case 'joinRequest':
       return '/choir/join-requests'
     case 'invitation':
       return '/portal/protocol'
     case 'operationalUnit':
-      return '/church'
+      return '/protocol'
     default:
-      return '/dashboard'
+      return '/portal'
   }
 }
 
@@ -117,7 +117,7 @@ function push(
     entityType: type,
     title,
     subtitle,
-    link: linkFor(type, id, title),
+    link: linkFor(type, id),
   })
 }
 
@@ -183,9 +183,6 @@ export function adaptSearchResponse(raw: BackendSearchResponse): SearchResult[] 
   }
   for (const item of raw.ministryFinance ?? []) {
     push(results, 'ministryFinance', item.id, item.title, 'Finance')
-  }
-  for (const item of raw.churchIntelligence ?? []) {
-    push(results, 'churchIntelligence', item.id, item.title, 'Church insight')
   }
   for (const w of raw.welfareCategories ?? []) {
     push(results, 'welfareCategory', w.id, w.name, 'Welfare category')

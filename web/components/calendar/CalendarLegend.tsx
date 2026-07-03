@@ -12,7 +12,7 @@ type Props = {
 
 export function CalendarLegend({ kinds, className }: Props) {
   const { tr } = useTranslations()
-  const unique = [...new Set(kinds)]
+  const unique = Array.from(new Set(kinds))
 
   return (
     <div className={cn('flex flex-wrap gap-x-4 gap-y-2', className)}>

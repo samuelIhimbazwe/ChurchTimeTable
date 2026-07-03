@@ -78,6 +78,7 @@ interface User {
   role: string
   permissions: string[]
   onboardingComplete?: boolean
+  homePath?: string
 }
 
 interface AuthStore {

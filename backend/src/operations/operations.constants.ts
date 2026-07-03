@@ -92,8 +92,8 @@ export const ASSIGNMENT_TYPE_UNIT_CODES: Partial<
 export const CHILDREN_CHOIR_UNIT_SEED = {
   ministryCode: 'MUSIC',
   code: 'CHILDREN_CHOIR',
-  name: 'Children Choir',
-  description: 'Children choir operational unit',
+  name: 'Hope',
+  description: 'Hope children choir',
   type: 'CHOIR' as const,
 };
 

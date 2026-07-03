@@ -1,7 +1,6 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import Link from 'next/link'
 import { KeyRound, Mic2, Settings2, UserPlus, FileText, Shield } from 'lucide-react'
 import { choirApi } from '@/lib/api'
 import { Card, SkeletonCard } from '@/components/shared'
@@ -116,11 +115,7 @@ export function ChoirSettingsPanel() {
           </ul>
         )}
         <p className="text-xs text-text-muted mt-4">
-          Dissolution transfers (when a choir closes) are managed at{' '}
-          <Link href="/church/choir-transfers" className="text-primary-600 font-semibold">
-            Church → Choir transfers
-          </Link>{' '}
-          by church administrators.
+          Choir dissolution transfers are managed by choir administrators from service operations.
         </p>
       </Card>
     </div>

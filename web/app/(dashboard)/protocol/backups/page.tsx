@@ -114,6 +114,11 @@ export default function BackupsPage() {
                         <p className="text-xs text-text-muted">Rank {String(b.rank)}</p>
                       )}
                     </div>
+                    {b.available !== false ? (
+                      <Badge variant="status-present">Available</Badge>
+                    ) : (
+                      <Badge variant="status-inactive">Unavailable</Badge>
+                    )}
                     {b.priority != null && (
                       <Badge variant="status-pending">P{String(b.priority)}</Badge>
                     )}

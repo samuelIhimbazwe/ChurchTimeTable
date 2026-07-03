@@ -3,13 +3,17 @@
 import { useMemo } from 'react'
 import Link from 'next/link'
 import { useProtocolDashboardContext } from '@/lib/hooks/useProtocolDashboardContext'
+import { useDualMemberPortalAccess } from '@/lib/portal/access'
 import { ProtocolDashboardCtx } from '@/components/protocol/ProtocolDashboardProvider'
-import { protocolMemberHome } from '@/lib/protocol/paths'
+import { ProtocolModuleTabBar } from '@/components/protocol/ProtocolModuleTabBar'
+import { ProtocolMobileTabBar } from '@/components/protocol/ProtocolMobileTabBar'
+import { protocolLandingPath } from '@/lib/navigation/protocol-module-nav'
 import { Card } from '@/components/shared'
 import { ArrowLeft, Shield } from 'lucide-react'
 
 export default function ProtocolScopedLayout({ children }: { children: React.ReactNode }) {
   const { data: context, isLoading, isError } = useProtocolDashboardContext()
+  const { isDualMember, isLoading: loadingPortalAccess } = useDualMemberPortalAccess()
 
   const accessDenied = isError || (context != null && context.canAccess === false)
 
@@ -17,6 +21,8 @@ export default function ProtocolScopedLayout({ children }: { children: React.Rea
     () => ({ context, isLoading, isError }),
     [context, isLoading, isError],
   )
+
+  const landing = protocolLandingPath(context?.positions ?? [])
 
   if (isLoading || (!context && !isError)) {
     return (
@@ -36,10 +42,10 @@ export default function ProtocolScopedLayout({ children }: { children: React.Rea
             You need an approved protocol membership to open this dashboard.
           </p>
           <Link
-            href="/portal?reason=protocol-membership-required"
+            href={isDualMember ? '/portal' : '/dashboard'}
             className="mt-4 block text-center text-sm font-semibold text-primary-600"
           >
-            Back to member portal →
+            {isDualMember ? 'Back to member portal →' : 'Back to dashboard →'}
           </Link>
         </Card>
       </div>
@@ -56,32 +62,39 @@ export default function ProtocolScopedLayout({ children }: { children: React.Rea
 
   return (
     <ProtocolDashboardCtx.Provider value={providerValue}>
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3 px-1 py-2 rounded-lg bg-primary-50 border border-primary-100">
+      <div className="space-y-0 pb-2">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-1 py-2 mb-3 rounded-lg bg-primary-50 border border-primary-100">
           <p className="text-sm text-text-secondary">
-            <span className="font-semibold text-text-primary">{context.ministry.name}</span> dashboard
+            <span className="font-semibold text-text-primary">{context.ministry.name}</span>
             {context.positions.length > 0 && (
               <span className="text-text-muted">
                 {' '}· {context.positions.map((p) => p.roleName).join(', ')}
               </span>
             )}
           </p>
-          <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <div className="flex flex-wrap items-center gap-3 shrink-0 text-sm font-semibold">
             <Link
-              href={protocolMemberHome()}
-              className="text-sm font-semibold text-primary-700 hover:text-primary-900 dark:text-gold-400 dark:hover:text-gold-300"
+              href={landing}
+              className="text-primary-700 hover:text-primary-900 dark:text-gold-400"
             >
-              My protocol home
+              Home
             </Link>
-            <Link
-              href="/portal"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-700 hover:text-primary-900 dark:text-gold-400 dark:hover:text-gold-300"
-            >
-              <ArrowLeft size={14} /> Member portal
-            </Link>
+            {!loadingPortalAccess && isDualMember && (
+              <Link
+                href="/portal"
+                className="inline-flex items-center gap-1.5 text-primary-700 hover:text-primary-900 dark:text-gold-400"
+              >
+                <ArrowLeft size={14} /> Portal
+              </Link>
+            )}
           </div>
         </div>
-        {children}
+
+        <ProtocolModuleTabBar />
+
+        <div className="pt-4">{children}</div>
+
+        <ProtocolMobileTabBar />
       </div>
     </ProtocolDashboardCtx.Provider>
   )

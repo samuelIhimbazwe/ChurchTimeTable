@@ -128,7 +128,7 @@ export default function AssetsPage() {
           <EmptyState
             icon={Package}
             title="No assets in registry"
-            description="Register church-wide assets in the management panel."
+            description="Register choir uniforms and equipment in the assets panel."
             className="py-8"
           />
         ) : (

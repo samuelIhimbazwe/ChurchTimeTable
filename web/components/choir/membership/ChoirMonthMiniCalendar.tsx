@@ -95,7 +95,7 @@ export function ChoirMonthMiniCalendar({ choirId }: Props) {
                 <p className="font-medium text-text-primary">{item.title}</p>
                 <p className="text-xs text-text-muted">
                   {formatDate(item.startAt)}
-                  {item.startTime ? ` · ${formatTime(item.startTime)}` : ''}
+                  {item.startAt ? ` · ${formatTime(item.startAt)}` : ''}
                 </p>
               </Link>
             </li>

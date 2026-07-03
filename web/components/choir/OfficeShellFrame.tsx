@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { BackButton } from '@/components/shared/BackButton'
+import { useDualMemberPortalAccess } from '@/lib/portal/access'
 import type { OfficeThemeKey } from '@/lib/choir/office-themes'
 import { OFFICE_THEMES } from '@/lib/choir/office-themes'
 
@@ -44,6 +45,7 @@ export function OfficeShellFrame({
 }: Props) {
   const theme = OFFICE_THEMES[themeKey]
   const Icon = theme.icon
+  const { isDualMember, isLoading: loadingPortalAccess } = useDualMemberPortalAccess()
 
   return (
     <div
@@ -100,16 +102,18 @@ export function OfficeShellFrame({
                 )}
               </div>
             </div>
-            <Link
-              href="/portal"
-              className={cn(
-                'inline-flex items-center gap-1.5 text-sm font-semibold shrink-0 self-start',
-                theme.portalLink,
-              )}
-            >
-              <ArrowLeft size={14} />
-              Member portal
-            </Link>
+            {!loadingPortalAccess && isDualMember && (
+              <Link
+                href="/portal"
+                className={cn(
+                  'inline-flex items-center gap-1.5 text-sm font-semibold shrink-0 self-start',
+                  theme.portalLink,
+                )}
+              >
+                <ArrowLeft size={14} />
+                Member portal
+              </Link>
+            )}
           </div>
         </div>
       </header>

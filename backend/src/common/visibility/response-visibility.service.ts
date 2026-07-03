@@ -4,7 +4,17 @@ import {
   canViewDisciplineIntelligence,
   canViewFinanceIntelligence,
 } from '../governance/governance-permissions.util';
-import type { MinistryAlert } from '../../dashboard/ministry-intelligence.service';
+
+type MinistryAlert = {
+  id: string
+  type: string
+  severity: string
+  title: string
+  message: string
+  ministryScope?: string | null
+  memberId?: string
+  count?: number
+}
 
 const FINANCE_WIDGET_IDS = new Set([
   'treasurerPanel',

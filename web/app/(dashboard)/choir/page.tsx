@@ -1,6 +1,10 @@
 'use client'
 
-import { useDashboard } from '@/lib/hooks'
+import { useQuery } from '@tanstack/react-query'
+import { choirActivityApi, choirSchedulingApi } from '@/lib/api'
+import { useResolvedChoirScope } from '@/lib/hooks'
+import { formatDate, formatTime } from '@/lib/utils/format'
+import Link from 'next/link'
 import {
   Card, CardHeader, CardTitle, CardDescription,
   StatTile, Badge, SkeletonStatTile, SkeletonCard,
@@ -8,14 +12,8 @@ import {
 } from '@/components/shared'
 import {
   Users, Calendar, CheckCircle2, ArrowLeftRight,
-  AlertTriangle, PlusCircle,
+  PlusCircle, Heart, Shield,
 } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
-import { choirActivityApi, choirSchedulingApi } from '@/lib/api'
-import { useResolvedChoirScope } from '@/lib/hooks'
-import { formatDate, formatTime } from '@/lib/utils/format'
-import Link from 'next/link'
-import { Heart, Shield } from 'lucide-react'
 
 function healthNum(data: Record<string, unknown> | undefined, ...keys: string[]) {
   if (!data) return 0
@@ -26,9 +24,6 @@ function healthNum(data: Record<string, unknown> | undefined, ...keys: string[])
 }
 
 export default function ChoirHubPage() {
-  const { data: summary, isLoading: sumLoading } = useDashboard()
-  const leaderSummary = summary as import('@/types').LeaderDashboardSummary | undefined
-
   const { choirId, choirName, choirLink } = useResolvedChoirScope()
 
   const { data: health, isLoading: healthLoading } = useQuery({
@@ -77,28 +72,6 @@ export default function ChoirHubPage() {
           </CapabilityGate>
         </div>
       </div>
-
-      {/* Action items */}
-      {leaderSummary?.actionItems?.map((a) => (
-        a.link ? (
-          <Link key={a.id} href={a.link}>
-            <Card accent={a.type === 'warning' ? 'warning' : a.type === 'danger' ? 'danger' : 'info'} padding="sm">
-              <div className="flex items-center gap-3">
-                <AlertTriangle size={16} className="text-warning shrink-0" />
-                <p className="text-sm text-text-primary flex-1">{a.text}</p>
-                <span className="text-xs font-semibold text-primary-600 shrink-0">Review →</span>
-              </div>
-            </Card>
-          </Link>
-        ) : (
-          <Card key={a.id} accent={a.type === 'warning' ? 'warning' : a.type === 'danger' ? 'danger' : 'info'} padding="sm">
-            <div className="flex items-center gap-3">
-              <AlertTriangle size={16} className="text-warning shrink-0" />
-              <p className="text-sm text-text-primary flex-1">{a.text}</p>
-            </div>
-          </Card>
-        )
-      ))}
 
       {/* Health dashboard */}
       <Card padding="md" href={choirLink('reports')}>
@@ -162,14 +135,14 @@ export default function ChoirHubPage() {
 
       {/* KPI tiles */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {sumLoading ? (
+        {healthLoading ? (
           Array.from({ length: 4 }).map((_, i) => <SkeletonStatTile key={i} />)
         ) : (
           <>
-            <StatTile label="Total Members"     value={leaderSummary?.totalMembers ?? 0}    icon={Users}         animate delta={leaderSummary?.membersDelta} href={choirLink('members')} />
-            <StatTile label="Attendance Rate"   value={leaderSummary?.attendanceRate ?? 0}  suffix="%" icon={CheckCircle2} animate delta={leaderSummary?.attendanceDelta} href={choirLink('reports')} />
-            <StatTile label="Pending Swaps"     value={leaderSummary?.pendingSwaps ?? 0}    icon={ArrowLeftRight} animate href={choirLink('scheduling')} />
-            <StatTile label="This Week"         value={leaderSummary?.eventsThisWeek ?? 0}  icon={Calendar}      animate href={choirLink('activities')} />
+            <StatTile label="Total Members" value={healthNum(h, 'activeMembers', 'activeMemberCount', 'totalMembers')} icon={Users} animate href={choirLink('members')} />
+            <StatTile label="Attendance Rate" value={healthNum(h, 'attendanceRate', 'avgAttendanceRate', 'serviceAttendanceRate')} suffix="%" icon={CheckCircle2} animate href={choirLink('reports')} />
+            <StatTile label="Pending Swaps" value={healthNum(h, 'pendingSwaps', 'pendingSwapCount')} icon={ArrowLeftRight} animate href={choirLink('scheduling')} />
+            <StatTile label="This Week" value={healthNum(h, 'upcomingRehearsals', 'eventsThisWeek')} icon={Calendar} animate href={choirLink('activities')} />
           </>
         )}
       </div>
@@ -218,16 +191,17 @@ export default function ChoirHubPage() {
           )}
         </Card>
 
-        {/* Ministry health */}
+        {/* Choir health summary */}
         <Card padding="md" href={choirLink('reports')}>
           <CardHeader>
-            <CardTitle>Ministry Health</CardTitle>
-            <CardDescription>Participation rates — tap for full reports</CardDescription>
+            <CardTitle>Participation</CardTitle>
+            <CardDescription>Service and rehearsal engagement</CardDescription>
           </CardHeader>
           <div className="space-y-4">
-            {(leaderSummary?.ministryHealth ?? [
-              { name: 'Loading…', percentage: 0 }
-            ]).map((m) => (
+            {[
+              { name: 'Service attendance', percentage: healthNum(h, 'attendanceRate', 'avgAttendanceRate', 'serviceAttendanceRate') },
+              { name: 'Reliability', percentage: healthNum(h, 'reliability', 'reliabilityScore', 'overallReliability') },
+            ].map((m) => (
               <div key={m.name}>
                 <div className="flex justify-between text-sm mb-1.5">
                   <span className="font-medium text-text-primary">{m.name}</span>
@@ -253,7 +227,7 @@ export default function ChoirHubPage() {
             <Card padding="md" className="hover:shadow-raised transition-shadow cursor-pointer">
               <p className="text-sm text-text-secondary">Pending Approvals</p>
               <p className="font-display text-4xl font-bold mt-1 text-warning">
-                {leaderSummary?.pendingApprovals ?? 0}
+                {healthNum(h, 'pendingApprovals', 'pendingJoinRequests')}
               </p>
             </Card>
           </Link>
@@ -263,7 +237,7 @@ export default function ChoirHubPage() {
             <Card padding="md" className="hover:shadow-raised transition-shadow cursor-pointer">
               <p className="text-sm text-text-secondary">Active Welfare</p>
               <p className="font-display text-4xl font-bold mt-1 text-danger">
-                {leaderSummary?.activeWelfare ?? 0}
+                {healthNum(h, 'welfareAlerts', 'activeWelfare', 'activeWelfareCases')}
               </p>
             </Card>
           </Link>
@@ -273,7 +247,7 @@ export default function ChoirHubPage() {
             <Card padding="md" className="hover:shadow-raised transition-shadow cursor-pointer">
               <p className="text-sm text-text-secondary">Pending Swaps</p>
               <p className="font-display text-4xl font-bold mt-1 text-info">
-                {leaderSummary?.pendingSwaps ?? 0}
+                {healthNum(h, 'pendingSwaps', 'pendingSwapCount')}
               </p>
             </Card>
           </Link>

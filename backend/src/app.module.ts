@@ -18,9 +18,7 @@ import { FinanceModule } from './finance/finance.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SyncModule } from './sync/sync.module';
 import { ReportsModule } from './reports/reports.module';
-import { DashboardModule } from './dashboard/dashboard.module';
 import { UsersModule } from './users/users.module';
-import { SystemModule } from './system/system.module';
 import { AppScheduleModule } from './schedule/schedule.module';
 import { GovernanceModule } from './governance/governance.module';
 import { FamiliesModule } from './families/families.module';
@@ -32,11 +30,6 @@ import { DevotionsModule } from './devotions/devotions.module';
 import { ChoirCustomRolesModule } from './choir-custom-roles/choir-custom-roles.module';
 import { MinistriesModule } from './ministries/ministries.module';
 import { OperationalUnitsModule } from './operational-units/operational-units.module';
-import { MinistryServicesModule } from './ministry-services/ministry-services.module';
-import { AssetsModule } from './assets/assets.module';
-import { MinistryFinanceModule } from './ministry-finance/ministry-finance.module';
-import { ChurchIntelligenceModule } from './church-intelligence/church-intelligence.module';
-import { ChurchScheduleModule } from './church-schedule/church-schedule.module';
 import { OperationsModule } from './operations/operations.module';
 import { ProtocolModule } from './protocol/protocol.module';
 import { ChoirSchedulingModule } from './choir-scheduling/choir-scheduling.module';
@@ -72,11 +65,6 @@ import { AppService } from './app.service';
     ChoirCustomRolesModule,
     MinistriesModule,
     OperationalUnitsModule,
-    MinistryServicesModule,
-    AssetsModule,
-    MinistryFinanceModule,
-    ChurchIntelligenceModule,
-    ChurchScheduleModule,
     OperationsModule,
     ProtocolModule,
     ChoirSchedulingModule,
@@ -84,11 +72,9 @@ import { AppService } from './app.service';
     MemberPortalModule,
     PilotReadyModule,
     AuthUxModule,
-    SystemModule,
     NotificationsModule,
     SyncModule,
     ReportsModule,
-    DashboardModule,
     MessagingModule,
   ],
   controllers: [AppController],

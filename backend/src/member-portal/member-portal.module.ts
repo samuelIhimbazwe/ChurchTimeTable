@@ -4,10 +4,8 @@ import { AuthModule } from '../auth/auth.module';
 import { AuthUxModule } from '../auth-ux/auth-ux.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { MemberPhoneEnforcementModule } from '../common/member/member-phone-enforcement.module';
-import { ChurchController } from './church.controller';
 import { ProtocolPortalController } from './protocol-portal.controller';
 import { MemberPortalController } from './member-portal.controller';
-import { ChurchBroadcastsService } from './church-broadcasts.service';
 import { ChoirDiscoveryService } from './choir-discovery.service';
 import { ChoirMembershipRulesService } from './choir-membership-rules.service';
 import { ProtocolInvitationsService } from './protocol-invitations.service';
@@ -41,12 +39,10 @@ import { ChoirHttpAccessModule } from '../common/choir/choir-http-access.module'
     ChoirHttpAccessModule,
   ],
   controllers: [
-    ChurchController,
     ProtocolPortalController,
     MemberPortalController,
   ],
   providers: [
-    ChurchBroadcastsService,
     ChoirDiscoveryService,
     ChoirMembershipRulesService,
     ProtocolInvitationsService,

@@ -32,17 +32,18 @@ Protocol dashboard → /protocol
 
 | # | Module | Status | Gap |
 |---|--------|--------|-----|
-| 1 | Membership | ✅ | Claims + invitations UI |
-| 2 | Teams | 🟡 | Publish console shipped; build flow on generate page |
-| 3 | Attendance | ✅ | Team detail page |
-| 4 | Replacements | 🟡 | Split queue console |
+| 1 | Membership | ✅ | Roster search/filter, 360° tabs, invite modal, status badges |
+| 2 | Teams | ✅ | Calendar picker, drag builder, auto-generate on generate page |
+| 3 | Attendance | ✅ | Bulk-mark chips, quota bar on 360 profile |
+| 4 | Replacements | ✅ | Kanban view, pending banner, backup availability |
 | 5 | Rankings | ✅ | Generate + categories |
 | 6 | Team leaders | ✅ | CRUD + assign on team detail |
-| 7 | Treasury | 🟡 | `ProtocolContributionTreasuryPanel` — scoped unity contributions |
-| 8 | Reports | 🟡 | Team reports + CSV; health pack planned (P4) |
+| 7 | Treasury | ✅ | Financial summary dashboard + exports |
+| 8 | Reports | ✅ | Health charts, KPI drill-down, health pack PDF |
 | 9 | Admin / settings | ✅ | Admin hub + engine settings |
-| 10 | Communications | 🟡 | Deep links for assignment, replacement, claim, invitation |
+| 10 | Communications | ✅ | Composer + SMS/WhatsApp + log at `/protocol/communications` |
 | 11 | Portal | ✅ | Stats + contributions |
+| 12 | Documents | ✅ | Upload modal, category tabs, preview pane |
 
 ---
 

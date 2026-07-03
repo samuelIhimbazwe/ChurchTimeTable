@@ -35,6 +35,7 @@ import { ProtocolOfficerSlaService } from './protocol-officer-sla.service';
 import { ProtocolDocumentsService } from './protocol-documents.service';
 import { ProtocolMemberRecognitionService } from './protocol-member-recognition.service';
 import { ProtocolMonthlyScheduleService } from './protocol-monthly-schedule.service';
+import { ProtocolCommunicationsService } from './protocol-communications.service';
 import { ChoirServiceAssignmentRole } from '@prisma/client';
 import { ProtocolRankingCategory } from '@prisma/client';
 
@@ -57,12 +58,66 @@ export class ProtocolController {
     private documents: ProtocolDocumentsService,
     private recognition: ProtocolMemberRecognitionService,
     private monthlySchedule: ProtocolMonthlyScheduleService,
+    private communications: ProtocolCommunicationsService,
   ) {}
 
   @Get('documents')
   @RequireUiCapability('protocol-view')
   listDocuments(@CurrentUser('sub') userId: string) {
     return this.documents.list(userId);
+  }
+
+  @Post('documents')
+  @RequireUiCapability('protocol-manage')
+  uploadDocument(
+    @CurrentUser('sub') userId: string,
+    @Body()
+    body: {
+      title: string;
+      description?: string;
+      category?: string;
+      fileName: string;
+      fileUrl: string;
+      mimeType?: string;
+      fileSize?: number;
+    },
+  ) {
+    return this.documents.upload(userId, body);
+  }
+
+  @Get('communications/templates')
+  @RequireUiCapability('protocol-manage')
+  communicationTemplates() {
+    return this.communications.listTemplates();
+  }
+
+  @Get('communications/logs')
+  @RequireUiCapability('protocol-manage')
+  communicationLogs(
+    @CurrentUser('sub') userId: string,
+    @Query('status') status?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.communications.listLogs(userId, {
+      status,
+      limit: limit ? Number(limit) : undefined,
+    });
+  }
+
+  @Post('communications/send')
+  @RequireUiCapability('protocol-manage')
+  sendCommunication(
+    @CurrentUser('sub') userId: string,
+    @Body()
+    body: {
+      memberIds: string[];
+      channel: 'IN_APP' | 'SMS' | 'WHATSAPP';
+      title: string;
+      message: string;
+      templateId?: string;
+    },
+  ) {
+    return this.communications.send(userId, body);
   }
 
   @Get('dashboard/team-leader')
@@ -291,6 +346,7 @@ export class ProtocolController {
       occurrenceId: string;
       memberIds?: string[];
       overrideReason?: string;
+      randomizeLeader?: boolean;
     },
   ) {
     return this.teams.generateForOccurrence(userId, body.occurrenceId, body);
@@ -326,8 +382,22 @@ export class ProtocolController {
 
   @Get('members')
   @RequireUiCapability('protocol-view')
-  listMembers(@CurrentUser('sub') userId: string) {
-    return this.members.listProfiles(userId);
+  listMembers(
+    @CurrentUser('sub') userId: string,
+    @Query('q') q?: string,
+    @Query('status') status?: 'active' | 'inactive' | 'all',
+  ) {
+    return this.members.listProfiles(userId, { q, status });
+  }
+
+  @Patch('members/:memberId')
+  @RequireUiCapability('protocol-manage')
+  updateMember(
+    @CurrentUser('sub') userId: string,
+    @Param('memberId') memberId: string,
+    @Body() body: { active?: boolean; notes?: string },
+  ) {
+    return this.members.upsertProfile(userId, memberId, body);
   }
 
   @Get('members/:memberId')
@@ -365,6 +435,23 @@ export class ProtocolController {
       body.outcome,
       body.notes,
     );
+  }
+
+  @Post('attendance/bulk')
+  @RequireUiCapability('protocol-attendance-manage')
+  recordAttendanceBulk(
+    @CurrentUser('sub') userId: string,
+    @Body()
+    body: {
+      teamId: string;
+      records: Array<{
+        teamMemberId: string;
+        outcome: ProtocolAttendanceOutcome;
+        notes?: string;
+      }>;
+    },
+  ) {
+    return this.attendance.recordBulk(userId, body.teamId, body.records);
   }
 
   @Get('teams/:teamId/attendance')
@@ -510,6 +597,15 @@ export class ProtocolController {
     return this.monthlySchedule.generate(userId, body);
   }
 
+  @Post('scheduling/plans/:id/regenerate')
+  @RequireUiCapability('protocol-team-manage')
+  regenerateMonthlySchedule(
+    @CurrentUser('sub') userId: string,
+    @Param('id') id: string,
+  ) {
+    return this.monthlySchedule.regenerate(userId, id);
+  }
+
   @Get('scheduling/plans/:id')
   @RequireUiCapability('protocol-view')
   getMonthlySchedule(
@@ -570,6 +666,16 @@ export class ProtocolController {
     return this.monthlySchedule.removeEntry(userId, planId, entryId);
   }
 
+  @Patch('scheduling/plans/:id/bulletin')
+  @RequireUiCapability('protocol-team-manage')
+  updateScheduleBulletin(
+    @CurrentUser('sub') userId: string,
+    @Param('id') planId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.monthlySchedule.updateBulletinOverrides(userId, planId, body);
+  }
+
   @Post('scheduling/plans/:id/approve')
   @RequireUiCapability('protocol-team-approve-publish')
   approveMonthlySchedule(
@@ -584,8 +690,24 @@ export class ProtocolController {
   publishMonthlySchedule(
     @CurrentUser('sub') userId: string,
     @Param('id') id: string,
+    @Body() body?: { buildProtocolTeams?: boolean },
   ) {
-    return this.monthlySchedule.publish(userId, id);
+    return this.monthlySchedule.publish(userId, id, body);
+  }
+
+  @Post('scheduling/plans/:id/build-teams')
+  @RequireUiCapability('protocol-team-manage')
+  buildTeamsForMonthlySchedule(
+    @CurrentUser('sub') userId: string,
+    @Param('id') id: string,
+    @Body()
+    body?: {
+      skipExisting?: boolean;
+      randomizeLeaders?: boolean;
+      occurrenceIds?: string[];
+    },
+  ) {
+    return this.teams.generateForPlan(userId, id, body);
   }
 
   @Get('reports/monthly-service')

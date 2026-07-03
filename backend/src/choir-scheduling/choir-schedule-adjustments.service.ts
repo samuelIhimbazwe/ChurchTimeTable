@@ -34,7 +34,7 @@ export class ChoirScheduleAdjustmentsService {
     let assignmentId: string | undefined;
 
     if (data.action === 'REPLACE' && data.choirId && data.newChoirId) {
-      const isChurch = await this.assignments.isChurchScheduler(actorUserId);
+      const isChurch = await this.assignments.isServiceScheduler(actorUserId);
       if (!isChurch) {
         throw new ForbiddenException('Replacing service choirs requires church coordination');
       }
@@ -46,7 +46,7 @@ export class ChoirScheduleAdjustmentsService {
         },
         data: { cancelledAt: new Date() },
       });
-      const created = await this.assignments.churchDirectAssign(actorUserId, {
+      const created = await this.assignments.directServiceAssign(actorUserId, {
         choirId: data.newChoirId,
         occurrenceId: data.occurrenceId,
         role: data.role,
@@ -54,11 +54,11 @@ export class ChoirScheduleAdjustmentsService {
       });
       assignmentId = created.id;
     } else if (data.action === 'ADD_SUPPORTING' && data.newChoirId) {
-      const isChurch = await this.assignments.isChurchScheduler(actorUserId);
+      const isChurch = await this.assignments.isServiceScheduler(actorUserId);
       if (!isChurch) {
         throw new ForbiddenException('Adding supporting service choirs requires church coordination');
       }
-      const created = await this.assignments.churchDirectAssign(actorUserId, {
+      const created = await this.assignments.directServiceAssign(actorUserId, {
         choirId: data.newChoirId,
         occurrenceId: data.occurrenceId,
         role: 'SUPPORTING',

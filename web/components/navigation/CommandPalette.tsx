@@ -33,6 +33,7 @@ import {
   type CommandItem,
 
 } from '@/lib/navigation/command-routes'
+import { useDualMemberPortalAccess } from '@/lib/portal/access'
 
 import {
 
@@ -143,6 +144,8 @@ export function CommandPalette({ open, onClose, onOpenNotifications }: Props) {
   const theme = useUIStore((st) => st.theme)
 
   const setTheme = useUIStore((st) => st.setTheme)
+
+  const { isDualMember } = useDualMemberPortalAccess()
 
   const recentPages = useNavStore((st) => st.recentPages)
 
@@ -264,7 +267,9 @@ export function CommandPalette({ open, onClose, onOpenNotifications }: Props) {
 
   const baseItems = useMemo(() => {
 
-    const themed = STATIC_COMMANDS.map((c) =>
+    const themed = STATIC_COMMANDS.filter(
+      (c) => c.id !== 'nav-portal' || isDualMember,
+    ).map((c) =>
 
       c.action === 'toggle-theme'
 
@@ -297,7 +302,7 @@ export function CommandPalette({ open, onClose, onOpenNotifications }: Props) {
 
     return items
 
-  }, [pinnedCommands, recentCommands, query, searchCommands, theme])
+  }, [pinnedCommands, recentCommands, query, searchCommands, theme, isDualMember])
 
 
 

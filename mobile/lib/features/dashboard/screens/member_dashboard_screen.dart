@@ -9,7 +9,7 @@ import '../../../core/design/components/cards/cmms_stat_tile.dart';
 import '../../../core/widgets/localized_card.dart';
 import '../../../core/widgets/shell_aware_scaffold.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../../choir/providers/choir_providers.dart';
+import '../../member_portal/providers/member_portal_providers.dart';
 import '../providers/dashboard_providers.dart';
 
 class MemberDashboardScreen extends ConsumerWidget {
@@ -20,6 +20,7 @@ class MemberDashboardScreen extends ConsumerWidget {
     final l10n = context.l10n;
     final auth = ref.watch(authProvider);
     final summaryAsync = ref.watch(memberDashboardProvider);
+    final portalAccessAsync = ref.watch(dualMemberPortalAccessProvider);
     final member = auth.profile?['member'] as Map<String, dynamic>?;
     final name = member != null
         ? '${member['firstName']} ${member['lastName']}'
@@ -47,6 +48,10 @@ class MemberDashboardScreen extends ConsumerWidget {
               summary.raw['attendanceScore'] as Map<String, dynamic>?;
           final widgets = summary.widgets;
           final perms = summary.permissionWidgets;
+          final showMemberPortal = portalAccessAsync.maybeWhen(
+            data: (access) => access.canAccessPortal,
+            orElse: () => false,
+          );
 
           return ListView(
             padding: const EdgeInsets.all(16),
@@ -170,11 +175,12 @@ class MemberDashboardScreen extends ConsumerWidget {
                     title: l10n.nav_notifications,
                     route: AppRouter.notifications,
                   ),
-                _NavTile(
-                  icon: Icons.home_outlined,
-                  title: 'Member portal',
-                  route: AppRouter.memberPortalHome,
-                ),
+                if (showMemberPortal)
+                  _NavTile(
+                    icon: Icons.home_outlined,
+                    title: 'Member portal',
+                    route: AppRouter.memberPortalHome,
+                  ),
                 if (auth.hasPermission('discipline:read_all'))
                   _NavTile(
                     icon: Icons.gavel,

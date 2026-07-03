@@ -221,9 +221,15 @@ export const protocolApi = {
       attendancePoints?: number
     }>>(`/protocol/occurrences/${occurrenceId}/recommendations`),
 
-  generateTeam: (occurrenceId: string, memberIds?: string[]) =>
+  generateTeam: (
+    occurrenceId: string,
+    memberIds?: string[],
+    options?: { randomizeLeader?: boolean },
+  ) =>
     apiClient.post<never, Record<string, unknown>>('/protocol/teams/generate', {
-      occurrenceId, memberIds,
+      occurrenceId,
+      memberIds,
+      randomizeLeader: options?.randomizeLeader,
     }),
 
   updateTeamStatus: (teamId: string, status: ProtocolTeamStatus) =>
@@ -257,16 +263,26 @@ export const protocolApi = {
     apiClient.patch<never, void>(`/protocol/claims/${id}`, { status, reviewNotes }),
 
   submitAttendance: async (payload: SubmitProtocolAttendancePayload) => {
-    let saved = 0
-    for (const record of payload.records) {
+    if (payload.records.length > 1) {
+      return apiClient.post<never, { saved: number }>('/protocol/attendance/bulk', {
+        teamId: payload.teamId,
+        records: payload.records.map((r) => ({
+          teamMemberId: r.teamMemberId,
+          outcome: r.outcome,
+          notes: r.note,
+        })),
+      })
+    }
+    if (payload.records.length === 1) {
+      const record = payload.records[0]
       await apiClient.post<never, unknown>('/protocol/attendance', {
         teamMemberId: record.teamMemberId,
         outcome: record.outcome,
         notes: record.note,
       })
-      saved += 1
+      return { saved: 1 }
     }
-    return { saved }
+    return { saved: 0 }
   },
 
   getRankings: async (params?: { year?: number; month?: number; category?: string }) => {
@@ -321,8 +337,11 @@ export const protocolApi = {
   respondInvitation: (id: string, status: 'ACCEPTED' | 'DECLINED') =>
     apiClient.patch<never, Record<string, unknown>>(`/protocol/invitations/${id}`, { status }),
 
-  listProtocolMembers: () =>
-    apiClient.get<never, unknown[]>('/protocol/members'),
+  listProtocolMembers: (params?: { q?: string; status?: 'active' | 'inactive' | 'all' }) =>
+    apiClient.get<never, unknown[]>('/protocol/members', { params }),
+
+  updateProtocolMember: (memberId: string, data: { active?: boolean; notes?: string }) =>
+    apiClient.patch<never, Record<string, unknown>>(`/protocol/members/${memberId}`, data),
 
   getProtocolMember: (memberId: string) =>
     apiClient.get<never, Record<string, unknown>>(`/protocol/members/${memberId}`),
@@ -352,6 +371,46 @@ export const protocolApi = {
       }>
       documentsDisabled?: boolean
     }>('/protocol/documents'),
+
+  uploadDocument: (data: {
+    title: string
+    description?: string
+    category?: string
+    fileName: string
+    fileUrl: string
+    mimeType?: string
+    fileSize?: number
+  }) => apiClient.post<never, Record<string, unknown>>('/protocol/documents', data),
+
+  getCommunicationTemplates: () =>
+    apiClient.get<never, Array<{ id: string; label: string; title: string; body: string }>>(
+      '/protocol/communications/templates',
+    ),
+
+  getCommunicationLogs: (params?: { status?: string; limit?: number }) =>
+    apiClient.get<never, Array<{
+      id: string
+      channel: string
+      title: string
+      body: string
+      status: string
+      recipientName: string
+      sentAt?: string | null
+      failureReason?: string | null
+      createdAt: string
+      templateId?: string | null
+    }>>('/protocol/communications/logs', { params }),
+
+  sendCommunication: (data: {
+    memberIds: string[]
+    channel: 'IN_APP' | 'SMS' | 'WHATSAPP'
+    title: string
+    message: string
+    templateId?: string
+  }) => apiClient.post<never, { sent: number; results: unknown[] }>(
+    '/protocol/communications/send',
+    data,
+  ),
 
   createTeamLeader: (data: {
     memberId: string
@@ -390,6 +449,11 @@ export const protocolApi = {
     apiClient.post<never, ProtocolMonthlySchedulePlanDetail>(
       '/protocol/scheduling/plans/generate',
       data,
+    ),
+
+  regenerateMonthlySchedule: (id: string) =>
+    apiClient.post<never, ProtocolMonthlySchedulePlanDetail>(
+      `/protocol/scheduling/plans/${id}/regenerate`,
     ),
 
   getMonthlySchedule: (id: string) =>
@@ -431,9 +495,29 @@ export const protocolApi = {
       `/protocol/scheduling/plans/${id}/approve`,
     ),
 
-  publishMonthlySchedule: (id: string) =>
-    apiClient.post<never, ProtocolMonthlySchedulePlan>(
+  publishMonthlySchedule: (id: string, options?: { buildProtocolTeams?: boolean }) =>
+    apiClient.post<never, ProtocolMonthlySchedulePlan & { teamBuild?: ProtocolPlanTeamBuildResult }>(
       `/protocol/scheduling/plans/${id}/publish`,
+      options ?? {},
+    ),
+
+  buildTeamsForMonthlySchedule: (
+    id: string,
+    options?: {
+      skipExisting?: boolean;
+      randomizeLeaders?: boolean;
+      occurrenceIds?: string[];
+    },
+  ) =>
+    apiClient.post<never, ProtocolPlanTeamBuildResult>(
+      `/protocol/scheduling/plans/${id}/build-teams`,
+      options ?? {},
+    ),
+
+  updateScheduleBulletin: (id: string, data: ProtocolBulletinOverrides) =>
+    apiClient.patch<never, ProtocolMonthlySchedulePrintGrid>(
+      `/protocol/scheduling/plans/${id}/bulletin`,
+      data,
     ),
 }
 
@@ -471,6 +555,35 @@ export type ProtocolMonthlySchedulePlanDetail = ProtocolMonthlySchedulePlan & {
   entries: ProtocolSchedulePlanEntry[]
 }
 
+export type ProtocolPlanTeamBuildResult = {
+  planId: string
+  year: number
+  month: number | null
+  built: Array<{
+    occurrenceId: string
+    teamId: string
+    memberCount: number
+    title: string
+  }>
+  skipped: Array<{ occurrenceId: string; title: string; reason: string }>
+  failed: Array<{ occurrenceId: string; title: string; reason: string }>
+  summary: {
+    builtCount: number
+    skippedCount: number
+    failedCount: number
+  }
+}
+
+export type ProtocolBulletinOverrides = {
+  churchName?: string
+  title?: string
+  footerLines?: string[]
+  weekTitles?: Record<string, string>
+  serviceHeaders?: Record<string, string>
+  cellTexts?: Record<string, string>
+  igaburoTitles?: Record<string, string>
+}
+
 export type ProtocolMonthlySchedulePrintGrid = {
   plan: Pick<ProtocolMonthlySchedulePlan, 'id' | 'label' | 'year' | 'month' | 'status'>
   weeks: Array<{
@@ -495,4 +608,5 @@ export type ProtocolMonthlySchedulePrintGrid = {
     choirs: string[]
   }>
   preparedBy: string
+  bulletinOverrides?: ProtocolBulletinOverrides | null
 }

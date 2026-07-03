@@ -15,7 +15,6 @@ export function ProtocolCoordinatorCommandHome() {
   })
 
   const d = (dashboard ?? {}) as Record<string, unknown>
-  const pendingReplacements = Number(d.pendingReplacements ?? 0)
   const draftTeams = Number(d.draftTeams ?? 0)
 
   const planList = Array.isArray(schedules) ? schedules : []
@@ -26,12 +25,12 @@ export function ProtocolCoordinatorCommandHome() {
   return (
     <OfficeCommandHome
       title="Coordinator desk"
-      subtitle="Your three daily jobs — one click each"
-      maxWidgets={3}
+      subtitle="Monthly choir schedule and service teams"
+      maxWidgets={2}
       widgets={[
         {
           id: 'schedule',
-          label: 'Choir monthly schedule',
+          label: 'Monthly schedule',
           primary: pendingSchedules,
           secondary: 'Drafts awaiting review or approval',
           cta: 'Open schedule',
@@ -46,15 +45,6 @@ export function ProtocolCoordinatorCommandHome() {
           cta: 'Review teams',
           href: '/protocol/teams',
           tone: draftTeams > 0 ? 'warning' : 'default',
-        },
-        {
-          id: 'replacements',
-          label: 'Replacements',
-          primary: pendingReplacements,
-          secondary: 'Pending substitution requests',
-          cta: 'Handle replacements',
-          href: '/protocol/replacements',
-          tone: pendingReplacements > 0 ? 'warning' : 'default',
         },
       ]}
     />

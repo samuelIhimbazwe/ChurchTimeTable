@@ -1,14 +1,14 @@
 import { apiClient } from '../client'
 
-export type ChurchServiceRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
+export type ChoirServiceRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
 export type ChoirServiceAssignmentStatus =
-  | 'PENDING_CHURCH_CONFIRMATION'
+  | 'PENDING_SCHEDULER_CONFIRMATION'
   | 'PENDING_CHOIR_ACCEPTANCE'
   | 'CONFIRMED'
   | 'REJECTED'
-export type ChoirServiceAssignmentSource = 'CHOIR_PROPOSED' | 'CHURCH_REQUEST' | 'CHURCH_DIRECT'
+export type ChoirServiceAssignmentSource = 'CHOIR_PROPOSED' | 'SERVICE_REQUEST' | 'SCHEDULER_DIRECT'
 
-export interface ChurchServiceAssignment {
+export interface ChoirServiceAssignment {
   id: string
   choirId: string
   occurrenceId: string
@@ -32,7 +32,7 @@ export type ServicePreparationItemType =
   | 'CUSTOM'
 export type PepTalkTiming = 'BEFORE_SERVICE' | 'AFTER_SERVICE'
 
-export interface ChurchServiceRequest {
+export interface ChoirServiceRequest {
   id: string
   occurrenceId: string
   preferredChoirId: string | null
@@ -40,7 +40,7 @@ export interface ChurchServiceRequest {
   role: string
   title: string | null
   notes: string | null
-  status: ChurchServiceRequestStatus
+  status: ChoirServiceRequestStatus
   reviewNotes: string | null
   createdAt: string
   occurrence?: { id: string; title: string; startAt: string; endAt: string; status?: string }
@@ -73,21 +73,21 @@ export interface ServicePreparationPlan {
 }
 
 export const choirServiceOpsApi = {
-  listChurchRequests: (params?: { status?: ChurchServiceRequestStatus; choirId?: string }) =>
-    apiClient.get<never, ChurchServiceRequest[]>('/church/service-requests', { params }),
+  listServiceRequests: (params?: { status?: ChoirServiceRequestStatus; choirId?: string }) =>
+    apiClient.get<never, ChoirServiceRequest[]>('/choir/service-requests', { params }),
 
-  createChurchRequest: (data: {
+  createServiceRequest: (data: {
     occurrenceId: string
     preferredChoirId?: string
     role?: string
     title?: string
     notes?: string
-  }) => apiClient.post<never, ChurchServiceRequest>('/church/service-requests', data),
+  }) => apiClient.post<never, ChoirServiceRequest>('/choir/service-requests', data),
 
-  reviewChurchRequest: (
+  reviewServiceRequest: (
     id: string,
     data: { status: 'APPROVED' | 'REJECTED'; assignedChoirId?: string; reviewNotes?: string },
-  ) => apiClient.post<never, ChurchServiceRequest>(`/church/service-requests/${id}/review`, data),
+  ) => apiClient.post<never, ChoirServiceRequest>(`/choir/service-requests/${id}/review`, data),
 
   checkAssignmentConflicts: (
     choirId: string,
@@ -102,17 +102,17 @@ export const choirServiceOpsApi = {
       hasConflict: boolean
       summary: string | null
       conflicts: Array<{ kind: string; id: string; title: string; startAt: string; endAt: string }>
-    }>('/church/service-assignments/conflicts', { params: { choirId, ...params } }),
+    }>('/choir/service-assignments/conflicts', { params: { choirId, ...params } }),
 
-  listChurchAssignments: (params?: {
+  listServiceAssignments: (params?: {
     status?: ChoirServiceAssignmentStatus
     pendingOnly?: boolean
     from?: string
     to?: string
   }) =>
-    apiClient.get<never, ChurchServiceAssignment[]>('/church/service-assignments', { params }),
+    apiClient.get<never, ChoirServiceAssignment[]>('/choir/service-assignments', { params }),
 
-  churchDirectAssign: (data: {
+  directServiceAssign: (data: {
     choirId: string
     occurrenceId?: string
     serviceCode?: 'SUNDAY_SERVICE_1' | 'SUNDAY_SERVICE_2' | 'TUESDAY_SERVICE' | 'IGABURO' | 'OTHER'
@@ -123,15 +123,15 @@ export const choirServiceOpsApi = {
     role?: string
     overrideReason?: string
     bypassRules?: boolean
-  }) => apiClient.post<never, ChurchServiceAssignment>('/church/service-assignments', data),
+  }) => apiClient.post<never, ChoirServiceAssignment>('/choir/service-assignments', data),
 
-  confirmChurchAssignment: (
+  confirmServiceAssignment: (
     id: string,
     data?: { bypassRules?: boolean; overrideReason?: string },
-  ) => apiClient.post<never, ChurchServiceAssignment>(`/church/service-assignments/${id}/confirm`, data ?? {}),
+  ) => apiClient.post<never, ChoirServiceAssignment>(`/choir/service-assignments/${id}/confirm`, data ?? {}),
 
-  rejectChurchAssignment: (id: string, data?: { reason?: string }) =>
-    apiClient.post<never, ChurchServiceAssignment>(`/church/service-assignments/${id}/reject`, data ?? {}),
+  rejectServiceAssignment: (id: string, data?: { reason?: string }) =>
+    apiClient.post<never, ChoirServiceAssignment>(`/choir/service-assignments/${id}/reject`, data ?? {}),
 
   listPreparation: (choirId: string, params?: { from?: string; to?: string }) =>
     apiClient.get<never, Array<{

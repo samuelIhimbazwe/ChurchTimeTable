@@ -53,16 +53,67 @@ export class ProtocolMembersService {
     }
   }
 
-  async listProfiles(actorUserId: string) {
+  async listProfiles(
+    actorUserId: string,
+    options?: { q?: string; status?: 'active' | 'inactive' | 'all' },
+  ) {
     await this.actor(actorUserId);
-    return this.prisma.protocolMemberProfile.findMany({
-      where: { active: true },
+    const unitId = await this.getProtocolUnitId();
+    const statusFilter = options?.status ?? 'all';
+    const profiles = await this.prisma.protocolMemberProfile.findMany({
+      where:
+        statusFilter === 'active'
+          ? { active: true }
+          : statusFilter === 'inactive'
+            ? { active: false }
+            : {},
       include: {
-        member: { select: { id: true, firstName: true, lastName: true } },
+        member: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            memberNumber: true,
+          },
+        },
         badges: { orderBy: { awardedAt: 'desc' }, take: 5 },
       },
       orderBy: { currentRank: 'asc' },
     });
+
+    const memberIds = profiles.map((p) => p.memberId);
+    const memberships = await this.prisma.operationalUnitMembership.findMany({
+      where: { operationalUnitId: unitId, memberId: { in: memberIds } },
+      select: { memberId: true, status: true },
+    });
+    const membershipByMember = new Map(
+      memberships.map((m) => [m.memberId, m.status]),
+    );
+
+    const q = options?.q?.trim().toLowerCase();
+    return profiles
+      .map((profile) => {
+        const membershipStatus = membershipByMember.get(profile.memberId) ?? 'INACTIVE';
+        const memberStatus = !profile.active
+          ? 'suspended'
+          : membershipStatus === 'ACTIVE'
+            ? 'active'
+            : membershipStatus === 'INACTIVE'
+              ? 'inactive'
+              : 'removed';
+        return {
+          ...profile,
+          memberId: profile.memberId,
+          membershipStatus,
+          memberStatus,
+        };
+      })
+      .filter((row) => {
+        if (!q) return true;
+        const name = `${row.member.firstName ?? ''} ${row.member.lastName ?? ''}`.toLowerCase();
+        const num = row.member.memberNumber?.toLowerCase() ?? '';
+        return name.includes(q) || num.includes(q);
+      });
   }
 
   async getProfile(actorUserId: string, memberId: string) {
@@ -87,7 +138,112 @@ export class ProtocolMembersService {
       },
     });
     if (!profile) throw new NotFoundException('Profile not found');
-    return profile;
+
+    const quota = await this.quota.quotaStatus(memberId, new Date());
+    const unitId = await this.getProtocolUnitId();
+    const membership = await this.prisma.operationalUnitMembership.findFirst({
+      where: { operationalUnitId: unitId, memberId },
+      select: { status: true, joinedAt: true },
+    });
+
+    const contributions = await this.prisma.contributionRecord.findMany({
+      where: {
+        memberId,
+        contributionTypeCatalog: { ministryScope: 'PROTOCOL' },
+        status: { in: ['CONFIRMED', 'SUBMITTED', 'PENDING'] },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+      select: {
+        id: true,
+        claimedAmount: true,
+        confirmedAmount: true,
+        status: true,
+        createdAt: true,
+        referenceNumber: true,
+      },
+    });
+
+    return {
+      ...profile,
+      quota,
+      membership,
+      recentContributions: contributions.map((c) => ({
+        id: c.id,
+        amount: Number(c.confirmedAmount ?? c.claimedAmount),
+        status: c.status,
+        referenceNumber: c.referenceNumber,
+        createdAt: c.createdAt,
+      })),
+      activity: await this.buildActivityTimeline(memberId),
+    };
+  }
+
+  private async buildActivityTimeline(memberId: string) {
+    const assignments = await this.prisma.protocolOccurrenceTeamMember.findMany({
+      where: { memberId },
+      include: {
+        attendance: true,
+        team: {
+          include: {
+            occurrence: { select: { title: true, startAt: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 15,
+    });
+
+    const contributions = await this.prisma.contributionRecord.findMany({
+      where: {
+        memberId,
+        contributionTypeCatalog: { ministryScope: 'PROTOCOL' },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+      select: {
+        id: true,
+        claimedAmount: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+
+    const events: Array<{
+      id: string;
+      kind: string;
+      label: string;
+      at: Date;
+      meta?: string;
+    }> = [];
+
+    for (const row of assignments) {
+      const occ = row.team.occurrence;
+      events.push({
+        id: `assign-${row.id}`,
+        kind: 'assignment',
+        label: occ.title,
+        at: occ.startAt,
+        meta: row.attendance?.outcome ?? 'ASSIGNED',
+      });
+    }
+    for (const c of contributions) {
+      events.push({
+        id: `contrib-${c.id}`,
+        kind: 'contribution',
+        label: 'Unity contribution',
+        at: c.createdAt,
+        meta: `${Number(c.claimedAmount)} · ${c.status}`,
+      });
+    }
+
+    return events
+      .sort((a, b) => b.at.getTime() - a.at.getTime())
+      .slice(0, 20)
+      .map((e) => ({
+        ...e,
+        at: e.at.toISOString(),
+      }));
   }
 
   async myDashboard(actorUserId: string) {

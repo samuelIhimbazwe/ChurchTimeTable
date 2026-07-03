@@ -8,11 +8,7 @@ import { PortalVerseGlance } from '@/components/portal/home/PortalVerseGlance'
 import { useTranslations } from '@/lib/i18n'
 import { SkeletonCard } from '@/components/shared'
 
-type Props = {
-  choirId: string
-}
-
-export function ChoirMembershipWelcome({ choirId }: Props) {
+export function ChoirMembershipWelcome() {
   const { tr } = useTranslations()
   const { context } = useChoirDashboardCtx()
   const choirName = context?.choir.name ?? tr('Choir')

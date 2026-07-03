@@ -50,22 +50,21 @@ export class ChoirServiceAssignmentsService {
     await this.opsAccess.requireView(userId, choirId);
   }
 
-  async isChurchScheduler(actorUserId: string) {
+  async isServiceScheduler(actorUserId: string) {
     const resolved = await this.permissions.resolveForUser(actorUserId);
     return (
-      hasEffectivePermission(resolved.permissions, PERMISSIONS.CHURCH_SCHEDULE_RESOLVE) ||
-      hasEffectivePermission(resolved.permissions, PERMISSIONS.CHURCH_SCHEDULE_MANAGE) ||
-      hasEffectivePermission(resolved.permissions, PERMISSIONS.CHURCH_GOVERNANCE_MANAGE)
+      hasEffectivePermission(resolved.permissions, PERMISSIONS.PROTOCOL_MANAGE) ||
+      hasEffectivePermission(resolved.permissions, PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE)
     );
   }
 
   private async canChurchSchedule(actorUserId: string) {
-    return this.isChurchScheduler(actorUserId);
+    return this.isServiceScheduler(actorUserId);
   }
 
   private async assertChurchSchedule(actorUserId: string) {
     if (!(await this.canChurchSchedule(actorUserId))) {
-      throw new ForbiddenException('Church schedule management denied');
+      throw new ForbiddenException('Protocol schedule management denied');
     }
   }
 
@@ -91,11 +90,11 @@ export class ChoirServiceAssignmentsService {
         'Church coordination assigns choirs to services. Use activities for rehearsals and other events.',
       );
     }
-    return this.churchDirectAssign(actorUserId, data);
+    return this.directServiceAssign(actorUserId, data);
   }
 
   /** Church assigns a choir to a service — announced immediately unless schedule conflicts exist. */
-  async churchDirectAssign(
+  async directServiceAssign(
     actorUserId: string,
     data: {
       choirId: string;
@@ -575,7 +574,7 @@ export class ChoirServiceAssignmentsService {
     return assignment;
   }
 
-  async listPendingForChurch(actorUserId: string) {
+  async listPendingForScheduler(actorUserId: string) {
     await this.assertChurchSchedule(actorUserId);
     return this.prisma.choirServiceAssignment.findMany({
       where: {
@@ -591,7 +590,7 @@ export class ChoirServiceAssignmentsService {
     });
   }
 
-  async listForChurch(
+  async listForScheduler(
     actorUserId: string,
     filters?: { status?: ChoirServiceAssignmentStatus; from?: Date; to?: Date },
   ) {
@@ -678,7 +677,7 @@ export class ChoirServiceAssignmentsService {
     const results = [];
     for (const rec of recs) {
       results.push(
-        await this.churchDirectAssign(actorUserId, {
+        await this.directServiceAssign(actorUserId, {
           choirId: rec.choirId,
           occurrenceId,
           role: rec.role,

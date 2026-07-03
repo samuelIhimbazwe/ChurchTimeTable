@@ -193,46 +193,12 @@ bool canViewFamilies(List<String> permissions) {
   return hasAnyEffectivePermission(permissions, ['family:view', 'family:manage']);
 }
 
-bool canViewMinistries(List<String> permissions) {
-  return hasAnyEffectivePermission(permissions, [
-    'ministry.view',
-    'ministry.manage',
-    'ministry.member.view',
-    'ministry.member.manage',
-  ]);
-}
-
 bool canViewOperationalUnits(List<String> permissions) {
   return hasAnyEffectivePermission(permissions, [
     'operational_unit.view',
     'operational_unit.manage',
     'operational_unit.member.view',
     'operational_unit.member.manage',
-  ]);
-}
-
-bool canViewAssets(List<String> permissions) {
-  return hasAnyEffectivePermission(permissions, [
-    'asset.view',
-    'asset.manage',
-    'asset.report',
-  ]);
-}
-
-bool canViewMinistryFinance(List<String> permissions) {
-  return hasAnyEffectivePermission(permissions, [
-    'ministry.finance.view',
-    'ministry.finance.manage',
-    'ministry.finance.report',
-    'ministry.finance.oversight',
-  ]);
-}
-
-bool canViewChurchIntelligence(List<String> permissions) {
-  return hasAnyEffectivePermission(permissions, [
-    'church.intelligence.view',
-    'church.governance.view',
-    'church.reports.view',
   ]);
 }
 

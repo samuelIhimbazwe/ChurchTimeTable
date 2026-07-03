@@ -14,6 +14,8 @@ import {
   teamReportOptionsFromDashboard,
 } from '@/components/protocol/ProtocolTeamReportForm'
 import { ProtocolOfficerSlaPanel } from '@/components/protocol/ProtocolOfficerSlaPanel'
+import { ProtocolHealthCharts } from '@/components/protocol/ProtocolHealthCharts'
+import { useRouter } from 'next/navigation'
 
 async function downloadBlob(fetcher: () => Promise<Blob>, filename: string) {
   try {
@@ -37,7 +39,9 @@ function healthBadgeVariant(grade?: string) {
 }
 
 export default function ProtocolReportsPage() {
+  const router = useRouter()
   const [showForm, setShowForm] = useState(false)
+  const [drillDown, setDrillDown] = useState<string | null>(null)
   const now = new Date()
   const year = now.getFullYear()
   const month = now.getMonth() + 1
@@ -128,6 +132,59 @@ export default function ProtocolReportsPage() {
         </div>
 
         {health && (
+          <>
+            <ProtocolHealthCharts
+              health={health}
+              onDrillDown={(metric) => setDrillDown(metric)}
+            />
+            {drillDown && (
+              <Card padding="md" accent="info">
+                <p className="text-sm font-semibold capitalize">{drillDown} drill-down</p>
+                <p className="text-sm text-text-secondary mt-1">
+                  {drillDown === 'attendance' && `Average attendance: ${health.attendanceRateAvg}%`}
+                  {drillDown === 'members' && `Active protocol members: ${health.activeMembers}`}
+                  {drillDown === 'claims' && `Pending claims: ${health.pendingClaims}`}
+                  {drillDown === 'replacements' && `Pending replacements: ${health.pendingReplacements}`}
+                  {drillDown === 'teams' && `Draft teams in queue: ${health.draftTeams}`}
+                </p>
+                <div className="flex gap-2 mt-3">
+                  <button
+                    type="button"
+                    onClick={() => setDrillDown(null)}
+                    className="text-xs font-semibold text-text-muted"
+                  >
+                    Close
+                  </button>
+                  {drillDown === 'claims' && (
+                    <button
+                      type="button"
+                      onClick={() => router.push('/protocol/claims')}
+                      className="text-xs font-semibold text-primary-600"
+                    >
+                      Open claims →
+                    </button>
+                  )}
+                  {drillDown === 'replacements' && (
+                    <button
+                      type="button"
+                      onClick={() => router.push('/protocol/replacements')}
+                      className="text-xs font-semibold text-primary-600"
+                    >
+                      Open replacements →
+                    </button>
+                  )}
+                  {drillDown === 'teams' && (
+                    <button
+                      type="button"
+                      onClick={() => router.push('/protocol/teams')}
+                      className="text-xs font-semibold text-primary-600"
+                    >
+                      Open teams →
+                    </button>
+                  )}
+                </div>
+              </Card>
+            )}
           <Card padding="md">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -153,6 +210,7 @@ export default function ProtocolReportsPage() {
               <Download size={15} /> Download health pack PDF
             </button>
           </Card>
+          </>
         )}
 
         <ProtocolOfficerSlaPanel />

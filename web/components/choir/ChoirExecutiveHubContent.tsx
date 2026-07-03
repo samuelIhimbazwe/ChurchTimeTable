@@ -92,9 +92,9 @@ export function ChoirExecutiveHubContent({ deputyMode = false }: Props) {
   const pendingJoins = joinRequests?.length ?? 0
 
   const { data: serviceRequests } = useQuery({
-    queryKey: ['church-service-requests', 'PENDING', choirId],
+    queryKey: ['choir-service-requests', 'PENDING', choirId],
     queryFn: () =>
-      choirServiceOpsApi.listChurchRequests({ status: 'PENDING', choirId }),
+      choirServiceOpsApi.listServiceRequests({ status: 'PENDING', choirId }),
     enabled: !!choirId,
   })
 
@@ -197,7 +197,7 @@ export function ChoirExecutiveHubContent({ deputyMode = false }: Props) {
           <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'records')} label="Secretary records" desc="Activities, music, documents" icon={FileText} />
           <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'scheduling')} label="Scheduling" desc="Calendar and assignments" icon={Calendar} />
           <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'service-preparation')} label="Service preparation" desc="Per-service plans and songs" icon={Calendar} />
-          <HubQuickLink href="/church/service-requests" label="Church service requests" desc="Approve choir assignments for services" icon={ClipboardList} stat={(serviceRequests?.length ?? 0) > 0 ? `${serviceRequests!.length} pending` : undefined} />
+          <HubQuickLink href="/choir/service-requests" label="Service requests" desc="Approve choir assignments for services" icon={ClipboardList} stat={(serviceRequests?.length ?? 0) > 0 ? `${serviceRequests!.length} pending` : undefined} />
           <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'discipline')} label="Discipline module" desc="Full case management" icon={Shield} />
         </div>
       )}

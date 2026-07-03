@@ -65,4 +65,26 @@ export class DemoModeService {
     });
     return { demoModeEnabled: config?.demoModeEnabled ?? false };
   }
+
+  async clear(actorUserId: string) {
+    await this.assertDemo(actorUserId);
+    const backendRoot = path.resolve(__dirname, '../..');
+    execSync('npm run prisma:clear-pilot', {
+      cwd: backendRoot,
+      stdio: 'pipe',
+      env: process.env,
+    });
+
+    const [members, choirs] = await Promise.all([
+      this.prisma.member.count(),
+      this.prisma.choir.count({ where: { isActive: true } }),
+    ]);
+
+    return {
+      demoModeEnabled: false,
+      cleared: true,
+      remaining: { members, choirs },
+      message: 'Demo data removed. Only baseline admin accounts remain.',
+    };
+  }
 }

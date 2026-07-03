@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { memberPortalApi, devotionsApi } from '@/lib/api'
 import { OfficeCommandHome } from '@/components/shared/office/OfficeCommandHome'
-import { Card, SkeletonCard } from '@/components/shared'
+import { SkeletonCard } from '@/components/shared'
 import { useResolvedChoirScope } from '@/lib/hooks'
 
 export function SpiritualCommandHome() {
@@ -26,7 +26,7 @@ export function SpiritualCommandHome() {
   const openPrayers =
     inbox?.filter((row) => row.status !== 'COMPLETED').length ?? 0
   const publishedDevotions =
-    devotions?.filter((row) => row.publishedAt || row.status === 'PUBLISHED').length ?? 0
+    devotions?.filter((row) => row.publishedAt).length ?? 0
 
   return (
     <OfficeCommandHome

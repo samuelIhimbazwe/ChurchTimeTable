@@ -1,4 +1,4 @@
-/** Platform UI capabilities — scoped capability ids for protocol/church/system. */
+/** Platform UI capabilities — scoped capability ids for choir and protocol. */
 export type PlatformUiCapabilityDefinition = {
   id: string;
   label: string;
@@ -70,6 +70,15 @@ export const PLATFORM_UI_CAPABILITY_REGISTRY: PlatformUiCapabilityDefinition[] =
     id: 'protocol-manage',
     label: 'Protocol manage',
     requireAnyOf: ['protocol.manage@ministry'],
+  },
+  {
+    id: 'protocol-communications',
+    label: 'Protocol communications',
+    requireAnyOf: [
+      'protocol.manage@ministry',
+      'protocol.oversight@ministry',
+      'protocol.team.manage@ministry',
+    ],
   },
   {
     id: 'protocol-view',
@@ -196,67 +205,13 @@ export const PLATFORM_UI_CAPABILITY_REGISTRY: PlatformUiCapabilityDefinition[] =
     ],
   },
   {
-    id: 'church-facility-manage',
-    label: 'Church facility manage',
-    requireAnyOf: ['church.facility.manage@church'],
-  },
-  {
-    id: 'church-facility-view',
-    label: 'Church facility view',
-    requireAnyOf: [
-      'church.facility.view@church',
-      'church.facility.manage@church',
-    ],
-  },
-  {
-    id: 'church-schedule-submit',
-    label: 'Church schedule submit',
-    requireAnyOf: ['church.schedule.submit@church'],
-  },
-  {
-    id: 'church-schedule-view-queue',
-    label: 'Church schedule view queue',
-    requireAnyOf: ['church.schedule.view.queue@church'],
-  },
-  {
-    id: 'church-schedule-manage',
-    label: 'Church schedule manage',
-    requireAnyOf: ['church.schedule.manage@church'],
-  },
-  {
-    id: 'church-schedule-resolve',
-    label: 'Church schedule resolve',
-    requireAnyOf: ['church.schedule.resolve@church'],
-  },
-  {
-    id: 'church-schedule-view',
-    label: 'Church schedule view',
-    requireAnyOf: [
-      'church.schedule.view@church',
-      'church.schedule.submit@church',
-      'church.schedule.manage@church',
-      'church.schedule.view.queue@church',
-    ],
-  },
-  {
-    id: 'church-governance-manage',
-    label: 'Church governance manage',
+    id: 'choir-governance-manage',
+    label: 'Choir governance manage',
     requireAnyOf: ['church.governance.manage@church'],
   },
   {
-    id: 'church-intelligence-view',
-    label: 'Church intelligence view',
-    requireAnyOf: [
-      'church.intelligence.view@church',
-      'church.governance.view@church',
-      'church.reports.view@church',
-      'church.intelligence.manage@church',
-      'church.governance.manage@church',
-    ],
-  },
-  {
-    id: 'church-service-request-schedule',
-    label: 'Church service request schedule',
+    id: 'choir-service-request-schedule',
+    label: 'Choir service request schedule',
     requireAnyOf: [
       'church.choir.ops.schedule@church',
       'church.choir.ops.manage@church',
@@ -264,16 +219,16 @@ export const PLATFORM_UI_CAPABILITY_REGISTRY: PlatformUiCapabilityDefinition[] =
     ],
   },
   {
-    id: 'church-service-request-create',
-    label: 'Church service request create',
+    id: 'choir-service-request-create',
+    label: 'Choir service request create',
     requireAnyOf: [
       'church.governance.manage@church',
       'church.operations.manage@church',
     ],
   },
   {
-    id: 'church-service-requests-view',
-    label: 'Church service requests view',
+    id: 'choir-service-requests-view',
+    label: 'Choir service requests view',
     requireAnyOf: [
       'church.governance.manage@church',
       'church.governance.view@church',
@@ -283,22 +238,12 @@ export const PLATFORM_UI_CAPABILITY_REGISTRY: PlatformUiCapabilityDefinition[] =
     ],
   },
   {
-    id: 'church-service-assignments-view',
-    label: 'Church service assignments view',
+    id: 'choir-service-assignments-view',
+    label: 'Choir service assignments view',
     requireAnyOf: [
-      'church.schedule.view.queue@church',
-      'church.schedule.manage@church',
-      'church.schedule.resolve@church',
+      'church.choir.ops.schedule@church',
+      'church.choir.ops.manage@church',
       'church.governance.manage@church',
-    ],
-  },
-  {
-    id: 'church-announcements-manage',
-    label: 'Church announcements manage',
-    requireAnyOf: [
-      'church.ministry.announcement.manage@church',
-      'church.ministry.manage@church',
-      'church.intelligence.manage@church',
     ],
   },
   {

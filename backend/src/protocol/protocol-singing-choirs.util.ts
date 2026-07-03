@@ -68,3 +68,37 @@ export async function mapMembersToSingingChoirs(
 
   return result;
 }
+
+/** All active choir ids each protocol member belongs to. */
+export async function mapMembersToAllChoirIds(
+  prisma: PrismaClient,
+  memberIds: string[],
+): Promise<Map<string, string[]>> {
+  const result = new Map<string, string[]>();
+  if (memberIds.length === 0) return result;
+
+  const members = await prisma.member.findMany({
+    where: { id: { in: memberIds } },
+    select: { id: true, userId: true },
+  });
+  const userIds = members.map((m) => m.userId).filter(Boolean) as string[];
+  const userToMember = new Map(
+    members.filter((m) => m.userId).map((m) => [m.userId!, m.id]),
+  );
+  if (userIds.length === 0) return result;
+
+  const memberships = await prisma.choirMembership.findMany({
+    where: { userId: { in: userIds }, isActive: true },
+    select: { userId: true, choirId: true },
+  });
+
+  for (const row of memberships) {
+    const memberId = userToMember.get(row.userId);
+    if (!memberId) continue;
+    const list = result.get(memberId) ?? [];
+    if (!list.includes(row.choirId)) list.push(row.choirId);
+    result.set(memberId, list);
+  }
+
+  return result;
+}

@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { choirApi, choirSchedulingApi, dashboardApi, welfareApi } from '@/lib/api'
+import { choirApi, choirSchedulingApi, welfareApi } from '@/lib/api'
 import { useResolvedChoirId } from '@/lib/hooks'
 import { useAuthStore } from '@/stores/index'
 import { choirPath } from '@/lib/choir/paths'
@@ -11,7 +11,6 @@ import type { LeadershipAttentionItem } from '@/components/shared/office/Leaders
 export function useAttentionItems() {
   const choirId = useResolvedChoirId()
   const hasAnyPermission = useAuthStore((s) => s.hasAnyPermission)
-  const isAdmin = hasAnyPermission(['admin.users.manage', 'pilot.readiness.view'])
 
   const canReviewJoins = hasAnyPermission([
     'choir.join.review',
@@ -37,35 +36,8 @@ export function useAttentionItems() {
     enabled: !!choirId && hasAnyPermission(['choir.welfare.manage']),
   })
 
-  const { data: adminSummary } = useQuery({
-    queryKey: ['dashboard', 'attention-admin'],
-    queryFn: dashboardApi.getAdminSummary,
-    enabled: isAdmin,
-  })
-
   const items = useMemo<LeadershipAttentionItem[]>(() => {
     const list: LeadershipAttentionItem[] = []
-
-    if (isAdmin) {
-      const pending = adminSummary?.pendingMembers ?? 0
-      if (pending > 0) {
-        list.push({
-          id: 'admin-approvals',
-          label: `${pending} member approval${pending === 1 ? '' : 's'} pending`,
-          href: '/admin/approvals',
-          tone: 'warning',
-        })
-      }
-      const sync = adminSummary?.syncConflicts ?? 0
-      if (sync > 0) {
-        list.push({
-          id: 'admin-sync',
-          label: `${sync} sync conflict${sync === 1 ? '' : 's'}`,
-          href: '/system/sync',
-          tone: 'warning',
-        })
-      }
-    }
 
     if (!choirId) return list
 
@@ -121,7 +93,7 @@ export function useAttentionItems() {
     }
 
     return list
-  }, [choirId, joinRequests, leaderDash, welfareCases, adminSummary, isAdmin])
+  }, [choirId, joinRequests, leaderDash, welfareCases])
 
   const urgentCount = items.filter((i) => i.tone === 'warning').length
 

@@ -7,6 +7,7 @@ import { protocolApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import { Badge, Card, CapabilityGate, SkeletonCard, EmptyState } from '@/components/shared'
 import { SplitQueueConsole } from '@/components/shared/office/SplitQueueConsole'
+import { ProtocolReplacementsKanban } from '@/components/protocol/ProtocolReplacementsKanban'
 import { SnoozeButton } from '@/components/workflow/SnoozeButton'
 import { useSnoozedQueue } from '@/lib/hooks'
 import { formatDate } from '@/lib/utils/format'
@@ -20,6 +21,7 @@ const STATUS_BADGE: Record<ReplacementRequestStatus, 'status-pending' | 'status-
 }
 
 type Filter = 'pending' | 'all'
+type ViewMode = 'split' | 'kanban'
 
 export function ProtocolReplacementsConsole({ filter = 'pending' }: { filter?: Filter }) {
   const searchParams = useSearchParams()
@@ -27,6 +29,7 @@ export function ProtocolReplacementsConsole({ filter = 'pending' }: { filter?: F
   const qc = useQueryClient()
   const [mobileShowDetail, setMobileShowDetail] = useState(!!requestIdParam)
   const [statusFilter, setStatusFilter] = useState<Filter>(filter)
+  const [viewMode, setViewMode] = useState<ViewMode>('split')
 
   const { data, isLoading } = useQuery({
     queryKey: ['protocol-replacements'],
@@ -78,6 +81,17 @@ export function ProtocolReplacementsConsole({ filter = 'pending' }: { filter?: F
 
   return (
     <div className="space-y-4">
+      {pendingCount > 0 && (
+        <Card padding="md" accent="warning">
+          <p className="text-sm font-semibold text-text-primary">
+            {pendingCount} replacement request{pendingCount !== 1 ? 's' : ''} awaiting review
+          </p>
+          <p className="text-xs text-text-muted mt-1">
+            Review before service day to keep teams staffed.
+          </p>
+        </Card>
+      )}
+
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
@@ -101,8 +115,24 @@ export function ProtocolReplacementsConsole({ filter = 'pending' }: { filter?: F
         >
           All requests
         </button>
+        <button
+          type="button"
+          onClick={() => setViewMode(viewMode === 'split' ? 'kanban' : 'split')}
+          className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-border text-text-muted hover:bg-surface-raised ml-auto"
+        >
+          {viewMode === 'split' ? 'Kanban view' : 'Split queue'}
+        </button>
       </div>
 
+      {viewMode === 'kanban' ? (
+        <ProtocolReplacementsKanban
+          items={(data ?? []) as ProtocolReplacementRequest[]}
+          onSelect={(id) => {
+            setActiveId(id)
+            setMobileShowDetail(true)
+          }}
+        />
+      ) : (
       <SplitQueueConsole<ProtocolReplacementRequest>
         title="Replacement requests"
         subtitle="Review substitution requests before service day"
@@ -210,6 +240,7 @@ export function ProtocolReplacementsConsole({ filter = 'pending' }: { filter?: F
           ) : null
         }
       />
+      )}
     </div>
   )
 }

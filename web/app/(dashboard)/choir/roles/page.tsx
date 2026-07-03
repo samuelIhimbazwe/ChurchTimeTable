@@ -98,7 +98,7 @@ export default function ChoirRolesPage() {
   const { data: sodCheck } = useQuery({
     queryKey: ['choir-sod-check', name, permissions],
     queryFn: () => governanceApi.checkChoirSod(permissions, name.trim()),
-    enabled: showForm && name.trim().length > 0,
+    enabled: !!(showForm && name.trim().length > 0),
   })
 
   const sodWarnings = sodCheck?.warnings ?? []

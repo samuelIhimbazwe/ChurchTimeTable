@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { familiesApi, choirActivityApi } from '@/lib/api'
 import {
-  Card, StatTile, Badge, SkeletonCard, CapabilityGate, EmptyState,
+  Card, Badge, SkeletonCard, CapabilityGate, EmptyState,
 } from '@/components/shared'
 import { ChoirPositionHubShell, HubQuickLink } from '@/components/choir/ChoirPositionHubShell'
 import { useResolvedChoirScope } from '@/lib/hooks'

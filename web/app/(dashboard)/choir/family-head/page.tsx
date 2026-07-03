@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { familiesApi, choirActivityApi, financeApi } from '@/lib/api'
 import {
@@ -13,7 +12,7 @@ import { FamilyRankingsPanel } from '@/components/choir/FamilyRankingsPanel'
 import { ContributionAmountDisplay } from '@/components/choir/ContributionAmountDisplay'
 import { FamilyLeadershipContributionsHub } from '@/components/choir/FamilyLeadershipContributionsHub'
 import { FamilyPaymentSettingsForm } from '@/components/choir/FamilyPaymentSettingsForm'
-import { formatCurrency, formatDate, formatTime } from '@/lib/utils/format'
+import { formatDate, formatTime } from '@/lib/utils/format'
 import { Users, CheckCircle2, Heart, Lock } from 'lucide-react'
 
 const TABS = [

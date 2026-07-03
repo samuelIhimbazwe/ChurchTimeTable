@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { useParams, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useChoirDashboardContext } from '@/lib/hooks/useChoirDashboardContext'
+import { useDualMemberPortalAccess } from '@/lib/portal/access'
 import { useContributionAuthRefresh } from '@/lib/hooks/useContributionAuthRefresh'
 import { useChoirSponsorDashboardContext } from '@/lib/hooks/useChoirSponsorDashboardContext'
 import { ChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
@@ -65,6 +66,7 @@ export default function ChoirScopedLayout({ children }: { children: React.ReactN
   )
 
   const isSovereignOffice = isSovereignOfficePath(pathname)
+  const { isDualMember, isLoading: loadingPortalAccess } = useDualMemberPortalAccess()
 
   const stillLoading =
     loadingMember ||
@@ -97,12 +99,14 @@ export default function ChoirScopedLayout({ children }: { children: React.ReactN
                 <Heart size={14} className="inline mr-1" />
                 Sponsor home
               </Link>
-              <Link
-                href="/portal"
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-700 hover:text-primary-900"
-              >
-                <ArrowLeft size={14} /> Member portal
-              </Link>
+              {!loadingPortalAccess && isDualMember && (
+                <Link
+                  href="/portal"
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-700 hover:text-primary-900"
+                >
+                  <ArrowLeft size={14} /> Member portal
+                </Link>
+              )}
             </div>
           </div>
           {children}
@@ -133,12 +137,14 @@ export default function ChoirScopedLayout({ children }: { children: React.ReactN
                 >
                   My membership
                 </Link>
-                <Link
-                  href="/portal"
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-700 hover:text-primary-900 dark:text-gold-400 dark:hover:text-gold-300"
-                >
-                  <ArrowLeft size={14} /> Member portal
-                </Link>
+                {!loadingPortalAccess && isDualMember && (
+                  <Link
+                    href="/portal"
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-700 hover:text-primary-900 dark:text-gold-400 dark:hover:text-gold-300"
+                  >
+                    <ArrowLeft size={14} /> Member portal
+                  </Link>
+                )}
               </div>
             </div>
           )}

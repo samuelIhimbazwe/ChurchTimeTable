@@ -30,7 +30,7 @@ export type DataTablePaginationOptions = {
   totalCount?: number
 }
 
-export type DataTableSummaryRow<T> = {
+export type DataTableSummaryRow = {
   label?: string
   cells: Record<string, React.ReactNode>
 }
@@ -76,7 +76,7 @@ export type DataTableProps<T> = {
   enableRowSelection?: boolean
   bulkActions?: (ctx: DataTableBulkContext<T>) => React.ReactNode
   /** Footer summary cells keyed by column id */
-  summaryRow?: DataTableSummaryRow<T>
+  summaryRow?: DataTableSummaryRow
   /** Controlled visible column ids */
   visibleColumnIds?: string[]
   onVisibleColumnIdsChange?: (ids: string[]) => void

@@ -75,7 +75,7 @@ export class ChoirsController {
   @Get('catalog')
   async catalog() {
     return this.prisma.choir.findMany({
-      where: { isActive: true },
+      where: { isActive: true, code: { not: 'MAIN_CHOIR' } },
       orderBy: { name: 'asc' },
       select: { id: true, name: true, code: true, description: true },
     });

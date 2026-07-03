@@ -22,16 +22,23 @@ function nextPilotPhone(): string {
 }
 
 async function nextMemberNumber(): Promise<string> {
+  const members = await prisma.member.findMany({
+    where: { memberNumber: { not: null } },
+    select: { memberNumber: true },
+  });
+  let max = 0;
+  for (const row of members) {
+    if (!row.memberNumber) continue;
+    const parsed = Number.parseInt(row.memberNumber.replace(/^M/i, ''), 10);
+    if (!Number.isNaN(parsed) && parsed > max) max = parsed;
+  }
+  const next = max + 1;
   await prisma.memberNumberSequence.upsert({
     where: { id: MEMBER_NUMBER_SEQUENCE_ID },
-    create: { id: MEMBER_NUMBER_SEQUENCE_ID, nextValue: 1 },
-    update: {},
+    create: { id: MEMBER_NUMBER_SEQUENCE_ID, nextValue: next + 1 },
+    update: { nextValue: next + 1 },
   });
-  const updated = await prisma.memberNumberSequence.update({
-    where: { id: MEMBER_NUMBER_SEQUENCE_ID },
-    data: { nextValue: { increment: 1 } },
-  });
-  return `M${String(updated.nextValue - 1).padStart(6, '0')}`;
+  return `M${String(next).padStart(6, '0')}`;
 }
 
 async function ensureProtocolProfile(memberId: string) {
@@ -102,8 +109,15 @@ async function upsertPilotUser(
   const role = await prisma.role.findUniqueOrThrow({ where: { name: roleName } });
   const passwordHash = await bcrypt.hash(PILOT_PASSWORD, 10);
   const status = options?.status ?? 'ACTIVE';
-  const phone = options?.phone ?? nextPilotPhone();
-  const memberNumber = options?.memberNumber ?? (await nextMemberNumber());
+  const existing = await prisma.user.findUnique({
+    where: { email },
+    include: { member: true },
+  });
+  const phone = options?.phone ?? existing?.member?.phone ?? nextPilotPhone();
+  const memberNumber =
+    options?.memberNumber ??
+    existing?.member?.memberNumber ??
+    (await nextMemberNumber());
   const memberData = {
     ...member,
     status,
@@ -435,20 +449,33 @@ async function main() {
     'protocol_vice_president',
   );
 
-  const members = await Promise.all(
-    [
-      { email: 'member1@church.local', firstName: 'David', lastName: 'Hoza', ministry: 'CHOIR' as const },
-      { email: 'member2@church.local', firstName: 'Chantal', lastName: 'Mujawamariya', ministry: 'CHOIR' as const },
-      { email: 'member3@church.local', firstName: 'Paul', lastName: 'Niyonzima', ministry: 'PROTOCOL' as const },
-      { email: 'member4@church.local', firstName: 'Grace', lastName: 'Mutesi', ministry: 'PROTOCOL' as const },
-    ].map((m) =>
-      upsertPilotUser(m.email, ROLES.MEMBER, {
-        firstName: m.firstName,
-        lastName: m.lastName,
-        ministry: m.ministry,
-      }),
-    ),
-  );
+  for (const m of [
+    { email: 'member1@church.local', firstName: 'David', lastName: 'Hoza', ministry: 'CHOIR' as const },
+    { email: 'member2@church.local', firstName: 'Chantal', lastName: 'Mujawamariya', ministry: 'CHOIR' as const },
+    { email: 'member3@church.local', firstName: 'Paul', lastName: 'Niyonzima', ministry: 'PROTOCOL' as const },
+    { email: 'member4@church.local', firstName: 'Grace', lastName: 'Mutesi', ministry: 'PROTOCOL' as const },
+  ]) {
+    await upsertPilotUser(m.email, ROLES.MEMBER, {
+      firstName: m.firstName,
+      lastName: m.lastName,
+      ministry: m.ministry,
+    });
+  }
+  const members = await prisma.member.findMany({
+    where: {
+      user: {
+        email: {
+          in: [
+            'member1@church.local',
+            'member2@church.local',
+            'member3@church.local',
+            'member4@church.local',
+          ],
+        },
+      },
+    },
+    include: { user: { select: { email: true } } },
+  });
 
   await upsertPilotUser(
     'pending.choir@church.local',
@@ -645,13 +672,13 @@ async function main() {
     update: { familyName: 'Pilot Family Beta', delegationEnabled: true },
   });
 
-  const member1 = members.find((u) => u.email === 'member1@church.local');
-  const member2 = members.find((u) => u.email === 'member2@church.local');
-  if (member1?.member) {
-    await ensureProtocolMembership(member1.member.id);
-    await ensureProtocolProfile(member1.member.id);
+  const member1 = members.find((m) => m.user.email === 'member1@church.local');
+  const member2 = members.find((m) => m.user.email === 'member2@church.local');
+  if (member1) {
+    await ensureProtocolMembership(member1.id);
+    await ensureProtocolProfile(member1.id);
     await prisma.member.update({
-      where: { id: member1.member.id },
+      where: { id: member1.id },
       data: { ministry: 'BOTH' },
     });
   }
@@ -783,10 +810,10 @@ async function main() {
     },
   });
 
-  if (member1?.member && member2?.member) {
+  if (member1 && member2) {
     for (const [memberId, role] of [
-      [member1.member.id, FamilyMemberRole.HEAD],
-      [member2.member.id, FamilyMemberRole.SECRETARY],
+      [member1.id, FamilyMemberRole.HEAD],
+      [member2.id, FamilyMemberRole.SECRETARY],
     ] as const) {
       await prisma.familyMember.upsert({
         where: { memberId },

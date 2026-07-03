@@ -155,13 +155,6 @@ List<ShellDestination> buildShellDestinations(
       show: canViewFamilies(auth.permissions),
     );
     add(
-      route: AppRouter.ministries,
-      icon: Icons.church_outlined,
-      selectedIcon: Icons.church,
-      label: l10n.ministries_title,
-      show: canViewMinistries(auth.permissions),
-    );
-    add(
       route: AppRouter.operationalUnits,
       icon: Icons.groups_outlined,
       selectedIcon: Icons.groups,

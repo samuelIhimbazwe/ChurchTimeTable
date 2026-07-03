@@ -60,7 +60,7 @@ export function ContributionTreasuryPanel({ compact = false }: { compact?: boole
   const familyNameById = useMemo(() => {
     const map = new Map<string, string>()
     for (const f of familyRows ?? []) {
-      map.set(f.id, f.familyName ?? f.familyCode ?? 'Family')
+      map.set(f.id, f.name ?? f.familyCode ?? 'Family')
     }
     return map
   }, [familyRows])

@@ -7,6 +7,7 @@ import {
   StatTile, CapabilityGate, SkeletonStatTile, SkeletonCard,
 } from '@/components/shared'
 import { DollarSign, TrendingUp, Users, PieChart } from 'lucide-react'
+import { formatCurrency } from '@/lib/utils/format'
 import { useResolvedChoirScope } from '@/lib/hooks'
 
 function num(data: Record<string, unknown> | undefined, ...keys: string[]) {

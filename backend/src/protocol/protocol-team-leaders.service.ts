@@ -251,6 +251,65 @@ export class ProtocolTeamLeadersService {
     return assignment;
   }
 
+  /** Assign one team leader at random (prefer roster members who are registered leaders). */
+  async assignRandomLeader(
+    actorUserId: string | null,
+    teamId: string,
+    rosterMemberIds: string[] = [],
+  ) {
+    let pool = await this.prisma.protocolTeamLeader.findMany({
+      where: {
+        active: true,
+        ...(rosterMemberIds.length > 0
+          ? { memberId: { in: rosterMemberIds } }
+          : {}),
+      },
+      include: leaderInclude,
+    });
+
+    if (pool.length === 0) {
+      pool = await this.prisma.protocolTeamLeader.findMany({
+        where: { active: true },
+        include: leaderInclude,
+      });
+    }
+
+    if (pool.length === 0) {
+      return { assignment: null, reason: 'NO_TEAM_LEADERS' as const };
+    }
+
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+
+    if (actorUserId) {
+      const assignment = await this.assignToTeam(
+        actorUserId,
+        teamId,
+        pick.id,
+        'Auto-generated random team leader',
+      );
+      return { assignment, reason: 'RANDOM' as const };
+    }
+
+    const assignment = await this.prisma.protocolOccurrenceTeamLeader.upsert({
+      where: {
+        teamId_protocolTeamLeaderId: {
+          teamId,
+          protocolTeamLeaderId: pick.id,
+        },
+      },
+      create: { teamId, protocolTeamLeaderId: pick.id },
+      update: {},
+      include: {
+        protocolTeamLeader: {
+          include: {
+            member: { select: { firstName: true, lastName: true } },
+          },
+        },
+      },
+    });
+    return { assignment, reason: 'RANDOM' as const };
+  }
+
   /** Assign all leaders recommended for the singing choirs on this team. */
   async assignRecommendedLeaders(
     actorUserId: string | null,

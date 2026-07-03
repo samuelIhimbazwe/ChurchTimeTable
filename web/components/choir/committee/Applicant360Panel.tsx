@@ -35,7 +35,7 @@ export function Applicant360Panel({ memberId, memberName, onClose }: Props) {
 
   const displayName =
     memberName ||
-    `${member?.firstName ?? ''} ${member?.lastName ?? ''}`.trim() ||
+    member?.name ||
     'Applicant'
 
   const att = attendance as Record<string, unknown> | undefined
@@ -72,8 +72,10 @@ export function Applicant360Panel({ memberId, memberName, onClose }: Props) {
             <>
               <Card padding="md">
                 <div className="flex flex-wrap gap-2 mb-3">
-                  {member?.memberNumber && (
-                    <Badge variant="default">#{member.memberNumber}</Badge>
+                  {(profile as { memberNumber?: string } | undefined)?.memberNumber && (
+                    <Badge variant="default">
+                      #{(profile as { memberNumber: string }).memberNumber}
+                    </Badge>
                   )}
                   {member?.status && (
                     <Badge variant="status-pending">{member.status}</Badge>
@@ -83,7 +85,7 @@ export function Applicant360Panel({ memberId, memberName, onClose }: Props) {
                 <dl className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <dt className="text-xs text-text-muted">Joined church</dt>
-                    <dd>{member?.joinedAt ? formatDate(member.joinedAt) : '—'}</dd>
+                    <dd>{member?.memberSince ? formatDate(member.memberSince) : '—'}</dd>
                   </div>
                   <div>
                     <dt className="text-xs text-text-muted">Attendance</dt>

@@ -5,22 +5,32 @@
 | Mode | Templates |
 |------|-----------|
 | SUNDAY | Sunday Service 1 & 2 |
-| TUESDAY | Tuesday Service |
+| TUESDAY | Tuesday Service, Friday Service |
 | IGABURO | IGABURO |
 | SPECIAL_EVENT | Concerts, conferences, revivals |
 
-## Sunday mode
+## Team size
 
-Represents **main choir** members assigned on the same occurrence. Children choir is ignored. Non-choir protocol members capped by `maxNonChoirMembers` (default 3).
+Every official team is **10 members** (`PROTOCOL_TEAM_SIZING.TEAM_SIZE_TARGET`).
 
-## Tuesday / IGABURO
+## Sunday / Tuesday / IGABURO composition
 
-Priorities:
+1. **Singing choir members first** — only members whose choir is confirmed to sing at *this* occurrence (not another service the same day).
+2. **Non-choir members** — fill remaining slots up to `maxNonChoirMembers` (default 3).
+3. Choir caps when multiple choirs sing: one choir → up to 7 choir members; two choirs → up to 4 per choir.
 
-1. Under 3-service quota (`LOW_PRIORITY` when at quota — not blocked)
-2. Available / active
-3. Lowest monthly official service count
-4. Other choir members allowed
+Members who belong to any choir but whose choir is **not** singing at this occurrence are excluded entirely.
+
+## Monthly batch build (`POST /protocol/scheduling/plans/:id/build-teams`)
+
+Processes occurrences chronologically within the published plan:
+
+| Rule | Behavior |
+|------|----------|
+| Same calendar day | A member cannot appear on two teams the same day |
+| Monthly cap | Hard stop at 3 official assignments per member per month (DB + in-flight batch) |
+
+Optional `buildProtocolTeams: true` on publish runs the same builder after choir assignments are sent.
 
 ## Special events
 
@@ -28,7 +38,7 @@ Leader sets team size; engine recommends only.
 
 ## Three-service rule
 
-`ServiceQuotaEngine` tracks official services with attendance credit in the calendar month. Overrides are audited via `quotaOverrideReason` on team members.
+`ServiceQuotaEngine.countAssignmentsInMonth` counts all draft and published official team slots in the calendar month. Members at the cap are excluded from recommendations (not merely deprioritized). Overrides are audited via `quotaOverrideReason` on team members.
 
 ## Override
 

@@ -1,13 +1,15 @@
 # Member Experience
 
-After approval, members land on `/dashboard/member` (not choir/protocol dashboards).
+After approval, members land on **`/portal`** (the member portal).
+
+See [PLATFORM.md](./PLATFORM.md) for the two-system architecture (Choir + Protocol).
 
 ## Widgets
 
-- **Spiritual** — verse of the day
-- **Church life** — upcoming services, events, announcements
-- **Media** — live broadcast and recent sermons
-- **Participation** — choir, protocol, ministries with discovery links
+- **Spiritual** — verse of the day / devotion
+- **Schedule** — upcoming services and rehearsals
+- **Participation** — choir and protocol with discovery links
+- **Giving** — contribution shortcuts
 - **Activity** — requests, invitations, notifications
 
 ## First login

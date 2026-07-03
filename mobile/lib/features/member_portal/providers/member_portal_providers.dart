@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/localization/locale_provider.dart';
+import '../../../core/portal/dual_member_portal_access.dart';
 import '../../../core/repositories/member_portal_repository.dart';
 
 final memberPortalRepositoryProvider = Provider<MemberPortalRepository>((ref) {
@@ -14,6 +15,13 @@ final memberPortalHomeProvider = FutureProvider<Map<String, dynamic>>((ref) asyn
   } catch (_) {
     return repo.home(preferCache: true);
   }
+});
+
+final dualMemberPortalAccessProvider =
+    Provider<AsyncValue<DualMemberPortalAccess>>((ref) {
+  return ref.watch(memberPortalHomeProvider).whenData(
+        DualMemberPortalAccess.fromHomeData,
+      );
 });
 
 final memberPortalMembershipProvider =

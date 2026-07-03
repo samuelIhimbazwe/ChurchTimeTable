@@ -30,6 +30,7 @@ import { ProtocolOfficerSlaService } from './protocol-officer-sla.service';
 import { ProtocolDocumentsService } from './protocol-documents.service';
 import { ProtocolMemberRecognitionService } from './protocol-member-recognition.service';
 import { ProtocolMonthlyScheduleService } from './protocol-monthly-schedule.service';
+import { ProtocolCommunicationsService } from './protocol-communications.service';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { ProtocolMonthlyScheduleService } from './protocol-monthly-schedule.serv
     ProtocolDocumentsService,
     ProtocolMemberRecognitionService,
     ProtocolMonthlyScheduleService,
+    ProtocolCommunicationsService,
   ],
   exports: [ProtocolTeamsService, ProtocolDashboardService],
 })

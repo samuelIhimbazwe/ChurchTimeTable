@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/portal/dual_member_portal_access.dart';
 import '../../../core/routing/app_router.dart';
 import '../providers/member_portal_providers.dart';
 
-/// Member portal home — summary and navigation to portal areas.
+/// Member portal home — choir + protocol summary for dual members.
 class MemberHomeScreen extends ConsumerWidget {
   const MemberHomeScreen({super.key});
 
@@ -14,11 +15,12 @@ class MemberHomeScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Member home'),
+        title: const Text('Member portal'),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
-            onPressed: () => Navigator.of(context).pushNamed(AppRouter.notifications),
+            onPressed: () =>
+                Navigator.of(context).pushNamed(AppRouter.notifications),
           ),
         ],
       ),
@@ -32,34 +34,43 @@ class MemberHomeScreen extends ConsumerWidget {
           error: (_, __) => ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              const Text('Showing offline navigation (network unavailable).'),
+              const Text('Could not load portal — pull to retry.'),
               const SizedBox(height: 16),
-              ..._navTiles(context),
+              ..._navTiles(context, const DualMemberPortalAccess(
+                isDualMember: true,
+                hasChoirMembership: true,
+                hasProtocolMembership: true,
+              )),
             ],
           ),
           data: (data) {
-            final summary = data['summary'] as Map<String, dynamic>?;
-            final live = (data['broadcasts'] as List?)?.length ?? 0;
+            final access = DualMemberPortalAccess.fromHomeData(data);
+            final welcome = data['welcome'] as Map<String, dynamic>?;
+            final participation =
+                data['participation'] as Map<String, dynamic>?;
+            final weekCount =
+                (participation?['thisWeek'] as List?)?.length ?? 0;
+            final conflictCount =
+                (participation?['conflicts'] as List?)?.length ?? 0;
+
             return ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                if (summary != null)
+                if (welcome != null)
                   Card(
                     child: ListTile(
-                      title: Text(summary['displayName']?.toString() ?? 'Member'),
+                      title: Text(
+                        welcome['displayName']?.toString() ?? 'Member',
+                      ),
                       subtitle: Text(
-                        'Choirs: ${(summary['myChoirs'] as List?)?.length ?? 0} · '
-                        'Protocol: ${summary['protocolStatus'] ?? 'NONE'}',
+                        'Choir & protocol member · '
+                        '$weekCount commitment${weekCount == 1 ? '' : 's'} this week'
+                        '${conflictCount > 0 ? ' · $conflictCount conflict${conflictCount == 1 ? '' : 's'}' : ''}',
                       ),
                     ),
                   ),
-                ListTile(
-                  leading: const Icon(Icons.live_tv),
-                  title: const Text('Live & recent broadcasts'),
-                  trailing: Text('$live'),
-                ),
                 const SizedBox(height: 8),
-                ..._navTiles(context),
+                ..._navTiles(context, access),
               ],
             );
           },
@@ -68,44 +79,45 @@ class MemberHomeScreen extends ConsumerWidget {
     );
   }
 
-  List<Widget> _navTiles(BuildContext context) {
-    return [
+  List<Widget> _navTiles(
+    BuildContext context,
+    DualMemberPortalAccess access,
+  ) {
+    final tiles = <Widget>[
       ListTile(
         leading: const Icon(Icons.group_outlined),
         title: const Text('Membership center'),
         subtitle: const Text('Choir and protocol membership'),
-        onTap: () => Navigator.of(context).pushNamed(AppRouter.memberPortalMembership),
-      ),
-      ListTile(
-        leading: const Icon(Icons.campaign_outlined),
-        title: const Text('Broadcast center'),
-        subtitle: const Text('Church live streams and announcements'),
-        onTap: () => Navigator.of(context).pushNamed(AppRouter.memberPortalBroadcasts),
-      ),
-      ListTile(
-        leading: const Icon(Icons.mail_outline),
-        title: const Text('Invitations'),
-        subtitle: const Text('Protocol invitations'),
-        onTap: () => Navigator.of(context).pushNamed(AppRouter.memberPortalInvitations),
-      ),
-      ListTile(
-        leading: const Icon(Icons.pending_actions_outlined),
-        title: const Text('Requests'),
-        subtitle: const Text('Choir join and membership requests'),
-        onTap: () => Navigator.of(context).pushNamed(AppRouter.memberPortalRequests),
-      ),
-      ListTile(
-        leading: const Icon(Icons.volunteer_activism_outlined),
-        title: const Text('My contributions'),
-        subtitle: const Text('History and submit choir claims'),
-        onTap: () => Navigator.of(context).pushNamed(AppRouter.myContributions),
-      ),
-      ListTile(
-        leading: const Icon(Icons.shield_outlined),
-        title: const Text('Protocol'),
-        subtitle: const Text('Contributions and service assignments'),
-        onTap: () => Navigator.of(context).pushNamed(AppRouter.protocolDashboard),
+        onTap: () =>
+            Navigator.of(context).pushNamed(AppRouter.memberPortalMembership),
       ),
     ];
+
+    if (access.primaryChoirId != null) {
+      final choirId = access.primaryChoirId!;
+      tiles.add(
+        ListTile(
+          leading: const Icon(Icons.music_note_outlined),
+          title: const Text('Choir assignments'),
+          subtitle: const Text('Service prep and singing schedule'),
+          onTap: () => Navigator.of(context).pushNamed(
+            AppRouter.choirAssignments,
+            arguments: choirId,
+          ),
+        ),
+      );
+    }
+
+    tiles.add(
+      ListTile(
+        leading: const Icon(Icons.shield_outlined),
+        title: const Text('Protocol dashboard'),
+        subtitle: const Text('Teams, attendance, and service assignments'),
+        onTap: () =>
+            Navigator.of(context).pushNamed(AppRouter.protocolDashboard),
+      ),
+    );
+
+    return tiles;
   }
 }

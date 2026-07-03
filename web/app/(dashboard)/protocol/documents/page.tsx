@@ -11,7 +11,7 @@ export default function ProtocolDocumentsPage() {
           Official policies, rosters, and forms for the protocol committee
         </p>
       </div>
-      <ProtocolDocumentsShelf showTitle={false} />
+      <ProtocolDocumentsShelf showTitle={false} allowUpload />
     </div>
   )
 }

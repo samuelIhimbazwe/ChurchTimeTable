@@ -46,7 +46,7 @@ export function FamilyLeadershipHistoryPanel({ choirId }: { choirId?: string }) 
         <option value="">Select family…</option>
         {items.map((f) => (
           <option key={f.id} value={f.id}>
-            {f.familyName ?? f.familyCode ?? f.id}
+            {f.name ?? f.familyCode ?? f.id}
           </option>
         ))}
       </select>

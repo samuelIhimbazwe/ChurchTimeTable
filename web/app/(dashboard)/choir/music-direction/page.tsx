@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
-import { musicApi, rehearsalsApi, choirActivityApi, choirSchedulingApi } from '@/lib/api'
+import { musicApi, choirActivityApi } from '@/lib/api'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import {
-  Card, StatTile, Badge, SkeletonCard, CapabilityGate, EmptyState,
+  Card, Badge, SkeletonCard, CapabilityGate, EmptyState,
 } from '@/components/shared'
 import { ChoirPositionHubShell, HubQuickLink } from '@/components/choir/ChoirPositionHubShell'
 import { MusicSongNotifyForm } from '@/components/choir/MusicSongNotifyForm'
@@ -25,11 +25,6 @@ const TABS = [
   { id: 'rehearsals', label: 'Rehearsals' },
 ]
 
-function num(v: unknown) {
-  const n = Number(v)
-  return Number.isFinite(n) ? n : 0
-}
-
 export default function MusicDirectorHubPage() {
   const searchParams = useSearchParams()
   const initialTab = searchParams.get('tab')
@@ -45,21 +40,6 @@ export default function MusicDirectorHubPage() {
     }
   }, [searchParams])
 
-  const { data: songs, isLoading: loadingSongs } = useQuery({
-    queryKey: ['music-songs-count'],
-    queryFn: () => musicApi.getSongs({ limit: 1 }),
-  })
-
-  const { data: voiceSections } = useQuery({
-    queryKey: ['voice-sections'],
-    queryFn: rehearsalsApi.getVoiceSections,
-  })
-
-  const { data: rehearsalDash } = useQuery({
-    queryKey: ['rehearsal-dashboard'],
-    queryFn: rehearsalsApi.getDashboard,
-  })
-
   const { choirId, choirLink } = useResolvedChoirScope()
 
   const { data: activities, isLoading: loadingAct } = useQuery({
@@ -68,14 +48,7 @@ export default function MusicDirectorHubPage() {
     enabled: !!choirId,
   })
 
-  const { data: health } = useQuery({
-    queryKey: ['choir-leader-dashboard', choirId],
-    queryFn: () => choirSchedulingApi.getLeaderDashboard(choirId!),
-    enabled: !!choirId,
-  })
-  const h = health as Record<string, unknown> | undefined
-
-  const { data: recentSongs } = useQuery({
+  const { data: recentSongs, isLoading: loadingSongs } = useQuery({
     queryKey: ['music-songs-recent'],
     queryFn: () => musicApi.getSongs({ limit: 8 }),
     enabled: tab === 'library',
