@@ -21,6 +21,7 @@ import {
 } from './protocol.constants';
 import {
   hasProtocolManage,
+  hasProtocolTeamLeaderManage,
   hasProtocolTeamApprove,
   hasProtocolTeamPublish,
   hasProtocolView,
@@ -240,8 +241,12 @@ export class ProtocolTeamsService {
     overrideReason?: string,
   ) {
     await this.actor(actorUserId);
-    if (!hasProtocolManage((await this.permissions.resolveForUser(actorUserId)).permissions)) {
-      throw new ForbiddenException('Coordinator only');
+    const { permissions } = await this.permissions.resolveForUser(actorUserId);
+    if (
+      !hasProtocolManage(permissions) &&
+      !hasProtocolTeamLeaderManage(permissions)
+    ) {
+      throw new ForbiddenException('Team leader assignment denied');
     }
     return this.teamLeaders.assignToTeam(
       actorUserId,

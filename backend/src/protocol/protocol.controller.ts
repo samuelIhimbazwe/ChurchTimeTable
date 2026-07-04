@@ -222,7 +222,7 @@ export class ProtocolController {
   }
 
   @Post('teams/:teamId/leader')
-  @RequireUiCapability('protocol-manage')
+  @RequireUiCapability('protocol-team-leadership')
   assignTeamLeader(
     @CurrentUser('sub') userId: string,
     @Param('teamId') teamId: string,

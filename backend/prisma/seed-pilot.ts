@@ -449,11 +449,25 @@ async function main() {
     'protocol_vice_president',
   );
 
+  const demoProtocolMembers = [
+    { email: 'member3@church.local', firstName: 'Paul', lastName: 'Niyonzima', ministry: 'PROTOCOL' as const },
+    { email: 'member4@church.local', firstName: 'Grace', lastName: 'Mutesi', ministry: 'PROTOCOL' as const },
+    { email: 'member5@church.local', firstName: 'Aimable', lastName: 'Mugisha', ministry: 'PROTOCOL' as const },
+    { email: 'member6@church.local', firstName: 'Beatha', lastName: 'Uwase', ministry: 'PROTOCOL' as const },
+    { email: 'member7@church.local', firstName: 'Cedric', lastName: 'Habimana', ministry: 'PROTOCOL' as const },
+    { email: 'member8@church.local', firstName: 'Diane', lastName: 'Ingabire', ministry: 'PROTOCOL' as const },
+    { email: 'member9@church.local', firstName: 'Emmanuel', lastName: 'Ntakirutimana', ministry: 'PROTOCOL' as const },
+    { email: 'member10@church.local', firstName: 'Florence', lastName: 'Mukandayisenga', ministry: 'PROTOCOL' as const },
+    { email: 'member11@church.local', firstName: 'Gaston', lastName: 'Nshimiyimana', ministry: 'PROTOCOL' as const },
+    { email: 'member12@church.local', firstName: 'Hope', lastName: 'Umutoni', ministry: 'PROTOCOL' as const },
+    { email: 'member13@church.local', firstName: 'Isaie', lastName: 'Ndayishimiye', ministry: 'PROTOCOL' as const },
+    { email: 'member14@church.local', firstName: 'Jeannette', lastName: 'Uwimana', ministry: 'PROTOCOL' as const },
+  ];
+
   for (const m of [
     { email: 'member1@church.local', firstName: 'David', lastName: 'Hoza', ministry: 'CHOIR' as const },
     { email: 'member2@church.local', firstName: 'Chantal', lastName: 'Mujawamariya', ministry: 'CHOIR' as const },
-    { email: 'member3@church.local', firstName: 'Paul', lastName: 'Niyonzima', ministry: 'PROTOCOL' as const },
-    { email: 'member4@church.local', firstName: 'Grace', lastName: 'Mutesi', ministry: 'PROTOCOL' as const },
+    ...demoProtocolMembers,
   ]) {
     await upsertPilotUser(m.email, ROLES.MEMBER, {
       firstName: m.firstName,
@@ -468,8 +482,7 @@ async function main() {
           in: [
             'member1@church.local',
             'member2@church.local',
-            'member3@church.local',
-            'member4@church.local',
+            ...demoProtocolMembers.map((m) => m.email),
           ],
         },
       },
@@ -837,8 +850,7 @@ async function main() {
     'protocol.treasurer@church.local',
     'protocol.admin@church.local',
     'member1@church.local',
-    'member3@church.local',
-    'member4@church.local',
+    ...demoProtocolMembers.map((m) => m.email),
   ]) {
     const user = await prisma.user.findUnique({
       where: { email },
@@ -860,11 +872,6 @@ async function main() {
   });
   const pilotProtocolMemberIds: string[] = [];
   for (const email of [
-    'protocol.leader@church.local',
-    'protocol.president@church.local',
-    'protocol.coordinator@church.local',
-    'protocol.treasurer@church.local',
-    'member1@church.local',
     'member3@church.local',
     'member4@church.local',
   ]) {
@@ -922,6 +929,12 @@ async function main() {
           publishedAt: occurrenceTeam.publishedAt ?? new Date(),
         },
       });
+      await prisma.protocolOccurrenceTeamMember.deleteMany({
+        where: {
+          teamId: occurrenceTeam.id,
+          memberId: { notIn: rosterMemberIds },
+        },
+      });
       for (const memberId of rosterMemberIds) {
         await prisma.protocolOccurrenceTeamMember.upsert({
           where: {
@@ -935,6 +948,12 @@ async function main() {
           update: {},
         });
       }
+      await prisma.protocolOccurrenceTeamLeader.deleteMany({
+        where: {
+          teamId: occurrenceTeam.id,
+          protocolTeamLeaderId: { not: teamLeader.id },
+        },
+      });
       await prisma.protocolOccurrenceTeamLeader.upsert({
         where: {
           teamId_protocolTeamLeaderId: {
@@ -985,7 +1004,7 @@ async function main() {
   console.log('    Coordinator:   protocol.coordinator@church.local → /protocol/coordinator');
   console.log('    Treasurer:     protocol.treasurer@church.local → /protocol/treasury');
   console.log('    Team head:     protocol.teamhead@church.local  → /protocol/team-leader');
-  console.log('    Regular member: member3@church.local, member4@church.local → /protocol/member');
+  console.log('    Regular members: member3@church.local ... member14@church.local → /protocol/member');
   console.log('  Pending onboarding:  pending.choir@church.local, pending.protocol@church.local');
   console.log('  Church coordinator:  church.coord@church.local → /church (CHURCH_ADMIN)');
   console.log('  Admin (IT):          admin@church.local / Admin@123');
