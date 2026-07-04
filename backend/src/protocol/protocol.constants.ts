@@ -61,8 +61,12 @@ export const PROTOCOL_TEAM_SIZING = {
 /** Small roster fallback for seeded demo environments only. */
 export const PROTOCOL_DEMO_TEAM_SIZE = 3;
 
+export function isProtocolDemoSeedEnabled() {
+  return process.env.SEED_DEMO === 'true';
+}
+
 export function resolveProtocolTeamTargetSize() {
-  return process.env.SEED_DEMO === 'true'
+  return isProtocolDemoSeedEnabled()
     ? PROTOCOL_DEMO_TEAM_SIZE
     : PROTOCOL_TEAM_SIZING.TEAM_SIZE_TARGET;
 }

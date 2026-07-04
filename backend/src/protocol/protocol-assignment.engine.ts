@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { ServiceQuotaEngine } from './service-quota.engine';
 import {
+  isProtocolDemoSeedEnabled,
   PROTOCOL_TEAM_SIZING,
   PROTOCOL_UNIT_CODE,
   resolveProtocolTeamTargetSize,
@@ -50,6 +51,10 @@ export class ProtocolAssignmentEngine {
     at: Date,
     batchCounts: Map<string, number> = new Map(),
   ): Promise<string[]> {
+    if (isProtocolDemoSeedEnabled()) {
+      return [];
+    }
+
     const settings = await this.quota.getSettings();
     const max = settings.maxOfficialServicesPerMonth;
     const unit = await this.prisma.operationalUnit.findFirst({
@@ -132,6 +137,7 @@ export class ProtocolAssignmentEngine {
     const allChoirMap = await mapMembersToAllChoirIds(this.prisma, memberIds);
 
     const batchCounts = params.monthBatchCounts ?? new Map();
+    const ignoreMonthlyCap = isProtocolDemoSeedEnabled();
     const monthlyBlocked = new Set(
       await this.memberIdsBlockedByMonthlyCap(occurrence.startAt, batchCounts),
     );
@@ -156,7 +162,7 @@ export class ProtocolAssignmentEngine {
         dbMonthCount + (batchCounts.get(member.id) ?? 0);
       const atCap = monthTotal >= settings.maxOfficialServicesPerMonth;
 
-      if (atCap || monthlyBlocked.has(member.id)) {
+      if (!ignoreMonthlyCap && (atCap || monthlyBlocked.has(member.id))) {
         continue;
       }
 
