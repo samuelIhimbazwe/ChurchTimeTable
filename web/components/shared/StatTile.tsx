@@ -75,12 +75,12 @@ export default function StatTile({
       onKeyDown={onClick && !href ? (e) => e.key === 'Enter' && onClick() : undefined}
       onClick={href ? undefined : onClick}
       className={cn(
-        'relative bg-surface rounded-lg p-4 sm:p-5 min-w-0',
-        'border border-border shadow-card',
-        'flex flex-col gap-3',
-        accent && 'border-l-[3px] border-l-primary-600',
-        interactive && 'cursor-pointer hover:shadow-raised hover:-translate-y-0.5',
-        'transition-all duration-fast',
+        'relative bg-surface rounded-md p-4 sm:p-5 min-w-0',
+        'border border-border',
+        'flex flex-col gap-2.5',
+        accent && 'border-l-2 border-l-gold-500',
+        interactive && 'cursor-pointer hover:border-border-strong',
+        'transition-colors duration-fast',
         className,
       )}
     >
@@ -128,8 +128,8 @@ export default function StatTile({
       <Link
         href={href}
         className={cn(
-          'block rounded-lg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
-          'hover:shadow-raised hover:-translate-y-0.5 transition-all duration-fast',
+          'block rounded-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40',
+          'hover:border-border-strong transition-colors duration-fast',
           className,
         )}
       >

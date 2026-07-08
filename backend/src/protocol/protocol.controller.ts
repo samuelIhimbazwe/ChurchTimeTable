@@ -36,8 +36,8 @@ import { ProtocolDocumentsService } from './protocol-documents.service';
 import { ProtocolMemberRecognitionService } from './protocol-member-recognition.service';
 import { ProtocolMonthlyScheduleService } from './protocol-monthly-schedule.service';
 import { ProtocolCommunicationsService } from './protocol-communications.service';
-import { ChoirServiceAssignmentRole } from '@prisma/client';
-import { ProtocolRankingCategory } from '@prisma/client';
+import { ProvisionProtocolMemberDto } from './dto/provision-protocol-member.dto';
+import { ChoirServiceAssignmentRole, ProtocolRankingCategory } from '@prisma/client';
 
 @Controller('protocol')
 @UseGuards(JwtAuthGuard, UiCapabilityGuard, PhoneOperationalGuard)
@@ -400,6 +400,15 @@ export class ProtocolController {
     return this.members.upsertProfile(userId, memberId, body);
   }
 
+  @Post('members/provision')
+  @RequireUiCapability('protocol-manage')
+  provisionMember(
+    @CurrentUser('sub') userId: string,
+    @Body() body: ProvisionProtocolMemberDto,
+  ) {
+    return this.members.provisionMember(userId, body);
+  }
+
   @Get('members/:memberId')
   @RequireUiCapability('protocol-view')
   getMember(
@@ -545,14 +554,92 @@ export class ProtocolController {
 
   @Get('reports/health')
   @RequireUiCapability('protocol-report')
-  healthReport(@CurrentUser('sub') userId: string) {
-    return this.reports.health(userId);
+  healthReport(
+    @CurrentUser('sub') userId: string,
+    @Query('year') year?: string,
+    @Query('month') month?: string,
+  ) {
+    return this.reports.health(
+      userId,
+      year ? Number(year) : undefined,
+      month ? Number(month) : undefined,
+    );
+  }
+
+  @Get('reports/summary')
+  @RequireUiCapability('protocol-report')
+  reportSummary(
+    @CurrentUser('sub') userId: string,
+    @Query('year') year: string,
+    @Query('month') month: string,
+  ) {
+    return this.reports.summary(userId, Number(year), Number(month));
+  }
+
+  @Get('reports/monthly-service')
+  @RequireUiCapability('protocol-report')
+  monthlyServiceReport(
+    @Query('year') year: string,
+    @Query('month') month: string,
+  ) {
+    return this.reports.monthlyServiceReport(Number(year), Number(month));
+  }
+
+  @Get('reports/attendance')
+  @RequireUiCapability('protocol-report')
+  attendanceReport(
+    @Query('year') year: string,
+    @Query('month') month: string,
+  ) {
+    return this.reports.attendanceReport(Number(year), Number(month));
+  }
+
+  @Get('reports/replacements')
+  @RequireUiCapability('protocol-report')
+  replacementsReport(
+    @Query('year') year: string,
+    @Query('month') month: string,
+  ) {
+    return this.reports.replacementReport(Number(year), Number(month));
+  }
+
+  @Get('reports/reliability')
+  @RequireUiCapability('protocol-report')
+  reliabilityReport() {
+    return this.reports.reliabilityReport();
+  }
+
+  @Get('reports/scheduling')
+  @RequireUiCapability('protocol-report')
+  schedulingReport(
+    @Query('year') year: string,
+    @Query('month') month: string,
+  ) {
+    return this.reports.schedulingReport(Number(year), Number(month));
+  }
+
+  @Get('reports/quota')
+  @RequireUiCapability('protocol-report')
+  quotaReport(
+    @Query('year') year: string,
+    @Query('month') month: string,
+  ) {
+    return this.reports.quotaReport(Number(year), Number(month));
   }
 
   @Get('reports/health-pack.pdf')
   @RequireUiCapability('protocol-report')
-  async healthPackPdf(@CurrentUser('sub') userId: string, @Res() res: Response) {
-    const exported = await this.reports.exportHealthPackPdf(userId);
+  async healthPackPdf(
+    @CurrentUser('sub') userId: string,
+    @Res() res: Response,
+    @Query('year') year?: string,
+    @Query('month') month?: string,
+  ) {
+    const exported = await this.reports.exportHealthPackPdf(
+      userId,
+      year ? Number(year) : undefined,
+      month ? Number(month) : undefined,
+    );
     res.setHeader('Content-Type', exported.mimeType);
     res.setHeader(
       'Content-Disposition',
@@ -708,14 +795,5 @@ export class ProtocolController {
     },
   ) {
     return this.teams.generateForPlan(userId, id, body);
-  }
-
-  @Get('reports/monthly-service')
-  @RequireUiCapability('protocol-report')
-  monthlyServiceReport(
-    @Query('year') year: string,
-    @Query('month') month: string,
-  ) {
-    return this.reports.monthlyServiceReport(Number(year), Number(month));
   }
 }

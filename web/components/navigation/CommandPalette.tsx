@@ -29,11 +29,16 @@ import {
   STATIC_COMMANDS,
 
   filterCommands,
+  filterCommandsForMemberScope,
 
   type CommandItem,
 
 } from '@/lib/navigation/command-routes'
 import { useDualMemberPortalAccess } from '@/lib/portal/access'
+import { accountProfilePath } from '@/lib/account/paths'
+import { resolveMemberWorkspaceScope } from '@/lib/member-workspace/access'
+import { useAuthStore } from '@/stores'
+import { useChoirAccess } from '@/lib/hooks/useChoirAccess'
 
 import {
 
@@ -146,6 +151,10 @@ export function CommandPalette({ open, onClose, onOpenNotifications }: Props) {
   const setTheme = useUIStore((st) => st.setTheme)
 
   const { isDualMember } = useDualMemberPortalAccess()
+  const profileHref = accountProfilePath(isDualMember)
+  const user = useAuthStore((s) => s.user)
+  const { primaryChoirId } = useChoirAccess()
+  const memberScope = resolveMemberWorkspaceScope(user?.accessRouting, user?.role)
 
   const recentPages = useNavStore((st) => st.recentPages)
 
@@ -267,13 +276,15 @@ export function CommandPalette({ open, onClose, onOpenNotifications }: Props) {
 
   const baseItems = useMemo(() => {
 
-    const themed = STATIC_COMMANDS.filter(
-      (c) => c.id !== 'nav-portal' || isDualMember,
-    ).map((c) =>
-
-      c.action === 'toggle-theme'
-
-        ? {
+    const themed = filterCommandsForMemberScope(
+      STATIC_COMMANDS.filter(
+        (c) => c.id !== 'nav-portal' || isDualMember,
+      ).map((c) => {
+        if (c.id === 'nav-profile') {
+          return { ...c, href: profileHref }
+        }
+        if (c.action === 'toggle-theme') {
+          return {
             ...c,
             label:
               theme === 'high-contrast'
@@ -283,9 +294,11 @@ export function CommandPalette({ open, onClose, onOpenNotifications }: Props) {
                   : 'Switch to dark theme',
             icon: theme === 'dark' || theme === 'high-contrast' ? Sun : Moon,
           }
-
-        : c,
-
+        }
+        return c
+      }),
+      memberScope,
+      { isDualMember, primaryChoirId, profileHref },
     )
 
     let items = [...pinnedCommands, ...recentCommands, ...themed]
@@ -302,7 +315,7 @@ export function CommandPalette({ open, onClose, onOpenNotifications }: Props) {
 
     return items
 
-  }, [pinnedCommands, recentCommands, query, searchCommands, theme, isDualMember])
+  }, [pinnedCommands, recentCommands, query, searchCommands, theme, isDualMember, profileHref, memberScope, primaryChoirId])
 
 
 

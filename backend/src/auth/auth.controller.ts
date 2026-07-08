@@ -20,6 +20,7 @@ import { RefreshDto } from './dto/refresh.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AcceptInviteDto } from '../account-invites/dto/accept-invite.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { AccountInvitesService } from '../account-invites/account-invites.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import {
@@ -111,6 +112,19 @@ export class AuthController {
     const session = await this.authService.acceptInvite(dto);
     this.setRefreshCookie(res, session.refreshToken, session.refreshTokenExpiresAt);
     return session.response;
+  }
+
+  @Patch('change-password')
+  @UseGuards(JwtAuthGuard)
+  changePassword(
+    @CurrentUser('sub') userId: string,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    return this.authService.changePassword(
+      userId,
+      dto.currentPassword,
+      dto.newPassword,
+    );
   }
 
   @Get('me')

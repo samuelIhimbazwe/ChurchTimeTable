@@ -7,6 +7,10 @@ import {
   inferProtocolCommitteeRoleKeys,
   resolveProtocolLandingPath,
 } from '../member-portal/protocol-officer-roles.util';
+import {
+  inferCommitteeRoleKeys,
+  resolveChoirLandingPath,
+} from '../member-portal/choir-officer-roles.util';
 
 export interface AccessRouting {
   homePath: string;
@@ -17,22 +21,26 @@ export interface AccessRouting {
   primaryChoirId: string | null;
 }
 
-const STAFF_ROLE_HOME: Partial<Record<string, string>> = {
+const CHURCH_WIDE_STAFF_HOME: Partial<Record<string, string>> = {
   [ROLES.SUPER_ADMIN]: '/choir',
   [ROLES.CHURCH_ADMIN]: '/choir',
   [ROLES.PROTOCOL_ADMIN]: '/protocol',
   [ROLES.PROTOCOL_LEADER]: '/protocol',
   [ROLES.CHOIR_ADMIN]: '/choir',
-  [ROLES.CHOIR_PRESIDENT]: '/choir',
-  [ROLES.CHOIR_VICE_PRESIDENT]: '/choir',
-  [ROLES.CHOIR_SECRETARY]: '/choir',
-  [ROLES.CHOIR_TREASURER]: '/choir',
-  [ROLES.CHOIR_REHEARSAL_DIRECTOR]: '/choir',
-  [ROLES.CHOIR_LOGISTICS]: '/choir',
-  [ROLES.CHOIR_FAMILY_COORDINATOR]: '/choir',
-  [ROLES.CHOIR_COMMITTEE]: '/choir',
-  [ROLES.CHOIR_LEADER]: '/choir',
 };
+
+/** Choir officers land on their choir hub — requires active choir membership. */
+const CHOIR_OFFICER_ROLES = new Set<string>([
+  ROLES.CHOIR_PRESIDENT,
+  ROLES.CHOIR_VICE_PRESIDENT,
+  ROLES.CHOIR_SECRETARY,
+  ROLES.CHOIR_TREASURER,
+  ROLES.CHOIR_REHEARSAL_DIRECTOR,
+  ROLES.CHOIR_LOGISTICS,
+  ROLES.CHOIR_FAMILY_COORDINATOR,
+  ROLES.CHOIR_COMMITTEE,
+  ROLES.CHOIR_LEADER,
+]);
 
 @Injectable()
 export class AccessRoutingService {
@@ -43,16 +51,17 @@ export class AccessRoutingService {
     roles: string[],
   ): Promise<AccessRouting> {
     for (const role of roles) {
-      const staffHome = STAFF_ROLE_HOME[role];
-      if (staffHome) {
-        return {
-          homePath: staffHome,
-          ministryScope: null,
-          isDualMember: false,
-          hasChoirMembership: false,
-          hasProtocolMembership: false,
-          primaryChoirId: null,
-        };
+      if (CHURCH_WIDE_STAFF_HOME[role]) {
+        return this.resolveChurchWideStaffRouting(
+          userId,
+          CHURCH_WIDE_STAFF_HOME[role]!,
+        );
+      }
+    }
+
+    for (const role of roles) {
+      if (CHOIR_OFFICER_ROLES.has(role)) {
+        return this.resolveChoirOfficerRouting(userId, roles);
       }
     }
 
@@ -96,7 +105,7 @@ export class AccessRoutingService {
 
     if (isDualMember) {
       return {
-        homePath: protocolOfficerHome ?? '/portal',
+        homePath: '/portal',
         ministryScope,
         isDualMember: true,
         hasChoirMembership,
@@ -135,6 +144,87 @@ export class AccessRoutingService {
       hasProtocolMembership,
       primaryChoirId: null,
     };
+  }
+
+  private async resolveChurchWideStaffRouting(
+    userId: string,
+    homePath: string,
+  ): Promise<AccessRouting> {
+    const primaryChoir = await this.prisma.choirMembership.findFirst({
+      where: { userId, isActive: true },
+      orderBy: { joinedAt: 'asc' },
+      select: { choirId: true },
+    });
+    return {
+      homePath,
+      ministryScope: null,
+      isDualMember: false,
+      hasChoirMembership: !!primaryChoir,
+      hasProtocolMembership: false,
+      primaryChoirId: primaryChoir?.choirId ?? null,
+    };
+  }
+
+  private async resolveChoirOfficerRouting(
+    userId: string,
+    systemRoles: string[],
+  ): Promise<AccessRouting> {
+    const member = await this.prisma.member.findUnique({
+      where: { userId },
+      select: { id: true, ministry: true },
+    });
+
+    const primaryChoir = await this.prisma.choirMembership.findFirst({
+      where: { userId, isActive: true },
+      orderBy: { joinedAt: 'asc' },
+      select: { choirId: true },
+    });
+
+    if (!member || !primaryChoir) {
+      return {
+        homePath: '/choir',
+        ministryScope: member?.ministry ?? null,
+        isDualMember: false,
+        hasChoirMembership: false,
+        hasProtocolMembership: false,
+        primaryChoirId: null,
+      };
+    }
+
+    const homePath = await this.choirOfficerHomePath(
+      member.id,
+      primaryChoir.choirId,
+      systemRoles,
+    );
+
+    return {
+      homePath,
+      ministryScope: MinistryScope.CHOIR,
+      isDualMember: false,
+      hasChoirMembership: true,
+      hasProtocolMembership: false,
+      primaryChoirId: primaryChoir.choirId,
+    };
+  }
+
+  private async choirOfficerHomePath(
+    memberId: string,
+    choirId: string,
+    systemRoles: string[],
+  ): Promise<string> {
+    const committeeRows = await this.prisma.choirCommitteeMember.findMany({
+      where: { memberId, choirId },
+      include: { role: { select: { name: true } } },
+    });
+    const positions = committeeRows.map((row) => ({
+      roleKey: row.role.name,
+    }));
+    for (const roleKey of inferCommitteeRoleKeys(systemRoles)) {
+      if (!positions.some((p) => p.roleKey === roleKey)) {
+        positions.push({ roleKey });
+      }
+    }
+    return resolveChoirLandingPath(choirId, positions);
   }
 
   private scopeFromMembership(

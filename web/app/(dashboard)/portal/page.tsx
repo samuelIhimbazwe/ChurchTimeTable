@@ -10,19 +10,16 @@ import { Music, Shield, ChevronRight } from 'lucide-react'
 import { RoleHeroBand } from '@/components/portal/home/RoleHeroBand'
 import { PortalQuickActionsGrid } from '@/components/portal/home/PortalQuickActionsGrid'
 import { useTranslations } from '@/lib/i18n'
-import {
-  filterVisiblePortalChoirs,
-  resolveChoirPortalActions,
-} from '@/lib/choir/membership-display'
 import { useChoirAccess } from '@/lib/hooks/useChoirAccess'
 import { ChoirDashboardEntryButton } from '@/components/choir/ChoirDashboardEntryButton'
 import { ProtocolDashboardEntryButton } from '@/components/protocol/ProtocolDashboardEntryButton'
 import { PortalMyWeekCard } from '@/components/portal/PortalMyWeekCard'
+import { choirMemberHome } from '@/lib/choir/paths'
 
 export default function MemberPortalPage() {
   const { tr } = useTranslations()
   const { data, isLoading, error, refetch } = useMemberPortalHome()
-  const { activeChoirMemberships } = useChoirAccess()
+  const { activeChoirMemberships, primaryChoirId } = useChoirAccess()
 
   if (isLoading) {
     return (
@@ -59,10 +56,8 @@ export default function MemberPortalPage() {
     )
   }
 
-  const { welcome, choirs, protocol, participation } = data
-  const visibleChoirs = filterVisiblePortalChoirs(activeChoirMemberships, choirs)
-  const previewChoirs = visibleChoirs.slice(0, 5)
-  const primaryChoirId = activeChoirMemberships[0]?.id
+  const { welcome, protocol, participation } = data
+  const effectivePrimaryId = primaryChoirId ?? activeChoirMemberships[0]?.id
   const weekCount = participation?.thisWeek?.length ?? 0
   const conflictCount = participation?.conflicts?.length ?? 0
 
@@ -74,7 +69,7 @@ export default function MemberPortalPage() {
           accent="member"
           churchName={welcome.churchName}
           title={`${tr('Welcome')}, ${welcome.firstName}.`}
-          subtitle="Your choir and protocol home — schedules, teams, and service in one place."
+          subtitle="Choose your choir workspace or protocol dashboard — nothing else lives here."
           trailing={
             welcome.pendingApproval ? (
               <Badge variant="status-pending" className="self-start">
@@ -98,7 +93,7 @@ export default function MemberPortalPage() {
       )}
 
       <PortalQuickActionsGrid
-        choirId={primaryChoirId}
+        choirId={effectivePrimaryId}
         hasChoirMembership={activeChoirMemberships.length > 0}
       />
 
@@ -122,42 +117,35 @@ export default function MemberPortalPage() {
         <Card padding="md" data-tour="portal-choir-entry">
           <CardHeader className="p-0 mb-4">
             <CardTitle className="flex items-center gap-2">
-              <Music size={18} /> Choirs
+              <Music size={18} /> My choir
             </CardTitle>
             <CardDescription>
-              Your choir memberships and dashboards
+              Open your choir workspace — schedules, giving, and your role
             </CardDescription>
           </CardHeader>
-          {previewChoirs.length === 0 ? (
-            <p className="text-sm text-text-muted">No choir memberships found.</p>
+          {activeChoirMemberships.length === 0 ? (
+            <p className="text-sm text-text-muted">No choir membership found.</p>
           ) : (
             <ul className="space-y-3">
-              {previewChoirs.map((c) => {
-                const actions = resolveChoirPortalActions(activeChoirMemberships, c, [])
-                return (
-                  <li key={c.id} className="py-2 border-b border-border last:border-0">
-                    <div className="flex items-center justify-between gap-3">
-                      <Link href={`/portal/choirs/${c.id}`} className="flex-1 min-w-0 group">
-                        <p className="text-sm font-medium text-text-primary group-hover:text-primary-700 dark:group-hover:text-gold-400">
-                          {c.name}
-                        </p>
-                        {c.description && (
-                          <p className="text-xs text-text-muted line-clamp-1 mt-0.5">{c.description}</p>
-                        )}
-                      </Link>
-                      {actions.showDashboardButton && (
-                        <ChoirDashboardEntryButton choirId={c.id} className="shrink-0" />
-                      )}
-                    </div>
-                  </li>
-                )
-              })}
+              {activeChoirMemberships.map((c) => (
+                <li key={c.id} className="py-2 border-b border-border last:border-0">
+                  <div className="flex items-center justify-between gap-3">
+                    <Link
+                      href={choirMemberHome(c.id)}
+                      className="flex-1 min-w-0 group"
+                    >
+                      <p className="text-sm font-medium text-text-primary group-hover:text-primary-700 dark:group-hover:text-gold-400">
+                        {c.name}
+                      </p>
+                      <p className="text-xs text-text-muted mt-0.5">
+                        Enter choir workspace
+                      </p>
+                    </Link>
+                    <ChoirDashboardEntryButton choirId={c.id} className="shrink-0" />
+                  </div>
+                </li>
+              ))}
             </ul>
-          )}
-          {visibleChoirs.length > 5 && (
-            <Link href="/portal/choirs" className="inline-flex items-center gap-1 text-xs font-semibold text-primary-600 mt-3">
-              All choirs <ChevronRight size={14} />
-            </Link>
           )}
         </Card>
 
@@ -176,7 +164,7 @@ export default function MemberPortalPage() {
               href="/portal/protocol"
               className="text-xs font-semibold text-primary-600 hover:text-primary-800 inline-flex items-center gap-1"
             >
-              Protocol stats <ChevronRight size={12} />
+              Protocol overview <ChevronRight size={12} />
             </Link>
           </div>
         </Card>

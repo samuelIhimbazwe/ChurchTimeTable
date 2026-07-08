@@ -127,6 +127,24 @@ export const choirApi = {
       { deactivated: boolean; membershipId: string; memberId: string; memberName: string }
     >('/choirs/members/deactivate', data),
 
+  provisionMember: (data: {
+    choirId: string
+    email: string
+    firstName: string
+    lastName: string
+    phone?: string
+  }) =>
+    apiClient.post<
+      never,
+      {
+        email: string
+        memberId?: string
+        existingAccount: boolean
+        temporaryPassword: string | null
+        message: string
+      }
+    >('/choirs/members/provision', data),
+
   getPresidentDelegation: (choirId: string) =>
     apiClient.get<
       never,

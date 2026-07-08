@@ -4,9 +4,13 @@ import { useMemo } from 'react'
 import { useParams, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useChoirDashboardContext } from '@/lib/hooks/useChoirDashboardContext'
+import { useChoirWorkspaceGuard } from '@/lib/hooks/useChoirWorkspaceGuard'
 import { useDualMemberPortalAccess } from '@/lib/portal/access'
 import { useContributionAuthRefresh } from '@/lib/hooks/useContributionAuthRefresh'
 import { useChoirSponsorDashboardContext } from '@/lib/hooks/useChoirSponsorDashboardContext'
+import { useChoirAccess } from '@/lib/hooks/useChoirAccess'
+import { useAuthStore } from '@/stores'
+import { choirWorkspaceRedirect } from '@/lib/choir/membership-scope'
 import { ChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
 import { ChoirSponsorDashboardCtx } from '@/components/choir/ChoirSponsorDashboardProvider'
 import { choirMemberHome } from '@/lib/choir/paths'
@@ -67,12 +71,18 @@ export default function ChoirScopedLayout({ children }: { children: React.ReactN
 
   const isSovereignOffice = isSovereignOfficePath(pathname)
   const { isDualMember, isLoading: loadingPortalAccess } = useDualMemberPortalAccess()
+  const { isBlocked: choirScopeBlocked, isLoading: loadingScopeGuard } =
+    useChoirWorkspaceGuard()
+  const { activeChoirMemberships } = useChoirAccess()
+  const accessRouting = useAuthStore((s) => s.user?.accessRouting)
+  const deniedRedirect = choirWorkspaceRedirect(activeChoirMemberships, accessRouting)
 
   const stillLoading =
     loadingMember ||
+    loadingScopeGuard ||
     ((memberDenied || isSponsorRoute) && loadingSponsor && !sponsorContext)
 
-  if (stillLoading) {
+  if (stillLoading || choirScopeBlocked) {
     return (
       <div className="max-w-lg mx-auto py-16 text-center text-sm text-text-muted">
         Loading choir dashboard…
@@ -118,31 +128,30 @@ export default function ChoirScopedLayout({ children }: { children: React.ReactN
   if (memberAccess && memberContext) {
     return (
       <ChoirDashboardCtx.Provider value={memberProviderValue}>
-        <div className={isSovereignOffice ? undefined : 'space-y-4'}>
+        <div className={isSovereignOffice ? undefined : 'space-y-5'}>
           {!isSovereignOffice && (
-            <div className="flex flex-wrap items-center justify-between gap-3 px-1 py-2 rounded-lg bg-primary-50 border border-primary-100">
-              <p className="text-sm text-text-secondary">
-                <span className="font-semibold text-text-primary">{memberContext.choir.name}</span>
-                {' · Choir workspace'}
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-border text-[13px]">
+              <p className="text-text-muted min-w-0">
+                <span className="font-medium text-text-primary">{memberContext.choir.name}</span>
                 {memberContext.positions.length > 0 && (
                   <span className="text-text-muted">
-                    {' '}· {memberContext.positions.map((p) => p.roleName).join(', ')}
+                    {' · '}{memberContext.positions.map((p) => p.roleName).join(', ')}
                   </span>
                 )}
               </p>
-              <div className="flex flex-wrap items-center gap-3 shrink-0">
+              <div className="flex flex-wrap items-center gap-3 shrink-0 text-xs">
                 <Link
                   href={choirMemberHome(choirId)}
-                  className="text-sm font-semibold text-primary-700 hover:text-primary-900 dark:text-gold-400 dark:hover:text-gold-300"
+                  className="font-medium text-text-secondary hover:text-text-primary transition-colors"
                 >
                   My membership
                 </Link>
                 {!loadingPortalAccess && isDualMember && (
                   <Link
                     href="/portal"
-                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-700 hover:text-primary-900 dark:text-gold-400 dark:hover:text-gold-300"
+                    className="inline-flex items-center gap-1 font-medium text-text-secondary hover:text-text-primary transition-colors"
                   >
-                    <ArrowLeft size={14} /> Member portal
+                    <ArrowLeft size={12} /> Portal
                   </Link>
                 )}
               </div>
@@ -163,10 +172,10 @@ export default function ChoirScopedLayout({ children }: { children: React.ReactN
           You need an approved membership or sponsorship to open this choir dashboard.
         </p>
         <Link
-          href="/portal/choirs?reason=choir-membership-required"
+          href={deniedRedirect}
           className="mt-4 block text-center text-sm font-semibold text-primary-600"
         >
-          Browse choirs →
+          Go to your workspace →
         </Link>
       </Card>
     </div>

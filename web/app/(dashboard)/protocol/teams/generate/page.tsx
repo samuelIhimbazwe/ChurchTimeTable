@@ -15,6 +15,7 @@ import { ProtocolOccurrenceCalendarPicker } from '@/components/protocol/Protocol
 import { ProtocolTeamDragBuilder } from '@/components/protocol/ProtocolTeamDragBuilder'
 import Link from 'next/link'
 import { Calendar, Wand2 } from 'lucide-react'
+import { PROTOCOL_TEAM_AUTO_SIZE } from '@/lib/protocol/team-sizing'
 
 export default function GenerateTeamPage() {
   const router = useRouter()

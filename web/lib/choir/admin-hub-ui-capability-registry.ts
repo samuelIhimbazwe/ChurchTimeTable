@@ -27,8 +27,8 @@ export const ADMIN_HUB_UI_CAPABILITY_REGISTRY: AdminHubUiCapabilityDefinition[] 
     },
     {
       id: 'admin-join-link',
-      label: 'Join requests',
-      routeSegments: ['admin'],
+      label: 'Member onboarding',
+      routeSegments: ['member-onboarding'],
       requireAnyOf: [
         'choir.join.review@choir',
         'choir.member.manage@choir',

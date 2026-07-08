@@ -21,6 +21,7 @@ import { ProtocolMembershipService } from '../member-portal/protocol-membership.
 import { MemberMinistryScopeService } from '../member-portal/member-ministry-scope.service';
 import { RosterCapabilityModule } from '../common/choir/roster-capability.module';
 import { ChoirCustomRolesModule } from '../choir-custom-roles/choir-custom-roles.module';
+import { MemberNumberModule } from '../members/member-number.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { ChoirCustomRolesModule } from '../choir-custom-roles/choir-custom-roles
     forwardRef(() => PilotReadyModule),
     RosterCapabilityModule,
     ChoirCustomRolesModule,
+    MemberNumberModule,
   ],
   controllers: [ChoirsController],
   providers: [

@@ -112,83 +112,12 @@ export class ChoirJoinRequestsService {
       reason?: string;
     },
   ) {
-    const member = await this.memberForUser(userId);
-    const choir = await this.prisma.choir.findFirst({
-      where: { id: data.choirId, isActive: true, isPublicJoinable: true },
+    throw new ForbiddenException({
+      code: 'FORBIDDEN',
+      messageKey: 'SELF_JOIN_DISABLED',
+      message:
+        'Self-service choir join is disabled. Contact your choir administrator for an account.',
     });
-    if (!choir) throw new NotFoundException('Choir not available');
-
-    const active = await this.prisma.choirMembership.findFirst({
-      where: { userId: member.userId, choirId: data.choirId, isActive: true },
-    });
-    if (active) {
-      throw new BadRequestException('You are already a member of this choir');
-    }
-
-    const activeSponsor = await this.prisma.choirSponsorship.findFirst({
-      where: { memberId: member.id, choirId: data.choirId, active: true },
-    });
-    if (activeSponsor) {
-      throw new BadRequestException(
-        'You sponsor this choir and cannot also join as a singer here',
-      );
-    }
-
-    const pending = await this.prisma.choirJoinRequest.findFirst({
-      where: {
-        memberId: member.id,
-        choirId: data.choirId,
-        status: { in: ['PENDING', 'NEEDS_INFO'] },
-      },
-    });
-    if (pending) {
-      throw new BadRequestException('A pending request already exists');
-    }
-
-    const otherPending = await this.prisma.choirJoinRequest.findFirst({
-      where: {
-        memberId: member.id,
-        status: { in: ['PENDING', 'NEEDS_INFO'] },
-        choirId: { not: data.choirId },
-      },
-      include: { choir: { select: { name: true, code: true, choirKind: true } } },
-    });
-    if (otherPending) {
-      const targetIsYerusalemu =
-        choir.code === YERUSALEMU_CHOIR_CODE || choir.choirKind === 'SPECIAL';
-      if (!targetIsYerusalemu) {
-        throw new BadRequestException(
-          `You already have a pending request for ${otherPending.choir.name}. Cancel that request first before joining another choir. Yerusalemu (morning service) may be requested separately.`,
-        );
-      }
-    }
-
-    await this.rules.validateNewMembership(userId, data.choirId);
-
-    const request = await this.prisma.choirJoinRequest.create({
-      data: {
-        memberId: member.id,
-        choirId: data.choirId,
-        requestType: data.requestType ?? 'PERMANENT_MEMBER',
-        reason: data.reason,
-      },
-      include: {
-        choir: { select: { name: true } },
-        member: { select: { firstName: true, lastName: true } },
-      },
-    });
-
-    await this.audit.log({
-      userId,
-      action: MEMBER_PORTAL_AUDIT.JOIN_REQUEST_SUBMITTED,
-      entity: 'ChoirJoinRequest',
-      entityId: request.id,
-      newValue: data as Prisma.InputJsonValue,
-    });
-
-    await this.notifyJoinRequestSubmitted(request);
-
-    return request;
   }
 
   private async notifyJoinRequestSubmitted(request: {

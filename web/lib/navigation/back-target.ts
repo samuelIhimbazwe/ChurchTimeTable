@@ -95,16 +95,34 @@ const RULES: Rule[] = [
 
 function labelForParent(path: string): string {
   const choirId = choirIdFromPath(path)
-  if (choirId && path === `/choir/${choirId}`) return 'Portal'
-  if (path === '/choir') return 'Portal'
+  if (choirId && path === `/choir/${choirId}`) return 'Choir'
+  if (path === '/choir') return 'Choir'
   if (path.startsWith('/protocol')) return 'Protocol'
   if (path.endsWith('/membership')) return 'Choir'
   const last = path.split('/').filter(Boolean).pop() ?? ''
   return last.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) || 'Back'
 }
 
+export type BackTargetContext = {
+  homePath?: string | null
+  isDualMember?: boolean
+}
+
+function workspaceHome(ctx?: BackTargetContext): BackTarget {
+  if (ctx?.isDualMember) {
+    return { href: '/portal', label: 'Portal' }
+  }
+  const home = ctx?.homePath ?? '/dashboard'
+  if (home.startsWith('/choir/')) return { href: home, label: 'Choir' }
+  if (home.startsWith('/protocol')) return { href: home, label: 'Protocol' }
+  return { href: home, label: 'Dashboard' }
+}
+
 /** Parent route when browser history is unavailable. */
-export function resolveBackTarget(pathname: string): BackTarget {
+export function resolveBackTarget(
+  pathname: string,
+  ctx?: BackTargetContext,
+): BackTarget {
   const path = normalizePath(pathname)
 
   for (const rule of RULES) {
@@ -114,18 +132,21 @@ export function resolveBackTarget(pathname: string): BackTarget {
 
   const segments = path.split('/').filter(Boolean)
   if (segments.length <= 1) {
-    return { href: '/portal', label: 'Portal' }
+    return workspaceHome(ctx)
   }
 
   const parent = `/${segments.slice(0, -1).join('/')}`
 
   if (parent === '/choir') {
-    return { href: '/portal', label: 'Portal' }
+    return workspaceHome(ctx)
   }
 
   const choirId = choirIdFromPath(path)
   if (choirId && parent === `/choir/${choirId}`) {
-    return { href: '/portal', label: 'Portal' }
+    if (ctx?.isDualMember) {
+      return { href: '/portal', label: 'Portal' }
+    }
+    return { href: `/choir/${choirId}/membership`, label: 'Choir' }
   }
 
   return { href: parent, label: labelForParent(parent) }

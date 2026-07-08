@@ -92,7 +92,7 @@ const CHOIR_ADMIN_TOOLS: NavSection = {
   section: 'Administration',
   items: [
     { label: 'Administration hub', icon: Shield,     path: '/choir/admin' },
-    { label: 'Join requests',      icon: UserPlus,   path: '/choir/join-requests' },
+    { label: 'Member onboarding', icon: UserPlus,   path: '/choir/member-onboarding' },
     { label: 'Position roles',     icon: KeyRound,   path: '/choir/roles' },
     { label: 'Families structure', icon: Users,      path: '/choir/admin/families' },
     CHOIR_PUBLIC_PROFILE,
@@ -190,23 +190,13 @@ const PROTOCOL_TEAM_LEADER_NAV: NavSection = {
   ],
 }
 
-const DUAL_SYSTEM_LINKS: NavSection = {
-  section: 'Systems',
-  items: [
-    { label: 'Choir',    icon: Music,  path: '/choir' },
-    { label: 'Protocol', icon: Shield, path: '/protocol' },
-  ],
-}
-
 const DUAL_MEMBER_PORTAL: NavSection[] = [
   {
     items: [
       { label: 'My Portal', icon: Home, path: '/portal' },
-      { label: 'Choirs', icon: Music, path: '/portal/choirs' },
       { label: 'Protocol', icon: Shield, path: '/portal/protocol' },
     ],
   },
-  DUAL_SYSTEM_LINKS,
 ]
 
 const MEMBER_PORTAL: NavSection[] = DUAL_MEMBER_PORTAL
@@ -324,19 +314,16 @@ export const NAV_BY_ROLE: Record<string, NavSection[]> = {
     PROTOCOL_DASHBOARD,
     PROTOCOL_OPS,
     { section: 'Administration', items: [{ label: 'Claims', icon: ClipboardCheck, path: '/protocol/claims' }] },
-    DUAL_SYSTEM_LINKS,
   ],
 
   PROTOCOL_LEADER: [
     PROTOCOL_DASHBOARD,
     PROTOCOL_OPS,
-    DUAL_SYSTEM_LINKS,
   ],
 
   PROTOCOL_VICE_PRESIDENT: [
     PROTOCOL_DASHBOARD,
     PROTOCOL_OPS,
-    DUAL_SYSTEM_LINKS,
   ],
 
   PROTOCOL_COORDINATOR: [
@@ -464,7 +451,7 @@ export function getPortalNavForUser(
   _role: string | undefined,
   choirAccess: Pick<ChoirAccessState, 'canAccessChoirArea' | 'isChoirMember'>,
   activeChoirMemberships: ActiveChoirMembership[] = [],
-  options?: { isDualMember?: boolean },
+  options?: { isDualMember?: boolean; primaryChoirId?: string | null },
 ): NavSection[] {
   if (options?.isDualMember === false) {
     return []
@@ -472,8 +459,21 @@ export function getPortalNavForUser(
 
   const sections: NavSection[] = [...DUAL_MEMBER_PORTAL]
 
+  if (options?.primaryChoirId && choirAccess.isChoirMember) {
+    sections.unshift({
+      items: [
+        {
+          label: 'My choir',
+          icon: Music,
+          path: choirMemberHome(options.primaryChoirId),
+        },
+      ],
+    })
+  }
+
   if (choirAccess.canAccessChoirArea && choirAccess.isChoirMember) {
     for (const choir of activeChoirMemberships) {
+      if (choir.id === options?.primaryChoirId) continue
       sections.push(CHOIR_DASHBOARD_ENTRY(choir))
     }
   }
@@ -528,7 +528,7 @@ export function getNavForContext(
   permissions: string[] = [],
   activeChoirMemberships: ActiveChoirMembership[] = [],
   capabilityCheck?: (capId: string) => boolean,
-  options?: { isDualMember?: boolean },
+  options?: { isDualMember?: boolean; primaryChoirId?: string | null },
 ): NavSection[] {
   const choirId = parseChoirIdFromPath(pathname)
   if (choirId && choirAccess.canAccessChoirArea) {
@@ -539,7 +539,19 @@ export function getNavForContext(
     return getNavForRole(role)
   }
 
-  return getPortalNavForUser(role, choirAccess, activeChoirMemberships, options)
+  if (pathname.startsWith('/portal') && options?.isDualMember === false) {
+    return []
+  }
+
+  if (pathname.startsWith('/dashboard')) {
+    return []
+  }
+
+  if (pathname.startsWith('/portal')) {
+    return getPortalNavForUser(role, choirAccess, activeChoirMemberships, options)
+  }
+
+  return []
 }
 
 /** @deprecated Use getNavForContext */

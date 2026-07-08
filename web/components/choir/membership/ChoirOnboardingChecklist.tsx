@@ -92,7 +92,7 @@ export function ChoirOnboardingChecklist({ choirId }: Props) {
         id: 'profile',
         label: 'Complete your profile',
         description: 'Add your name so leaders know who you are.',
-        href: '/portal/profile',
+        href: '/account/profile',
         done: profileDone,
       },
       {

@@ -10,7 +10,7 @@ export default function NotificationsPage() {
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
-      <BackButton variant="compact" href="/portal" label="Portal" forceShow />
+      <BackButton variant="compact" forceShow />
       <div>
         <h2 className="font-display text-3xl text-text-primary">Notifications</h2>
         <p className="text-text-secondary text-sm mt-1">

@@ -2,6 +2,8 @@
 
 import { useEffect } from 'react'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { useAuthStore } from '@/stores'
+import { useDualMemberPortalAccess } from '@/lib/portal/access'
 
 export default function DashboardError({
   error,
@@ -10,6 +12,11 @@ export default function DashboardError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const homePath = useAuthStore((s) => s.user?.homePath) ?? '/dashboard'
+  const { isDualMember } = useDualMemberPortalAccess()
+  const homeHref = isDualMember ? '/portal' : homePath
+  const homeLabel = isDualMember ? 'Go to portal' : 'Go to home'
+
   useEffect(() => {
     console.error(error)
   }, [error])
@@ -36,10 +43,10 @@ export default function DashboardError({
           Try again
         </button>
         <a
-          href="/portal"
+          href={homeHref}
           className="inline-flex items-center px-4 py-2.5 text-sm font-semibold border border-border rounded-lg hover:bg-surface-raised"
         >
-          Go to portal
+          {homeLabel}
         </a>
       </div>
     </div>

@@ -138,16 +138,18 @@ export default function Shell({
         id="main-content"
         tabIndex={-1}
         className={cn(
-          'pt-[calc(4rem+env(safe-area-inset-top,0px))] min-h-[100dvh] min-w-0 max-w-full safe-x',
-          'lg:transition-[margin-left] lg:duration-normal lg:ease-out',
-          'lg:ml-[240px]',
-          collapsed && 'lg:ml-16',
+          'pt-[calc(3.5rem+env(safe-area-inset-top,0px))] min-h-[100dvh] min-w-0 max-w-full safe-x',
+          'lg:transition-[margin-left] lg:duration-fast lg:ease-out',
+          'lg:ml-sidebar',
+          collapsed && 'lg:ml-sidebar-collapsed',
         )}
       >
-        <div className="p-3 xs:p-4 sm:p-6 page-enter min-w-0 max-w-full pb-safe-bottom">
-          <ViewAsMemberBanner className="mb-4 rounded-lg" />
-          <WorkspaceContextStrip />
-          {children}
+        <div className="px-4 sm:px-6 lg:px-8 py-5 sm:py-7 page-enter min-w-0 max-w-full pb-safe-bottom">
+          <div className="app-content space-y-5">
+            <ViewAsMemberBanner className="rounded-md" />
+            <WorkspaceContextStrip />
+            {children}
+          </div>
         </div>
       </main>
     </div>

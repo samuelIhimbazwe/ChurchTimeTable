@@ -6,7 +6,7 @@ import {
   UserPlus, Users, KeyRound, Settings2, LayoutDashboard,
   Calendar, ClipboardList, Shield,
 } from 'lucide-react'
-import { choirApi } from '@/lib/api'
+import { choirApi, invitesApi } from '@/lib/api'
 import { choirServiceOpsApi } from '@/lib/api/modules/choirServiceOps'
 import { Card, CapabilityGate, StatTile } from '@/components/shared'
 import { HubQuickLink } from '@/components/choir/ChoirPositionHubShell'
@@ -15,11 +15,16 @@ import { useResolvedChoirScope } from '@/lib/hooks'
 export function ChoirAdminHub() {
   const { choirId, choirLink, choirName } = useResolvedChoirScope()
 
-  const { data: pendingJoins } = useQuery({
-    queryKey: ['choir-join-requests', choirId, 'PENDING'],
-    queryFn: () => choirApi.getJoinRequests({ choirId, status: 'PENDING' }),
+  const { data: pendingInvites } = useQuery({
+    queryKey: ['account-invites', 'CHOIR', 'PENDING', choirId],
+    queryFn: () =>
+      invitesApi.list({ inviteType: 'CHOIR', status: 'PENDING', limit: 50 }),
     enabled: !!choirId,
   })
+
+  const choirPendingInvites = (pendingInvites?.items ?? []).filter(
+    (inv) => inv.choir?.id === choirId,
+  )
 
   const { data: roster } = useQuery({
     queryKey: ['choir-members', choirId, 'admin-count'],
@@ -63,11 +68,11 @@ export function ChoirAdminHub() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatTile
-          label="Pending joins"
-          value={pendingJoins?.length ?? 0}
+          label="Pending invites"
+          value={choirPendingInvites.length}
           icon={UserPlus}
           animate
-          href={choirLink('join-requests')}
+          href={choirLink('member-onboarding')}
         />
         <StatTile
           label="Active roster"
@@ -97,11 +102,15 @@ export function ChoirAdminHub() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <CapabilityGate uiCapability="admin-join-link">
             <HubQuickLink
-              href={choirLink('join-requests')}
-              label="Join requests"
-              desc="Review applicants and assign choir positions"
+              href={choirLink('member-onboarding')}
+              label="Member onboarding"
+              desc="Invite officers with a role or create regular member accounts"
               icon={UserPlus}
-              stat={`${pendingJoins?.length ?? 0} pending`}
+              stat={
+                choirPendingInvites.length > 0
+                  ? `${choirPendingInvites.length} pending invites`
+                  : undefined
+              }
             />
           </CapabilityGate>
           <CapabilityGate uiCapability="admin-roster-link">

@@ -69,7 +69,7 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
         role="dialog"
         aria-modal="true"
         aria-label={tr('Notifications')}
-        className="fixed top-below-topbar left-3 right-3 sm:left-auto sm:right-4 z-50 w-auto sm:w-96 max-w-[calc(100vw-1.5rem)] bg-surface rounded-xl border border-border shadow-overlay animate-page-enter overflow-hidden max-h-below-topbar"
+        className="fixed top-below-topbar left-3 right-3 sm:left-auto sm:right-4 z-50 w-auto sm:w-96 max-w-[calc(100vw-1.5rem)] bg-surface rounded-md border border-border shadow-overlay overflow-hidden max-h-below-topbar"
       >
 
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">

@@ -27,7 +27,9 @@ export function AuthSessionRestore() {
           role: user.role,
           permissions: user.permissions,
           onboardingComplete: user.onboardingComplete,
+          mustChangePassword: user.mustChangePassword,
           homePath: user.homePath,
+          accessRouting: user.accessRouting,
         })
       })
       .catch(() => {

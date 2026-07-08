@@ -38,4 +38,16 @@ export class CreateAccountInviteDto {
   @IsString()
   @MinLength(1)
   choirId?: string;
+
+  /** Committee position role for choir officer invites (required for CHOIR invites). */
+  @ValidateIf((o: CreateAccountInviteDto) => o.inviteType === AccountInviteType.CHOIR)
+  @IsString()
+  @MinLength(1)
+  assignedRoleId?: string;
+
+  /** Committee position role for protocol officer invites (required for PROTOCOL invites). */
+  @ValidateIf((o: CreateAccountInviteDto) => o.inviteType === AccountInviteType.PROTOCOL)
+  @IsString()
+  @MinLength(1)
+  assignedProtocolRoleId?: string;
 }

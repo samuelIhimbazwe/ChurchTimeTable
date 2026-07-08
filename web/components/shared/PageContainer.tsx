@@ -64,7 +64,7 @@ export function PageHeader({
         )}
       >
       <div className="min-w-0 space-y-1">
-        <h2 className="page-heading font-display text-text-primary">{tr(title)}</h2>
+        <h2 className="page-heading font-display font-medium text-text-primary tracking-tight">{tr(title)}</h2>
         {subtitle && (
           <p className="text-sm text-text-secondary leading-relaxed">{tr(subtitle)}</p>
         )}

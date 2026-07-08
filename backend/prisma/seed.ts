@@ -574,13 +574,15 @@ async function main() {
       id: MAIN_CHOIR_ID,
       code: MAIN_CHOIR_CODE,
       name: 'Main Choir',
-      description: 'Legacy container — not a singing choir; excluded from scheduling.',
-      isActive: false,
+      description: 'Default pilot choir workspace — holds legacy MVP data and local QA memberships.',
+      isActive: true,
+      isPublicJoinable: true,
     },
     update: {
       code: MAIN_CHOIR_CODE,
       name: 'Main Choir',
-      isActive: false,
+      isActive: true,
+      isPublicJoinable: true,
     },
   });
 

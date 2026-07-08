@@ -5,7 +5,15 @@ import { useQuery } from '@tanstack/react-query'
 import { memberPortalApi } from '@/lib/api'
 import { useAuthStore } from '@/stores'
 import { deriveChoirAccess, type ChoirAccessState } from '@/lib/choir/access'
-import { normalizeActiveChoirMemberships } from '@/lib/choir/membership-display'
+import {
+  normalizeActiveChoirMemberships,
+  type ActiveChoirMembership,
+} from '@/lib/choir/membership-display'
+import {
+  resolveAllowedChoirMemberships,
+  resolvePrimaryChoirId,
+  shouldBypassChoirScope,
+} from '@/lib/choir/membership-scope'
 
 const EMPTY: ChoirAccessState = {
   isChoirMember: false,
@@ -18,6 +26,7 @@ const EMPTY: ChoirAccessState = {
 export function useChoirAccess() {
   const user = useAuthStore((s) => s.user)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const accessRouting = user?.accessRouting
 
   const { data: membership, isLoading, isError } = useQuery({
     queryKey: ['choir-membership-access'],
@@ -27,10 +36,31 @@ export function useChoirAccess() {
     retry: 1,
   })
 
-  const activeChoirCount =
-    membership?.choirs?.length ??
-    membership?.activeChoirs?.length ??
-    0
+  const allMemberships = useMemo(
+    () => normalizeActiveChoirMemberships(membership),
+    [membership],
+  )
+
+  const bypassScope = shouldBypassChoirScope(user?.role)
+
+  const primaryChoirId = useMemo(
+    () =>
+      membership?.primaryChoirId ??
+      accessRouting?.primaryChoirId ??
+      resolvePrimaryChoirId(allMemberships, accessRouting),
+    [membership?.primaryChoirId, accessRouting, allMemberships],
+  )
+
+  const activeChoirMemberships = useMemo(
+    () =>
+      resolveAllowedChoirMemberships(allMemberships, {
+        primaryChoirId,
+        bypassScope,
+      }),
+    [allMemberships, primaryChoirId, bypassScope],
+  )
+
+  const activeChoirCount = activeChoirMemberships.length
 
   const access = user
     ? deriveChoirAccess({
@@ -40,18 +70,16 @@ export function useChoirAccess() {
       })
     : EMPTY
 
-  const activeChoirMemberships = useMemo(
-    () => normalizeActiveChoirMemberships(membership),
-    [membership],
-  )
-
-  // If membership API failed, still allow staff roles / choir permissions
   if (isError && user) {
     return {
       ...access,
       isLoading: false,
       membership: undefined,
-      activeChoirMemberships: [],
+      allChoirMemberships: [] as ActiveChoirMembership[],
+      activeChoirMemberships: [] as ActiveChoirMembership[],
+      primaryChoirId: accessRouting?.primaryChoirId ?? null,
+      isDualMember: accessRouting?.isDualMember ?? false,
+      bypassChoirScope: bypassScope,
     }
   }
 
@@ -59,6 +87,10 @@ export function useChoirAccess() {
     ...access,
     isLoading: isAuthenticated && isLoading,
     membership,
+    allChoirMemberships: allMemberships,
     activeChoirMemberships,
+    primaryChoirId,
+    isDualMember: accessRouting?.isDualMember ?? false,
+    bypassChoirScope: bypassScope,
   }
 }

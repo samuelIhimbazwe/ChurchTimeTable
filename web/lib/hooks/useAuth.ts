@@ -21,7 +21,9 @@ export function useAuth() {
         role:        user.role,
         permissions: user.permissions,
         onboardingComplete: user.onboardingComplete,
+        mustChangePassword: user.mustChangePassword,
         homePath: user.homePath,
+        accessRouting: user.accessRouting,
       })
       return user
     },
@@ -49,7 +51,9 @@ export function useLogin() {
         role:        data.user.role,
         permissions: data.user.permissions,
         onboardingComplete: data.user.onboardingComplete,
+        mustChangePassword: data.user.mustChangePassword,
         homePath: data.user.homePath,
+        accessRouting: data.user.accessRouting,
       })
       const from = searchParams.get('from')
       const home = data.user.homePath ?? from ?? '/dashboard'
@@ -73,9 +77,11 @@ export function useRegister() {
         role:        data.user.role,
         permissions: data.user.permissions,
         onboardingComplete: data.user.onboardingComplete,
+        mustChangePassword: data.user.mustChangePassword,
         homePath: data.user.homePath,
+        accessRouting: data.user.accessRouting,
       })
-      router.push('/portal')
+      router.push(data.user.homePath ?? '/dashboard')
     },
   })
 }

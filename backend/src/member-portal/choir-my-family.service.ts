@@ -19,19 +19,19 @@ export class ChoirMyFamilyService {
       throw new ForbiddenException('Member profile required');
     }
 
-    const choir = await this.prisma.choir.findFirst({
-      where: { id: choirId, isActive: true },
-      select: { id: true },
-    });
-    if (!choir) {
-      throw new NotFoundException('Choir not found');
-    }
-
     const membership = await this.prisma.choirMembership.findUnique({
       where: { userId_choirId: { userId, choirId } },
     });
     if (!membership?.isActive) {
       throw new ForbiddenException('Not a member of this choir');
+    }
+
+    const choir = await this.prisma.choir.findUnique({
+      where: { id: choirId },
+      select: { id: true, isActive: true },
+    });
+    if (!choir) {
+      throw new NotFoundException('Choir not found');
     }
 
     const familyMember = await this.prisma.familyMember.findUnique({

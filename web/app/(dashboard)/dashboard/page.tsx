@@ -3,12 +3,14 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/stores'
+import { resolveMemberWorkspaceHome } from '@/lib/member-workspace/access'
+import { useChoirAccess } from '@/lib/hooks/useChoirAccess'
+import { useDualMemberPortalAccess } from '@/lib/portal/access'
 
-/** Everyone lands on the member portal first; choir and protocol dashboards are entered deliberately. */
+/** Redirect hub — scoped members never stay on /dashboard. */
 const ROLE_HOME: Record<string, string> = {
   SUPER_ADMIN:              '/choir',
   CHURCH_ADMIN:             '/choir',
-  MEMBER:                   '/dashboard',
   CHOIR_ADMIN:              '/choir',
   CHOIR_LEADER:             '/choir',
   CHOIR_PRESIDENT:          '/choir',
@@ -28,12 +30,24 @@ const ROLE_HOME: Record<string, string> = {
 
 export default function DashboardRedirect() {
   const router = useRouter()
-  const role   = useAuthStore((s) => s.user?.role)
-  const homePath = useAuthStore((s) => s.user?.homePath)
+  const user = useAuthStore((s) => s.user)
+  const { primaryChoirId } = useChoirAccess()
+  const { isDualMember } = useDualMemberPortalAccess()
 
   useEffect(() => {
-    router.replace(homePath ?? ROLE_HOME[role ?? 'MEMBER'] ?? '/dashboard')
-  }, [role, homePath, router])
+    const target =
+      user?.homePath
+      ?? resolveMemberWorkspaceHome({
+        accessRouting: user?.accessRouting,
+        role: user?.role,
+        primaryChoirId,
+        homePath: user?.homePath,
+        isDualMember,
+      })
+      ?? ROLE_HOME[user?.role ?? 'MEMBER']
+      ?? '/dashboard'
+    router.replace(target)
+  }, [user, primaryChoirId, isDualMember, router])
 
   return (
     <div className="flex items-center justify-center h-64">

@@ -7,7 +7,7 @@ import { ProtocolCommitteePanel } from '@/components/protocol/ProtocolCommitteeP
 import { ProtocolMemberRosterPanel } from '@/components/protocol/ProtocolMemberRosterPanel'
 import { Card, StatTile, CapabilityGate } from '@/components/shared'
 import {
-  Users, ClipboardCheck, UserPlus, Shield, Settings2,
+  Users, UserPlus, Shield, Settings2,
 } from 'lucide-react'
 
 export function ProtocolAdminHub() {
@@ -28,12 +28,17 @@ export function ProtocolAdminHub() {
     <ProtocolPositionHubShell
       roleKey="protocol_admin"
       title="Protocol ministry admin"
-      subtitle="Assigned by the president/leader — manage membership, roles, invitations, and claims."
+      subtitle="Assigned by the president/leader — onboard members, manage roles, and invitations."
     >
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatTile label="Active members" value={Number(d.activeMembers ?? 0)} icon={Users} animate />
-        <StatTile label="Pending claims" value={Number(d.pendingClaims ?? 0)} icon={ClipboardCheck} animate />
-        <StatTile label="Open invitations" value={Number(d.pendingInvitations ?? 0)} icon={UserPlus} animate />
+        <StatTile
+          label="Pending invites"
+          value={Number(d.pendingInvitations ?? 0)}
+          icon={UserPlus}
+          animate
+          href="/protocol/member-onboarding"
+        />
         <StatTile label="Team leaders" value={Number(d.activeTeamLeaders ?? 0)} icon={Shield} animate />
       </div>
 
@@ -43,18 +48,17 @@ export function ProtocolAdminHub() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <ProtocolHubQuickLink
-          href="/protocol/invitations"
-          label="Invitations"
-          desc="Invite church members into the protocol ministry."
+          href="/protocol/member-onboarding"
+          label="Member onboarding"
+          desc="Invite officers with a role or create regular member accounts."
           icon={UserPlus}
-          stat={Number(d.pendingInvitations ?? 0) > 0 ? `${d.pendingInvitations} open` : undefined}
         />
         <ProtocolHubQuickLink
-          href="/protocol/claims"
-          label="Membership claims"
-          desc="Review members requesting protocol access."
-          icon={ClipboardCheck}
-          stat={Number(d.pendingClaims ?? 0) > 0 ? `${d.pendingClaims} pending` : undefined}
+          href="/protocol/invitations"
+          label="Church member invitations"
+          desc="Add existing church members to protocol ministry."
+          icon={Users}
+          stat={Number(d.pendingInvitations ?? 0) > 0 ? `${d.pendingInvitations} open` : undefined}
         />
         <ProtocolHubQuickLink
           href="/protocol/team-leaders"

@@ -11,6 +11,8 @@ import {
   shouldShowBackButton,
   type BackTarget,
 } from '@/lib/navigation/back-target'
+import { useAuthStore } from '@/stores'
+import { useDualMemberPortalAccess } from '@/lib/portal/access'
 
 type Variant = 'icon' | 'compact' | 'text'
 
@@ -34,12 +36,15 @@ export function BackButton({
   const router = useRouter()
   const pathname = usePathname()
   const { tr } = useTranslations()
+  const homePath = useAuthStore((s) => s.user?.homePath)
+  const { isDualMember } = useDualMemberPortalAccess()
+  const backCtx = { homePath, isDualMember }
 
   const visible = forceShow || shouldShowBackButton(pathname)
 
   const fallback: BackTarget = {
-    href: href ?? resolveBackTarget(pathname).href,
-    label: label ?? resolveBackTarget(pathname).label,
+    href: href ?? resolveBackTarget(pathname, backCtx).href,
+    label: label ?? resolveBackTarget(pathname, backCtx).label,
   }
 
   const goBack = useCallback(() => {

@@ -33,7 +33,7 @@ export function PortalQuickActionsGrid({
       id: 'choirs',
       label: hasChoirMembership && choirId ? tr('My choir') : tr('Choirs'),
       icon: Music,
-      href: hasChoirMembership && choirId ? choirMemberHome(choirId) : '/portal/choirs',
+      href: hasChoirMembership && choirId ? choirMemberHome(choirId) : '/portal',
       badge: hasChoirMembership ? tr('Member') : undefined,
     },
     {

@@ -4,6 +4,9 @@ import { useMemo } from 'react'
 import Link from 'next/link'
 import { useProtocolDashboardContext } from '@/lib/hooks/useProtocolDashboardContext'
 import { useDualMemberPortalAccess } from '@/lib/portal/access'
+import { resolveMemberWorkspaceHome } from '@/lib/member-workspace/access'
+import { useAuthStore } from '@/stores'
+import { useChoirAccess } from '@/lib/hooks/useChoirAccess'
 import { ProtocolDashboardCtx } from '@/components/protocol/ProtocolDashboardProvider'
 import { ProtocolModuleTabBar } from '@/components/protocol/ProtocolModuleTabBar'
 import { ProtocolMobileTabBar } from '@/components/protocol/ProtocolMobileTabBar'
@@ -14,6 +17,15 @@ import { ArrowLeft, Shield } from 'lucide-react'
 export default function ProtocolScopedLayout({ children }: { children: React.ReactNode }) {
   const { data: context, isLoading, isError } = useProtocolDashboardContext()
   const { isDualMember, isLoading: loadingPortalAccess } = useDualMemberPortalAccess()
+  const user = useAuthStore((s) => s.user)
+  const { primaryChoirId } = useChoirAccess()
+  const deniedHome = resolveMemberWorkspaceHome({
+    accessRouting: user?.accessRouting,
+    role: user?.role,
+    primaryChoirId,
+    homePath: user?.homePath,
+    isDualMember,
+  })
 
   const accessDenied = isError || (context != null && context.canAccess === false)
 
@@ -42,10 +54,10 @@ export default function ProtocolScopedLayout({ children }: { children: React.Rea
             You need an approved protocol membership to open this dashboard.
           </p>
           <Link
-            href={isDualMember ? '/portal' : '/dashboard'}
+            href={deniedHome}
             className="mt-4 block text-center text-sm font-semibold text-primary-600"
           >
-            {isDualMember ? 'Back to member portal →' : 'Back to dashboard →'}
+            {isDualMember ? 'Back to member portal →' : 'Back to your workspace →'}
           </Link>
         </Card>
       </div>

@@ -37,7 +37,7 @@ export function ProtocolModuleTabBar() {
   if (tabs.length < 2) return null
 
   return (
-    <div className="sticky top-[calc(4rem+env(safe-area-inset-top,0px))] z-20 -mx-3 sm:-mx-4 md:-mx-6 bg-surface border-b border-border shadow-sm">
+    <div className="sticky top-below-topbar z-20 -mx-3 sm:-mx-4 md:-mx-6 bg-surface/95 backdrop-blur-sm border-b border-border">
       <nav
         className="scroll-strip px-3 sm:px-4 md:px-6 py-2 flex gap-1.5"
         aria-label="Protocol module sections"

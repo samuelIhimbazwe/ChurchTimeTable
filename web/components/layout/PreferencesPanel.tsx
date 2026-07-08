@@ -9,6 +9,8 @@ import { useSetAppLocale, useTranslations, APP_LOCALES, LOCALE_NAMES, type AppLo
 import { useFocusTrap } from '@/lib/hooks/useFocusTrap'
 import { useViewAsStore } from '@/lib/governance/view-as-store'
 import { canUseMemberPreview } from '@/lib/governance/permissions-preview'
+import { accountProfilePath } from '@/lib/account/paths'
+import { useDualMemberPortalAccess } from '@/lib/portal/access'
 
 interface PreferencesPanelProps {
   open:    boolean
@@ -47,6 +49,8 @@ export default function PreferencesPanel({ open, onClose }: PreferencesPanelProp
   const permissions = useAuthStore((s) => s.user?.permissions ?? EMPTY_PERMISSIONS)
   const showMemberPreview = canUseMemberPreview(permissions)
   const { tr } = useTranslations()
+  const { isDualMember } = useDualMemberPortalAccess()
+  const profileHref = accountProfilePath(isDualMember)
 
   if (!open) return null
 
@@ -65,7 +69,7 @@ export default function PreferencesPanel({ open, onClose }: PreferencesPanelProp
         role="dialog"
         aria-modal="true"
         aria-label={tr('Preferences')}
-        className="fixed top-below-topbar left-3 right-3 sm:left-auto sm:right-4 z-50 w-auto sm:w-96 max-w-[calc(100vw-1.5rem)] bg-surface rounded-xl border border-border shadow-overlay animate-page-enter overflow-hidden max-h-below-topbar"
+        className="fixed top-below-topbar left-3 right-3 sm:left-auto sm:right-4 z-50 w-auto sm:w-96 max-w-[calc(100vw-1.5rem)] bg-surface rounded-md border border-border shadow-overlay overflow-hidden max-h-below-topbar"
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <div className="flex items-center gap-2">
@@ -222,7 +226,7 @@ export default function PreferencesPanel({ open, onClose }: PreferencesPanelProp
               {tr('Account')}
             </p>
             <Link
-              href="/portal/profile"
+              href={profileHref}
               onClick={onClose}
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-border hover:bg-surface-raised transition-colors"
             >

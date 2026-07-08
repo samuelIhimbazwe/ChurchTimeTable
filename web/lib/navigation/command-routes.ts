@@ -1,3 +1,5 @@
+import type { MemberWorkspaceScope } from '@/lib/member-workspace/access'
+import { choirMemberHome } from '@/lib/choir/paths'
 import {
   LayoutDashboard,
   Users,
@@ -124,6 +126,58 @@ export const STATIC_COMMANDS: CommandItem[] = [
     group: 'Actions',
   },
 ]
+
+export function filterCommandsForMemberScope(
+  commands: CommandItem[],
+  scope: MemberWorkspaceScope,
+  options?: {
+    isDualMember?: boolean
+    primaryChoirId?: string | null
+    profileHref?: string
+  },
+): CommandItem[] {
+  if (scope === 'staff') return commands
+
+  const choirHome = options?.primaryChoirId
+    ? choirMemberHome(options.primaryChoirId)
+    : null
+
+  const hiddenForScoped = new Set([
+    'nav-choir',
+    'nav-choir-members',
+    'nav-choir-activities',
+    'nav-choir-scheduling',
+    'nav-choir-analytics',
+    'nav-choir-welfare',
+    'nav-choir-music',
+  ])
+
+  return commands
+    .filter((c) => {
+      if (c.id === 'nav-portal') return options?.isDualMember === true
+      if (scope === 'choir-only') {
+        if (c.id === 'nav-protocol') return false
+        if (c.id !== 'nav-choir' && hiddenForScoped.has(c.id)) return false
+      }
+      if (scope === 'protocol-only') {
+        if (hiddenForScoped.has(c.id)) return false
+      }
+      if (scope === 'dual') {
+        if (hiddenForScoped.has(c.id)) return false
+        if (c.id === 'nav-protocol' && c.href === '/protocol') return false
+      }
+      return true
+    })
+    .map((c) => {
+      if (c.id === 'nav-profile' && options?.profileHref) {
+        return { ...c, href: options.profileHref }
+      }
+      if (scope === 'choir-only' && c.id === 'nav-choir' && choirHome) {
+        return { ...c, href: choirHome, label: 'My choir' }
+      }
+      return c
+    })
+}
 
 export function filterCommands(query: string, items: CommandItem[]): CommandItem[] {
   const q = query.trim().toLowerCase()

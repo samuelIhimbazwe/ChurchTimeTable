@@ -12,7 +12,7 @@ import {
   membershipNavActiveSegment,
   membershipOfficePath,
 } from '@/lib/choir/membership-office'
-import { hasMemberLeadershipOffice } from '@/lib/choir/member-leadership-offices'
+import { resolveMemberLeadershipOffices } from '@/lib/choir/member-leadership-offices'
 import { MemberAttentionStrip } from '@/components/choir/membership/MemberAttentionStrip'
 import { MemberRecognitionStrip } from '@/components/choir/membership/MemberRecognitionStrip'
 import { OfficeShellFrame } from '@/components/choir/OfficeShellFrame'
@@ -74,9 +74,9 @@ export function MemberOfficeShell({ choirId, children }: Props) {
 
   const memberHeader = totals?.member
 
-  const showOfficeTab = useMemo(
+  const leadershipOffices = useMemo(
     () =>
-      hasMemberLeadershipOffice(
+      resolveMemberLeadershipOffices(
         choirId,
         context,
         familyCtx?.families?.map((f) => ({
@@ -88,33 +88,29 @@ export function MemberOfficeShell({ choirId, children }: Props) {
   )
 
   const navItems = useMemo(() => {
-    const items = MEMBERSHIP_OFFICE_NAV.flatMap((item) => {
-      const entry = {
-        id: item.id,
-        label: item.label,
-        href: membershipOfficePath(choirId, item.segment || undefined),
-        active: activeSegment === item.segment,
-        badge: item.id === 'obligations' ? obligationCount : undefined,
-      }
+    const membershipEntries = MEMBERSHIP_OFFICE_NAV.map((item) => ({
+      id: item.id,
+      label: item.label,
+      href: membershipOfficePath(choirId, item.segment || undefined),
+      active: activeSegment === item.segment,
+      badge: item.id === 'obligations' ? obligationCount : undefined,
+      kind: 'membership' as const,
+    }))
 
-      if (item.id === 'announcements' && showOfficeTab) {
-        return [
-          entry,
-          {
-            id: 'office',
-            label: 'Office',
-            href: membershipOfficePath(choirId, 'office'),
-            active: activeSegment === 'office',
-            badge: undefined,
-          },
-        ]
-      }
+    const officeEntries = leadershipOffices.map((office) => ({
+      id: office.id,
+      label: office.label,
+      href: office.href,
+      active:
+        pathname === office.href || pathname.startsWith(`${office.href}/`),
+      kind: 'office' as const,
+    }))
 
-      return [entry]
-    })
+    if (officeEntries.length === 0) return membershipEntries
 
-    return items
-  }, [choirId, activeSegment, obligationCount, showOfficeTab])
+    const [week, ...rest] = membershipEntries
+    return [week, ...officeEntries, ...rest]
+  }, [choirId, activeSegment, obligationCount, leadershipOffices, pathname])
 
   const meta = (memberHeader || myFamily?.family) ? (
     <>
@@ -208,6 +204,8 @@ export function MemberOfficeShell({ choirId, children }: Props) {
         choirId={choirId}
         activeSegment={activeSegment}
         todoCount={obligationCount}
+        offices={leadershipOffices.map((o) => ({ label: o.label, href: o.href }))}
+        pathname={pathname}
       />
     </OfficeShellFrame>
   )

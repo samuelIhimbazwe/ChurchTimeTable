@@ -61,6 +61,7 @@ mobile/.gradle/
 
 # Misc
 *.log
+recordings/
 
 # Web rebuild backups (local only)
 web_old_*/

@@ -308,12 +308,24 @@ async function upsertOperationAssignment(
   });
 }
 
+async function ensurePilotChoirActive() {
+  await prisma.choir.update({
+    where: { id: MAIN_CHOIR_ID },
+    data: {
+      isActive: true,
+      description: 'Pilot choir — Main Choir workspace for local QA.',
+    },
+  });
+}
+
 async function main() {
+  await ensurePilotChoirActive();
   await upsertPilotUser(
     'choir.president@church.local',
     ROLES.CHOIR_PRESIDENT,
     { firstName: 'Jean', lastName: 'Mukiza', ministry: 'CHOIR' },
   );
+  await assignChoirCommitteeRole('choir.president@church.local', 'president');
   await upsertPilotUser(
     'choir.vice@church.local',
     ROLES.CHOIR_VICE_PRESIDENT,
@@ -840,6 +852,21 @@ async function main() {
   await assignFamilyRole('choir.asstfamily@church.local', pilotFamilyB.id, FamilyMemberRole.ASSISTANT_HEAD);
   await assignFamilyRole('choir.familysec@church.local', pilotFamilyB.id, FamilyMemberRole.SECRETARY);
   await assignFamilyRole('choir.singer@church.local', pilotFamilyB.id, FamilyMemberRole.MEMBER);
+
+  // Executive officers — Pilot Family Alpha (contribution / giving QA)
+  for (const email of [
+    'choir.president@church.local',
+    'choir.vice@church.local',
+    'choir.secretary@church.local',
+    'choir.treasurer@church.local',
+    'choir.rehearsal@church.local',
+    'choir.logistics@church.local',
+    'choir.committee@church.local',
+    'choir.welfare@church.local',
+    'choir.spiritual@church.local',
+  ]) {
+    await assignFamilyRole(email, pilotFamily.id, FamilyMemberRole.MEMBER);
+  }
 
   for (const email of [
     'protocol.leader@church.local',

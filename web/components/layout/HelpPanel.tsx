@@ -14,6 +14,10 @@ import { KEYBOARD_SHORTCUTS } from '@/lib/accessibility/keyboard-shortcuts'
 import { useFocusTrap } from '@/lib/hooks/useFocusTrap'
 import { startProductTourReplay } from '@/components/tour/ProductTourProvider'
 import { useDualMemberPortalAccess } from '@/lib/portal/access'
+import { accountProfilePath } from '@/lib/account/paths'
+import { resolveMemberWorkspaceHome } from '@/lib/member-workspace/access'
+import { useAuthStore } from '@/stores'
+import { useChoirAccess } from '@/lib/hooks/useChoirAccess'
 
 interface HelpPanelProps {
   open:    boolean
@@ -28,6 +32,15 @@ export default function HelpPanel({ open, onClose, onOpenSearch }: HelpPanelProp
   const { shell: s, tr, locale } = useTranslations()
   const tourStrings = tourUi[locale]
   const { isDualMember } = useDualMemberPortalAccess()
+  const user = useAuthStore((s) => s.user)
+  const { primaryChoirId } = useChoirAccess()
+  const workspaceHome = resolveMemberWorkspaceHome({
+    accessRouting: user?.accessRouting,
+    role: user?.role,
+    primaryChoirId,
+    homePath: user?.homePath,
+    isDualMember,
+  })
 
   if (!open) return null
 
@@ -35,10 +48,15 @@ export default function HelpPanel({ open, onClose, onOpenSearch }: HelpPanelProp
     ...(isDualMember
       ? [
           { href: '/portal', label: tr('Member portal'), icon: Home, desc: s.memberPortalDesc },
-          { href: '/portal/profile', label: tr('My Profile'), icon: User, desc: s.myProfileDesc },
         ]
       : []),
-    { href: '/dashboard', label: tr('Dashboard'), icon: Home, desc: s.dashboardDesc },
+    { href: accountProfilePath(isDualMember), label: tr('My Profile'), icon: User, desc: s.myProfileDesc },
+    {
+      href: workspaceHome,
+      label: isDualMember ? tr('Member portal') : tr('My choir'),
+      icon: Home,
+      desc: isDualMember ? s.memberPortalDesc : s.dashboardDesc,
+    },
   ]
 
   const shortcutGroups = KEYBOARD_SHORTCUTS.reduce<Record<string, typeof KEYBOARD_SHORTCUTS>>(
@@ -59,7 +77,7 @@ export default function HelpPanel({ open, onClose, onOpenSearch }: HelpPanelProp
         role="dialog"
         aria-modal="true"
         aria-label={s.helpTitle}
-        className="fixed top-below-topbar left-3 right-3 sm:left-auto sm:right-4 z-50 w-auto sm:w-96 max-w-[calc(100vw-1.5rem)] bg-surface rounded-xl border border-border shadow-overlay animate-page-enter overflow-hidden max-h-below-topbar"
+        className="fixed top-below-topbar left-3 right-3 sm:left-auto sm:right-4 z-50 w-auto sm:w-96 max-w-[calc(100vw-1.5rem)] bg-surface rounded-md border border-border shadow-overlay overflow-hidden max-h-below-topbar"
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <div className="flex items-center gap-2">

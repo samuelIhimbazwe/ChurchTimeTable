@@ -34,6 +34,13 @@ export default function PortalProtocolPage() {
         </p>
       </div>
 
+      <Card padding="md" accent="info">
+        <p className="text-sm text-text-secondary">
+          <strong className="text-text-primary">Internal membership.</strong> Protocol access is
+          granted by your ministry administrator — not via self-service claims on the portal.
+        </p>
+      </Card>
+
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => <SkeletonStatTile key={i} />)

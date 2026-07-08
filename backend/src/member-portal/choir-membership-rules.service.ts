@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ChoirKind } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { YERUSALEMU_CHOIR_CODE } from './member-portal.constants';
@@ -148,9 +153,20 @@ export class ChoirMembershipRulesService {
     const active = await this.prisma.choirMembership.findMany({
       where: { userId, isActive: true },
       include: { choir: { select: { name: true, code: true, choirKind: true } } },
+      orderBy: { joinedAt: 'asc' },
     });
+    const refs = active.map((m) => ({
+      choirId: m.choirId,
+      code: m.choir.code,
+      kind: m.choir.choirKind,
+    }));
+    const workspaceIds = this.resolveWorkspaceChoirIds(refs);
+    const primaryChoirId = this.resolvePrimaryChoirId(refs);
+    const scoped = active.filter((m) => workspaceIds.has(m.choirId));
+
     return {
-      activeChoirs: active.map((m) => ({
+      primaryChoirId,
+      activeChoirs: scoped.map((m) => ({
         id: m.choirId,
         name: m.choir.name,
         code: m.choir.code,
@@ -162,5 +178,43 @@ export class ChoirMembershipRulesService {
         yerusalemuCode: YERUSALEMU_CHOIR_CODE,
       },
     };
+  }
+
+  /** Choir workspaces a regular member may open (primary + optional Yerusalemu). */
+  resolveWorkspaceChoirIds(activeMemberships: ActiveChoirRef[]): Set<string> {
+    if (activeMemberships.length === 0) return new Set();
+
+    const primary = this.resolvePrimaryChoirIdFromRefs(activeMemberships);
+    const allowed = new Set<string>();
+    if (primary) allowed.add(primary);
+
+    const yerusalemu = activeMemberships.find((m) =>
+      this.isYerusalemuChoir({ code: m.code, choirKind: m.kind }),
+    );
+    if (yerusalemu) allowed.add(yerusalemu.choirId);
+
+    return allowed;
+  }
+
+  resolvePrimaryChoirId(activeMemberships: ActiveChoirRef[]): string | null {
+    return this.resolvePrimaryChoirIdFromRefs(activeMemberships);
+  }
+
+  private resolvePrimaryChoirIdFromRefs(
+    activeMemberships: ActiveChoirRef[],
+  ): string | null {
+    const primary = activeMemberships.find(
+      (m) =>
+        m.code !== YERUSALEMU_CHOIR_CODE && this.isPrimaryChoirKind(m.kind),
+    );
+    return primary?.choirId ?? activeMemberships[0]?.choirId ?? null;
+  }
+
+  async assertChoirWorkspaceAccess(userId: string, choirId: string): Promise<void> {
+    const activeMemberships = await this.loadActiveChoirRefs(userId);
+    const allowed = this.resolveWorkspaceChoirIds(activeMemberships);
+    if (!allowed.has(choirId)) {
+      throw new ForbiddenException('Choir workspace not available');
+    }
   }
 }

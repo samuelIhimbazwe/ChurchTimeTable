@@ -59,11 +59,19 @@ export default function Sidebar({
   const { tr }    = useTranslations()
   const authRole  = useAuthStore((s) => s.user?.role) ?? role
   const permissions = useAuthStore((s) => s.user?.permissions ?? EMPTY_PERMISSIONS)
-  const { canAccessChoirArea, isChoirMember, isLoading: loadingChoirAccess, activeChoirMemberships } = useChoirAccess()
   const choirId = parseChoirIdFromPath(pathname)
+  const {
+    activeChoirMemberships,
+    isLoading: loadingChoirAccess,
+    primaryChoirId,
+    canAccessChoirArea,
+    isChoirMember,
+  } = useChoirAccess()
   const contextChoirId =
     choirId
-    ?? (pathname.startsWith('/choir') ? activeChoirMemberships[0]?.id : undefined)
+    ?? (pathname.startsWith('/choir')
+      ? (primaryChoirId ?? activeChoirMemberships[0]?.id)
+      : undefined)
   const inProtocolArea = isProtocolDashboardPath(pathname)
   const { data: choirCtx } = useChoirDashboardContext(contextChoirId)
   const contributionAuth = choirCtx?.contributionAuth
@@ -88,9 +96,9 @@ export default function Sidebar({
 
   const rawSections = (() => {
     if (loadingChoirAccess || loadingPortalAccess || (inProtocolArea && loadingProtocolCtx)) {
-      return getPortalNavForUser(authRole, { canAccessChoirArea: false, isChoirMember: false }, [], { isDualMember: false })
+      return getPortalNavForUser(authRole, { canAccessChoirArea: false, isChoirMember: false }, [], { isDualMember: false, primaryChoirId: null })
     }
-    if (choirId && (choirCtx || membershipForPath)) {
+    if (choirId && (choirCtx || membershipForPath) && membershipForPath) {
       return getComposedChoirNav(
         choirId,
         choirCtx?.choir.name ?? membershipForPath!.name,
@@ -117,7 +125,7 @@ export default function Sidebar({
       permissions,
       activeChoirMemberships,
       choirCtx ? capabilityCheck : undefined,
-      { isDualMember },
+      { isDualMember, primaryChoirId },
     )
   })()
 
@@ -213,40 +221,40 @@ export default function Sidebar({
       data-tour="nav-sidebar"
       className={cn(
         'fixed inset-y-0 left-0 z-40 flex flex-col',
-        'bg-primary-900 text-text-inverse',
-        'transition-[width] duration-normal ease-out',
-        isMobile ? 'w-[min(280px,85vw)]' : collapsed ? 'w-16' : 'w-[240px]',
+        'bg-surface border-r border-border',
+        'transition-[width] duration-fast ease-out',
+        isMobile ? 'w-[min(260px,85vw)]' : collapsed ? 'w-sidebar-collapsed' : 'w-sidebar',
       )}
     >
-      {/* Logo */}
+      {/* Brand */}
       <div className={cn(
-        'flex items-center gap-3 px-4 border-b border-primary-800 dark:border-[#1E2D4A]',
-        'h-16 shrink-0',
+        'flex items-center gap-2.5 px-4 border-b border-border',
+        'h-14 shrink-0',
         collapsed && 'justify-center px-0',
       )}>
-        <div className="flex items-center justify-center w-8 h-8 rounded-md bg-gold-500 shrink-0">
-          <span className="font-display font-bold text-primary-900 text-sm">C</span>
+        <div className="flex items-center justify-center w-7 h-7 rounded-sm border border-gold-500/40 bg-gold-50 shrink-0">
+          <span className="font-display font-semibold text-gold-700 text-sm leading-none">C</span>
         </div>
         {!collapsed && (
-          <div className="overflow-hidden">
-            <p className="font-display font-semibold text-base text-text-inverse leading-tight truncate">
+          <div className="overflow-hidden min-w-0">
+            <p className="font-display font-semibold text-[15px] text-text-primary leading-tight truncate tracking-tight">
               CMMS
             </p>
-            <p className="text-xs text-primary-300 truncate">{tr('Choir & Protocol')}</p>
+            <p className="text-[11px] text-text-muted truncate">{tr('Choir & Protocol')}</p>
           </div>
         )}
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-4 space-y-6">
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto py-3 space-y-5 scrollbar-thin">
         {sections.map((sec, si) => (
           <div key={si}>
             {sec.section && !collapsed && (
-              <p className="px-4 mb-1 text-xs font-semibold uppercase tracking-widest text-primary-400">
+              <p className="px-4 mb-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-text-muted">
                 {sec.section}
               </p>
             )}
-            <ul className="space-y-0.5 px-2">
+            <ul className="space-y-px px-2">
               {sec.items.map((item) => {
                 const active = pathname === item.path ||
                   (item.path !== '/dashboard' && item.path !== '/portal' &&
@@ -259,23 +267,24 @@ export default function Sidebar({
                       title={collapsed ? item.label : undefined}
                       onClick={onNavigate}
                       className={cn(
-                        'group flex items-center gap-3 rounded-md px-3 py-2.5',
-                        'text-sm font-medium transition-colors duration-fast',
-                        'relative overflow-hidden',
+                        'group flex items-center gap-2.5 rounded-md px-2.5 py-2',
+                        'text-[13px] transition-colors duration-fast',
+                        'relative',
                         active
-                          ? 'bg-primary-800 dark:bg-[#1E2D4A] text-text-inverse'
-                          : 'text-primary-300 hover:bg-primary-800/60 dark:hover:bg-[#1E2D4A]/60 hover:text-text-inverse',
-                        collapsed && 'justify-center px-0 w-10 mx-auto',
+                          ? 'bg-surface-raised text-text-primary font-medium'
+                          : 'text-text-secondary hover:bg-surface-raised/80 hover:text-text-primary font-normal',
+                        collapsed && 'justify-center px-0 w-9 mx-auto',
                       )}
                     >
                       {active && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-gold-500 rounded-full" />
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-gold-500 rounded-full" />
                       )}
                       <Icon
-                        size={18}
+                        size={16}
+                        strokeWidth={active ? 2.25 : 1.75}
                         className={cn(
                           'shrink-0 transition-colors duration-fast',
-                          active ? 'text-gold-400' : 'text-primary-400 group-hover:text-gold-300',
+                          active ? 'text-gold-600' : 'text-text-muted group-hover:text-text-secondary',
                         )}
                       />
                       {!collapsed && (
@@ -290,27 +299,29 @@ export default function Sidebar({
         ))}
       </nav>
 
-      {/* Collapse toggle — desktop only */}
-      {!isMobile && <div className="shrink-0 border-t border-primary-800 dark:border-[#1E2D4A] p-2">
-        <button
-          onClick={toggle}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className={cn(
-            'flex items-center justify-center w-full rounded-md py-2',
-            'text-primary-400 hover:text-text-inverse hover:bg-primary-800 dark:hover:bg-[#1E2D4A]',
-            'transition-colors duration-fast',
-          )}
-        >
-          {collapsed
-            ? <ChevronRight size={16} />
-            : (
-              <span className="flex items-center gap-2 text-xs">
-                <ChevronLeft size={16} /> {tr('Collapse')}
-              </span>
-            )
-          }
-        </button>
-      </div>}
+      {/* Collapse — desktop only */}
+      {!isMobile && (
+        <div className="shrink-0 border-t border-border p-2">
+          <button
+            onClick={toggle}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className={cn(
+              'flex items-center justify-center w-full rounded-md py-1.5',
+              'text-text-muted hover:text-text-primary hover:bg-surface-raised',
+              'transition-colors duration-fast text-xs',
+            )}
+          >
+            {collapsed
+              ? <ChevronRight size={15} />
+              : (
+                <span className="flex items-center gap-1.5">
+                  <ChevronLeft size={15} /> {tr('Collapse')}
+                </span>
+              )
+            }
+          </button>
+        </div>
+      )}
     </aside>
   )
 }

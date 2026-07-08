@@ -28,7 +28,9 @@ export interface AuthUser {
   role: string
   permissions: string[]
   onboardingComplete: boolean
+  mustChangePassword?: boolean
   homePath?: string
+  accessRouting?: AccessRouting
 }
 
 export interface AccessRouting {
@@ -51,6 +53,7 @@ interface MeResponse {
   roles: string[]
   permissions: string[]
   onboardingCompleted: boolean
+  mustChangePassword?: boolean
   preferredLanguage?: string
   member?: {
     id: string
@@ -82,7 +85,9 @@ function mapMeToAuthUser(me: MeResponse): AuthUser {
     role: me.roles[0] ?? 'MEMBER',
     permissions: me.permissions,
     onboardingComplete: me.onboardingCompleted,
+    mustChangePassword: me.mustChangePassword,
     homePath: me.accessRouting?.homePath,
+    accessRouting: me.accessRouting,
   }
 }
 
@@ -177,9 +182,14 @@ export const authApi = {
         lastName: string
         inviteType: string
         choir?: { id: string; name: string; code: string } | null
+        assignedRole?: { id: string; name: string } | null
+        assignedProtocolRole?: { id: string; name: string } | null
         expiresAt: string
       }
     >('/auth/invite', { params: { token } }),
+
+  changePassword: (payload: { currentPassword: string; newPassword: string }) =>
+    apiClient.patch<never, { ok: boolean }>('/auth/change-password', payload),
 
   acceptInvite: async (payload: {
     token: string

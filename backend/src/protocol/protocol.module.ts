@@ -31,6 +31,9 @@ import { ProtocolDocumentsService } from './protocol-documents.service';
 import { ProtocolMemberRecognitionService } from './protocol-member-recognition.service';
 import { ProtocolMonthlyScheduleService } from './protocol-monthly-schedule.service';
 import { ProtocolCommunicationsService } from './protocol-communications.service';
+import { MemberNumberModule } from '../members/member-number.module';
+import { ProtocolMembershipService } from '../member-portal/protocol-membership.service';
+import { MemberMinistryScopeService } from '../member-portal/member-ministry-scope.service';
 
 @Module({
   imports: [
@@ -43,6 +46,7 @@ import { ProtocolCommunicationsService } from './protocol-communications.service
     FinanceModule,
     ChoirHttpAccessModule,
     ChoirSchedulingModule,
+    MemberNumberModule,
   ],
   controllers: [ProtocolController],
   providers: [
@@ -68,6 +72,8 @@ import { ProtocolCommunicationsService } from './protocol-communications.service
     ProtocolMemberRecognitionService,
     ProtocolMonthlyScheduleService,
     ProtocolCommunicationsService,
+    ProtocolMembershipService,
+    MemberMinistryScopeService,
   ],
   exports: [ProtocolTeamsService, ProtocolDashboardService],
 })

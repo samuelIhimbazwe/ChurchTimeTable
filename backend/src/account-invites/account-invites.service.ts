@@ -20,6 +20,7 @@ import { ROLES } from '../common/constants/roles';
 import { paginate, paginatedResult } from '../common/dto/pagination.dto';
 import { MemberNumberService } from '../members/member-number.service';
 import { AppLinkService } from '../messaging/app-link.service';
+import { OnboardingDeliveryService } from '../messaging/onboarding-delivery.service';
 import { MemberMinistryScopeService } from '../member-portal/member-ministry-scope.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAccountInviteDto } from './dto/create-account-invite.dto';
@@ -52,6 +53,7 @@ export class AccountInvitesService {
     private appLinks: AppLinkService,
     private memberNumberService: MemberNumberService,
     private ministryScope: MemberMinistryScopeService,
+    private onboardingDelivery: OnboardingDeliveryService,
   ) {}
 
   async create(actorUserId: string, dto: CreateAccountInviteDto) {
@@ -83,6 +85,43 @@ export class AccountInvitesService {
       }
     }
 
+    let assignedRoleId: string | null = null;
+    if (dto.inviteType === AccountInviteType.CHOIR) {
+      if (!dto.assignedRoleId) {
+        throw new BadRequestException(
+          'assignedRoleId is required for choir officer invites',
+        );
+      }
+      const role = await this.prisma.choirCommitteeRole.findFirst({
+        where: { id: dto.assignedRoleId, choirId: dto.choirId! },
+      });
+      if (!role) {
+        throw new BadRequestException('Invalid choir position role');
+      }
+      if (role.name === 'choir_member') {
+        throw new BadRequestException(
+          'Regular members are added via account provisioning, not invite links',
+        );
+      }
+      assignedRoleId = role.id;
+    }
+
+    let assignedProtocolRoleId: string | null = null;
+    if (dto.inviteType === AccountInviteType.PROTOCOL) {
+      if (!dto.assignedProtocolRoleId) {
+        throw new BadRequestException(
+          'assignedProtocolRoleId is required for protocol officer invites',
+        );
+      }
+      const role = await this.prisma.protocolCommitteeRole.findFirst({
+        where: { id: dto.assignedProtocolRoleId, ministryId: 'protocol-ministry' },
+      });
+      if (!role) {
+        throw new BadRequestException('Invalid protocol position role');
+      }
+      assignedProtocolRoleId = role.id;
+    }
+
     const pending = await this.prisma.accountInvite.findFirst({
       where: { email, status: AccountInviteStatus.PENDING },
     });
@@ -105,17 +144,29 @@ export class AccountInvitesService {
         phone: dto.phone?.trim() || null,
         inviteType: dto.inviteType,
         choirId: dto.choirId ?? null,
+        assignedRoleId,
+        assignedProtocolRoleId,
         tokenHash,
         expiresAt,
         invitedByUserId: actorUserId,
       },
       include: {
         choir: { select: { id: true, name: true, code: true } },
+        assignedRole: { select: { id: true, name: true } },
+        assignedProtocolRole: { select: { id: true, name: true } },
       },
     });
 
     const inviteUrl = this.appLinks.acceptInvite(rawToken);
-    this.deliverInviteLink(email, inviteUrl);
+    const whatsappMessage = this.buildWhatsAppMessage(invite, inviteUrl);
+    await this.deliverInviteLink(
+      email,
+      invite.phone,
+      invite.firstName,
+      invite.inviteType,
+      inviteUrl,
+      whatsappMessage,
+    );
 
     await this.audit.log({
       userId: actorUserId,
@@ -194,6 +245,7 @@ export class AccountInvitesService {
       },
       include: {
         choir: { select: { id: true, name: true, code: true } },
+        assignedRole: { select: { id: true, name: true } },
       },
     });
 
@@ -232,11 +284,21 @@ export class AccountInvitesService {
       data: { tokenHash, expiresAt },
       include: {
         choir: { select: { id: true, name: true, code: true } },
+        assignedRole: { select: { id: true, name: true } },
+        assignedProtocolRole: { select: { id: true, name: true } },
       },
     });
 
     const inviteUrl = this.appLinks.acceptInvite(rawToken);
-    this.deliverInviteLink(invite.email, inviteUrl);
+    const whatsappMessage = this.buildWhatsAppMessage(updated, inviteUrl);
+    await this.deliverInviteLink(
+      invite.email,
+      invite.phone,
+      invite.firstName,
+      invite.inviteType,
+      inviteUrl,
+      whatsappMessage,
+    );
 
     await this.audit.log({
       userId: actorUserId,
@@ -267,6 +329,15 @@ export class AccountInvitesService {
       lastName: invite.lastName,
       inviteType: invite.inviteType,
       choir: invite.choir,
+      assignedRole: invite.assignedRole
+        ? { id: invite.assignedRole.id, name: invite.assignedRole.name }
+        : null,
+      assignedProtocolRole: invite.assignedProtocolRole
+        ? {
+            id: invite.assignedProtocolRole.id,
+            name: invite.assignedProtocolRole.name,
+          }
+        : null,
       expiresAt: invite.expiresAt.toISOString(),
     };
   }
@@ -317,6 +388,7 @@ export class AccountInvitesService {
         data: {
           email: invite.email,
           passwordHash,
+          mustChangePassword: true,
           termsAcceptedAt: new Date(),
           member: {
             create: {
@@ -346,6 +418,30 @@ export class AccountInvitesService {
             isActive: true,
           },
         });
+
+        if (invite.assignedRoleId && created.member) {
+          await tx.choirCommitteeMember.upsert({
+            where: {
+              choirId_memberId_roleId: {
+                choirId: invite.choirId!,
+                memberId: created.member.id,
+                roleId: invite.assignedRoleId,
+              },
+            },
+            create: {
+              choirId: invite.choirId!,
+              memberId: created.member.id,
+              roleId: invite.assignedRoleId,
+              assignedBy: invite.invitedByUserId,
+              effectiveEnd: null,
+            },
+            update: {
+              assignedBy: invite.invitedByUserId,
+              assignedAt: new Date(),
+              effectiveEnd: null,
+            },
+          });
+        }
       }
 
       if (
@@ -362,6 +458,28 @@ export class AccountInvitesService {
             status: 'ACTIVE',
           },
         });
+
+        if (invite.assignedProtocolRoleId && created.member) {
+          await tx.protocolCommitteeMember.upsert({
+            where: {
+              ministryId_memberId_roleId: {
+                ministryId: 'protocol-ministry',
+                memberId: created.member.id,
+                roleId: invite.assignedProtocolRoleId,
+              },
+            },
+            create: {
+              ministryId: 'protocol-ministry',
+              memberId: created.member.id,
+              roleId: invite.assignedProtocolRoleId,
+              assignedBy: invite.invitedByUserId,
+            },
+            update: {
+              assignedBy: invite.invitedByUserId,
+              assignedAt: new Date(),
+            },
+          });
+        }
       }
 
       await tx.accountInvite.update({
@@ -393,6 +511,8 @@ export class AccountInvitesService {
       where: { tokenHash },
       include: {
         choir: { select: { id: true, name: true, code: true } },
+        assignedRole: { select: { id: true, name: true } },
+        assignedProtocolRole: { select: { id: true, name: true } },
       },
     });
 
@@ -502,14 +622,34 @@ export class AccountInvitesService {
     return createHash('sha256').update(token).digest('hex');
   }
 
-  private deliverInviteLink(email: string, inviteUrl: string) {
-    if (process.env.NODE_ENV !== 'production') {
+  private async deliverInviteLink(
+    email: string,
+    phone: string | null | undefined,
+    firstName: string,
+    inviteType: AccountInviteType,
+    inviteUrl: string,
+    body: string,
+  ) {
+    const scope =
+      inviteType === AccountInviteType.DUAL
+        ? 'choir and protocol'
+        : inviteType === AccountInviteType.CHOIR
+          ? 'choir'
+          : 'protocol team';
+    const subject = `Invitation to join ${scope} on Church CMMS`;
+    const delivery = await this.onboardingDelivery.deliverInvite({
+      email,
+      phone,
+      subject,
+      body,
+    });
+    if (
+      delivery.email !== 'sent' &&
+      delivery.whatsapp !== 'sent' &&
+      delivery.sms !== 'sent'
+    ) {
       this.logger.log(`Account invite link for ${email}: ${inviteUrl}`);
-      return;
     }
-    this.logger.warn(
-      `Account invite created for ${email} but outbound email is not configured.`,
-    );
   }
 
   private shouldExposeDevLink(): boolean {
@@ -526,6 +666,8 @@ export class AccountInvitesService {
       lastName: string;
       inviteType: AccountInviteType;
       choir?: { name: string } | null;
+      assignedRole?: { id: string; name: string } | null;
+      assignedProtocolRole?: { id: string; name: string } | null;
     },
     inviteUrl: string,
   ): string {
@@ -534,8 +676,8 @@ export class AccountInvitesService {
       invite.inviteType === AccountInviteType.DUAL
         ? 'choir and protocol'
         : invite.inviteType === AccountInviteType.CHOIR
-          ? invite.choir?.name ?? 'choir'
-          : 'protocol team';
+          ? `${invite.choir?.name ?? 'choir'}${invite.assignedRole ? ` as ${invite.assignedRole.name.replace(/_/g, ' ')}` : ''}`
+          : `protocol team${invite.assignedProtocolRole ? ` as ${invite.assignedProtocolRole.name.replace(/^protocol_/, '').replace(/_/g, ' ')}` : ''}`;
     return `Hello ${name}, you are invited to join ${scope} on Church CMMS. Set your password here: ${inviteUrl}`;
   }
 
@@ -553,6 +695,8 @@ export class AccountInvitesService {
       revokedAt: Date | null;
       createdAt: Date;
       choir?: { id: string; name: string; code: string } | null;
+      assignedRole?: { id: string; name: string } | null;
+      assignedProtocolRole?: { id: string; name: string } | null;
       invitedBy?: {
         id: string;
         email: string;
@@ -574,6 +718,8 @@ export class AccountInvitesService {
       revokedAt: invite.revokedAt?.toISOString() ?? null,
       createdAt: invite.createdAt.toISOString(),
       choir: invite.choir ?? null,
+      assignedRole: invite.assignedRole ?? null,
+      assignedProtocolRole: invite.assignedProtocolRole ?? null,
       invitedBy: invite.invitedBy
         ? {
             id: invite.invitedBy.id,

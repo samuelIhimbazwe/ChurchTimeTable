@@ -3,6 +3,8 @@
 import { useLayoutEffect, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useChoirAccess } from '@/lib/hooks/useChoirAccess'
+import { useAuthStore } from '@/stores'
+import { choirWorkspaceRedirect } from '@/lib/choir/membership-scope'
 import {
   isLegacyChoirPath,
   parseChoirIdFromPath,
@@ -22,26 +24,28 @@ function OpeningMessage() {
 export default function ChoirLegacyLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
-  const { activeChoirMemberships, isLoading } = useChoirAccess()
+  const { activeChoirMemberships, isLoading, primaryChoirId } = useChoirAccess()
+  const accessRouting = useAuthStore((s) => s.user?.accessRouting)
   const appliedTargetRef = useRef<string | null>(null)
 
   const doubled = normalizeDoubledChoirPath(pathname)
   const choirIdInPath = parseChoirIdFromPath(pathname)
   const isLegacy = isLegacyChoirPath(pathname)
-  const primaryChoirId = activeChoirMemberships[0]?.id
+  const primaryChoirIdResolved = primaryChoirId ?? activeChoirMemberships[0]?.id
 
   let redirectTarget: string | null = null
 
   if (doubled && doubled !== pathname) {
     redirectTarget = doubled
   } else if (!choirIdInPath && !isLoading && isLegacy) {
-    if (!primaryChoirId) {
-      redirectTarget = '/portal/choirs?reason=choir-membership-required'
+    if (!primaryChoirIdResolved) {
+      redirectTarget =
+        choirWorkspaceRedirect(activeChoirMemberships, accessRouting)
     } else if (pathname === '/choir' || pathname === '/choir/') {
-      redirectTarget = choirMemberHome(primaryChoirId)
+      redirectTarget = choirMemberHome(primaryChoirIdResolved)
     } else {
       const legacyTail = pathname.replace(/^\/choir\/?/, '')
-      redirectTarget = `/choir/${primaryChoirId}/${legacyTail}`
+      redirectTarget = `/choir/${primaryChoirIdResolved}/${legacyTail}`
     }
   }
 

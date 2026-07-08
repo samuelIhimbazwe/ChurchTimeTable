@@ -14,6 +14,8 @@ export type OfficeNavItem = {
   href: string
   active: boolean
   badge?: number
+  /** Leadership desk link — highlighted in the office nav strip */
+  kind?: 'membership' | 'office'
 }
 
 type Props = {
@@ -118,7 +120,7 @@ export function OfficeShellFrame({
         </div>
       </header>
 
-      <div className="sticky top-[calc(4rem+env(safe-area-inset-top,0px))] z-20 bg-surface border-b border-border shadow-sm">
+      <div className="sticky top-below-topbar z-20 bg-surface/95 backdrop-blur-sm border-b border-border">
         <div className="max-w-6xl mx-auto px-3 xs:px-4 sm:px-6 py-2">
           <nav
             className="scroll-strip sm:flex-wrap sm:overflow-visible -mx-1 px-1"
@@ -131,7 +133,13 @@ export function OfficeShellFrame({
                 aria-current={item.active ? 'page' : undefined}
                 className={cn(
                   'interactive-tile shrink-0 px-3 sm:px-3.5 py-2 min-h-[2.75rem] text-xs sm:text-sm font-semibold rounded-lg whitespace-nowrap',
-                  item.active ? theme.navActive : theme.navInactive,
+                  item.kind === 'office'
+                    ? item.active
+                      ? 'bg-gold-600 text-primary-950 shadow-md'
+                      : 'bg-gold-50 text-gold-900 border border-gold-200/80 hover:bg-gold-100'
+                    : item.active
+                      ? theme.navActive
+                      : theme.navInactive,
                 )}
               >
                 {item.label}

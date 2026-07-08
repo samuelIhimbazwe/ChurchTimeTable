@@ -68,6 +68,31 @@ function officerHubsForPositions(
   return items
 }
 
+/** Sidebar links for choir committee + family leadership desks. */
+export function buildMyOfficeNavItems(
+  choirId: string,
+  familyOffices: Array<{ label: string; officePath: string }> = [],
+  positions: Array<{ roleKey: string }> = [],
+): NavItem[] {
+  const familyOfficePaths = new Set(familyOffices.map((o) => o.officePath))
+  const items: NavItem[] = []
+  const seen = new Set<string>()
+
+  for (const office of familyOffices) {
+    if (seen.has(office.officePath)) continue
+    seen.add(office.officePath)
+    items.push({ label: office.label, icon: Users, path: office.officePath })
+  }
+
+  for (const hub of officerHubsForPositions(choirId, positions, familyOfficePaths)) {
+    if (seen.has(hub.path)) continue
+    seen.add(hub.path)
+    items.push(hub)
+  }
+
+  return items
+}
+
 /** Choir-wide admin nav — not for member / family office roles alone. */
 const ELEVATED_COMMITTEE_ROLE_KEYS = new Set([
   'president',
@@ -121,7 +146,7 @@ export function adminToolsForCapabilities(
     items.push({ label: 'Administration', icon: Shield, path: choirPath(choirId, 'admin') })
   }
   if (adminUiVisible('admin-join-link', capabilityCheck)) {
-    items.push({ label: 'Join requests', icon: UserPlus, path: choirPath(choirId, 'join-requests') })
+    items.push({ label: 'Member onboarding', icon: UserPlus, path: choirPath(choirId, 'member-onboarding') })
   }
   if (adminUiVisible('admin-roles-link', capabilityCheck)) {
     items.push({ label: 'Position roles', icon: KeyRound, path: choirPath(choirId, 'roles') })
@@ -149,7 +174,7 @@ function adminToolsForPermissions(choirId: string, permissions: string[]): NavIt
     items.push({ label: 'Administration', icon: Shield, path: choirPath(choirId, 'admin') })
   }
   if (permissions.some((p) => ['choir.join.review', 'member:manage', 'choir.ops.manage'].includes(p))) {
-    items.push({ label: 'Join requests', icon: UserPlus, path: choirPath(choirId, 'join-requests') })
+    items.push({ label: 'Member onboarding', icon: UserPlus, path: choirPath(choirId, 'member-onboarding') })
     items.push({ label: 'Position roles', icon: KeyRound, path: choirPath(choirId, 'roles') })
   }
   if (permissions.some((p) => ['family:manage', 'choir.family.manage'].includes(p))) {
@@ -208,7 +233,7 @@ export function getComposedChoirNav(
   options?: { isDualMember?: boolean },
 ): NavSection[] {
   const sections: NavSection[] = options?.isDualMember ? [BACK_TO_PORTAL] : []
-  const familyOfficePaths = new Set(familyOffices.map((o) => o.officePath))
+  const officeItems = buildMyOfficeNavItems(choirId, familyOffices, positions)
 
   sections.push({
     section: choirName,
@@ -217,14 +242,10 @@ export function getComposedChoirNav(
     ],
   })
 
-  if (familyOffices.length > 0) {
+  if (officeItems.length > 0) {
     sections.push({
-      section: 'Family office',
-      items: familyOffices.map((office) => ({
-        label: office.label,
-        icon: Users,
-        path: office.officePath,
-      })),
+      section: 'My offices',
+      items: officeItems,
     })
   }
 
@@ -238,11 +259,6 @@ export function getComposedChoirNav(
       { label: 'Activities', icon: Calendar, path: choirPath(choirId, 'activities') },
     ],
   })
-
-  const hubs = officerHubsForPositions(choirId, positions, familyOfficePaths)
-  if (hubs.length > 0) {
-    sections.push({ section: 'Committee roles', items: hubs })
-  }
 
   const hasCapRouting = Boolean(capabilityCheck || contributionAuth)
   const capCheck = (uiId: string) =>

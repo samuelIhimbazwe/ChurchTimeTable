@@ -23,6 +23,7 @@ import { ChoirExecutiveDashboardService } from './choir-executive-dashboard.serv
 import { UpdatePresidentDelegationDto } from './dto/update-president-delegation.dto';
 import { UpsertChoirExecutivePulseDto } from './dto/upsert-choir-executive-pulse.dto';
 import { DeactivateChoirMemberDto } from './dto/deactivate-choir-member.dto';
+import { ProvisionChoirMemberDto } from './dto/provision-choir-member.dto';
 
 import { IsString } from 'class-validator';
 
@@ -183,6 +184,14 @@ export class ChoirsController {
       dto.choirId,
       dto.memberId,
     );
+  }
+
+  @Post('members/provision')
+  provisionMember(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: ProvisionChoirMemberDto,
+  ) {
+    return this.choirMembers.provisionMember(user.sub, dto);
   }
 
   @Post('join-requests')

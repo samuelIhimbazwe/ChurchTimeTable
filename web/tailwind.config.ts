@@ -180,9 +180,9 @@ const config: Config = {
 
       /* ── SPACING (sidebar width etc.) ── */
       spacing: {
-        sidebar:          '240px',
-        'sidebar-collapsed': '64px',
-        topbar:           '64px',
+        sidebar:          '232px',
+        'sidebar-collapsed': '60px',
+        topbar:           '56px',
         'safe-top':         'env(safe-area-inset-top, 0px)',
         'safe-bottom':      'env(safe-area-inset-bottom, 0px)',
         'safe-left':        'env(safe-area-inset-left, 0px)',

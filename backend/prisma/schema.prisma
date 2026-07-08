@@ -554,8 +554,9 @@ enum DevotionVisibilityScope {
 model User {
   id           String     @id @default(uuid())
   email        String     @unique
-  passwordHash String
-  isActive     Boolean    @default(true)
+  passwordHash       String
+  mustChangePassword Boolean    @default(false)
+  isActive           Boolean    @default(true)
   fcmToken           String?
   refreshTokenHash   String?
   refreshTokenExpiresAt DateTime?
@@ -750,6 +751,7 @@ model ChoirCommitteeRole {
   updatedAt       DateTime @updatedAt
   choir           Choir    @relation(fields: [choirId], references: [id], onDelete: Cascade)
   members         ChoirCommitteeMember[]
+  accountInvites  AccountInvite[]
 
   @@unique([choirId, name])
   @@index([choirId])
@@ -835,6 +837,7 @@ model ProtocolCommitteeRole {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   members         ProtocolCommitteeMember[]
+  accountInvites  AccountInvite[]
 
   @@unique([ministryId, name])
   @@index([ministryId])
@@ -1261,6 +1264,8 @@ model AccountInvite {
   phone           String?
   inviteType      AccountInviteType
   choirId         String?
+  assignedRoleId  String?
+  assignedProtocolRoleId String?
   tokenHash       String              @unique
   status          AccountInviteStatus @default(PENDING)
   expiresAt       DateTime
@@ -1270,10 +1275,14 @@ model AccountInvite {
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
 
-  invitedBy User   @relation("AccountInvitesSent", fields: [invitedByUserId], references: [id], onDelete: Restrict)
-  choir     Choir? @relation(fields: [choirId], references: [id], onDelete: Restrict)
+  invitedBy    User                @relation("AccountInvitesSent", fields: [invitedByUserId], references: [id], onDelete: Restrict)
+  choir        Choir?              @relation(fields: [choirId], references: [id], onDelete: Restrict)
+  assignedRole ChoirCommitteeRole? @relation(fields: [assignedRoleId], references: [id], onDelete: SetNull)
+  assignedProtocolRole ProtocolCommitteeRole? @relation(fields: [assignedProtocolRoleId], references: [id], onDelete: SetNull)
 
   @@index([email, status])
+  @@index([assignedRoleId])
+  @@index([assignedProtocolRoleId])
   @@index([status, expiresAt])
   @@index([choirId])
 }

@@ -286,7 +286,7 @@ export class MemberPortalDashboardService {
             ? ('PENDING_INVITATION' as const)
             : ('NONE' as const),
       isMember: isProtocolMember,
-      canClaim: !isProtocolMember && !pendingClaim,
+      canClaim: false,
       pendingClaim: pendingClaim
         ? {
             id: pendingClaim.id,
@@ -415,11 +415,29 @@ export class MemberPortalDashboardService {
       where: { userId },
     });
     const rules = await this.choirRules.describeMembershipRules(userId);
+    const workspaceIds = this.choirRules.resolveWorkspaceChoirIds(
+      (
+        await this.prisma.choirMembership.findMany({
+          where: { userId, isActive: true },
+          include: { choir: { select: { code: true, choirKind: true } } },
+          orderBy: { joinedAt: 'asc' },
+        })
+      ).map((m) => ({
+        choirId: m.choirId,
+        code: m.choir.code,
+        kind: m.choir.choirKind,
+      })),
+    );
 
     return {
       ...rules,
+      primaryChoirId: rules.primaryChoirId,
       choirs: await this.prisma.choirMembership.findMany({
-        where: { userId, isActive: true },
+        where: {
+          userId,
+          isActive: true,
+          choirId: { in: [...workspaceIds] },
+        },
         include: { choir: true },
       }),
       joinRequests: await this.prisma.choirJoinRequest.findMany({
@@ -451,28 +469,36 @@ export class MemberPortalDashboardService {
       label: string;
       path: string;
       priority: number;
-    }> = [
-      {
+    }> = [];
+
+    const choirMember = await this.prisma.choirMembership.findFirst({
+      where: { userId, isActive: true },
+      orderBy: { joinedAt: 'asc' },
+    });
+    const isProtocolMember = await this.protocolMembership.isProtocolMember(
+      member.id,
+    );
+    const isDualMember = !!choirMember && isProtocolMember;
+
+    if (isDualMember) {
+      dashboards.push({
         key: 'member',
         label: 'Member',
         path: '/portal',
         priority: 10,
-      },
-    ];
+      });
+    }
 
-    const choirMember = await this.prisma.choirMembership.findFirst({
-      where: { userId, isActive: true },
-    });
     if (choirMember) {
       dashboards.push({
         key: 'choir',
         label: 'Choir',
-        path: '/choir',
+        path: `/choir/${choirMember.choirId}/membership`,
         priority: 20,
       });
     }
 
-    if (await this.protocolMembership.isProtocolMember(member.id)) {
+    if (isProtocolMember) {
       dashboards.push({
         key: 'protocol',
         label: 'Protocol',

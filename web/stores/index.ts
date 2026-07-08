@@ -78,7 +78,9 @@ interface User {
   role: string
   permissions: string[]
   onboardingComplete?: boolean
+  mustChangePassword?: boolean
   homePath?: string
+  accessRouting?: import('@/lib/api/modules/auth').AccessRouting
 }
 
 interface AuthStore {
@@ -87,6 +89,7 @@ interface AuthStore {
   login: (user: User) => void
   logout: () => void
   setOnboardingComplete: (complete: boolean) => void
+  setMustChangePassword: (required: boolean) => void
   hasPermission: (permission: string) => boolean
   hasAnyPermission: (permissions: string[]) => boolean
 }
@@ -104,6 +107,9 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
         && s.user.email === user.email
         && s.user.role === user.role
         && s.user.onboardingComplete === user.onboardingComplete
+        && s.user.mustChangePassword === user.mustChangePassword
+        && s.user.homePath === user.homePath
+        && JSON.stringify(s.user.accessRouting) === JSON.stringify(user.accessRouting)
         && s.user.permissions.length === user.permissions.length
         && s.user.permissions.every((p, i) => p === user.permissions[i])
       ) {
@@ -116,6 +122,11 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
     set((s) => {
       if (!s.user || s.user.onboardingComplete === complete) return s
       return { user: { ...s.user, onboardingComplete: complete } }
+    }),
+  setMustChangePassword: (required) =>
+    set((s) => {
+      if (!s.user || s.user.mustChangePassword === required) return s
+      return { user: { ...s.user, mustChangePassword: required } }
     }),
   hasPermission: (permission) =>
     get().user?.permissions.includes(permission) ?? false,

@@ -34,6 +34,14 @@ export class ProtocolClaimsService {
   }
 
   async submit(userId: string, message?: string) {
+    throw new ForbiddenException({
+      code: 'SELF_JOIN_DISABLED',
+      message:
+        'Protocol membership is managed internally. Contact your protocol administrator.',
+    });
+  }
+
+  private async submitLegacy(userId: string, message?: string) {
     const member = await this.prisma.member.findUniqueOrThrow({
       where: { userId },
     });

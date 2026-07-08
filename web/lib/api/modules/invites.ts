@@ -17,6 +17,8 @@ export interface AccountInvite {
   revokedAt: string | null
   createdAt: string
   choir: { id: string; name: string; code: string } | null
+  assignedRole?: { id: string; name: string } | null
+  assignedProtocolRole?: { id: string; name: string } | null
   invitedBy?: { id: string; email: string; name: string }
   inviteUrl?: string
   whatsappMessage?: string
@@ -29,6 +31,8 @@ export interface CreateAccountInvitePayload {
   phone?: string
   inviteType: AccountInviteType
   choirId?: string
+  assignedRoleId?: string
+  assignedProtocolRoleId?: string
 }
 
 function mapPaginatedInvites(raw: {

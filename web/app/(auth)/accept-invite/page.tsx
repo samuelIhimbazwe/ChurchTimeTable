@@ -8,6 +8,8 @@ import { cn } from '@/lib/utils'
 import { authApi } from '@/lib/api'
 import { ApiError, ValidationError } from '@/lib/api'
 import { useTranslations } from '@/lib/i18n'
+import { PROTOCOL_COMMITTEE_ROLE_LABELS } from '@/lib/protocol/constants'
+import { choirPositionLabel } from '@/lib/constants/choir-positions'
 import { useAuthStore } from '@/stores'
 
 export default function AcceptInvitePage() {
@@ -22,6 +24,7 @@ export default function AcceptInvitePage() {
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [showPass, setShowPass] = useState(false)
   const [inviteName, setInviteName] = useState<string | null>(null)
+  const [assignedRole, setAssignedRole] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(
     () => (token ? null : t.acceptInviteMissingToken),
   )
@@ -34,6 +37,15 @@ export default function AcceptInvitePage() {
       .previewInvite(token)
       .then((preview) => {
         setInviteName(`${preview.firstName} ${preview.lastName}`.trim())
+        if (preview.assignedRole?.name) {
+          setAssignedRole(choirPositionLabel(preview.assignedRole.name))
+        } else if (preview.assignedProtocolRole?.name) {
+          const key = preview.assignedProtocolRole.name
+          setAssignedRole(
+            PROTOCOL_COMMITTEE_ROLE_LABELS[key] ??
+              key.replace(/^protocol_/, '').replace(/_/g, ' '),
+          )
+        }
       })
       .catch(() => {
         setFormError(t.acceptInviteInvalid)
@@ -75,7 +87,9 @@ export default function AcceptInvitePage() {
         role: data.user.role,
         permissions: data.user.permissions,
         onboardingComplete: data.user.onboardingComplete,
+        mustChangePassword: data.user.mustChangePassword,
         homePath: data.user.homePath,
+        accessRouting: data.user.accessRouting,
       })
       setSuccess(true)
       const home = data.user.homePath ?? '/dashboard'
@@ -119,6 +133,7 @@ export default function AcceptInvitePage() {
           <h1 className="font-display text-3xl text-text-primary">{t.acceptInviteTitle}</h1>
           <p className="text-text-secondary text-sm">
             {inviteName ? `${t.inviteWelcome}, ${inviteName}. ` : ''}
+            {assignedRole ? `You are joining as ${assignedRole}. ` : ''}
             {t.acceptInviteSubtitle}
           </p>
         </div>

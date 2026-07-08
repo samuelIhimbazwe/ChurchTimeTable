@@ -108,6 +108,7 @@ export const UI_LABELS: Record<string, LabelEntry> = {
   'Family leadership': { en: 'Family leadership', fr: 'Direction familiale', rw: 'Ubuyobozi bw\'umuryango' },
   'Advisor oversight': { en: 'Advisor oversight', fr: 'Supervision conseiller', rw: 'Kugenzura kw\'umujyanama' },
   'My membership': { en: 'My membership', fr: 'Mon adhésion', rw: 'Uko ninjiye' },
+  'My offices': { en: 'My offices', fr: 'Mes bureaux', rw: 'Ibiro byanjye' },
   Stewardship: { en: 'Stewardship', fr: 'Intendance', rw: 'Umusanzu' },
   Welfare: { en: 'Welfare', fr: 'Bien-être', rw: 'Imibereho myiza' },
   Discipline: { en: 'Discipline', fr: 'Discipline', rw: 'Imyitwarire' },

@@ -100,7 +100,7 @@ export function usePageTitle(fallback = 'CMMS'): string {
   const locale = useUIStore((s) => s.locale)
   const authRole = useAuthStore((s) => s.user?.role) ?? 'MEMBER'
   const permissions = useAuthStore((s) => s.user?.permissions ?? EMPTY_PERMISSIONS)
-  const { canAccessChoirArea, isChoirMember, isLoading: loadingChoirAccess, activeChoirMemberships } =
+  const { canAccessChoirArea, isChoirMember, isLoading: loadingChoirAccess, activeChoirMemberships, primaryChoirId } =
     useChoirAccess()
   const choirId = parseChoirIdFromPath(pathname)
   const inProtocolArea = isProtocolDashboardPath(pathname)
@@ -142,7 +142,7 @@ export function usePageTitle(fallback = 'CMMS'): string {
         authRole,
         { canAccessChoirArea, isChoirMember },
         activeChoirMemberships,
-        { isDualMember },
+        { isDualMember, primaryChoirId },
       )
     } else {
       sections = getNavForContext(
@@ -152,7 +152,7 @@ export function usePageTitle(fallback = 'CMMS'): string {
         permissions,
         activeChoirMemberships,
         undefined,
-        { isDualMember },
+        { isDualMember, primaryChoirId },
       )
     }
 
@@ -182,6 +182,7 @@ export function usePageTitle(fallback = 'CMMS'): string {
     membershipForPath,
     protocolCtx,
     isDualMember,
+    primaryChoirId,
     fallback,
   ])
 }

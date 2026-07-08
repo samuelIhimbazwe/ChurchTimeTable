@@ -25,7 +25,7 @@ export default function MobileDrawer({ open, onClose, role }: MobileDrawerProps)
     <>
       <div
         className={cn(
-          'fixed inset-0 z-40 bg-primary-950/60 backdrop-blur-sm lg:hidden',
+          'fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px] lg:hidden',
           'transition-opacity duration-normal',
           open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
         )}
@@ -49,7 +49,7 @@ export default function MobileDrawer({ open, onClose, role }: MobileDrawerProps)
           <button
             onClick={onClose}
             aria-label="Close menu"
-            className="absolute top-3.5 right-3 z-10 w-9 h-9 flex items-center justify-center rounded-md bg-primary-800 text-text-inverse hover:bg-primary-700 transition-colors"
+            className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-md bg-surface border border-border text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors"
           >
             <X size={18} />
           </button>

@@ -43,11 +43,11 @@ export class ChoirSponsorDashboardContextService {
     userId: string,
     choirId: string,
   ): Promise<ChoirSponsorDashboardContext> {
-    const choir = await this.prisma.choir.findFirst({
-      where: { id: choirId, isActive: true },
-      select: { id: true, name: true, code: true, choirKind: true },
+    const choirRow = await this.prisma.choir.findUnique({
+      where: { id: choirId },
+      select: { id: true, name: true, code: true, choirKind: true, isActive: true },
     });
-    if (!choir) {
+    if (!choirRow) {
       throw new NotFoundException('Choir not found');
     }
 
@@ -72,6 +72,10 @@ export class ChoirSponsorDashboardContextService {
 
     const isActiveSponsor = sponsorship?.active === true;
 
+    if (!choirRow.isActive && !isAdminOverride && !isActiveSponsor) {
+      throw new NotFoundException('Choir not found');
+    }
+
     if (!isAdminOverride && !isActiveSponsor) {
       throw new ForbiddenException('Not a sponsor of this choir');
     }
@@ -79,7 +83,12 @@ export class ChoirSponsorDashboardContextService {
     const landingPath = `/choir/${choirId}/sponsor`;
 
     return {
-      choir,
+      choir: {
+        id: choirRow.id,
+        name: choirRow.name,
+        code: choirRow.code,
+        choirKind: choirRow.choirKind,
+      },
       sponsorship: isActiveSponsor
         ? {
             active: true as const,

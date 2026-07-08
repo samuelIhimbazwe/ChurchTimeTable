@@ -1,14 +1,25 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { MemberStatus, MinistryScope } from '@prisma/client';
 import type { Prisma } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { ChoirRosterAccessService } from './choir-roster-access.service';
+import { ChoirContextService } from './choir-context.service';
+import { ChoirMembershipRulesService } from '../member-portal/choir-membership-rules.service';
+import { MemberMinistryScopeService } from '../member-portal/member-ministry-scope.service';
+import { MemberNumberService } from '../members/member-number.service';
+import { ROLES } from '../common/constants/roles';
 import { activeChoirCommitteeMemberWhere } from '../common/governance/choir-committee-member.util';
+import { AppLinkService } from '../messaging/app-link.service';
+import { OnboardingDeliveryService } from '../messaging/onboarding-delivery.service';
 
 type ListQuery = {
   page?: number;
@@ -22,12 +33,26 @@ function scoreBand(score: number): 'excellent' | 'good' | 'needs_attention' {
   return 'needs_attention';
 }
 
+function generateTemporaryPassword(): string {
+  return randomBytes(6)
+    .toString('base64url')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .slice(0, 10)
+    .padEnd(10, 'A');
+}
+
 @Injectable()
 export class ChoirMembersService {
   constructor(
     private prisma: PrismaService,
     private rosterAccess: ChoirRosterAccessService,
     private audit: AuditService,
+    private choirContext: ChoirContextService,
+    private membershipRules: ChoirMembershipRulesService,
+    private memberNumberService: MemberNumberService,
+    private ministryScope: MemberMinistryScopeService,
+    private appLinks: AppLinkService,
+    private onboardingDelivery: OnboardingDeliveryService,
   ) {}
 
   async listMembers(actorUserId: string, choirId: string, query: ListQuery = {}) {
@@ -234,6 +259,149 @@ export class ChoirMembersService {
       membershipId: membership.id,
       memberId,
       memberName: `${member.firstName} ${member.lastName}`.trim(),
+    };
+  }
+
+  async provisionMember(
+    actorUserId: string,
+    data: {
+      choirId: string;
+      email: string;
+      firstName: string;
+      lastName: string;
+      phone?: string;
+    },
+  ) {
+    await this.rosterAccess.requireManageRoster(actorUserId, data.choirId);
+
+    const email = data.email.trim().toLowerCase();
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email },
+      include: { member: true },
+    });
+
+    const choir = await this.prisma.choir.findFirst({
+      where: { id: data.choirId, isActive: true },
+    });
+    if (!choir) {
+      throw new NotFoundException('Choir not found');
+    }
+
+    const temporaryPassword = generateTemporaryPassword();
+    const passwordHash = await bcrypt.hash(temporaryPassword, 10);
+
+    const memberRole = await this.prisma.role.findUnique({
+      where: { name: ROLES.MEMBER },
+    });
+    if (!memberRole) {
+      throw new BadRequestException('System roles not seeded');
+    }
+
+    if (existingUser) {
+      const activeMembership = await this.prisma.choirMembership.findFirst({
+        where: {
+          userId: existingUser.id,
+          choirId: data.choirId,
+          isActive: true,
+        },
+      });
+      if (activeMembership) {
+        throw new ConflictException({
+          code: 'CONFLICT',
+          messageKey: 'ALREADY_CHOIR_MEMBER',
+        });
+      }
+      await this.membershipRules.validateNewMembership(
+        existingUser.id,
+        data.choirId,
+      );
+      await this.choirContext.ensureMembership(
+        existingUser.id,
+        data.choirId,
+        ROLES.MEMBER,
+      );
+      if (existingUser.member) {
+        await this.ministryScope.syncMinistryScope(existingUser.member.id);
+      }
+      await this.audit.log({
+        userId: actorUserId,
+        action: 'CHOIR_MEMBER_PROVISIONED_EXISTING',
+        entity: 'ChoirMembership',
+        entityId: data.choirId,
+        newValue: { email, choirId: data.choirId },
+      });
+      return {
+        email,
+        memberId: existingUser.member?.id,
+        existingAccount: true,
+        temporaryPassword: null as string | null,
+        message:
+          'Existing account was added to this choir. Share login instructions separately.',
+      };
+    }
+
+    const user = await this.prisma.$transaction(async (tx) => {
+      const memberNumber = await this.memberNumberService.generateMemberNumber(tx);
+      const created = await tx.user.create({
+        data: {
+          email,
+          passwordHash,
+          mustChangePassword: true,
+          termsAcceptedAt: new Date(),
+          member: {
+            create: {
+              firstName: data.firstName.trim(),
+              lastName: data.lastName.trim(),
+              phone: data.phone?.trim() || null,
+              ministry: MinistryScope.CHOIR,
+              status: MemberStatus.ACTIVE,
+              onboardingCompleted: false,
+              memberNumber,
+            },
+          },
+          userRoles: { create: { roleId: memberRole.id } },
+        },
+        include: { member: true },
+      });
+
+      await tx.choirMembership.create({
+        data: {
+          userId: created.id,
+          choirId: data.choirId,
+          role: ROLES.MEMBER,
+          isActive: true,
+        },
+      });
+
+      return created;
+    });
+
+    await this.ministryScope.syncMinistryScope(user.member!.id);
+
+    const delivery = await this.onboardingDelivery.deliverCredentials({
+      email,
+      phone: data.phone,
+      firstName: data.firstName,
+      temporaryPassword,
+      loginUrl: `${this.appLinks.baseUrl()}/login`,
+    });
+
+    await this.audit.log({
+      userId: actorUserId,
+      action: 'CHOIR_MEMBER_PROVISIONED',
+      entity: 'User',
+      entityId: user.id,
+      newValue: { email, choirId: data.choirId, delivery },
+    });
+
+    return {
+      email,
+      memberId: user.member!.id,
+      existingAccount: false,
+      temporaryPassword,
+      message:
+        'Share these credentials securely. The member must change their password on first login.',
+      delivery,
     };
   }
 }

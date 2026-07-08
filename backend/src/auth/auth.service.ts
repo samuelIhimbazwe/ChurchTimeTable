@@ -81,9 +81,8 @@ export class AuthService {
   ) {}
 
   private get inviteOnlyRegistration(): boolean {
-    if (process.env.INVITE_ONLY_REGISTRATION === 'true') return true;
     if (process.env.INVITE_ONLY_REGISTRATION === 'false') return false;
-    return process.env.NODE_ENV === 'production';
+    return true;
   }
 
   async register(dto: RegisterDto) {
@@ -269,6 +268,7 @@ export class AuthService {
         id: true,
         email: true,
         preferredLanguage: true,
+        mustChangePassword: true,
         member: {
           select: {
             id: true,
@@ -409,6 +409,7 @@ export class AuthService {
       id: user.id,
       email: user.email,
       preferredLanguage: user.preferredLanguage,
+      mustChangePassword: user.mustChangePassword,
       member,
       roles,
       permissions,
@@ -450,6 +451,39 @@ export class AuthService {
     });
 
     return updated;
+  }
+
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, passwordHash: true, isActive: true },
+    });
+    if (!user?.isActive) {
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED',
+        messageKey: 'ACCOUNT_INACTIVE',
+      });
+    }
+
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid) {
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED',
+        messageKey: 'INVALID_CURRENT_PASSWORD',
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash, mustChangePassword: false },
+    });
+
+    return { ok: true as const };
   }
 
   private get accessTokenExpiresIn() {

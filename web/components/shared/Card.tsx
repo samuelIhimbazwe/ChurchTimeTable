@@ -40,8 +40,8 @@ export default function Card({
   id,
 }: CardProps) {
   const surfaceClass = cn(
-    'bg-surface rounded-lg border border-border',
-    elevated ? 'shadow-raised' : 'shadow-card',
+    'bg-surface rounded-md border border-border',
+    elevated && 'shadow-card',
     accent && ACCENT_CLASSES[accent],
     PADDING_CLASSES[padding],
     className,
@@ -54,8 +54,8 @@ export default function Card({
         id={id}
         className={cn(
           surfaceClass,
-          'block cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
-          'hover:shadow-raised hover:-translate-y-0.5 transition-all duration-fast',
+          'block cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40',
+          'hover:border-border-strong transition-colors duration-fast',
         )}
       >
         {children}
@@ -73,7 +73,7 @@ export default function Card({
         onClick={onClick}
         className={cn(
           surfaceClass,
-          'cursor-pointer hover:shadow-raised hover:-translate-y-0.5 transition-all duration-fast',
+          'cursor-pointer hover:border-border-strong transition-colors duration-fast',
         )}
       >
         {children}
@@ -114,7 +114,7 @@ export function CardTitle({ children, className }: {
   className?: string
 }) {
   return (
-    <h3 className={cn('font-semibold text-lg sm:text-xl text-text-primary', className)}>
+    <h3 className={cn('font-medium text-base text-text-primary tracking-tight', className)}>
       {children}
     </h3>
   )

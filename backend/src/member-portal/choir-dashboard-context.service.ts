@@ -138,14 +138,19 @@ export class ChoirDashboardContextService {
   ) {}
 
   async getContext(userId: string, choirId: string): Promise<ChoirDashboardContext> {
-    const choir = await this.prisma.choir.findFirst({
-      where: { id: choirId, isActive: true },
-      select: { id: true, name: true, code: true, choirKind: true,
+    const choirRow = await this.prisma.choir.findUnique({
+      where: { id: choirId },
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        choirKind: true,
+        isActive: true,
         presidentOutOfOffice: true,
         presidentDelegationJoinReview: true,
       },
     });
-    if (!choir) {
+    if (!choirRow) {
       throw new NotFoundException('Choir not found');
     }
 
@@ -159,6 +164,11 @@ export class ChoirDashboardContextService {
     });
 
     const isActiveMember = membership?.isActive === true;
+
+    if (!choirRow.isActive && !isAdminOverride && !isActiveMember) {
+      throw new NotFoundException('Choir not found');
+    }
+
     const canViewInPortal = await this.choirRules.canViewChoirInPortal(
       userId,
       choirId,
@@ -166,6 +176,10 @@ export class ChoirDashboardContextService {
 
     if (!isAdminOverride && !isActiveMember) {
       throw new ForbiddenException('Not a member of this choir');
+    }
+
+    if (!isAdminOverride && isActiveMember) {
+      await this.choirRules.assertChoirWorkspaceAccess(userId, choirId);
     }
 
     const member = resolved.memberId
@@ -376,10 +390,10 @@ export class ChoirDashboardContextService {
 
     return {
       choir: {
-        id: choir.id,
-        name: choir.name,
-        code: choir.code,
-        choirKind: choir.choirKind,
+        id: choirRow.id,
+        name: choirRow.name,
+        code: choirRow.code,
+        choirKind: choirRow.choirKind,
       },
       membership: isActiveMember
         ? { role: membership!.role, isActive: true as const }
@@ -391,8 +405,8 @@ export class ChoirDashboardContextService {
       familyOffices,
       customRoles,
       presidentDelegation: {
-        outOfOffice: choir.presidentOutOfOffice,
-        joinReview: choir.presidentDelegationJoinReview,
+        outOfOffice: choirRow.presidentOutOfOffice,
+        joinReview: choirRow.presidentDelegationJoinReview,
       },
       contributionAuth,
       welfareAuth,

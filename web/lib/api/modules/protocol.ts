@@ -138,24 +138,58 @@ export const protocolApi = {
       }
     >('/protocol/dashboard/officer-sla'),
 
-  getMinistryHealth: () =>
-    apiClient.get<
-      never,
-      {
-        score: number
-        grade: string
-        attendanceRateAvg: number
-        activeMembers: number
-        pendingClaims: number
-        pendingReplacements: number
-        draftTeams: number
-        officerAttentionCount: number | null
-        generatedAt: string
-      }
-    >('/protocol/reports/health'),
+  getMinistryHealth: (params?: { year?: number; month?: number }) =>
+    apiClient.get<never, import('@/lib/protocol/report-types').ProtocolHealthSnapshot>(
+      '/protocol/reports/health',
+      { params },
+    ),
 
-  exportHealthPackPdf: () =>
-    apiClient.get('/protocol/reports/health-pack.pdf', { responseType: 'blob' }),
+  getReportSummary: (year: number, month: number) =>
+    apiClient.get<never, import('@/lib/protocol/report-types').ProtocolReportSummary>(
+      '/protocol/reports/summary',
+      { params: { year, month } },
+    ),
+
+  getMonthlyServiceReport: (year: number, month: number) =>
+    apiClient.get<never, import('@/lib/protocol/report-types').ProtocolMonthlyServiceReport>(
+      '/protocol/reports/monthly-service',
+      { params: { year, month } },
+    ),
+
+  getAttendanceReport: (year: number, month: number) =>
+    apiClient.get<never, import('@/lib/protocol/report-types').ProtocolAttendanceReport>(
+      '/protocol/reports/attendance',
+      { params: { year, month } },
+    ),
+
+  getReplacementReport: (year: number, month: number) =>
+    apiClient.get<never, import('@/lib/protocol/report-types').ProtocolReplacementReport>(
+      '/protocol/reports/replacements',
+      { params: { year, month } },
+    ),
+
+  getReliabilityReport: () =>
+    apiClient.get<never, import('@/lib/protocol/report-types').ProtocolReliabilityReport>(
+      '/protocol/reports/reliability',
+    ),
+
+  getSchedulingReport: (year: number, month: number) =>
+    apiClient.get<never, import('@/lib/protocol/report-types').ProtocolSchedulingReport>(
+      '/protocol/reports/scheduling',
+      { params: { year, month } },
+    ),
+
+  getQuotaReport: (year: number, month: number) =>
+    apiClient.get<never, import('@/lib/protocol/report-types').ProtocolQuotaReport>(
+      '/protocol/reports/quota',
+      { params: { year, month } },
+    ),
+
+  exportHealthPackPdf: (params?: { year?: number; month?: number }) =>
+    apiClient.get('/protocol/reports/health-pack.pdf', {
+      params,
+      responseType: 'blob',
+    }),
 
   getAdminDashboard: () =>
     apiClient.get<never, Record<string, unknown>>('/protocol/dashboard/admin'),
@@ -244,7 +278,10 @@ export const protocolApi = {
   getReports: () =>
     apiClient.get<never, unknown[]>('/protocol/reports'),
 
-  exportReportCsv: (type: 'monthly-service' | 'reliability', params?: { year?: number; month?: number }) =>
+  exportReportCsv: (
+    type: import('@/lib/protocol/report-types').ProtocolReportExportType,
+    params?: { year?: number; month?: number },
+  ) =>
     apiClient.get<never, Blob>(`/protocol/reports/${type}/export`, {
       params,
       responseType: 'blob',
@@ -438,6 +475,24 @@ export const protocolApi = {
 
   reviewClaim: (claimId: string, action: 'APPROVED' | 'REJECTED') =>
     apiClient.patch<never, void>(`/protocol/claims/${claimId}`, { status: action }),
+
+  provisionMember: (data: {
+    email: string
+    firstName: string
+    lastName: string
+    phone?: string
+  }) =>
+    apiClient.post<
+      never,
+      {
+        email: string
+        memberId?: string
+        existingAccount: boolean
+        temporaryPassword: string | null
+        message: string
+        delivery?: { email: string; sms: string; whatsapp: string } | null
+      }
+    >('/protocol/members/provision', data),
 
   submitClaim: (message?: string) =>
     apiClient.post<never, Record<string, unknown>>('/protocol/claims', { message }),

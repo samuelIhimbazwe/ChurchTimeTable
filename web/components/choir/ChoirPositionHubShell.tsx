@@ -29,14 +29,16 @@ export function ChoirPositionHubShell({
 }: ShellProps) {
   const meta = choirPositionMeta(roleKey)
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-8">
-      <div>
-        <h1 className="font-display text-3xl text-text-primary">
+    <div className="space-y-5 max-w-5xl mx-auto pb-6">
+      <div className="space-y-1">
+        <h1 className="font-display text-2xl sm:text-3xl text-text-primary tracking-tight">
           {title ?? meta?.label ?? roleKey.replace(/_/g, ' ')}
         </h1>
-        <p className="text-text-secondary text-sm mt-1">
-          {subtitle ?? meta?.summary}
-        </p>
+        {(subtitle ?? meta?.summary) && (
+          <p className="text-sm text-text-muted leading-relaxed max-w-2xl">
+            {subtitle ?? meta?.summary}
+          </p>
+        )}
       </div>
       <ChoirPositionGuide roleKey={roleKey} />
       {tabs.length > 0 && (
@@ -58,7 +60,7 @@ type QuickLinkProps = {
 export function HubQuickLink({ href, label, desc, icon: Icon, stat }: QuickLinkProps) {
   return (
     <Link href={href}>
-      <Card padding="md" className="h-full hover:shadow-raised transition-shadow group">
+      <Card padding="md" className="h-full hover:border-border-strong transition-colors group">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary-50 dark:bg-primary-100/60 flex items-center justify-center shrink-0">

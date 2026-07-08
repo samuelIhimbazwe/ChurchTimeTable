@@ -2,6 +2,7 @@
 
 import { CapabilityGate } from '@/components/shared'
 import { ProtocolAdminHub } from '@/components/protocol/ProtocolAdminHub'
+import { ProtocolMemberOnboardingPanel } from '@/components/protocol/ProtocolMemberOnboardingPanel'
 import Link from 'next/link'
 
 export default function ProtocolAdminPage() {
@@ -19,7 +20,12 @@ export default function ProtocolAdminPage() {
         </div>
       }
     >
-      <ProtocolAdminHub />
+      <div className="max-w-5xl mx-auto pb-8 space-y-10">
+        <ProtocolAdminHub />
+        <CapabilityGate platformUiCapability="protocol-manage">
+          <ProtocolMemberOnboardingPanel />
+        </CapabilityGate>
+      </div>
     </CapabilityGate>
   )
 }

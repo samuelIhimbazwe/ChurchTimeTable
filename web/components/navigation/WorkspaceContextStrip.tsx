@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Star, MapPin } from 'lucide-react'
+import { Star } from 'lucide-react'
 import { useAuthStore } from '@/stores/index'
 import { useNavStore } from '@/lib/navigation/nav-store'
 import { resolveWorkspaceContext } from '@/lib/navigation/workspace-context'
@@ -29,36 +29,37 @@ export function WorkspaceContextStrip({ choirName, className }: Props) {
   )
   const crumbs = breadcrumbsFromPath(pathname)
 
-  const parts = [
+  const contextLabel = [
     ctx.office,
     ctx.choirName,
     ctx.roleLabel,
-  ].filter(Boolean)
+  ].filter(Boolean).join(' · ')
 
-  if (parts.length === 0 && crumbs.length <= 1 && pinnedPages.length === 0) return null
+  if (!contextLabel && crumbs.length <= 1 && pinnedPages.length === 0) return null
 
   return (
-    <div className={cn('space-y-2 mb-4', className)}>
-      {(parts.length > 0 || pinnedPages.length > 0) && (
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          {parts.length > 0 && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-50 border border-primary-100 text-primary-800 font-medium">
-              <MapPin size={12} />
-              {parts.join(' · ')}
-            </span>
-          )}
-          {pinnedPages.map((p) => (
-            <Link
-              key={p.path}
-              href={p.path}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gold-50 border border-gold-200 text-gold-900 font-semibold hover:bg-gold-100 transition-colors"
-            >
-              <Star size={11} className="fill-gold-500 text-gold-500" />
-              {p.label}
-            </Link>
-          ))}
-        </div>
-      )}
+    <div className={cn('space-y-1.5', className)}>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-h-[1.25rem]">
+        {contextLabel && (
+          <p className="text-[11px] text-text-muted tracking-wide truncate">
+            {contextLabel}
+          </p>
+        )}
+        {pinnedPages.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {pinnedPages.map((p) => (
+              <Link
+                key={p.path}
+                href={p.path}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium text-text-secondary border border-border hover:bg-surface-raised hover:text-text-primary transition-colors"
+              >
+                <Star size={10} className="text-gold-500 fill-gold-500 shrink-0" />
+                {p.label}
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
       {crumbs.length > 1 && (
         <PageBreadcrumbs items={crumbs} />
       )}

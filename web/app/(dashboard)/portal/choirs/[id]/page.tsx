@@ -22,7 +22,6 @@ import { useChoirAccess } from '@/lib/hooks/useChoirAccess'
 import { ChoirDashboardEntryButton } from '@/components/choir/ChoirDashboardEntryButton'
 import { ChoirSponsorEntryButton } from '@/components/choir/ChoirSponsorEntryButton'
 import { ChoirPortalJoinControls } from '@/components/portal/ChoirPortalJoinControls'
-import { ChoirJoinRequestForm } from '@/components/portal/ChoirJoinRequestForm'
 
 const REDIRECT_TARGET = '/portal/choirs?reason=choir-unavailable'
 
@@ -31,7 +30,6 @@ export default function ChoirDetailPage() {
   const params = useParams()
   const id = String(params.id)
   const qc = useQueryClient()
-  const [joinFormOpen, setJoinFormOpen] = useState(false)
   const [message, setMessage] = useState('')
   const [requestType, setRequestType] = useState('PERMANENT_MEMBER')
   const { activeChoirMemberships, isLoading: loadingMembership } = useChoirAccess()
@@ -64,7 +62,7 @@ export default function ChoirDetailPage() {
         await choirApi.requestSponsor(id, message || undefined, requestType)
         return
       }
-      await choirApi.requestJoin(id, message || undefined, requestType)
+      throw new Error('Contact your choir administrator to join as a singer')
     },
     onSuccess: () => {
       toast.success(
@@ -76,7 +74,6 @@ export default function ChoirDetailPage() {
       qc.invalidateQueries({ queryKey: ['choir-join-requests'] })
       qc.invalidateQueries({ queryKey: ['choir-sponsor-requests'] })
       qc.invalidateQueries({ queryKey: ['choir-membership-access'] })
-      setJoinFormOpen(false)
       setMessage('')
       setRequestType('PERMANENT_MEMBER')
     },
@@ -231,38 +228,31 @@ export default function ChoirDetailPage() {
           )}
           {!choirPortalActions.showDashboardButton &&
             !choirPortalActions.showSponsorDashboardButton && (
-            <ChoirPortalJoinControls
-              actions={choirPortalActions}
-              joinLabel="Join"
-              joinPending={join.isPending}
-              cancelPending={cancelJoin.isPending || cancelSponsor.isPending}
-              onJoin={() => setJoinFormOpen((open) => !open)}
-              onCancelPending={(requestId) => {
-                if (choirPortalActions.isPendingSponsor) {
-                  cancelSponsor.mutate(requestId)
-                } else {
-                  cancelJoin.mutate(requestId)
-                }
-              }}
-            />
+            choirPortalActions.isPendingJoin || choirPortalActions.isPendingSponsor ? (
+              <ChoirPortalJoinControls
+                actions={choirPortalActions}
+                joinLabel="Join"
+                joinPending={join.isPending}
+                cancelPending={cancelJoin.isPending || cancelSponsor.isPending}
+                onJoin={() => {}}
+                onCancelPending={(requestId) => {
+                  if (choirPortalActions.isPendingSponsor) {
+                    cancelSponsor.mutate(requestId)
+                  } else {
+                    cancelJoin.mutate(requestId)
+                  }
+                }}
+              />
+            ) : (
+              <Card padding="md" accent="info">
+                <p className="text-sm text-text-secondary">
+                  Choir membership is managed internally. Contact your choir administrator
+                  for an invite or login credentials.
+                </p>
+              </Card>
+            )
           )}
         </div>
-
-        {joinFormOpen &&
-          choirPortalActions.showJoinButton &&
-          !choirPortalActions.joinBlockedByPending && (
-          <Card padding="md">
-            <ChoirJoinRequestForm
-              requestType={requestType}
-              onRequestTypeChange={setRequestType}
-              message={message}
-              onMessageChange={setMessage}
-              submitting={join.isPending}
-              onCancel={() => setJoinFormOpen(false)}
-              onSubmit={() => join.mutate()}
-            />
-          </Card>
-        )}
       </div>
 
       <Link

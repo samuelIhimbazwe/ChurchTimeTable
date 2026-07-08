@@ -19,7 +19,7 @@ export function PageBreadcrumbs({ items, className }: Props) {
 
   return (
     <nav aria-label="Breadcrumb" className={cn('min-w-0', className)}>
-      <ol className="flex flex-wrap items-center gap-1 text-xs sm:text-sm">
+      <ol className="flex flex-wrap items-center gap-1 text-[11px] sm:text-xs">
         {items.map((item, index) => {
           const isLast = index === items.length - 1
           return (
@@ -34,7 +34,7 @@ export function PageBreadcrumbs({ items, className }: Props) {
               {item.href && !isLast ? (
                 <Link
                   href={item.href}
-                  className="font-semibold text-primary-600 hover:text-primary-800 truncate max-w-[12rem] sm:max-w-[16rem]"
+                  className="text-text-muted hover:text-text-primary truncate max-w-[12rem] sm:max-w-[16rem] transition-colors"
                 >
                   {item.label}
                 </Link>
