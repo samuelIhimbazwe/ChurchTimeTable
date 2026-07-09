@@ -258,13 +258,42 @@ export const protocolApi = {
   generateTeam: (
     occurrenceId: string,
     memberIds?: string[],
-    options?: { randomizeLeader?: boolean },
+    options?: { randomizeLeader?: boolean; forceRebuild?: boolean },
   ) =>
     apiClient.post<never, Record<string, unknown>>('/protocol/teams/generate', {
       occurrenceId,
       memberIds,
       randomizeLeader: options?.randomizeLeader,
+      forceRebuild: options?.forceRebuild,
     }),
+
+  updateTeamRoster: (
+    teamId: string,
+    memberIds: string[],
+    options?: { randomizeLeader?: boolean; overrideReason?: string },
+  ) =>
+    apiClient.patch<never, Record<string, unknown>>(`/protocol/teams/${teamId}/roster`, {
+      memberIds,
+      randomizeLeader: options?.randomizeLeader,
+      overrideReason: options?.overrideReason,
+    }).then(adaptTeam),
+
+  discardTeam: (teamId: string) =>
+    apiClient.post<never, { discarded: boolean; occurrenceId: string }>(
+      `/protocol/teams/${teamId}/discard`,
+      {},
+    ),
+
+  rebuildTeam: (
+    teamId: string,
+    options?: { memberIds?: string[]; randomizeLeader?: boolean },
+  ) =>
+    apiClient
+      .post<never, Record<string, unknown>>(`/protocol/teams/${teamId}/rebuild`, {
+        memberIds: options?.memberIds,
+        randomizeLeader: options?.randomizeLeader,
+      })
+      .then(adaptTeam),
 
   updateTeamStatus: (teamId: string, status: ProtocolTeamStatus) =>
     apiClient.patch<never, Record<string, unknown>>(`/protocol/teams/${teamId}/status`, { status }),

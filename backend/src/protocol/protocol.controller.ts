@@ -347,9 +347,46 @@ export class ProtocolController {
       memberIds?: string[];
       overrideReason?: string;
       randomizeLeader?: boolean;
+      forceRebuild?: boolean;
     },
   ) {
     return this.teams.generateForOccurrence(userId, body.occurrenceId, body);
+  }
+
+  @Patch('teams/:id/roster')
+  @RequireUiCapability('protocol-team-manage')
+  updateTeamRoster(
+    @CurrentUser('sub') userId: string,
+    @Param('id') id: string,
+    @Body()
+    body: {
+      memberIds: string[];
+      overrideReason?: string;
+      randomizeLeader?: boolean;
+    },
+  ) {
+    return this.teams.updateRoster(userId, id, body);
+  }
+
+  @Post('teams/:id/discard')
+  @RequireUiCapability('protocol-team-manage')
+  discardTeam(@CurrentUser('sub') userId: string, @Param('id') id: string) {
+    return this.teams.discardTeam(userId, id);
+  }
+
+  @Post('teams/:id/rebuild')
+  @RequireUiCapability('protocol-team-manage')
+  rebuildTeam(
+    @CurrentUser('sub') userId: string,
+    @Param('id') id: string,
+    @Body()
+    body: {
+      memberIds?: string[];
+      overrideReason?: string;
+      randomizeLeader?: boolean;
+    },
+  ) {
+    return this.teams.rebuildTeam(userId, id, body);
   }
 
   @Patch('teams/:id/status')
@@ -363,7 +400,7 @@ export class ProtocolController {
   }
 
   @Get('occurrences/:occurrenceId/team')
-  @RequireUiCapability('protocol-team-leadership')
+  @RequireUiCapability('protocol-view')
   teamForOccurrence(
     @CurrentUser('sub') userId: string,
     @Param('occurrenceId') occurrenceId: string,

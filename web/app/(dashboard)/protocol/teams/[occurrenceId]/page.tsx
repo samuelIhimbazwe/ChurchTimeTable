@@ -6,7 +6,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { protocolApi, occurrencesApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import { Card, CardHeader, CardTitle, Badge, Avatar, CapabilityGate } from '@/components/shared'
-import { ChevronLeft } from 'lucide-react'
+import Link from 'next/link'
+import { ChevronLeft, Pencil, RefreshCw, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatDate, outcomeLabel } from '@/lib/utils/format'
 import type { ProtocolAttendanceOutcome, ProtocolTeamStatus } from '@/types'
@@ -128,6 +129,28 @@ export default function ProtocolTeamPage() {
     onError: () => toast.error('Status update failed'),
   })
 
+  const discardTeam = useMutation({
+    mutationFn: () => protocolApi.discardTeam(team!.id),
+    onSuccess: () => {
+      toast.success('Team discarded')
+      qc.invalidateQueries({ queryKey: ['protocol-team-occurrences'] })
+      router.push('/protocol/teams/generate')
+    },
+    onError: () => toast.error('Could not discard team'),
+  })
+
+  const rebuildTeam = useMutation({
+    mutationFn: () => protocolApi.rebuildTeam(team!.id, { randomizeLeader: true }),
+    onSuccess: () => {
+      toast.success('Team rebuilt from recommendations')
+      qc.invalidateQueries({ queryKey: ['protocol-team', occurrenceId] })
+      qc.invalidateQueries({ queryKey: ['protocol-teams'] })
+    },
+    onError: () => toast.error('Rebuild failed'),
+  })
+
+  const canEditRoster = team && team.status !== 'COMPLETED'
+
   const markedCount = Object.values(records).filter(Boolean).length
   const nextStep = team ? NEXT_STATUS[team.status] : undefined
 
@@ -187,6 +210,40 @@ export default function ProtocolTeamPage() {
                 >
                   {advanceStatus.isPending ? 'Updating…' : nextStep.label}
                 </button>
+              )}
+            </CapabilityGate>
+            <CapabilityGate platformUiCapability="protocol-team-manage">
+              {canEditRoster && (
+                <div className="flex flex-wrap gap-2 justify-end">
+                  <Link
+                    href={`/protocol/teams/generate?occurrence=${occurrenceId}`}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-primary-600 hover:text-primary-800"
+                  >
+                    <Pencil size={12} /> Edit roster
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!window.confirm('Rebuild this team from auto recommendations?')) return
+                      rebuildTeam.mutate()
+                    }}
+                    disabled={rebuildTeam.isPending || discardTeam.isPending}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-text-secondary hover:text-text-primary disabled:opacity-60"
+                  >
+                    <RefreshCw size={12} /> Rebuild
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!window.confirm('Discard this team?')) return
+                      discardTeam.mutate()
+                    }}
+                    disabled={rebuildTeam.isPending || discardTeam.isPending}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-danger hover:text-danger disabled:opacity-60"
+                  >
+                    <Trash2 size={12} /> Discard
+                  </button>
+                </div>
               )}
             </CapabilityGate>
           </div>

@@ -21,6 +21,7 @@ import {
 } from './protocol.constants';
 import {
   hasProtocolManage,
+  hasProtocolTeamManage,
   hasProtocolTeamLeaderManage,
   hasProtocolTeamApprove,
   hasProtocolTeamPublish,
@@ -58,6 +59,20 @@ export class ProtocolTeamsService {
     return { permissions: resolved.permissions };
   }
 
+  private async assertTeamManage(actorUserId: string) {
+    const { permissions } = await this.actor(actorUserId);
+    if (!hasProtocolTeamManage(permissions)) {
+      throw new ForbiddenException('Team management denied');
+    }
+    return { permissions };
+  }
+
+  private assertRosterEditable(status: ProtocolOccurrenceTeamStatus) {
+    if (status === 'COMPLETED') {
+      throw new BadRequestException('Completed teams cannot be modified');
+    }
+  }
+
   async generateForOccurrence(
     actorUserId: string | null,
     occurrenceId: string,
@@ -67,6 +82,7 @@ export class ProtocolTeamsService {
       randomizeLeader?: boolean;
       excludeMemberIds?: string[];
       monthBatchCounts?: Map<string, number>;
+      forceRebuild?: boolean;
     },
   ) {
     const occurrence = await this.prisma.operationOccurrence.findUniqueOrThrow({
@@ -75,7 +91,18 @@ export class ProtocolTeamsService {
     });
 
     if (occurrence.protocolTeam) {
-      return this.getTeamInternal(occurrence.protocolTeam.id);
+      if (options?.forceRebuild) {
+        if (actorUserId) {
+          await this.discardTeam(actorUserId, occurrence.protocolTeam.id);
+        } else {
+          this.assertRosterEditable(occurrence.protocolTeam.status);
+          await this.prisma.protocolOccurrenceTeam.delete({
+            where: { id: occurrence.protocolTeam.id },
+          });
+        }
+      } else {
+        return this.getTeamInternal(occurrence.protocolTeam.id);
+      }
     }
 
     const hasProtocolAssignment = await this.prisma.operationAssignment.findFirst({
@@ -341,6 +368,7 @@ export class ProtocolTeamsService {
   async assertTeamAccess(actorUserId: string, teamId: string) {
     const { permissions } = await this.actor(actorUserId);
     if (hasProtocolManage(permissions)) return;
+    if (hasProtocolTeamManage(permissions)) return;
     const ledIds = await this.teamLeaders.myTeams(actorUserId).then((t) =>
       t.map((row) => row.id),
     );
@@ -348,11 +376,134 @@ export class ProtocolTeamsService {
     throw new ForbiddenException('Team access denied');
   }
 
+  async updateRoster(
+    actorUserId: string,
+    teamId: string,
+    options: {
+      memberIds: string[];
+      overrideReason?: string;
+      randomizeLeader?: boolean;
+    },
+  ) {
+    await this.assertTeamManage(actorUserId);
+    const team = await this.prisma.protocolOccurrenceTeam.findUniqueOrThrow({
+      where: { id: teamId },
+      include: {
+        members: { where: { assignmentType: 'OFFICIAL' } },
+      },
+    });
+    this.assertRosterEditable(team.status);
+
+    const memberIds = [...new Set(options.memberIds)];
+    if (!memberIds.length) {
+      throw new BadRequestException('Select at least one protocol member');
+    }
+
+    await this.members.ensureProfilesForMembers(memberIds);
+
+    const currentIds = new Set(team.members.map((m) => m.memberId));
+    const nextIds = new Set(memberIds);
+    const toRemove = team.members.filter((m) => !nextIds.has(m.memberId));
+    const toAdd = memberIds.filter((id) => !currentIds.has(id));
+    const statusChanged = team.status !== 'GENERATED';
+
+    await this.prisma.$transaction(async (tx) => {
+      if (toRemove.length) {
+        await tx.protocolOccurrenceTeamMember.deleteMany({
+          where: { id: { in: toRemove.map((m) => m.id) } },
+        });
+      }
+      if (toAdd.length) {
+        await tx.protocolOccurrenceTeamMember.createMany({
+          data: toAdd.map((memberId) => ({
+            teamId,
+            memberId,
+            assignmentType: 'OFFICIAL' as ProtocolTeamMemberType,
+            quotaOverrideReason: options.overrideReason,
+            quotaOverrideByUserId: options.overrideReason
+              ? actorUserId
+              : undefined,
+          })),
+        });
+      }
+      if (statusChanged) {
+        await tx.protocolOccurrenceTeam.update({
+          where: { id: teamId },
+          data: {
+            status: 'GENERATED',
+            reviewedAt: null,
+            approvedAt: null,
+            publishedAt: null,
+            approvedByUserId: null,
+          },
+        });
+      }
+    });
+
+    await this.audit.log({
+      userId: actorUserId,
+      action: PROTOCOL_AUDIT.TEAM_ROSTER_UPDATED,
+      entity: PROTOCOL_AUDIT_ENTITY,
+      entityId: teamId,
+      newValue: {
+        memberCount: memberIds.length,
+        added: toAdd.length,
+        removed: toRemove.length,
+        statusReset: statusChanged,
+      } as Prisma.InputJsonValue,
+    });
+
+    await this.finalizeTeam(teamId, actorUserId, {
+      randomizeLeader: options.randomizeLeader,
+      rosterMemberIds: memberIds,
+    });
+
+    return this.getTeamInternal(teamId);
+  }
+
+  async discardTeam(actorUserId: string, teamId: string) {
+    await this.assertTeamManage(actorUserId);
+    const team = await this.prisma.protocolOccurrenceTeam.findUniqueOrThrow({
+      where: { id: teamId },
+    });
+    this.assertRosterEditable(team.status);
+
+    await this.prisma.protocolOccurrenceTeam.delete({ where: { id: teamId } });
+
+    await this.audit.log({
+      userId: actorUserId,
+      action: PROTOCOL_AUDIT.TEAM_DISCARDED,
+      entity: PROTOCOL_AUDIT_ENTITY,
+      entityId: teamId,
+      newValue: { occurrenceId: team.occurrenceId } as Prisma.InputJsonValue,
+    });
+
+    return { discarded: true, occurrenceId: team.occurrenceId };
+  }
+
+  async rebuildTeam(
+    actorUserId: string,
+    teamId: string,
+    options?: {
+      memberIds?: string[];
+      randomizeLeader?: boolean;
+      overrideReason?: string;
+    },
+  ) {
+    const team = await this.prisma.protocolOccurrenceTeam.findUniqueOrThrow({
+      where: { id: teamId },
+      select: { id: true, occurrenceId: true, status: true },
+    });
+    this.assertRosterEditable(team.status);
+    await this.discardTeam(actorUserId, teamId);
+    return this.generateForOccurrence(actorUserId, team.occurrenceId, options);
+  }
+
   async listTeams(actorUserId: string, from?: Date, to?: Date) {
     const { permissions } = await this.actor(actorUserId);
     const scopedOnly =
       !hasProtocolManage(permissions) &&
-      !permissions.includes('protocol.team.manage') &&
+      !hasProtocolTeamManage(permissions) &&
       (await this.teamLeaders.myTeams(actorUserId)).length > 0;
 
     if (scopedOnly) {
@@ -533,7 +684,7 @@ export class ProtocolTeamsService {
         skipped.push({
           occurrenceId: occurrence.id,
           title: occurrence.title,
-          reason: 'Team already exists — remove manually to rebuild',
+          reason: 'Team already exists — edit or discard from the team builder',
         });
         continue;
       }

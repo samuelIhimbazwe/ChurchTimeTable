@@ -21,6 +21,13 @@ export function hasProtocolManage(permissions: string[]): boolean {
   );
 }
 
+export function hasProtocolTeamManage(permissions: string[]): boolean {
+  return (
+    hasEffectivePermission(permissions, PERMISSIONS.PROTOCOL_TEAM_MANAGE_SCOPE) ||
+    hasProtocolManage(permissions)
+  );
+}
+
 export function hasProtocolTeamApprove(permissions: string[]): boolean {
   return (
     hasEffectivePermission(permissions, PERMISSIONS.PROTOCOL_TEAM_APPROVE) ||
