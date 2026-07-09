@@ -53,12 +53,20 @@ type ProtocolBuiltTeamsListProps = {
   from?: string
   to?: string
   planLabel?: string
+  title?: string
+  description?: string
+  limit?: number
+  viewAllHref?: string
 }
 
 export function ProtocolBuiltTeamsList({
   from,
   to,
   planLabel,
+  title = 'Built Teams',
+  description,
+  limit,
+  viewAllHref,
 }: ProtocolBuiltTeamsListProps) {
   const { data: teams, isLoading } = useQuery({
     queryKey: ['protocol-teams', from, to],
@@ -73,20 +81,35 @@ export function ProtocolBuiltTeamsList({
     [teams],
   )
 
+  const visibleItems = limit != null ? items.slice(0, limit) : items
+  const hasMore = limit != null && items.length > limit
+
+  const defaultDescription = planLabel
+    ? `Protocol teams for ${planLabel}`
+    : 'View and edit teams already built for upcoming services'
+
   return (
     <Card padding="md">
-      <CardHeader className="p-0 mb-4">
-        <CardTitle>Built Teams</CardTitle>
-        <CardDescription>
-          {planLabel
-            ? `Protocol teams for ${planLabel}`
-            : 'View and edit teams already built for upcoming services'}
-        </CardDescription>
+      <CardHeader
+        className="p-0 mb-4"
+        action={
+          viewAllHref && items.length > 0 ? (
+            <Link
+              href={viewAllHref}
+              className="text-xs font-semibold text-primary-500 hover:text-primary-700"
+            >
+              {hasMore ? 'View all →' : 'Open teams →'}
+            </Link>
+          ) : undefined
+        }
+      >
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description ?? defaultDescription}</CardDescription>
       </CardHeader>
 
       {isLoading ? (
         <SkeletonCard rows={5} />
-      ) : items.length === 0 ? (
+      ) : visibleItems.length === 0 ? (
         <p className="text-sm text-text-muted py-4 text-center">
           No teams built yet. Use the button above or{' '}
           <Link
@@ -99,7 +122,7 @@ export function ProtocolBuiltTeamsList({
         </p>
       ) : (
         <ul className="divide-y divide-border rounded-xl border border-border overflow-hidden">
-          {items.map((row) => {
+          {visibleItems.map((row) => {
             const editable = row.status !== 'COMPLETED'
             return (
               <li
