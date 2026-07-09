@@ -104,6 +104,16 @@ export default function ProtocolTeamPage() {
   const [records, setRecords] = useState<Record<string, ProtocolAttendanceOutcome | null>>({})
   const [expandedMember, setExpandedMember] = useState<string | null>(null)
 
+  function memberOutcome(member: { id: string; attended?: ProtocolAttendanceOutcome | null }) {
+    if (member.id in records) return records[member.id] ?? null
+    return member.attended ?? null
+  }
+
+  function allMembersHaveOutcome(outcome: ProtocolAttendanceOutcome) {
+    if (!team?.members?.length) return false
+    return team.members.every((m) => memberOutcome(m) === outcome)
+  }
+
   const submit = useMutation({
     mutationFn: () => protocolApi.submitAttendance({
       teamId: team!.id,
@@ -151,7 +161,7 @@ export default function ProtocolTeamPage() {
 
   const canEditRoster = team && team.status !== 'COMPLETED'
 
-  const markedCount = Object.values(records).filter(Boolean).length
+  const markedCount = Object.entries(records).filter(([, o]) => o != null).length
   const nextStep = team ? NEXT_STATUS[team.status] : undefined
 
   const bulkOutcomes: { label: string; outcome: ProtocolAttendanceOutcome }[] = [
@@ -161,11 +171,22 @@ export default function ProtocolTeamPage() {
 
   function applyBulk(outcome: ProtocolAttendanceOutcome) {
     if (!team?.members?.length) return
+    if (allMembersHaveOutcome(outcome)) {
+      setRecords((prev) => {
+        const next = { ...prev }
+        for (const m of team.members) {
+          next[m.id] = null
+        }
+        return next
+      })
+      toast.success('Cleared selection for all members')
+      return
+    }
     const next: Record<string, ProtocolAttendanceOutcome> = {}
     for (const m of team.members) {
       next[m.id] = outcome
     }
-    setRecords(next)
+    setRecords((prev) => ({ ...prev, ...next }))
     toast.success(`Marked all ${team.members.length} as ${outcomeLabel(outcome)}`)
   }
 
@@ -284,7 +305,9 @@ export default function ProtocolTeamPage() {
           {team && team.members.length > 0 && (
             <div className="px-5 pb-3 flex flex-wrap gap-2">
               <span className="text-xs text-text-muted self-center mr-1">Bulk mark:</span>
-              {bulkOutcomes.map(({ label, outcome }) => (
+              {bulkOutcomes.map(({ label, outcome }) => {
+                const active = allMembersHaveOutcome(outcome)
+                return (
                 <button
                   key={outcome}
                   type="button"
@@ -293,20 +316,29 @@ export default function ProtocolTeamPage() {
                     'px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors',
                     OUTCOME_BG[outcome],
                   )}
+                  aria-pressed={active}
                 >
                   {label}
                 </button>
-              ))}
-              {ALL_OUTCOMES.slice(0, 4).map(({ label, outcome }) => (
+              )})}
+              {ALL_OUTCOMES.slice(0, 4).map(({ label, outcome }) => {
+                const active = allMembersHaveOutcome(outcome)
+                return (
                 <button
                   key={`chip-${outcome}`}
                   type="button"
                   onClick={() => applyBulk(outcome)}
-                  className="px-2.5 py-1 rounded-full text-xs font-medium border border-border text-text-muted hover:bg-surface-raised"
+                  className={cn(
+                    'px-2.5 py-1 rounded-full text-xs font-medium border transition-colors',
+                    active
+                      ? `${OUTCOME_BG[outcome]} font-semibold`
+                      : 'border-border text-text-muted hover:bg-surface-raised',
+                  )}
+                  aria-pressed={active}
                 >
                   {label}
                 </button>
-              ))}
+              )})}
             </div>
           )}
         </CapabilityGate>
@@ -319,7 +351,7 @@ export default function ProtocolTeamPage() {
         ) : (
           <ul className="divide-y divide-border">
             {team?.members?.map((m) => {
-              const selected = records[m.id] ?? m.attended ?? null
+              const selected = memberOutcome(m)
               const isExpanded = expandedMember === m.id
               return (
                 <li key={m.id} className="px-5 py-3">
@@ -356,8 +388,11 @@ export default function ProtocolTeamPage() {
                           <button
                             key={outcome}
                             onClick={() => {
-                              setRecords((prev) => ({ ...prev, [m.id]: outcome }))
-                              setExpandedMember(null)
+                              setRecords((prev) => ({
+                                ...prev,
+                                [m.id]: selected === outcome ? null : outcome,
+                              }))
+                              if (selected !== outcome) setExpandedMember(null)
                             }}
                             className={cn(
                               'px-2.5 py-1 rounded-md text-xs font-medium border transition-colors',

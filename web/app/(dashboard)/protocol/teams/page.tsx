@@ -11,8 +11,9 @@ import type {
 import {
   CapabilityGate, Card, CardDescription, CardHeader, CardTitle, SkeletonCard,
 } from '@/components/shared'
+import { ProtocolBuiltTeamsList } from '@/components/protocol/ProtocolBuiltTeamsList'
 import { toast } from '@/components/shared/Toast'
-import { ChevronRight, Shield, Users } from 'lucide-react'
+import { ChevronRight, Shield, Users, Wand2 } from 'lucide-react'
 
 function isBuildablePlan(
   plan: ProtocolMonthlySchedulePlan,
@@ -68,6 +69,7 @@ export default function ProtocolTeamsPage() {
         )
       }
       void qc.invalidateQueries({ queryKey: ['protocol-teams'] })
+      void qc.invalidateQueries({ queryKey: ['protocol-team-occurrences'] })
       void qc.invalidateQueries({ queryKey: ['protocol-monthly-schedules'] })
     },
     onError: (err: Error) =>
@@ -117,6 +119,14 @@ export default function ProtocolTeamsPage() {
               {buildTeams.isPending ? 'Building teams…' : 'Build protocol teams'}
             </button>
 
+            <Link
+              href="/protocol/teams/generate"
+              className="inline-flex items-center gap-2 px-4 py-3 text-sm font-semibold rounded-xl border border-border hover:bg-surface-raised"
+            >
+              <Wand2 size={16} />
+              Build single team
+            </Link>
+
             {activePlan && (
               <Link
                 href={`/protocol/scheduling/${activePlan.id}`}
@@ -128,6 +138,14 @@ export default function ProtocolTeamsPage() {
           </div>
         </CapabilityGate>
       </Card>
+
+      <ProtocolBuiltTeamsList
+        from={activePlan?.startAt}
+        to={activePlan?.endAt}
+        planLabel={
+          activePlan ? `${activePlan.label} ${activePlan.year}` : undefined
+        }
+      />
 
       {teamBuildResult ? (
         <Card padding="md">
