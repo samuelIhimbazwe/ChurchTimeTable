@@ -8,7 +8,7 @@ import {
 
 } from '@nestjs/common';
 
-import { ProtocolAttendanceOutcome } from '@prisma/client';
+import { ProtocolAttendanceOutcome, ProtocolOccurrenceTeamStatus } from '@prisma/client';
 
 import type { Prisma } from '@prisma/client';
 
@@ -74,6 +74,29 @@ export class ProtocolAttendanceService {
 
   }
 
+  private async ensureTeamReadyForAttendance(
+    actorUserId: string,
+    teamId: string,
+    currentStatus: ProtocolOccurrenceTeamStatus,
+  ) {
+    if (currentStatus !== 'GENERATED') return;
+    const { permissions } = await this.permissions.resolveForUser(actorUserId);
+    const canManage =
+      hasProtocolManage(permissions) || hasProtocolAttendanceManage(permissions);
+    if (!canManage) {
+      throw new BadRequestException(
+        'Mark the team as reviewed before recording attendance',
+      );
+    }
+    await this.prisma.protocolOccurrenceTeam.update({
+      where: { id: teamId },
+      data: {
+        status: 'REVIEWED',
+        reviewedAt: new Date(),
+      },
+    });
+  }
+
 
 
   async record(
@@ -107,15 +130,11 @@ export class ProtocolAttendanceService {
       throw new ForbiddenException('Attendance management denied');
     }
 
-
-
-    if (member.team.status === 'GENERATED') {
-
-      throw new BadRequestException('Team must be reviewed before attendance');
-
-    }
-
-
+    await this.ensureTeamReadyForAttendance(
+      actorUserId,
+      member.teamId,
+      member.team.status,
+    );
 
     const settings = await this.prisma.protocolEngineSettings.findUniqueOrThrow({
 
@@ -205,6 +224,11 @@ export class ProtocolAttendanceService {
     if (!records.length) {
       throw new BadRequestException('No attendance records provided');
     }
+    const team = await this.prisma.protocolOccurrenceTeam.findUniqueOrThrow({
+      where: { id: teamId },
+      select: { status: true },
+    });
+    await this.ensureTeamReadyForAttendance(actorUserId, teamId, team.status);
     const saved = [];
     for (const row of records) {
       const member = await this.prisma.protocolOccurrenceTeamMember.findUnique({

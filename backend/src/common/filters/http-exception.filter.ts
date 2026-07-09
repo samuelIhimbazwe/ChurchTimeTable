@@ -46,7 +46,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
         if (messageKey) {
           message = this.i18n.translate(locale, messageKey, obj.message as string);
         } else if (typeof obj.message === 'string') {
-          message = this.i18n.translate(locale, code, obj.message);
+          // Nest HttpException messages are already human-readable — do not map to BAD_REQUEST catalog text.
+          message = obj.message;
         } else if (Array.isArray(obj.message)) {
           message = obj.message.join(', ');
           code = 'VALIDATION_ERROR';
