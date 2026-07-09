@@ -118,7 +118,7 @@ export function getProtocolPrimaryNav(
     },
     {
       id: 'insights',
-      label: 'Insights',
+      label: 'Reports',
       icon: BarChart3,
       href: protocolPath('reports'),
       permissionsAny: [
@@ -126,6 +126,9 @@ export function getProtocolPrimaryNav(
         'protocol.ranking.view',
         'protocol.oversight',
         'protocol.finance.view',
+        'protocol.team.manage',
+        'protocol.operational.monitor',
+        'protocol.manage',
       ],
       capability: 'protocol-report',
     },
@@ -258,7 +261,13 @@ const MODULE_TABS: Record<ProtocolModuleId, ProtocolModuleTab[]> = {
       id: 'reports',
       label: 'Reports',
       href: protocolPath('reports'),
-      permissionsAny: ['protocol.report', 'protocol.operational.monitor'],
+      permissionsAny: [
+        'protocol.report',
+        'protocol.operational.monitor',
+        'protocol.team.manage',
+        'protocol.manage',
+        'protocol.oversight',
+      ],
       capability: 'protocol-report',
     },
     {

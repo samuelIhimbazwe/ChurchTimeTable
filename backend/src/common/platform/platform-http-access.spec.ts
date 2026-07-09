@@ -56,6 +56,9 @@ describe('platform HTTP access (capability + legacy)', () => {
   it('protocol team operations caps', () => {
     const manage = platformCheckFromPermissions(['protocol.team.manage']);
     expect(platformUiCapabilityVisible('protocol-team-manage', manage)).toBe(true);
+    expect(platformUiCapabilityVisible('protocol-report', manage)).toBe(true);
+    const monitor = platformCheckFromPermissions(['protocol.operational.monitor']);
+    expect(platformUiCapabilityVisible('protocol-report', monitor)).toBe(true);
     const report = platformCheckFromPermissions(['protocol.report']);
     expect(platformUiCapabilityVisible('protocol-report', report)).toBe(true);
   });

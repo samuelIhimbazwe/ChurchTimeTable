@@ -165,7 +165,13 @@ export const PLATFORM_UI_CAPABILITY_REGISTRY: PlatformUiCapabilityDefinition[] =
   {
     id: 'protocol-report',
     label: 'Protocol report',
-    requireAnyOf: ['protocol.report@ministry'],
+    requireAnyOf: [
+      'protocol.report@ministry',
+      'protocol.team.manage@ministry',
+      'protocol.operational.monitor@ministry',
+      'protocol.manage@ministry',
+      'protocol.oversight@ministry',
+    ],
   },
   {
     id: 'protocol-report-team-ops',
