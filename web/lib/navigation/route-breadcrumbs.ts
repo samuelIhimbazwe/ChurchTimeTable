@@ -48,6 +48,9 @@ export function breadcrumbsFromPath(pathname: string): BreadcrumbItem[] {
     const seg = segments[i]
     acc += `/${seg}`
     const isLast = i === segments.length - 1
+    if (seg === 'choir' && i + 1 < segments.length && isChoirIdSegment(segments[i + 1])) {
+      continue
+    }
     if (isChoirIdSegment(seg)) {
       items.push({ label: 'Choir', href: isLast ? undefined : acc })
       continue

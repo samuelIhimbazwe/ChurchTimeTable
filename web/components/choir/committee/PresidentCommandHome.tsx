@@ -38,7 +38,7 @@ function oldestPendingAge(items: JoinRow[]): string | null {
 export function PresidentCommandHome() {
   const { choirId, choirLink } = useResolvedChoirScope()
 
-  const { data: joinRequests, isLoading: loadingJoins } = useQuery({
+  const { data: joinRequests, isPending: loadingJoins, isError: joinsError } = useQuery({
     queryKey: ['choir-join-requests', choirId, 'reviewable'],
     queryFn: async () => {
       const rows = await choirApi.getJoinRequests({ choirId })
@@ -47,10 +47,11 @@ export function PresidentCommandHome() {
     enabled: !!choirId,
   })
 
-  const { data: officerSla, isLoading: loadingSla } = useQuery({
+  const { data: officerSla, isPending: loadingSla, isError: slaError } = useQuery({
     queryKey: ['choir-officer-sla', choirId],
     queryFn: () => choirApi.getOfficerSla(choirId!),
     enabled: !!choirId,
+    retry: false,
   })
 
   const { data: health } = useQuery({
@@ -102,7 +103,7 @@ export function PresidentCommandHome() {
     )
   }
 
-  if (loadingJoins || loadingSla) {
+  if (loadingJoins) {
     return <SkeletonCard rows={4} />
   }
 
@@ -118,23 +119,43 @@ export function PresidentCommandHome() {
   const decisionsCta =
     pendingCount > 0 ? 'Open decisions →' : 'View join history →'
 
-  const slaPrimary =
-    slaBreaches > 0
-      ? `${slaBreaches} breach`
-      : slaAttention > 0
-        ? slaAttention
-        : '✓'
-  const slaSecondary =
-    slaBreaches > 0
-      ? `Care ${careOfficer?.breachCount ?? 0} · Treasurer ${treasurerOfficer?.staleCount ?? 0} stale`
-      : slaAttention > 0
-        ? 'Officers with open or aging queues'
-        : 'All officer queues on track'
+  const slaPrimary = loadingSla
+    ? '…'
+    : slaError
+      ? '—'
+      : slaBreaches > 0
+        ? `${slaBreaches} breach`
+        : slaAttention > 0
+          ? slaAttention
+          : '✓'
+  const slaSecondary = loadingSla
+    ? 'Loading officer queues…'
+    : slaError
+      ? 'Officer SLA unavailable — refresh or try again'
+      : slaBreaches > 0
+        ? `Care ${careOfficer?.breachCount ?? 0} · Treasurer ${treasurerOfficer?.staleCount ?? 0} stale`
+        : slaAttention > 0
+          ? 'Officers with open or aging queues'
+          : 'All officer queues on track'
   const slaTone =
-    slaBreaches > 0 ? 'warning' : slaAttention > 0 ? 'warning' : 'success'
+    slaError
+      ? 'default'
+      : slaBreaches > 0
+        ? 'warning'
+        : slaAttention > 0
+          ? 'warning'
+          : 'success'
 
   return (
     <div className="space-y-6">
+      {joinsError && (
+        <Card padding="md" accent="warning">
+          <p className="text-sm text-text-secondary">
+            Could not load join requests. Other executive widgets are still available below.
+          </p>
+        </Card>
+      )}
+
       <OfficeCommandHome
         title="Executive command"
         subtitle="People decisions, choir health, and officer follow-ups."

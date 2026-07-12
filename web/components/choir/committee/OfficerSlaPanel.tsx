@@ -51,6 +51,7 @@ export function OfficerSlaPanel() {
     queryKey: ['choir-officer-sla', choirId],
     queryFn: () => choirApi.getOfficerSla(choirId!),
     enabled: !!choirId,
+    retry: false,
   })
 
   if (!choirId) return null
