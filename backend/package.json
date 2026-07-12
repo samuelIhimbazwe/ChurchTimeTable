@@ -25,6 +25,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "ts-node prisma/seed.ts",
     "prisma:seed:pilot": "ts-node prisma/seed-pilot.ts",
+    "prisma:seed:demo-recording": "ts-node prisma/seed-demo-recording.ts",
     "prisma:clear-pilot": "ts-node prisma/clear-pilot-data.ts",
     "backfill:member-numbers": "ts-node scripts/backfill-member-numbers.ts"
   },

@@ -9,6 +9,7 @@ import {
 import { DollarSign, TrendingUp, Users, PieChart } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils/format'
 import { useResolvedChoirScope } from '@/lib/hooks'
+import { useTreasurerOfficeShellActive } from '@/lib/hooks/useTreasurerOfficeShellActive'
 
 function num(data: Record<string, unknown> | undefined, ...keys: string[]) {
   if (!data) return 0
@@ -20,6 +21,7 @@ function num(data: Record<string, unknown> | undefined, ...keys: string[]) {
 
 export default function FinancePage() {
   const { choirLink } = useResolvedChoirScope()
+  const inTreasurerShell = useTreasurerOfficeShellActive()
   const { data: analytics, isLoading } = useQuery({
     queryKey: ['finance-stewardship', 'CHOIR'],
     queryFn:  () => financeApi.getStewardshipAnalytics('CHOIR'),
@@ -34,10 +36,12 @@ export default function FinancePage() {
       </div>
     }>
       <div className="space-y-6 max-w-5xl mx-auto">
-        <div>
-          <h2 className="font-display text-3xl text-text-primary">Finance Dashboard</h2>
-          <p className="text-text-secondary text-sm mt-1">Treasurer stewardship analytics</p>
-        </div>
+        {!inTreasurerShell && (
+          <div>
+            <h2 className="font-display text-3xl text-text-primary">Finance Dashboard</h2>
+            <p className="text-text-secondary text-sm mt-1">Treasurer stewardship analytics</p>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {isLoading ? (

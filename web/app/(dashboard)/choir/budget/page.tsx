@@ -11,6 +11,7 @@ import {
 import { ContributionTreasuryPanel } from '@/components/choir/ContributionTreasuryPanel'
 import { TreasurerCommandHome } from '@/components/choir/committee/TreasurerCommandHome'
 import { useResolvedChoirScope } from '@/lib/hooks'
+import { useTreasurerOfficeShellActive } from '@/lib/hooks/useTreasurerOfficeShellActive'
 import { DollarSign, Wallet, TrendingUp, ClipboardCheck } from 'lucide-react'
 import { formatDate } from '@/lib/utils/format'
 
@@ -37,6 +38,7 @@ export default function BudgetHubPage() {
   const qc = useQueryClient()
   const [tab, setTab] = useState('overview')
   const { choirLink } = useResolvedChoirScope()
+  const inTreasurerShell = useTreasurerOfficeShellActive()
 
   const [name, setName] = useState('')
   const [amount, setAmount] = useState('')
@@ -109,12 +111,14 @@ export default function BudgetHubPage() {
       }
     >
     <div className="space-y-6 max-w-5xl mx-auto pb-8">
-      <div>
-        <h1 className="font-display text-3xl text-text-primary">Treasurer & budget</h1>
-        <p className="text-text-secondary text-sm mt-1">
-          Umusanzu, savings, and financial planning for recordings, concerts, and choir projects
-        </p>
-      </div>
+      {!inTreasurerShell && (
+        <div>
+          <h1 className="font-display text-3xl text-text-primary">Treasurer & budget</h1>
+          <p className="text-text-secondary text-sm mt-1">
+            Umusanzu, savings, and financial planning for recordings, concerts, and choir projects
+          </p>
+        </div>
+      )}
 
       <HubTabs tabs={TABS} active={tab} onChange={setTab} />
 

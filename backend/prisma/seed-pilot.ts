@@ -1039,6 +1039,10 @@ async function main() {
 }
 
 main()
+  .then(async () => {
+    const { seedDemoRecordingData } = await import('./seed-demo-recording');
+    await seedDemoRecordingData();
+  })
   .catch((e) => {
     console.error(e);
     process.exit(1);

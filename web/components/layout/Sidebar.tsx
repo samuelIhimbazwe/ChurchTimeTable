@@ -9,6 +9,8 @@ import { useUIStore, useAuthStore } from '@/stores/index'
 import { translateNavSections, useTranslations } from '@/lib/i18n'
 import { getNavForContext, getPortalNavForUser } from '@/lib/navigation/role-nav'
 import { getComposedChoirNav } from '@/lib/navigation/choir-nav'
+import { getTreasurerSovereignNav } from '@/lib/navigation/choir-treasurer-nav'
+import { isPrimaryTreasurerRole } from '@/lib/choir/treasurer-office'
 import { composeContributionAwareNav } from '@/lib/navigation/contribution-nav'
 import { composeWelfareAwareNav } from '@/lib/navigation/welfare-nav'
 import { composeDisciplineAwareNav } from '@/lib/navigation/discipline-nav'
@@ -99,6 +101,18 @@ export default function Sidebar({
       return getPortalNavForUser(authRole, { canAccessChoirArea: false, isChoirMember: false }, [], { isDualMember: false, primaryChoirId: null })
     }
     if (choirId && (choirCtx || membershipForPath) && membershipForPath) {
+      const treasurerPrimary = isPrimaryTreasurerRole(
+        choirCtx?.positions ?? [],
+        authRole,
+      )
+      if (treasurerPrimary) {
+        return getTreasurerSovereignNav(
+          choirId,
+          choirCtx?.choir.name ?? membershipForPath!.name,
+          contributionAuth,
+          { isDualMember, routeCheck: capabilityCheck },
+        )
+      }
       return getComposedChoirNav(
         choirId,
         choirCtx?.choir.name ?? membershipForPath!.name,

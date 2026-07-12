@@ -8,10 +8,12 @@ import {
 } from '@/components/shared'
 import { StewardshipDashboard } from '@/components/choir/ContributionTreasuryPanel'
 import { useResolvedChoirScope } from '@/lib/hooks'
+import { useTreasurerOfficeShellActive } from '@/lib/hooks/useTreasurerOfficeShellActive'
 import { DollarSign, Users, TrendingUp } from 'lucide-react'
 
 export default function StewardshipPage() {
   const { choirLink } = useResolvedChoirScope()
+  const inTreasurerShell = useTreasurerOfficeShellActive()
   const { data: analytics, isLoading } = useQuery({
     queryKey: ['finance-stewardship', 'CHOIR'],
     queryFn: () => financeApi.getStewardshipAnalytics('CHOIR'),
@@ -28,22 +30,24 @@ export default function StewardshipPage() {
       </div>
     }>
       <div className="space-y-6 max-w-5xl mx-auto">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 className="font-display text-3xl text-text-primary">Stewardship</h2>
-            <p className="text-text-secondary text-sm mt-1">
-              Contribution workflow, discrepancy follow-up, and family rankings
-            </p>
+        {!inTreasurerShell && (
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="font-display text-3xl text-text-primary">Stewardship</h2>
+              <p className="text-text-secondary text-sm mt-1">
+                Contribution workflow, discrepancy follow-up, and family rankings
+              </p>
+            </div>
+            <CapabilityGate uiCapability="contribution-catalog">
+              <Link
+                href={choirLink('stewardship/admin')}
+                className="text-sm font-semibold text-primary-600 hover:underline"
+              >
+                Catalog & campaigns →
+              </Link>
+            </CapabilityGate>
           </div>
-          <CapabilityGate uiCapability="contribution-catalog">
-            <Link
-              href={choirLink('stewardship/admin')}
-              className="text-sm font-semibold text-primary-600 hover:underline"
-            >
-              Catalog & campaigns →
-            </Link>
-          </CapabilityGate>
-        </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {isLoading ? (

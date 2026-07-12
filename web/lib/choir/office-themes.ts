@@ -6,6 +6,7 @@ import {
   UserCog,
   LayoutDashboard,
   Calendar,
+  Wallet,
 } from 'lucide-react'
 import type { FamilyOfficeKind } from '@/lib/choir/family-office'
 
@@ -16,6 +17,7 @@ export type OfficeThemeKey =
   | 'family-deputy'
   | 'family-coordination'
   | 'protocol-scheduling'
+  | 'treasury'
 
 export type OfficeTheme = {
   key: OfficeThemeKey
@@ -140,6 +142,25 @@ export const OFFICE_THEMES: Record<OfficeThemeKey, OfficeTheme> = {
     badge: 'bg-white/10 text-gold-300 border border-white/20',
     portalLink: 'text-gold-300 hover:text-gold-200',
   },
+  treasury: {
+    key: 'treasury',
+    officeKindLabel: 'Treasury office',
+    accentBorder: 'border-l-emerald-600',
+    hero: 'bg-gradient-to-br from-emerald-950 via-emerald-900 to-primary-900 border-b border-emerald-800',
+    heroText: 'text-text-inverse',
+    heroMuted: 'text-emerald-100',
+    eyebrow: 'text-gold-300',
+    iconWrap: 'bg-white/10 border border-white/15 shadow-inner',
+    icon: Wallet,
+    iconColor: 'text-gold-300',
+    navActive: 'bg-gold-500 text-primary-950 shadow-md font-bold',
+    navInactive:
+      'text-emerald-100/90 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-gold-400/40',
+    contentBg:
+      'bg-[linear-gradient(to_bottom,rgba(6,78,59,0.08)_0%,var(--color-surface)_200px)]',
+    badge: 'bg-gold-400/20 text-gold-200 border border-gold-400/30',
+    portalLink: 'text-gold-300 hover:text-gold-200',
+  },
 }
 
 export function familyOfficeThemeKey(kind: FamilyOfficeKind): OfficeThemeKey {
@@ -154,6 +175,8 @@ export function isSovereignOfficePath(pathname: string): boolean {
     || pathname.includes('/family-leadership')
     || pathname.includes('/family-deputy')
     || pathname.includes('/family-coordination')
+    || /\/choir(?:\/[^/]+)?\/budget(\/|$)/.test(pathname)
+    || /\/choir(?:\/[^/]+)?\/stewardship(\/|$)/.test(pathname)
     || /\/choir\/[^/]+\/(members|scheduling|service-preparation|activities)(\/|$)/.test(pathname)
     || /\/choir\/[^/]+\/attendance\//.test(pathname)
     || /\/choir\/(members|scheduling|service-preparation|activities)(\/|$)/.test(pathname)

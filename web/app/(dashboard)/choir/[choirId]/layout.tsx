@@ -15,6 +15,11 @@ import { ChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
 import { ChoirSponsorDashboardCtx } from '@/components/choir/ChoirSponsorDashboardProvider'
 import { choirMemberHome } from '@/lib/choir/paths'
 import { isSovereignOfficePath } from '@/lib/choir/office-themes'
+import {
+  isPrimaryTreasurerRole,
+  isTreasurerOfficePath,
+} from '@/lib/choir/treasurer-office'
+import { TreasurerOfficeShell } from '@/components/choir/TreasurerOfficeShell'
 import { Card } from '@/components/shared'
 import { ArrowLeft, Heart, Music } from 'lucide-react'
 
@@ -74,8 +79,14 @@ export default function ChoirScopedLayout({ children }: { children: React.ReactN
   const { isBlocked: choirScopeBlocked, isLoading: loadingScopeGuard } =
     useChoirWorkspaceGuard()
   const { activeChoirMemberships } = useChoirAccess()
+  const authRole = useAuthStore((s) => s.user?.role)
   const accessRouting = useAuthStore((s) => s.user?.accessRouting)
   const deniedRedirect = choirWorkspaceRedirect(activeChoirMemberships, accessRouting)
+
+  const treasurerPrimary =
+    memberContext != null
+    && isPrimaryTreasurerRole(memberContext.positions, authRole)
+  const treasurerOfficeRoute = isTreasurerOfficePath(pathname)
 
   const stillLoading =
     loadingMember ||
@@ -126,10 +137,17 @@ export default function ChoirScopedLayout({ children }: { children: React.ReactN
   }
 
   if (memberAccess && memberContext) {
+    const body =
+      treasurerPrimary && treasurerOfficeRoute ? (
+        <TreasurerOfficeShell choirId={choirId}>{children}</TreasurerOfficeShell>
+      ) : (
+        children
+      )
+
     return (
       <ChoirDashboardCtx.Provider value={memberProviderValue}>
-        <div className={isSovereignOffice ? undefined : 'space-y-5'}>
-          {!isSovereignOffice && (
+        <div className={isSovereignOffice || treasurerOfficeRoute ? undefined : 'space-y-5'}>
+          {!isSovereignOffice && !treasurerOfficeRoute && (
             <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-border text-[13px]">
               <p className="text-text-muted min-w-0">
                 <span className="font-medium text-text-primary">{memberContext.choir.name}</span>
@@ -157,7 +175,7 @@ export default function ChoirScopedLayout({ children }: { children: React.ReactN
               </div>
             </div>
           )}
-          {children}
+          {body}
         </div>
       </ChoirDashboardCtx.Provider>
     )

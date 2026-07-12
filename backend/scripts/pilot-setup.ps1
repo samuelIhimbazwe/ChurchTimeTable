@@ -14,6 +14,10 @@ npx prisma db push
 npm run prisma:seed
 npm run prisma:seed:pilot
 
+Write-Host "`nFor video walkthroughs, run (API must be up for schedule):" -ForegroundColor Cyan
+Write-Host "  powershell -File .\scripts\prepare-demo-recording.ps1 -ScheduleOnly" -ForegroundColor DarkGray
+Write-Host "  See docs/pilot/DEMO_RECORDING.md" -ForegroundColor DarkGray
+
 Write-Host "`nStarting smoke test (API must be running in another terminal: npm run start:dev)..." -ForegroundColor Yellow
 Start-Sleep -Seconds 2
 try {
