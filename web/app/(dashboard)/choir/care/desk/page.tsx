@@ -20,10 +20,7 @@ export default function CareDeskPage() {
   const breaches = dashboard?.slaBreaches ?? 0
 
   return (
-    <AccessRedirectGate
-      uiCapability="welfare-care-inbox"
-      requirePosition="discipline_social_welfare"
-    >
+    <AccessRedirectGate uiCapability="welfare-care-inbox">
     <ChoirPositionHubShell
       roleKey="discipline_social_welfare"
       subtitle="Triage member care cases with SLA tracking and confidential follow-up."

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { useReachableHref } from '@/lib/hooks/useChoirHrefReachable'
 
 interface CardProps {
   children: React.ReactNode
@@ -39,6 +40,7 @@ export default function Card({
   onClick,
   id,
 }: CardProps) {
+  const reachableHref = useReachableHref(href)
   const surfaceClass = cn(
     'bg-surface rounded-md border border-border',
     elevated && 'shadow-card',
@@ -47,10 +49,10 @@ export default function Card({
     className,
   )
 
-  if (href) {
+  if (reachableHref) {
     return (
       <Link
-        href={href}
+        href={reachableHref}
         id={id}
         className={cn(
           surfaceClass,

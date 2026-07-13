@@ -102,7 +102,6 @@ export default function BudgetHubPage() {
   return (
     <AccessRedirectGate
       uiCapability="contribution-budget-hub"
-      requirePosition="treasurer"
     >
     <div className="space-y-6 max-w-5xl mx-auto pb-8">
       {!inTreasurerShell && (

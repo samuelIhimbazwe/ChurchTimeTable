@@ -85,14 +85,14 @@ export const OPS_UI_CAPABILITY_REGISTRY: OpsUiCapabilityDefinition[] = [
   {
     id: 'ops-attendance-manage',
     label: 'Record choir attendance',
-    routeSegments: ['activities', 'scheduling'],
+    routeSegments: ['attendance', 'activities', 'scheduling'],
     requireAnyOf: ['choir.ops.attendance@choir'],
     mode: 'any',
   },
   {
     id: 'ops-attendance-view',
     label: 'View choir attendance',
-    routeSegments: ['activities', 'scheduling'],
+    routeSegments: ['attendance', 'activities', 'scheduling'],
     requireAnyOf: ['choir.ops.attendance@choir', 'choir.ops.view@choir'],
     mode: 'any',
   },

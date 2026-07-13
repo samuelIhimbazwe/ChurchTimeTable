@@ -6,6 +6,7 @@ const CHOIR_ID_PATTERN =
 export const LEGACY_CHOIR_ROUTE_SEGMENTS = new Set([
   'activities',
   'admin',
+  'attendance',
   'advisor',
   'analytics',
   'announcements',

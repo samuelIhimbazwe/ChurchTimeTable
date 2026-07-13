@@ -65,7 +65,7 @@ export function useAttentionItems() {
         id: 'at-risk',
         label: `${missing} at-risk member${missing === 1 ? '' : 's'}`,
         detail: 'Low participation or unexcused absences',
-        href: choirPath(choirId, 'analytics'),
+        href: choirPath(choirId, 'attendance'),
         tone: 'warning',
       })
     }
@@ -86,14 +86,16 @@ export function useAttentionItems() {
       list.push({
         id: 'services',
         label: `${upcomingServices} upcoming service${upcomingServices === 1 ? '' : 's'} in 30 days`,
-        href: choirPath(choirId, 'scheduling'),
+        href: choirPath(choirId, 'attendance'),
+        detail: 'Take or review attendance for services',
       })
     }
     if (upcomingRehearsals > 0) {
       list.push({
         id: 'rehearsals',
         label: `${upcomingRehearsals} upcoming rehearsal${upcomingRehearsals === 1 ? '' : 's'}`,
-        href: choirPath(choirId, 'activities'),
+        href: choirPath(choirId, 'attendance/new'),
+        detail: 'Create attendance for rehearsals',
       })
     }
 

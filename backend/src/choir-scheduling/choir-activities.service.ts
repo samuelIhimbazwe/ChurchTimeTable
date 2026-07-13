@@ -1,9 +1,47 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import type { ChoirActivityType, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { ChoirOpsAccessService } from './choir-ops-access.service';
 import { CHOIR_SCHEDULING_AUDIT } from './choir-scheduling.constants';
+
+function toActivityDto(
+  row: {
+    id: string;
+    choirId: string;
+    title: string;
+    activityType: ChoirActivityType;
+    startAt: Date;
+    endAt: Date;
+    location: string | null;
+    occurrenceId: string | null;
+    choir?: { name: string } | null;
+    _count?: { attendance?: number };
+  },
+  memberCount = 0,
+) {
+  const startAt = row.startAt;
+  const endAt = row.endAt;
+  const attendanceCount = row._count?.attendance ?? 0;
+  const now = Date.now();
+  const windowStart = startAt.getTime() - 6 * 60 * 60 * 1000;
+  const windowEnd = endAt.getTime() + 12 * 60 * 60 * 1000;
+  return {
+    id: row.id,
+    choirId: row.choirId,
+    choirName: row.choir?.name,
+    activityType: row.activityType,
+    title: row.title,
+    date: startAt.toISOString(),
+    startTime: startAt.toISOString(),
+    endTime: endAt.toISOString(),
+    location: row.location ?? undefined,
+    occurrenceId: row.occurrenceId ?? undefined,
+    attendanceOpen: now >= windowStart && now <= windowEnd,
+    attendanceCount,
+    memberCount,
+  };
+}
 
 @Injectable()
 export class ChoirActivitiesService {
@@ -15,6 +53,12 @@ export class ChoirActivitiesService {
 
   private async actor(userId: string, choirId?: string) {
     await this.opsAccess.requireView(userId, choirId);
+  }
+
+  private async memberCount(choirId: string) {
+    return this.prisma.choirMembership.count({
+      where: { choirId, isActive: true },
+    });
   }
 
   async create(
@@ -47,6 +91,10 @@ export class ChoirActivitiesService {
         occurrenceId: data.occurrenceId,
         createdById: actorUserId,
       },
+      include: {
+        choir: { select: { name: true } },
+        _count: { select: { attendance: true } },
+      },
     });
 
     await this.audit.log({
@@ -57,7 +105,22 @@ export class ChoirActivitiesService {
       newValue: data as Prisma.InputJsonValue,
     });
 
-    return activity;
+    const members = await this.memberCount(activity.choirId);
+    return toActivityDto(activity, members);
+  }
+
+  async get(actorUserId: string, activityId: string) {
+    const activity = await this.prisma.choirActivity.findUnique({
+      where: { id: activityId },
+      include: {
+        choir: { select: { name: true } },
+        _count: { select: { attendance: true } },
+      },
+    });
+    if (!activity) throw new NotFoundException('Activity not found');
+    await this.actor(actorUserId, activity.choirId);
+    const members = await this.memberCount(activity.choirId);
+    return toActivityDto(activity, members);
   }
 
   async list(
@@ -70,7 +133,7 @@ export class ChoirActivitiesService {
     },
   ) {
     await this.actor(actorUserId, filters?.choirId);
-    return this.prisma.choirActivity.findMany({
+    const rows = await this.prisma.choirActivity.findMany({
       where: {
         ...(filters?.choirId ? { choirId: filters.choirId } : {}),
         ...(filters?.activityType ? { activityType: filters.activityType } : {}),
@@ -83,9 +146,31 @@ export class ChoirActivitiesService {
             }
           : {}),
       },
-      include: { choir: { select: { id: true, name: true, code: true } } },
-      orderBy: { startAt: 'asc' },
+      include: {
+        choir: { select: { id: true, name: true, code: true } },
+        _count: { select: { attendance: true } },
+      },
+      orderBy: { startAt: 'desc' },
       take: 200,
     });
+
+    const memberCounts = new Map<string, number>();
+    const choirIds = [...new Set(rows.map((r) => r.choirId))];
+    await Promise.all(
+      choirIds.map(async (id) => {
+        memberCounts.set(id, await this.memberCount(id));
+      }),
+    );
+
+    const items = rows.map((row) =>
+      toActivityDto(row, memberCounts.get(row.choirId) ?? 0),
+    );
+    return {
+      items,
+      total: items.length,
+      page: 1,
+      limit: items.length,
+      totalPages: 1,
+    };
   }
 }

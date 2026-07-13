@@ -123,6 +123,15 @@ export class ChoirSchedulingController {
     });
   }
 
+  @Get('activities/:activityId')
+  @RequireUiCapability('ops-activities-hub')
+  getActivity(
+    @CurrentUser('sub') userId: string,
+    @Param('activityId') activityId: string,
+  ) {
+    return this.activities.get(userId, activityId);
+  }
+
   @Get('occurrences/:occurrenceId/recommendations')
   @RequireUiCapability('ops-schedule-manage')
   recommend(

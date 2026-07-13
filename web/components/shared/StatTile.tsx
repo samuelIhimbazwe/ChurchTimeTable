@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTranslations } from '@/lib/i18n'
+import { useReachableHref } from '@/lib/hooks/useChoirHrefReachable'
 
 interface StatTileProps {
   label: string
@@ -59,6 +60,7 @@ export default function StatTile({
   accent = false,
 }: StatTileProps) {
   const { tr } = useTranslations()
+  const reachableHref = useReachableHref(href)
   const numericValue = typeof value === 'number' ? value : NaN
   const displayed    = useCountUp(isNaN(numericValue) ? 0 : numericValue, animate && !isNaN(numericValue))
 
@@ -66,14 +68,14 @@ export default function StatTile({
   const deltaNeutral  = delta === 0
   const DeltaIcon     = deltaNeutral ? Minus : deltaPositive ? TrendingUp : TrendingDown
 
-  const interactive = !!onClick || !!href
+  const interactive = !!onClick || !!reachableHref
 
   const body = (
     <div
-      role={onClick && !href ? 'button' : undefined}
-      tabIndex={onClick && !href ? 0 : undefined}
-      onKeyDown={onClick && !href ? (e) => e.key === 'Enter' && onClick() : undefined}
-      onClick={href ? undefined : onClick}
+      role={onClick && !reachableHref ? 'button' : undefined}
+      tabIndex={onClick && !reachableHref ? 0 : undefined}
+      onKeyDown={onClick && !reachableHref ? (e) => e.key === 'Enter' && onClick() : undefined}
+      onClick={reachableHref ? undefined : onClick}
       className={cn(
         'relative bg-surface rounded-md p-4 sm:p-5 min-w-0',
         'border border-border',
@@ -123,10 +125,10 @@ export default function StatTile({
     </div>
   )
 
-  if (href) {
+  if (reachableHref) {
     return (
       <Link
-        href={href}
+        href={reachableHref}
         className={cn(
           'block rounded-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40',
           'hover:border-border-strong transition-colors duration-fast',

@@ -111,7 +111,7 @@ export default function SpiritualHubPage() {
     'w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold-500'
 
   return (
-    <AccessRedirectGate uiCapability="devotion-spiritual-content" requirePosition="spiritual_leader">
+    <AccessRedirectGate uiCapability="devotion-spiritual-content">
     <div className="space-y-6 max-w-5xl mx-auto pb-8">
       <div>
         <h1 className="font-display text-3xl text-text-primary">Spiritual life</h1>

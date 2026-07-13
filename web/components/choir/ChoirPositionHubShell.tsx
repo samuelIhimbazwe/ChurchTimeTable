@@ -5,6 +5,7 @@ import { ChevronRight } from 'lucide-react'
 import { HubTabs, Card } from '@/components/shared'
 import { ChoirPositionGuide } from '@/components/choir/ChoirPositionGuide'
 import { choirPositionMeta } from '@/lib/constants/choir-positions'
+import { useReachableHref } from '@/lib/hooks/useChoirHrefReachable'
 
 export type HubTabDef = { id: string; label: string }
 
@@ -58,8 +59,11 @@ type QuickLinkProps = {
 }
 
 export function HubQuickLink({ href, label, desc, icon: Icon, stat }: QuickLinkProps) {
+  const reachableHref = useReachableHref(href)
+  if (!reachableHref) return null
+
   return (
-    <Link href={href}>
+    <Link href={reachableHref}>
       <Card padding="md" className="h-full hover:border-border-strong transition-colors group">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">

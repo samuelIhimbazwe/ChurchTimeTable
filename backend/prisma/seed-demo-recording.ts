@@ -19,7 +19,7 @@ import { MAIN_CHOIR_ID } from '../src/common/constants/choir.constants';
 const prisma = new PrismaClient();
 
 const DEMO = {
-  choirName: "Ijwi ry'Umwami Yesu",
+  choirName: 'El Bethel',
   choirDescription:
     'Primary church choir — worship, recordings, and Sunday service ministry.',
   churchDisplayName: 'ADEPR Kacyiru Parish',

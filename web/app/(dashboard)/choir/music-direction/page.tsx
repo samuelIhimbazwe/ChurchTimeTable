@@ -57,7 +57,6 @@ export default function MusicDirectorHubPage() {
   return (
     <AccessRedirectGate
       uiCapability="music-direction-hub"
-      requirePosition="music_director"
     >
     <ChoirPositionHubShell roleKey="music_director" tabs={TABS} activeTab={tab} onTabChange={setTab}>
       {tab === 'overview' && (

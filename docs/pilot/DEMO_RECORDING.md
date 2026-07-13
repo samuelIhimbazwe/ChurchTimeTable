@@ -19,7 +19,7 @@ Without the API, the script still resets accounts, treasury, and protocol demo d
 
 | Area | Demo state |
 |------|------------|
-| **Branding** | Choir **Ijwi ry'Umwami Yesu**, church **ADEPR Kacyiru Parish**, readable occurrence titles |
+| **Branding** | Choir **El Bethel**, church **ADEPR Kacyiru Parish**, readable occurrence titles |
 | **Treasurer** | 3 budgets, active Umusanzu campaign, **3 items in verify queue**, MTD confirmed gifts |
 | **Protocol teams** | Service I team **published**; Service II team **built (draft)** for publish demo |
 | **Protocol queue** | Pending **replacement** request |

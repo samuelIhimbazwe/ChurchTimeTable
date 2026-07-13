@@ -96,8 +96,8 @@ export function ChoirQuickActions({ choirId, todoCount = 0, className }: Props) 
               key={action.id}
               href={action.href}
               className={cn(
-                'flex items-center gap-3 p-3 rounded-lg border border-border bg-surface',
-                'shadow-card transition-colors min-h-[72px]',
+                'flex flex-col items-center justify-center gap-2 p-3 rounded-lg border border-border bg-surface',
+                'shadow-card transition-colors min-h-[88px] text-center overflow-hidden',
                 'hover:bg-surface-raised hover:border-primary-200 dark:hover:border-primary-700',
               )}
             >
@@ -109,8 +109,8 @@ export function ChoirQuickActions({ choirId, todoCount = 0, className }: Props) 
               >
                 <Icon size={20} />
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-text-primary leading-tight">
+              <div className="min-w-0 w-full px-0.5">
+                <p className="text-xs sm:text-sm font-semibold text-text-primary leading-snug break-words">
                   {action.label}
                 </p>
                 {action.badge && (

@@ -94,7 +94,6 @@ export default function RecordsHubPage() {
   return (
     <AccessRedirectGate
       uiCapability="records-hub"
-      requirePosition="secretary"
     >
     <div className="space-y-6 max-w-5xl mx-auto pb-8">
       <div>

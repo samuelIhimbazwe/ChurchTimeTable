@@ -40,7 +40,6 @@ export default function FamilyCoordinatorHubPage() {
   return (
     <AccessRedirectGate
       uiCapability="family-coordinator-hub"
-      requirePosition="family_coordinator"
     >
     <ChoirPositionHubShell roleKey="family_coordinator" tabs={TABS} activeTab={tab} onTabChange={setTab}>
       {tab === 'overview' && (

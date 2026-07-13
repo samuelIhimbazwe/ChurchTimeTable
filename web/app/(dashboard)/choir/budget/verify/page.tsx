@@ -7,7 +7,6 @@ export default function BudgetVerifyPage() {
   return (
     <AccessRedirectGate
       uiCapability="contribution-treasury-verify"
-      requirePosition="treasurer"
     >
       <TreasurerVerificationConsole />
     </AccessRedirectGate>

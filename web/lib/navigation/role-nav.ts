@@ -37,8 +37,7 @@ const CHOIR_DASHBOARD: NavSection = {
 const CHOIR_OPERATIONS: NavSection = {
   section: 'Operations',
   items: [
-    { label: 'Activities', icon: Calendar, path: '/choir/activities' },
-    { label: 'Roster',     icon: Users,    path: '/choir/members' },
+    { label: 'Operations', icon: LayoutDashboard, path: '/choir/members' },
   ],
 }
 
@@ -105,10 +104,9 @@ const CHOIR_FINANCE: NavSection = {
 }
 
 const CHOIR_REHEARSALS: NavSection = {
-  section: 'Rehearsals',
+  section: 'Operations',
   items: [
-    { label: 'Activities', icon: Calendar, path: '/choir/activities' },
-    { label: 'Roster',     icon: Users,    path: '/choir/members' },
+    { label: 'Operations', icon: LayoutDashboard, path: '/choir/members' },
   ],
 }
 
@@ -205,8 +203,7 @@ export const NAV_BY_ROLE: Record<string, NavSection[]> = {
     {
       section: 'Logistics',
       items: [
-        { label: 'Activities', icon: Calendar, path: '/choir/activities' },
-        { label: 'Welfare',    icon: Heart,    path: '/choir/welfare' },
+        { label: 'Welfare', icon: Heart, path: '/choir/welfare' },
       ],
     },
   ],
@@ -217,7 +214,6 @@ export const NAV_BY_ROLE: Record<string, NavSection[]> = {
     {
       section: 'Care',
       items: [
-        { label: 'Roster',  icon: Users, path: '/choir/members' },
         { label: 'Welfare', icon: Heart, path: '/choir/welfare' },
       ],
     },

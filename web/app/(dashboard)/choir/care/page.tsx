@@ -163,10 +163,7 @@ export default function CareHubPage() {
     'w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold-500'
 
   return (
-    <AccessRedirectGate
-      uiCapability="care-hub"
-      requirePosition="discipline_social_welfare"
-    >
+    <AccessRedirectGate uiCapability="care-hub">
     <div className="space-y-6 max-w-5xl mx-auto pb-8">
       <div>
         <h1 className="font-display text-3xl text-text-primary">Care & discipline</h1>

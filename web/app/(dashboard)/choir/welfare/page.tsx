@@ -85,6 +85,7 @@ export default function WelfarePage() {
           onSearchChange={setSearch}
           statusFilter={statusFilter}
           onStatusFilterChange={setStatusFilter}
+          onCreateCase={() => setShowCreate(true)}
         />
       )}
     </div>

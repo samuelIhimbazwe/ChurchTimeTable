@@ -67,7 +67,6 @@ export default function AdvisorHubPage() {
   return (
     <AccessRedirectGate
       uiCapability="advisor-hub"
-      requirePosition="advisor"
     >
     <ChoirPositionHubShell
       roleKey="advisor"

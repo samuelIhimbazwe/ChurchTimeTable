@@ -1,8 +1,10 @@
 'use client'
 
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { useTranslations } from '@/lib/i18n'
 import { ChoirSceneIllustration } from '@/components/brand/ChoirSceneIllustration'
+import { useReachableHref } from '@/lib/hooks/useChoirHrefReachable'
 
 type IllustrationVariant = 'choir' | 'music' | 'calendar' | 'giving'
 
@@ -28,6 +30,7 @@ export default function EmptyState({
   className,
 }: EmptyStateProps) {
   const { tr } = useTranslations()
+  const reachableHref = useReachableHref(actionHref)
 
   return (
     <div className={cn(
@@ -49,19 +52,20 @@ export default function EmptyState({
       )}
       {action && (
         <button
+          type="button"
           onClick={action.onClick}
           className="mt-5 px-5 py-2.5 text-sm font-semibold bg-gold-500 text-primary-900 rounded-lg hover:bg-gold-400 transition-colors"
         >
           {tr(action.label)}
         </button>
       )}
-      {actionHref && actionLabel && (
-        <a
-          href={actionHref}
+      {!action && reachableHref && actionLabel && (
+        <Link
+          href={reachableHref}
           className="mt-5 px-5 py-2.5 text-sm font-semibold bg-gold-500 text-primary-900 rounded-lg hover:bg-gold-400 transition-colors"
         >
           {tr(actionLabel)}
-        </a>
+        </Link>
       )}
     </div>
   )

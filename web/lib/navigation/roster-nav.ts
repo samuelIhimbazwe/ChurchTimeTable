@@ -1,9 +1,8 @@
-import { Users } from 'lucide-react'
 import { can } from '../choir/capability-can'
 import type { ResolvedAuth } from '../choir/capability.types'
 import { uiCapabilityVisible } from '../choir/roster-ui-capability-registry'
 import { rosterRouteTailFromPath } from '../choir/roster-routes'
-import { choirPath } from '../choir/paths'
+import { parseChoirIdFromPath } from '../choir/paths'
 import type { NavItem, NavSection } from './role-nav'
 
 const TAIL_TO_UI: Record<string, string> = {
@@ -37,8 +36,19 @@ export function rosterNavItemVisible(
   return pageAccessForRosterRoute(path, auth)
 }
 
+function isRosterTabPath(path: string): boolean {
+  const scoped = parseChoirIdFromPath(path)
+  if (scoped) {
+    const rest = path.replace(/^\/choir\/[^/]+\/?/, '').replace(/\/$/, '')
+    return rest.split('/')[0] === 'members'
+  }
+  return /^\/choir\/members(\/|$)/.test(path)
+}
+
 function filterItems(items: NavItem[], auth: ResolvedAuth | undefined): NavItem[] {
   return items.filter((item) => {
+    // Roster sub-page is tab-bar only; keep sidebar "Operations" hub entry.
+    if (isRosterTabPath(item.path) && item.label !== 'Operations') return false
     const uiId = rosterNavGateForPath(item.path)
     if (!uiId) return true
     return navGateVisible(uiId, auth)
@@ -57,29 +67,12 @@ export function applyRosterNavOverrides(
     .filter((sec) => sec.items.length > 0)
 }
 
-function pathInSections(sections: NavSection[], path: string): boolean {
-  return sections.some((sec) => sec.items.some((item) => item.path === path))
-}
-
 export function augmentRosterNavSections(
   sections: NavSection[],
-  choirId: string,
-  auth: ResolvedAuth | undefined,
+  _choirId: string,
+  _auth: ResolvedAuth | undefined,
 ): NavSection[] {
-  if (!auth) return sections
-
-  const path = choirPath(choirId, 'members')
-  if (pathInSections(sections, path)) return sections
-  if (!pageAccessForRosterRoute(path, auth)) return sections
-
-  const idx = sections.findIndex((s) => s.section === 'Operations')
-  const item: NavItem = { label: 'Roster', path, icon: Users }
-  if (idx >= 0) {
-    return sections.map((sec, i) =>
-      i === idx ? { ...sec, items: [...sec.items, item] } : sec,
-    )
-  }
-  return [...sections, { section: 'Operations', items: [item] }]
+  return sections
 }
 
 export function composeRosterAwareNav(

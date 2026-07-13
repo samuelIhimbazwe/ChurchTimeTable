@@ -18,6 +18,8 @@ import { formatDate } from '@/lib/utils/format'
 import { useResolvedChoirScope, useSnoozedQueue } from '@/lib/hooks'
 import { Heart, LayoutGrid, List, Inbox } from 'lucide-react'
 import type { WelfareCase } from '@/types'
+import { useUiCapability } from '@/lib/hooks/useCapability'
+import { useChoirHrefReachable } from '@/lib/hooks/useChoirHrefReachable'
 
 const STATUS_BADGE: Record<WelfareCase['status'], 'status-absent' | 'status-pending' | 'status-present'> = {
   OPEN: 'status-absent',
@@ -35,6 +37,7 @@ type Props = {
   onSearchChange: (v: string) => void
   statusFilter: StatusFilter
   onStatusFilterChange: (v: StatusFilter) => void
+  onCreateCase?: () => void
 }
 
 export function WelfareCasesWorkspace({
@@ -44,11 +47,15 @@ export function WelfareCasesWorkspace({
   onSearchChange,
   statusFilter,
   onStatusFilterChange,
+  onCreateCase,
 }: Props) {
   const { choirLink } = useResolvedChoirScope()
   const router = useRouter()
   const qc = useQueryClient()
   const [view, setView] = useState<ViewMode>('table')
+  const canManage = useUiCapability('welfare-manage')
+  const careDeskHref = choirLink('care/desk')
+  const careDeskReachable = useChoirHrefReachable(careDeskHref)
 
   const { visibleItems: unsnoozedCases, bumpSnooze } = useSnoozedQueue(
     cases ?? [],
@@ -174,7 +181,12 @@ export function WelfareCasesWorkspace({
         icon={Heart}
         title="No welfare cases"
         description="Open a case when a member needs pastoral or practical support."
-        actionHref={choirLink('care/desk')}
+        action={
+          canManage && onCreateCase
+            ? { label: 'New case', onClick: onCreateCase }
+            : undefined
+        }
+        actionHref={!canManage || !onCreateCase ? careDeskHref : undefined}
         actionLabel="Open care desk"
       />
     )
@@ -203,13 +215,15 @@ export function WelfareCasesWorkspace({
             <LayoutGrid size={14} /> Board
           </button>
         </div>
-        <Link
-          href={choirLink('care/desk')}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-600 hover:text-primary-800"
-        >
-          <Inbox size={16} />
-          Full care desk queue
-        </Link>
+        {careDeskReachable && (
+          <Link
+            href={careDeskHref}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-600 hover:text-primary-800"
+          >
+            <Inbox size={16} />
+            Full care desk queue
+          </Link>
+        )}
       </div>
 
       <DataTableFilterBar

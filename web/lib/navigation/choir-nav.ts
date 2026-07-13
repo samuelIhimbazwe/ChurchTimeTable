@@ -1,8 +1,7 @@
 import {
-  LayoutDashboard, Calendar, Users, Music, Home,
+  LayoutDashboard, Users, Music, Home,
   Heart, BookOpen, DollarSign, FileText, Settings2,
   UserPlus, KeyRound, Crown, UserCog, Mic2, Scale, Shield,
-  ClipboardList,
 } from 'lucide-react'
 import type { NavItem, NavSection } from '@/lib/navigation/role-nav'
 import { choirMemberHome, choirPath } from '@/lib/choir/paths'
@@ -190,34 +189,19 @@ function opsItemsForCapabilities(
   choirId: string,
   capabilityCheck: (capId: string) => boolean,
 ): NavItem[] {
-  const items: NavItem[] = []
-  const canViewSchedule = opsUiVisible('ops-scheduling-hub', capabilityCheck)
-  const canViewRoster = rosterUiVisible('roster-hub', capabilityCheck)
-  const canViewActivities =
-    opsUiVisible('ops-activities-hub', capabilityCheck)
-    || capabilityCheck('choir.ops.attendance@choir')
-  const showOverview =
-    capabilityCheck('choir.ops.manage@choir')
+  const canOps =
+    opsUiVisible('ops-scheduling-hub', capabilityCheck)
+    || opsUiVisible('ops-activities-hub', capabilityCheck)
+    || opsUiVisible('ops-attendance-view', capabilityCheck)
+    || rosterUiVisible('roster-hub', capabilityCheck)
+    || capabilityCheck('choir.ops.manage@choir')
     || capabilityCheck('choir.ops.view@choir')
+    || capabilityCheck('choir.ops.attendance@choir')
 
-  if (canViewSchedule) {
-    items.push({ label: 'Scheduling', icon: Calendar, path: choirPath(choirId, 'scheduling') })
-    items.push({
-      label: 'Service prep',
-      icon: ClipboardList,
-      path: choirPath(choirId, 'service-preparation'),
-    })
-  }
-  if (canViewRoster) {
-    items.push({ label: 'Roster', icon: Users, path: choirPath(choirId, 'members') })
-  }
-  if (canViewActivities || canViewSchedule) {
-    items.push({ label: 'Activities', icon: Calendar, path: choirPath(choirId, 'activities') })
-  }
-  if (showOverview) {
-    items.push({ label: 'Overview', icon: LayoutDashboard, path: choirPath(choirId) })
-  }
-  return items
+  if (!canOps) return []
+  return [
+    { label: 'Operations', icon: LayoutDashboard, path: choirPath(choirId, 'members') },
+  ]
 }
 
 /** Composed sidebar for `/choir/{choirId}/*`: member baseline + roles in this choir. */
@@ -253,8 +237,6 @@ export function getComposedChoirNav(
     items: [
       { label: 'My membership', icon: Users, path: choirPath(choirId, 'membership/profile') },
       { label: 'Music library', icon: Music, path: choirPath(choirId, 'music') },
-      { label: 'Scheduling', icon: Calendar, path: choirPath(choirId, 'scheduling') },
-      { label: 'Activities', icon: Calendar, path: choirPath(choirId, 'activities') },
     ],
   })
 
@@ -320,38 +302,22 @@ export function getComposedChoirNav(
     const opsItems = capabilityCheck
       ? opsItemsForCapabilities(choirId, capabilityCheck)
       : (() => {
-          const legacy: NavItem[] = []
-          const canViewRoster =
-            permissions.some((p) => ['member:manage', 'choir.ops.manage', 'choir.oversight'].includes(p))
-            || (
-              positions.some((p) => ELEVATED_COMMITTEE_ROLE_KEYS.has(p.roleKey))
-              && permissions.some((p) => ['member:read', 'choir.ops.view'].includes(p))
+          const canOps =
+            permissions.some((p) =>
+              [
+                'member:manage',
+                'choir.ops.manage',
+                'choir.ops.view',
+                'choir.oversight',
+                'attendance.mark',
+                'member:read',
+              ].includes(p),
             )
-          const canMarkAttendance = permissions.some((p) =>
-            ['member:manage', 'choir.ops.manage', 'choir.oversight', 'attendance.mark'].includes(p),
-          )
-          const canViewSchedule =
-            canViewRoster
-            || permissions.some((p) => ['choir.ops.view', 'member:read'].includes(p))
-
-          if (canViewSchedule) {
-            legacy.push({ label: 'Scheduling', icon: Calendar, path: choirPath(choirId, 'scheduling') })
-            legacy.push({
-              label: 'Service prep',
-              icon: ClipboardList,
-              path: choirPath(choirId, 'service-preparation'),
-            })
-          }
-          if (canViewRoster) {
-            legacy.push({ label: 'Roster', icon: Users, path: choirPath(choirId, 'members') })
-          }
-          if (canMarkAttendance || canViewSchedule) {
-            legacy.push({ label: 'Activities', icon: Calendar, path: choirPath(choirId, 'activities') })
-          }
-          if (permissions.some((p) => ['choir.ops.manage', 'choir.oversight'].includes(p))) {
-            legacy.push({ label: 'Overview', icon: LayoutDashboard, path: choirPath(choirId) })
-          }
-          return legacy
+            || positions.some((p) => ELEVATED_COMMITTEE_ROLE_KEYS.has(p.roleKey))
+          if (!canOps) return [] as NavItem[]
+          return [
+            { label: 'Operations', icon: LayoutDashboard, path: choirPath(choirId, 'members') },
+          ]
         })()
     if (opsItems.length > 0) {
       sections.push({ section: 'Operations', items: opsItems })
