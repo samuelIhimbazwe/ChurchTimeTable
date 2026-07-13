@@ -8,7 +8,7 @@ import {
   memberPortalApi,
 } from '@/lib/api'
 import { buildMemberObligations } from '@/lib/choir/member-obligations'
-import { membershipOfficePath } from '@/lib/choir/membership-office'
+import { membershipProfilePath } from '@/lib/choir/membership-office'
 import { formatDate, formatTime } from '@/lib/utils/format'
 import { AlertCircle, Clock, DollarSign, Calendar } from 'lucide-react'
 
@@ -46,7 +46,7 @@ export function MemberAttentionStrip({ choirId }: Props) {
           : nextEventRaw.date
             ? formatDate(String(nextEventRaw.date))
             : '',
-        href: membershipOfficePath(choirId, 'attendance'),
+        href: membershipProfilePath(choirId, 'attendance'),
       }
     : undefined
 

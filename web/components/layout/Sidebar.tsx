@@ -211,6 +211,7 @@ export default function Sidebar({
         ),
           contextChoirId ?? choirId,
           capabilityCheck,
+          contributionAuth,
         ),
           contextChoirId ?? choirId,
           capabilityCheck,

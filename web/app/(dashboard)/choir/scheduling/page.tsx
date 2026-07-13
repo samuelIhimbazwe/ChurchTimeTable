@@ -6,9 +6,7 @@ import Link from 'next/link'
 import { choirSchedulingApi } from '@/lib/api'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { ChoirOpsShell } from '@/components/choir/ChoirOpsShell'
-import {
-  Card, CardHeader, CardTitle, CardDescription, Badge, SkeletonCard, CapabilityGate, EmptyState,
-} from '@/components/shared'
+import { Card, CardHeader, CardTitle, CardDescription, Badge, SkeletonCard, CapabilityGate, EmptyState, AccessRedirectGate } from '@/components/shared'
 import {
   MonthCalendarGrid, CalendarLegend, WeekCalendarGrid, AgendaList,
   CalendarViewToggle, SubscribeCalendarButton,
@@ -143,14 +141,8 @@ export default function SchedulingPage() {
   const pendingCount = pendingAcceptance?.length ?? 0
 
   return (
-    <CapabilityGate
+    <AccessRedirectGate
       uiCapability="ops-scheduling-hub"
-      fallback={
-        <EmptyState
-          title="Scheduling not available"
-          description="You do not have permission to view the choir schedule."
-        />
-      }
     >
     <ChoirOpsShell
       title="Scheduling"
@@ -410,6 +402,6 @@ export default function SchedulingPage() {
       </Card>
       </div>
     </ChoirOpsShell>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

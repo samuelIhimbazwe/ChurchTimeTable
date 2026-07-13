@@ -1,4 +1,4 @@
-import { Mic2, Music } from 'lucide-react'
+import { Music } from 'lucide-react'
 import { can } from '../choir/capability-can'
 import type { ResolvedAuth } from '../choir/capability.types'
 import { uiCapabilityVisible } from '../choir/music-ui-capability-registry'
@@ -106,7 +106,6 @@ export function augmentMusicNavSections(
 
   const extras: NavItem[] = []
   const libraryPath = choirPath(choirId, 'music')
-  const directionPath = choirPath(choirId, 'music-direction')
 
   if (
     !pathInSections(sections, libraryPath)
@@ -114,12 +113,7 @@ export function augmentMusicNavSections(
   ) {
     extras.push({ label: 'Music library', path: libraryPath, icon: Music })
   }
-  if (
-    !pathInSections(sections, directionPath)
-    && pageAccessForMusicRoute(directionPath, auth)
-  ) {
-    extras.push({ label: 'Music direction', path: directionPath, icon: Mic2 })
-  }
+  // Music direction office comes from committee positions only — do not inject.
 
   if (extras.length === 0) return sections
 

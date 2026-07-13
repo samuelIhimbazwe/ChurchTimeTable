@@ -8,10 +8,7 @@ import { ChoirRoleTemplateLibrary } from '@/components/choir/committee/ChoirRole
 import { AdvisorElevationPanel } from '@/components/choir/committee/AdvisorElevationPanel'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { toast } from '@/components/shared/Toast'
-import {
-  Card, CardHeader, CardTitle, CardDescription,
-  SkeletonCard, Badge, CapabilityGate, EmptyState,
-} from '@/components/shared'
+import { Card, CardHeader, CardTitle, CardDescription, SkeletonCard, Badge, CapabilityGate, AccessRedirectGate } from '@/components/shared'
 import { useRolesUiCapability } from '@/lib/hooks/useCapability'
 import {
   CHOIR_POSITION_PERMISSION_OPTIONS,
@@ -105,14 +102,8 @@ export default function ChoirRolesPage() {
   const hasHighSod = sodWarnings.some((w) => w.severity === 'high')
 
   return (
-    <CapabilityGate
+    <AccessRedirectGate
       uiCapability="roles-hub"
-      fallback={
-        <EmptyState
-          title="Position roles not available"
-          description="You do not have permission to manage choir position roles."
-        />
-      }
     >
     <div className="space-y-6 max-w-4xl mx-auto pb-8">
       <div className="flex items-start justify-between gap-4">
@@ -243,6 +234,6 @@ export default function ChoirRolesPage() {
       )}
       </CapabilityGate>
     </div>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

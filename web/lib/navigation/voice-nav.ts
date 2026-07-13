@@ -1,9 +1,7 @@
-import { Mic2 } from 'lucide-react'
 import { can } from '../choir/capability-can'
 import type { ResolvedAuth } from '../choir/capability.types'
 import { uiCapabilityVisible } from '../choir/voice-ui-capability-registry'
 import { voiceRouteTailFromPath } from '../choir/voice-routes'
-import { choirPath } from '../choir/paths'
 import type { NavItem, NavSection } from './role-nav'
 
 const TAIL_TO_UI: Record<string, string> = {
@@ -57,36 +55,13 @@ export function applyVoiceNavOverrides(
     .filter((sec) => sec.items.length > 0)
 }
 
-function pathInSections(sections: NavSection[], path: string): boolean {
-  return sections.some((sec) => sec.items.some((item) => item.path === path))
-}
-
 export function augmentVoiceNavSections(
   sections: NavSection[],
-  choirId: string,
-  auth: ResolvedAuth | undefined,
+  _choirId: string,
+  _auth: ResolvedAuth | undefined,
 ): NavSection[] {
-  if (!auth) return sections
-
-  const extras: NavItem[] = []
-  const voicePath = choirPath(choirId, 'voice-sections')
-
-  if (
-    !pathInSections(sections, voicePath)
-    && pageAccessForVoiceRoute(voicePath, auth)
-  ) {
-    extras.push({ label: 'Voice sections', path: voicePath, icon: Mic2 })
-  }
-
-  if (extras.length === 0) return sections
-
-  const idx = sections.findIndex((s) => s.section === 'Music')
-  if (idx >= 0) {
-    return sections.map((sec, i) =>
-      i === idx ? { ...sec, items: [...sec.items, ...extras] } : sec,
-    )
-  }
-  return [...sections, { section: 'Music', items: extras }]
+  // MVP: no standalone voice-sections page in sidebar.
+  return sections
 }
 
 export function composeVoiceAwareNav(

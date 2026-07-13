@@ -11,7 +11,7 @@ import {
   choirServiceOpsApi,
 } from '@/lib/api'
 import { Card } from '@/components/shared'
-import { membershipOfficePath } from '@/lib/choir/membership-office'
+import { membershipOfficePath, membershipProfilePath } from '@/lib/choir/membership-office'
 import {
   dismissChoirOnboarding,
   isChoirOnboardingCelebrated,
@@ -99,7 +99,7 @@ export function ChoirOnboardingChecklist({ choirId }: Props) {
         id: 'family',
         label: 'Connect your family',
         description: 'See family members and shared giving in one place.',
-        href: membershipOfficePath(choirId, 'family'),
+        href: membershipProfilePath(choirId, 'family'),
         done: familyDone,
       },
       {
@@ -113,7 +113,7 @@ export function ChoirOnboardingChecklist({ choirId }: Props) {
         id: 'giving',
         label: 'Set a giving goal',
         description: 'Track your contribution toward choir campaigns.',
-        href: membershipOfficePath(choirId, 'giving'),
+        href: membershipProfilePath(choirId, 'giving'),
         done: givingDone,
       },
       {

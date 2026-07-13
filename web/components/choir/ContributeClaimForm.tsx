@@ -42,7 +42,7 @@ export function ContributeClaimForm({
     amount: number
     campaignName: string
   } | null>(null)
-  const { data: ctx, isLoading } = useQuery({
+  const { data: ctx, isLoading, isError, error } = useQuery({
     queryKey: ['contribution-submit-context', choirId],
     queryFn: () => contributionsApi.getSubmitContext(choirId),
   })
@@ -118,6 +118,18 @@ export function ContributeClaimForm({
 
   if (isLoading) {
     return <Card padding="md"><p className="text-sm text-text-muted">Loading…</p></Card>
+  }
+
+  if (isError) {
+    return (
+      <Card padding="md">
+        <p className="text-sm text-text-secondary">
+          {error instanceof Error && error.message
+            ? error.message
+            : 'Could not load payment submission options. Try again or contact your family coordinator.'}
+        </p>
+      </Card>
+    )
   }
 
   if (!ctx?.family) {

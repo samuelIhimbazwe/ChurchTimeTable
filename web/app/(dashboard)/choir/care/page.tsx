@@ -11,9 +11,7 @@ import {
   choirOperationsApi,
 } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
-import {
-  Card, Badge, Avatar, HubTabs, CapabilityGate, SkeletonCard, EmptyState,
-} from '@/components/shared'
+import { Card, Badge, Avatar, HubTabs, CapabilityGate, SkeletonCard, EmptyState, AccessRedirectGate } from '@/components/shared'
 import { CareCommandHome } from '@/components/choir/committee/CareCommandHome'
 import { formatDate } from '@/lib/utils/format'
 import { Heart, Shield, FileText, Megaphone, Calendar, ExternalLink } from 'lucide-react'
@@ -165,14 +163,9 @@ export default function CareHubPage() {
     'w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold-500'
 
   return (
-    <CapabilityGate
+    <AccessRedirectGate
       uiCapability="care-hub"
-      fallback={
-        <EmptyState
-          title="Care hub not available"
-          description="You do not have permission to access care and discipline tools."
-        />
-      }
+      requirePosition="discipline_social_welfare"
     >
     <div className="space-y-6 max-w-5xl mx-auto pb-8">
       <div>
@@ -476,6 +469,6 @@ export default function CareHubPage() {
         </CapabilityGate>
       )}
     </div>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

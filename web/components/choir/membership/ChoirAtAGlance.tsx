@@ -2,7 +2,7 @@
 
 import { Calendar, ClipboardList, ListTodo, TrendingUp } from 'lucide-react'
 import { StatTile } from '@/components/shared'
-import { membershipOfficePath } from '@/lib/choir/membership-office'
+import { membershipOfficePath, membershipProfilePath } from '@/lib/choir/membership-office'
 import { cn } from '@/lib/utils'
 
 type Props = {
@@ -36,7 +36,7 @@ export function ChoirAtAGlance({
           label="This week"
           value={weekEventCount}
           icon={Calendar}
-          href={membershipOfficePath(choirId, 'attendance')}
+          href={membershipProfilePath(choirId, 'attendance')}
           animate={weekEventCount > 0}
         />
         <StatTile
@@ -62,7 +62,7 @@ export function ChoirAtAGlance({
           label="Giving progress"
           value={givingProgressPct != null ? `${givingProgressPct}%` : '—'}
           icon={TrendingUp}
-          href={membershipOfficePath(choirId, 'giving')}
+          href={membershipProfilePath(choirId, 'giving')}
         />
       </div>
     </section>

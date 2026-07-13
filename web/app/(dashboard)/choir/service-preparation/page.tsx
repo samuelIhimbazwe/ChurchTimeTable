@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { choirServiceOpsApi } from '@/lib/api'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { ChoirOpsShell } from '@/components/choir/ChoirOpsShell'
-import { Card, Badge, SkeletonCard, CapabilityGate, EmptyState } from '@/components/shared'
+import { Card, Badge, SkeletonCard, AccessRedirectGate } from '@/components/shared'
 import { formatDate, formatTime } from '@/lib/utils/format'
 import { ClipboardList, ChevronRight } from 'lucide-react'
 
@@ -30,14 +30,8 @@ export default function ServicePreparationPage() {
   const needsPrep = (services ?? []).filter((s) => !s.hasPlan).length
 
   return (
-    <CapabilityGate
+    <AccessRedirectGate
       uiCapability="ops-scheduling-hub"
-      fallback={
-        <EmptyState
-          title="Service preparation not available"
-          description="You do not have permission to view service preparation."
-        />
-      }
     >
     <ChoirOpsShell
       title="Service preparation"
@@ -89,6 +83,6 @@ export default function ServicePreparationPage() {
         </ul>
       )}
     </ChoirOpsShell>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

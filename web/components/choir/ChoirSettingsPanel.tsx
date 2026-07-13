@@ -1,11 +1,12 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { KeyRound, Mic2, Settings2, UserPlus, FileText, Shield } from 'lucide-react'
+import { KeyRound, Settings2, UserPlus, FileText, Shield } from 'lucide-react'
 import { choirApi } from '@/lib/api'
 import { Card, SkeletonCard } from '@/components/shared'
 import { HubQuickLink } from '@/components/choir/ChoirPositionHubShell'
 import { useResolvedChoirScope } from '@/lib/hooks'
+import { memberOnboardingHref } from '@/lib/choir/membership-intake'
 
 function ruleLines(rules: Record<string, unknown> | undefined): string[] {
   if (!rules) return []
@@ -50,7 +51,7 @@ export function ChoirSettingsPanel() {
       <div>
         <h2 className="font-display text-3xl text-text-primary">Choir-wide settings</h2>
         <p className="text-text-secondary text-sm mt-1">
-          Configuration for {choirName ?? 'this choir'} — roles, profile, voice parts, and membership policy.
+          Configuration for {choirName ?? 'this choir'} — roles, profile, and membership policy.
         </p>
       </div>
 
@@ -68,15 +69,9 @@ export function ChoirSettingsPanel() {
           icon={Settings2}
         />
         <HubQuickLink
-          href={choirLink('voice-sections')}
-          label="Voice sections"
-          desc="Soprano, alto, tenor, bass groupings"
-          icon={Mic2}
-        />
-        <HubQuickLink
-          href={choirLink('join-requests')}
-          label="Join requests"
-          desc="Membership onboarding workflow"
+          href={memberOnboardingHref(choirLink)}
+          label="Member onboarding"
+          desc="Provision singers and assign positions"
           icon={UserPlus}
         />
         <HubQuickLink

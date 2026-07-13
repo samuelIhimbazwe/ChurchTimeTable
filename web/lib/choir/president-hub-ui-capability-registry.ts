@@ -14,7 +14,6 @@ export const PRESIDENT_HUB_UI_CAPABILITY_REGISTRY: PresidentHubUiCapabilityDefin
       label: 'President hub',
       routeSegments: ['president'],
       requireAnyOf: [
-        'choir.join.review@choir',
         'choir.member.manage@choir',
         'choir.ops.view@choir',
         'choir.ops.manage@choir',

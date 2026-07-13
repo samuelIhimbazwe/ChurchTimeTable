@@ -49,7 +49,7 @@ describe('care hub nav ↔ page access parity', () => {
     expect(legacyCareHubLinkVisible([])).toBe(false);
   });
 
-  it('getChoirNavForUser includes care hub when capability router grants access', () => {
+  it('getChoirNavForUser does not inject care hub from capabilities alone', () => {
     const check = buildCapabilityRouterFromAuths(welfareOfficerAuths);
     const sections = getChoirNavForUser(
       'MEMBER',
@@ -58,9 +58,7 @@ describe('care hub nav ↔ page access parity', () => {
       check,
     );
     const roleSection = sections.find((s) => s.section === 'My choir role');
-    expect(roleSection?.items.some((i) => i.path === LEGACY_CARE_HUB_PATH)).toBe(
-      true,
-    );
+    expect(roleSection?.items.some((i) => i.path === LEGACY_CARE_HUB_PATH) ?? false).toBe(false);
   });
 
   it('getChoirNavForUser omits care hub without caps or legacy permissions', () => {

@@ -1,8 +1,10 @@
 'use client'
 
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { choirActivityApi, choirSchedulingApi } from '@/lib/api'
 import { useResolvedChoirScope } from '@/lib/hooks'
+import { memberOnboardingHref } from '@/lib/choir/membership-intake'
 import { formatDate, formatTime } from '@/lib/utils/format'
 import Link from 'next/link'
 import {
@@ -25,6 +27,10 @@ function healthNum(data: Record<string, unknown> | undefined, ...keys: string[])
 
 export default function ChoirHubPage() {
   const { choirId, choirName, choirLink } = useResolvedChoirScope()
+  const pendingApprovalsHref = useMemo(
+    () => memberOnboardingHref(choirLink),
+    [choirLink],
+  )
 
   const { data: health, isLoading: healthLoading } = useQuery({
     queryKey: ['choir-leader-dashboard', choirId],
@@ -223,11 +229,11 @@ export default function ChoirHubPage() {
       {/* Leadership ops tiles — not contribution data; gate each tile separately */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <CapabilityGate uiCapability="hub-pending-approvals">
-          <Link href={choirLink('join-requests')}>
+          <Link href={pendingApprovalsHref}>
             <Card padding="md" className="hover:shadow-raised transition-shadow cursor-pointer">
-              <p className="text-sm text-text-secondary">Pending Approvals</p>
-              <p className="font-display text-4xl font-bold mt-1 text-warning">
-                {healthNum(h, 'pendingApprovals', 'pendingJoinRequests')}
+              <p className="text-sm text-text-secondary">Member onboarding</p>
+              <p className="font-display text-2xl font-bold mt-1 text-primary-700">
+                Provision members →
               </p>
             </Card>
           </Link>

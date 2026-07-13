@@ -11,7 +11,7 @@ export const SPONSOR_UI_CAPABILITY_REGISTRY: SponsorUiCapabilityDefinition[] =
   [
     {
       id: 'sponsor-requests-desk',
-      label: 'Sponsor requests',
+      label: 'Sponsors',
       routeSegments: ['join-requests'],
       requireAnyOf: [
         'choir.sponsor.review@choir',
@@ -21,7 +21,7 @@ export const SPONSOR_UI_CAPABILITY_REGISTRY: SponsorUiCapabilityDefinition[] =
     },
     {
       id: 'sponsor-requests-review',
-      label: 'Review sponsor requests',
+      label: 'Manage sponsors',
       routeSegments: ['join-requests'],
       requireAnyOf: [
         'choir.sponsor.review@choir',

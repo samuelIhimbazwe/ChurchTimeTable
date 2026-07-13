@@ -204,8 +204,7 @@ function FamilyReviewModal({
           </div>
         ) : (
           <Card padding="md" className="mt-4 bg-surface-overlay">
-            <p className="text-sm font-semibold text-text-muted">Not authorized</p>
-            <p className="text-xs text-text-muted mt-1">
+            <p className="text-xs text-text-muted">
               You can view this claim but cannot approve or reject. Contact your family head if
               verification is needed.
             </p>

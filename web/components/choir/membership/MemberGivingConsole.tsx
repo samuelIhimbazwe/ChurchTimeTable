@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { contributionsApi, type ContributionClaim } from '@/lib/api'
 import { ContributeClaimForm } from '@/components/choir/ContributeClaimForm'
 import { FamilyPaymentInstructionsCard } from '@/components/choir/FamilyPaymentInstructionsCard'
-import { membershipOfficePath } from '@/lib/choir/membership-office'
+import { membershipProfilePath } from '@/lib/choir/membership-office'
 import { Card, Badge, SkeletonCard } from '@/components/shared'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
 import {
@@ -241,7 +241,7 @@ export function MemberGivingConsole({ choirId }: Props) {
     }
   }, [showSubmit, claims.length, detailIdParam, selectedId, setDetailId])
 
-  const givingPath = membershipOfficePath(choirId, 'giving')
+  const givingPath = membershipProfilePath(choirId, 'giving')
 
   if (showSubmit) {
     return (

@@ -12,6 +12,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { ChoirSponsorAccessService } from './choir-sponsor-access.service';
 import { MEMBER_PORTAL_AUDIT } from './member-portal.constants';
+import { INTERNAL_CHOIR_MEMBERSHIP } from '../common/choir/membership-intake.constants';
 
 @Injectable()
 export class ChoirSponsorRequestsService {
@@ -44,6 +45,11 @@ export class ChoirSponsorRequestsService {
       message?: string;
     },
   ) {
+    if (INTERNAL_CHOIR_MEMBERSHIP) {
+      throw new BadRequestException(
+        'Sponsors are invited by choir leadership. Self-serve sponsor applications are closed.',
+      );
+    }
     const member = await this.memberForUser(userId);
     const choir = await this.prisma.choir.findFirst({
       where: { id: data.choirId, isActive: true, isPublicJoinable: true },

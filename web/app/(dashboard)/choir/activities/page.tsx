@@ -16,29 +16,7 @@ import { useResolvedChoirScope } from '@/lib/hooks'
 
 import { ChoirOpsShell } from '@/components/choir/ChoirOpsShell'
 
-import {
-
-  Badge,
-
-  DataTable,
-
-  DataTableFilterBar,
-
-  DataTableFilterChip,
-
-  DataTableSearch,
-
-  DataTableToolbar,
-
-  EmptyState,
-
-  CapabilityGate,
-
-  SkeletonCard,
-
-  type DataTableColumn,
-
-} from '@/components/shared'
+import { Badge, DataTable, DataTableFilterBar, DataTableFilterChip, DataTableSearch, DataTableToolbar, EmptyState, CapabilityGate, SkeletonCard, type DataTableColumn, AccessRedirectGate } from '@/components/shared'
 
 import { Calendar, Clock, MapPin } from 'lucide-react'
 
@@ -308,14 +286,8 @@ export default function ActivitiesPage() {
 
   return (
 
-    <CapabilityGate
+    <AccessRedirectGate
       uiCapability="ops-activities-hub"
-      fallback={
-        <EmptyState
-          title="Activities not available"
-          description="You do not have permission to view choir activities."
-        />
-      }
     >
     <ChoirOpsShell
 
@@ -457,7 +429,7 @@ export default function ActivitiesPage() {
 
     </ChoirOpsShell>
 
-    </CapabilityGate>
+    </AccessRedirectGate>
 
   )
 

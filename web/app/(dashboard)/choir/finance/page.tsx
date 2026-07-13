@@ -2,10 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { financeApi } from '@/lib/api'
-import {
-  Card, CardHeader, CardTitle, CardDescription,
-  StatTile, CapabilityGate, SkeletonStatTile, SkeletonCard,
-} from '@/components/shared'
+import { Card, CardHeader, CardTitle, CardDescription, StatTile, SkeletonStatTile, SkeletonCard, AccessRedirectGate } from '@/components/shared'
 import { DollarSign, TrendingUp, Users, PieChart } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils/format'
 import { useResolvedChoirScope } from '@/lib/hooks'
@@ -30,11 +27,9 @@ export default function FinancePage() {
   const a = analytics as Record<string, unknown> | undefined
 
   return (
-    <CapabilityGate uiCapability="contribution-finance-overview" fallback={
-      <div className="flex items-center justify-center h-64">
-        <p className="text-text-muted">You do not have access to finance data.</p>
-      </div>
-    }>
+    <AccessRedirectGate
+      uiCapability="contribution-finance-overview"
+    >
       <div className="space-y-6 max-w-5xl mx-auto">
         {!inTreasurerShell && (
           <div>
@@ -111,6 +106,6 @@ export default function FinancePage() {
           )}
         </Card>
       </div>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

@@ -4,23 +4,10 @@ import { useMemo, useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { choirApi } from '@/lib/api'
-import {
-  Avatar,
-  Badge,
-  DataTable,
-  DataTableFilterBar,
-  DataTableFilterChip,
-  DataTableSearch,
-  DataTableToolbar,
-  DataTableColumnPicker,
-  DataTableSavedViews,
-  EmptyState,
-  SkeletonCard,
-  CapabilityGate,
-  type DataTableColumn,
-} from '@/components/shared'
+import { Avatar, Badge, DataTable, DataTableFilterBar, DataTableFilterChip, DataTableSearch, DataTableToolbar, DataTableColumnPicker, DataTableSavedViews, EmptyState, SkeletonCard, CapabilityGate, type DataTableColumn, AccessRedirectGate } from '@/components/shared'
 import { exportRowsToCsv } from '@/lib/table/table-views'
 import { useResolvedChoirId, useResolvedChoirScope, useTableUrlState } from '@/lib/hooks'
+import { memberOnboardingHref } from '@/lib/choir/membership-intake'
 import { ChoirRosterActions } from '@/components/choir/ChoirRosterActions'
 import { ChoirOpsShell } from '@/components/choir/ChoirOpsShell'
 import { choirPositionLabel } from '@/lib/constants/choir-positions'
@@ -197,14 +184,8 @@ export default function ChoirMembersPage() {
   const columnMeta = columns.map((c) => ({ id: c.id, header: c.header }))
 
   return (
-    <CapabilityGate
+    <AccessRedirectGate
       uiCapability="roster-hub"
-      fallback={
-        <EmptyState
-          title="Roster not available"
-          description="You do not have permission to view the choir roster."
-        />
-      }
     >
     <ChoirOpsShell
       title="Choir roster"
@@ -340,8 +321,8 @@ export default function ChoirMembersPage() {
                   title="No members match"
                   description={search ? 'Try a different search.' : 'No active members in this choir.'}
                   action={search ? { label: 'Clear search', onClick: () => setSearch('') } : undefined}
-                  actionHref={search ? undefined : choirLink('president/decisions')}
-                  actionLabel={search ? undefined : 'Review join requests'}
+                  actionHref={search ? undefined : memberOnboardingHref(choirLink)}
+                  actionLabel={search ? undefined : 'Member onboarding'}
                 />
               }
               toolbar={
@@ -388,6 +369,6 @@ export default function ChoirMembersPage() {
         )}
       </div>
     </ChoirOpsShell>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

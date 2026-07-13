@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Award, ChevronRight, Heart, CalendarCheck } from 'lucide-react'
 import { Card } from '@/components/shared'
 import { choirSchedulingApi } from '@/lib/api'
-import { membershipOfficePath } from '@/lib/choir/membership-office'
+import { membershipProfilePath } from '@/lib/choir/membership-office'
 import { useTranslations } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 import { CelebrationMoment } from '@/components/member/CelebrationMoment'
@@ -108,8 +108,8 @@ export function MemberRecognitionStrip({ choirId }: Props) {
   }
 
   const milestones = data.nextMilestones ?? []
-  const attendanceHref = membershipOfficePath(choirId, 'attendance')
-  const givingHref = membershipOfficePath(choirId, 'giving')
+  const attendanceHref = membershipProfilePath(choirId, 'attendance')
+  const givingHref = membershipProfilePath(choirId, 'giving')
 
   return (
     <>

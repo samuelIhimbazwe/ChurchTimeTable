@@ -5,9 +5,7 @@ import Link from 'next/link'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { financeApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
-import {
-  Card, StatTile, HubTabs, CapabilityGate, SkeletonCard, SkeletonStatTile,
-} from '@/components/shared'
+import { Card, StatTile, HubTabs, CapabilityGate, SkeletonCard, SkeletonStatTile, AccessRedirectGate } from '@/components/shared'
 import { ContributionTreasuryPanel } from '@/components/choir/ContributionTreasuryPanel'
 import { TreasurerCommandHome } from '@/components/choir/committee/TreasurerCommandHome'
 import { useResolvedChoirScope } from '@/lib/hooks'
@@ -102,13 +100,9 @@ export default function BudgetHubPage() {
     'w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold-500'
 
   return (
-    <CapabilityGate
+    <AccessRedirectGate
       uiCapability="contribution-budget-hub"
-      fallback={
-        <div className="flex items-center justify-center h-64">
-          <p className="text-text-muted">You do not have access to the budget hub.</p>
-        </div>
-      }
+      requirePosition="treasurer"
     >
     <div className="space-y-6 max-w-5xl mx-auto pb-8">
       {!inTreasurerShell && (
@@ -270,6 +264,6 @@ export default function BudgetHubPage() {
         </div>
       )}
     </div>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

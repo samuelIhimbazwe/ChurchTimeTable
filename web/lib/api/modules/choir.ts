@@ -101,6 +101,51 @@ export const choirApi = {
       { withdraw: true },
     ),
 
+  getSponsors: (choirId: string) =>
+    apiClient.get<
+      never,
+      {
+        choirId: string
+        choirName: string
+        sponsors: Array<{
+          sponsorshipId: string
+          memberId: string
+          firstName: string
+          lastName: string
+          email: string | null
+          phone: string | null
+          startedAt: string
+          confirmedTotal: number
+          confirmedGiftCount: number
+          lastGiftAt: string | null
+          pendingGiftCount: number
+        }>
+        totals: {
+          sponsorCount: number
+          confirmedTotal: number
+          pendingGiftCount: number
+        }
+      }
+    >('/choirs/sponsors', { params: { choirId } }),
+
+  provisionSponsor: (data: {
+    choirId: string
+    email: string
+    firstName: string
+    lastName: string
+    phone?: string
+  }) =>
+    apiClient.post<
+      never,
+      {
+        email: string
+        memberId: string
+        existingAccount: boolean
+        temporaryPassword: string | null
+        message: string
+      }
+    >('/choirs/sponsors/provision', data),
+
   getPositionRoles: (choirId: string) =>
     apiClient.get<never, ChoirPositionRole[]>(
       '/choirs/position-roles',
@@ -162,67 +207,6 @@ export const choirApi = {
       never,
       { presidentOutOfOffice: boolean; presidentDelegationJoinReview: boolean }
     >(`/choirs/${choirId}/governance/president-delegation`, payload),
-
-  getOfficerSla: (choirId: string) =>
-    apiClient.get<
-      never,
-      {
-        choirId: string
-        generatedAt: string
-        officers: Array<{
-          id: string
-          label: string
-          queueCount: number
-          breachCount: number
-          staleCount: number
-          oldestHours: number | null
-          oldestLabel: string | null
-          status: 'ok' | 'attention' | 'breach'
-        }>
-        totals: {
-          breachCount: number
-          staleCount: number
-          attentionCount: number
-        }
-      }
-    >(`/choirs/${choirId}/executive/officer-sla`),
-
-  exportExecutivePackPdf: async (choirId: string) => {
-    const blob = await apiClient.get<never, Blob>(
-      `/choirs/${choirId}/executive/export/pdf`,
-      { responseType: 'blob' },
-    )
-    const url = URL.createObjectURL(blob)
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = 'choir-executive-pack.pdf'
-    anchor.click()
-    URL.revokeObjectURL(url)
-  },
-
-  getExecutivePulse: (choirId: string, weekStart?: string) =>
-    apiClient.get<
-      never,
-      {
-        choirId: string
-        weekStart: string
-        entry: {
-          score: number
-          note: string | null
-          recordedByName: string | null
-          updatedAt: string
-        } | null
-        recent: Array<{ weekStart: string; score: number; note: string | null }>
-      }
-    >(`/choirs/${choirId}/executive/pulse`, {
-      params: weekStart ? { weekStart } : undefined,
-    }),
-
-  upsertExecutivePulse: (
-    choirId: string,
-    payload: { score: number; note?: string; weekStart?: string },
-  ) =>
-    apiClient.post<never, unknown>(`/choirs/${choirId}/executive/pulse`, payload),
 
   getMeetings: () =>
     apiClient.get<never, unknown[]>('/choir/meetings'),

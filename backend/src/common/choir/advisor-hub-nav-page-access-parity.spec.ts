@@ -69,7 +69,7 @@ describe('advisor hub nav ↔ page access parity', () => {
     expect(legacyAdvisorHubLinkVisible([])).toBe(false);
   });
 
-  it('getChoirNavForUser includes advisor hub when capability router grants access', () => {
+  it('getChoirNavForUser does not inject advisor hub from capabilities alone', () => {
     const check = buildCapabilityRouterFromAuths(advisorOpsAuths);
     const sections = getChoirNavForUser(
       'MEMBER',
@@ -78,9 +78,7 @@ describe('advisor hub nav ↔ page access parity', () => {
       check,
     );
     const roleSection = sections.find((s) => s.section === 'My choir role');
-    expect(roleSection?.items.some((i) => i.path === LEGACY_ADVISOR_HUB_PATH)).toBe(
-      true,
-    );
+    expect(roleSection?.items.some((i) => i.path === LEGACY_ADVISOR_HUB_PATH) ?? false).toBe(false);
   });
 
   it('getChoirNavForUser omits advisor hub without caps or legacy permissions', () => {

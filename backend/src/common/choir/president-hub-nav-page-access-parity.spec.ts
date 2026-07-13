@@ -15,7 +15,7 @@ const presidentAuths = {
   joinAuth: {
     userId: 'pres',
     choirId: PILOT_CHOIR,
-    capabilities: [{ id: 'choir.join.review@choir' }],
+    capabilities: [{ id: 'choir.member.manage@choir' }],
   } satisfies ResolvedAuth,
 };
 
@@ -50,14 +50,14 @@ describe('president hub nav ↔ page access parity', () => {
   });
 
   it('member without caps falls back to legacy permissions only', () => {
-    expect(legacyPresidentHubLinkVisible(['choir.join.review'])).toBe(true);
     expect(legacyPresidentHubLinkVisible(['member:manage'])).toBe(true);
     expect(legacyPresidentHubLinkVisible(['choir.oversight'])).toBe(true);
     expect(legacyPresidentHubLinkVisible(['choir.operations.manage'])).toBe(true);
+    expect(legacyPresidentHubLinkVisible(['choir.join.review'])).toBe(false);
     expect(legacyPresidentHubLinkVisible([])).toBe(false);
   });
 
-  it('getChoirNavForUser includes president hub when capability router grants access', () => {
+  it('getChoirNavForUser does not inject president hub from capabilities alone', () => {
     const check = buildCapabilityRouterFromAuths(presidentAuths);
     const sections = getChoirNavForUser(
       'MEMBER',
@@ -67,8 +67,8 @@ describe('president hub nav ↔ page access parity', () => {
     );
     const roleSection = sections.find((s) => s.section === 'My choir role');
     expect(
-      roleSection?.items.some((i) => i.path === LEGACY_PRESIDENT_HUB_PATH),
-    ).toBe(true);
+      roleSection?.items.some((i) => i.path === LEGACY_PRESIDENT_HUB_PATH) ?? false,
+    ).toBe(false);
   });
 
   it('getChoirNavForUser omits president hub without caps or legacy permissions', () => {

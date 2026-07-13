@@ -6,9 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { musicApi, choirActivityApi } from '@/lib/api'
 import { useResolvedChoirScope } from '@/lib/hooks'
-import {
-  Card, Badge, SkeletonCard, CapabilityGate, EmptyState,
-} from '@/components/shared'
+import { Card, Badge, SkeletonCard, CapabilityGate, AccessRedirectGate } from '@/components/shared'
 import { ChoirPositionHubShell, HubQuickLink } from '@/components/choir/ChoirPositionHubShell'
 import { MusicSongNotifyForm } from '@/components/choir/MusicSongNotifyForm'
 import { MusicCreateSongForm } from '@/components/choir/MusicCreateSongForm'
@@ -57,14 +55,9 @@ export default function MusicDirectorHubPage() {
   const rehearsalItems = activities?.items ?? []
 
   return (
-    <CapabilityGate
+    <AccessRedirectGate
       uiCapability="music-direction-hub"
-      fallback={
-        <EmptyState
-          title="Music direction not available"
-          description="You do not have permission to access the music direction hub."
-        />
-      }
+      requirePosition="music_director"
     >
     <ChoirPositionHubShell roleKey="music_director" tabs={TABS} activeTab={tab} onTabChange={setTab}>
       {tab === 'overview' && (
@@ -79,7 +72,6 @@ export default function MusicDirectorHubPage() {
               </Card>
             </button>
             <HubQuickLink href={choirLink('music')} label="Full music library" desc="Scores, audio, metadata" icon={Music} />
-            <HubQuickLink href={choirLink('voice-sections')} label="Voice sections" desc="Soprano, alto, tenor, bass" icon={Mic2} />
             <HubQuickLink href={choirLink('scheduling')} label="Scheduling" desc="Service assignments" icon={Calendar} />
           </div>
         </div>
@@ -177,6 +169,6 @@ export default function MusicDirectorHubPage() {
         </div>
       )}
     </ChoirPositionHubShell>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

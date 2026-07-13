@@ -2,6 +2,7 @@ import { DollarSign, FileText } from 'lucide-react'
 import { can } from '../choir/capability-can'
 import type { ResolvedAuth } from '../choir/capability.types'
 import { uiCapabilityVisible } from '../choir/contribution-ui-capability-registry'
+import { hasScopedFamilyOfficeAccess } from '../choir/family-office-access'
 import { contributionRouteTailFromPath } from '../choir/contribution-routes'
 import { choirPath } from '../choir/paths'
 import type { NavItem, NavSection } from './role-nav'
@@ -20,6 +21,7 @@ export const LEGACY_BUDGET_HUB_PERMISSIONS = [
 export const LEGACY_BUDGET_HUB_PATH = '/choir/budget'
 
 const TAIL_TO_NAV_GATE: Record<string, ContributionNavGate> = {
+  'membership/profile': 'contribution-submit',
   'membership/giving': 'contribution-submit',
   'family-leadership/contributions': 'contribution-family-contributions',
   'budget/verify': 'contribution-treasury-verify',
@@ -35,22 +37,16 @@ const CONTRIBUTION_NAV_INJECT: Array<{
   section: string
   icon: NavItem['icon']
 }> = [
-  { tail: 'membership/giving', label: 'My giving', section: 'Quick links', icon: DollarSign },
+  { tail: 'membership/profile', label: 'My membership', section: 'Quick links', icon: DollarSign },
   { tail: 'family-leadership/contributions', label: 'Family contributions', section: 'Family office', icon: DollarSign },
   { tail: 'stewardship', label: 'Stewardship', section: 'Treasury', icon: DollarSign },
   { tail: 'finance', label: 'Finance analytics', section: 'Treasury', icon: DollarSign },
   { tail: 'stewardship/admin', label: 'Catalog & campaigns', section: 'Treasury', icon: FileText },
-  { tail: 'budget', label: 'Budget hub', section: 'Treasury', icon: DollarSign },
-  { tail: 'budget/verify', label: 'Treasury verification', section: 'Treasury', icon: DollarSign },
+  // Budget hub / verify come from treasurer position only — do not inject.
 ]
 
 function familyContributionsNavVisible(auth: ResolvedAuth | undefined): boolean {
-  if (!auth?.capabilities?.length) return false
-  return auth.capabilities.some(
-    (cap) =>
-      cap.id === 'choir.contribution.view@family'
-      || cap.id === 'choir.contribution.approve@family',
-  )
+  return hasScopedFamilyOfficeAccess(auth)
 }
 
 function navGateVisible(
@@ -86,10 +82,14 @@ export function pageAccessForContributionRoute(
 export function pageAccessForContributionRouteWithCheck(
   path: string,
   check: (capabilityId: string, scopeId?: string) => boolean,
+  contributionAuth?: ResolvedAuth,
 ): boolean {
   const gate = contributionNavGateForPath(path)
   if (!gate) return true
   if (gate === 'contribution-family-contributions') {
+    if (contributionAuth !== undefined) {
+      return hasScopedFamilyOfficeAccess(contributionAuth)
+    }
     return (
       check('choir.contribution.view@family')
       || check('choir.contribution.approve@family')

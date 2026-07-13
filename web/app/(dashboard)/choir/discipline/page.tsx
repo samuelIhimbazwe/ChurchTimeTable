@@ -8,9 +8,7 @@ import { disciplineApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import { useAuthStore } from '@/stores'
 import { canFinalApprove } from '@/lib/roles'
-import {
-  Card, CardHeader, CardTitle, Badge, Avatar, CapabilityGate, SkeletonCard, EmptyState,
-} from '@/components/shared'
+import { Card, CardHeader, CardTitle, Badge, Avatar, CapabilityGate, SkeletonCard, EmptyState, AccessRedirectGate } from '@/components/shared'
 import { FormField, Textarea } from '@/components/shared/form'
 import { disciplineCaseFormSchema, type DisciplineCaseFormValues } from '@/lib/validation/schemas'
 import { AlertTriangle } from 'lucide-react'
@@ -70,13 +68,8 @@ export default function DisciplinePage() {
   const active = cases?.filter((c) => !c.resolvedAt) ?? []
 
   return (
-    <CapabilityGate
+    <AccessRedirectGate
       uiCapability="discipline-desk"
-      fallback={
-        <div className="flex items-center justify-center h-64">
-          <p className="text-text-muted">You do not have access to discipline cases.</p>
-        </div>
-      }
     >
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between">
@@ -179,6 +172,6 @@ export default function DisciplinePage() {
         </div>
       )}
     </div>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

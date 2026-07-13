@@ -46,7 +46,7 @@ export function augmentSponsorJoinRequestsNav(
   if (!pageAccessForSponsorRoute(path, auth)) return sections
 
   const idx = sections.findIndex((s) => s.section === 'Leadership')
-  const item: NavItem = { label: 'Join requests', path, icon: UserPlus }
+  const item: NavItem = { label: 'Sponsors', path, icon: UserPlus }
   if (idx >= 0) {
     return sections.map((sec, i) =>
       i === idx ? { ...sec, items: [...sec.items, item] } : sec,

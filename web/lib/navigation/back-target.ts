@@ -73,7 +73,7 @@ const RULES: Rule[] = [
   },
   {
     pattern: new RegExp(`^/choir/(${UUID})/membership/([^/]+)$`, 'i'),
-    resolve: (m) => ({ href: `/choir/${m[1]}/membership`, label: 'My week' }),
+    resolve: (m) => ({ href: `/choir/${m[1]}/membership`, label: 'Home' }),
   },
   {
     pattern: new RegExp(`^/choir/(${UUID})/sponsor/songs/([^/]+)$`, 'i'),

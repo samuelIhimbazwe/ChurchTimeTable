@@ -56,7 +56,7 @@ describe('records hub nav ↔ page access parity', () => {
     expect(legacyRecordsHubLinkVisible([])).toBe(false);
   });
 
-  it('getChoirNavForUser includes records hub when capability router grants access', () => {
+  it('getChoirNavForUser does not inject records hub from capabilities alone', () => {
     const check = buildCapabilityRouterFromAuths(secretaryAuths);
     const sections = getChoirNavForUser(
       'MEMBER',
@@ -66,8 +66,8 @@ describe('records hub nav ↔ page access parity', () => {
     );
     const roleSection = sections.find((s) => s.section === 'My choir role');
     expect(
-      roleSection?.items.some((i) => i.path === LEGACY_RECORDS_HUB_PATH),
-    ).toBe(true);
+      roleSection?.items.some((i) => i.path === LEGACY_RECORDS_HUB_PATH) ?? false,
+    ).toBe(false);
   });
 
   it('getChoirNavForUser omits records hub without caps or legacy permissions', () => {

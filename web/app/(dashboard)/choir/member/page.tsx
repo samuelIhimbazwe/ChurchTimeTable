@@ -23,6 +23,6 @@ export default function LegacyChoirMemberRedirect() {
   }, [isLoading, activeChoirMemberships, primaryChoirId, accessRouting, router])
 
   return (
-    <div className="py-16 text-center text-sm text-text-muted">Opening my membership…</div>
+    <div className="py-16 text-center text-sm text-text-muted">Opening home…</div>
   )
 }

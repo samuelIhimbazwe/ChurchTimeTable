@@ -3,13 +3,12 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
-import {
-  choirActivityApi, choirSchedulingApi, financeApi, welfareApi, disciplineApi, choirApi, familiesApi,
-} from '@/lib/api'
-import { choirServiceOpsApi } from '@/lib/api/modules/choirServiceOps'
+import { choirActivityApi, choirSchedulingApi, financeApi, welfareApi, disciplineApi, choirServiceOpsApi } from '@/lib/api'
+import { familiesApi } from '@/lib/api'
 import { ContributionAmountDisplay } from '@/components/choir/ContributionAmountDisplay'
-import { useResolvedChoirId } from '@/lib/hooks'
+import { useResolvedChoirId, useResolvedChoirScope } from '@/lib/hooks'
 import { legacyOrScopedChoirPath } from '@/lib/choir/paths'
+import { INTERNAL_CHOIR_MEMBERSHIP, memberOnboardingHref } from '@/lib/choir/membership-intake'
 import {
   Card, StatTile, SkeletonStatTile, CapabilityGate, HubTabs,
 } from '@/components/shared'
@@ -37,6 +36,8 @@ export function ChoirExecutiveHubContent({ deputyMode = false }: Props) {
   const [tab, setTab] = useState('overview')
 
   const choirId = useResolvedChoirId()
+  const { choirLink } = useResolvedChoirScope()
+  const onboardingHref = memberOnboardingHref(choirLink)
 
   const { data: health, isLoading: loadingHealth } = useQuery({
     queryKey: ['choir-leader-dashboard', choirId],
@@ -44,12 +45,6 @@ export function ChoirExecutiveHubContent({ deputyMode = false }: Props) {
     enabled: !!choirId,
   })
   const h = health as Record<string, unknown> | undefined
-
-  const { data: joinRequests } = useQuery({
-    queryKey: ['choir-join-requests', choirId],
-    queryFn: () => choirApi.getJoinRequests({ choirId, status: 'PENDING' }),
-    enabled: !!choirId,
-  })
 
   const { data: activities } = useQuery({
     queryKey: ['choir-activities', choirId, { limit: 5 }],
@@ -89,8 +84,6 @@ export function ChoirExecutiveHubContent({ deputyMode = false }: Props) {
   })
   const openWelfare = welfare?.filter((c) => c.status !== 'RESOLVED').length ?? 0
 
-  const pendingJoins = joinRequests?.length ?? 0
-
   const { data: serviceRequests } = useQuery({
     queryKey: ['choir-service-requests', 'PENDING', choirId],
     queryFn: () =>
@@ -104,7 +97,7 @@ export function ChoirExecutiveHubContent({ deputyMode = false }: Props) {
         <Card padding="md" accent="info">
           <p className="text-sm text-text-secondary">
             As Vice President you have nearly the same access as the President — lead operations,
-            review joins, and use all officer hubs. Stand in fully when the President is away.
+            provision members, and use all officer hubs. Stand in fully when the President is away.
           </p>
         </Card>
       )}
@@ -119,7 +112,9 @@ export function ChoirExecutiveHubContent({ deputyMode = false }: Props) {
             ) : (
               <>
                 <StatTile label="Attendance rate" value={num(h?.attendanceRate ?? h?.avgAttendanceRate)} suffix="%" icon={Calendar} animate href={legacyOrScopedChoirPath(choirId, 'reports')} />
-                <StatTile label="Pending joins" value={pendingJoins} icon={UserPlus} animate href={legacyOrScopedChoirPath(choirId, 'president/decisions')} />
+                {INTERNAL_CHOIR_MEMBERSHIP ? (
+                  <StatTile label="Member onboarding" value="→" icon={UserPlus} animate href={onboardingHref} />
+                ) : null}
                 <StatTile label="Active discipline" value={activeDiscipline} icon={Shield} animate href={legacyOrScopedChoirPath(choirId, 'discipline')} />
                 <StatTile label="Open welfare" value={openWelfare} icon={Heart} animate href={legacyOrScopedChoirPath(choirId, 'welfare')} />
               </>
@@ -163,20 +158,25 @@ export function ChoirExecutiveHubContent({ deputyMode = false }: Props) {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-semibold flex items-center gap-2">
-                    <UserPlus size={18} /> Join requests
+                    <UserPlus /> {INTERNAL_CHOIR_MEMBERSHIP ? 'Member onboarding' : 'Join requests'}
                   </p>
                   <p className="text-sm text-text-secondary mt-1">
-                    {pendingJoins} pending — review applicants and assign positions.
+                    {INTERNAL_CHOIR_MEMBERSHIP
+                      ? 'Provision singers and assign positions — membership is admin-managed, not self-serve.'
+                      : 'Review applicants and assign positions.'}
                   </p>
                 </div>
-                <Link href={legacyOrScopedChoirPath(choirId, 'president/decisions')} className="px-4 py-2 text-sm font-semibold bg-primary-700 text-white rounded-lg shrink-0">
-                  Open decisions
+                <Link
+                  href={INTERNAL_CHOIR_MEMBERSHIP ? onboardingHref : legacyOrScopedChoirPath(choirId, 'president/decisions')}
+                  className="px-4 py-2 text-sm font-semibold bg-primary-700 text-white rounded-lg shrink-0"
+                >
+                  {INTERNAL_CHOIR_MEMBERSHIP ? 'Open onboarding' : 'Open decisions'}
                 </Link>
               </div>
             </Card>
           </CapabilityGate>
           <div className="grid sm:grid-cols-2 gap-4">
-            <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'admin')} label="Administration hub" desc="Joins, roster, families, settings" icon={Shield} />
+            <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'admin')} label="Administration hub" desc="Roster, families, settings" icon={Shield} />
             <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'public-profile')} label="Public choir profile" desc="What members and visitors see" icon={Settings2} />
             <CapabilityGate uiCapability="admin-executive-roles-link">
               <HubQuickLink href={legacyOrScopedChoirPath(choirId, 'roles')} label="Position roles" desc="Customize officer permissions" icon={KeyRound} />

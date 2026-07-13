@@ -1,24 +1,43 @@
 'use client'
 
 import Link from 'next/link'
-import { useParams, useSearchParams } from 'next/navigation'
+import { useEffect } from 'react'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { memberPortalApi } from '@/lib/api'
 import { Card, Badge, SkeletonCard } from '@/components/shared'
-import { membershipOfficePath } from '@/lib/choir/membership-office'
+import { membershipAnnouncementsHref, membershipOfficePath } from '@/lib/choir/membership-office'
+import { useUiCapability } from '@/lib/hooks/useCapability'
 import { formatDate } from '@/lib/utils/format'
 import { ChevronRight, Megaphone } from 'lucide-react'
 
 export default function MembershipAnnouncementsPage() {
   const params = useParams()
+  const router = useRouter()
   const choirId = String(params.choirId)
   const searchParams = useSearchParams()
   const selectedId = searchParams.get('id')
+  const canManageAnnouncements = useUiCapability('comms-announcements-manage', choirId)
+
+  useEffect(() => {
+    if (canManageAnnouncements) {
+      router.replace(membershipAnnouncementsHref(choirId, { canManage: true }))
+    }
+  }, [canManageAnnouncements, choirId, router])
 
   const { data: home, isLoading } = useQuery({
     queryKey: ['member-portal-home'],
     queryFn: memberPortalApi.getHome,
+    enabled: !canManageAnnouncements,
   })
+
+  if (canManageAnnouncements) {
+    return (
+      <p className="text-sm text-text-muted text-center py-12">
+        Opening announcements desk…
+      </p>
+    )
+  }
 
   const announcements = home?.announcements?.filter((a) => a.source === 'choir') ?? []
   const selected = selectedId
@@ -27,11 +46,6 @@ export default function MembershipAnnouncementsPage() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="font-display text-xl text-text-primary">Choir announcements</h2>
-        <p className="text-sm text-text-muted mt-0.5">Updates from your choir leaders.</p>
-      </div>
-
       {selected && (
         <Card padding="md" id={`announcement-${selected.id}`}>
           <div className="flex items-center gap-2 flex-wrap mb-2">

@@ -3,27 +3,20 @@
 import { useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Info, X, Clock, UserPlus, Ban } from 'lucide-react'
+import { Info, X, UserPlus, Ban } from 'lucide-react'
 
 type Props = {
   hasPendingJoinRequest?: boolean
 }
 
 const NOTICE_COPY = {
-  'choir-membership-required': (hasPendingJoinRequest: boolean) =>
-    hasPendingJoinRequest
-      ? {
-          title: 'Choir dashboard opens after approval',
-          body: 'Your join request is being reviewed. Once a choir leader approves it, return here and use Open choir dashboard on your choir.',
-          icon: Clock,
-          showPortalLink: true,
-        }
-      : {
-          title: 'Choir dashboard is for approved members',
-          body: 'Browse the choirs below and submit a join request. After approval, you can open the choir dashboard for rehearsals, announcements, and your role tools.',
-          icon: UserPlus,
-          showPortalLink: true,
-        },
+  'choir-membership-required': () =>
+    ({
+      title: 'Choir dashboard is for provisioned members',
+      body: 'This choir is internal — membership is assigned by choir leadership, not self-serve signup. Contact your choir administrator if you need access.',
+      icon: UserPlus,
+      showPortalLink: true,
+    }),
   'choir-unavailable': () => ({
     title: 'That choir is not available to you',
     body: 'Members belong to one primary choir. Yerusalemu (morning service) may be added as a second choir. Use the choirs listed below.',
@@ -32,7 +25,7 @@ const NOTICE_COPY = {
   }),
 } as const
 
-export function ChoirAccessNotice({ hasPendingJoinRequest = false }: Props) {
+export function ChoirAccessNotice({ hasPendingJoinRequest: _hasPendingJoinRequest = false }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [dismissed, setDismissed] = useState(false)
@@ -44,8 +37,8 @@ export function ChoirAccessNotice({ hasPendingJoinRequest = false }: Props) {
 
   const copy = useMemo(() => {
     if (reason === 'choir-unavailable') return NOTICE_COPY['choir-unavailable']()
-    return NOTICE_COPY['choir-membership-required'](hasPendingJoinRequest)
-  }, [reason, hasPendingJoinRequest])
+    return NOTICE_COPY['choir-membership-required']()
+  }, [reason])
 
   if (!visible) return null
 

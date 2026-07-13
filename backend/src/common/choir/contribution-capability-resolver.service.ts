@@ -53,6 +53,7 @@ export class ContributionCapabilityResolverService {
     }
 
     // 2) Office grants (family membership in this choir)
+    let inChoirFamily = false;
     if (resolved.memberId) {
       const familyRows = await this.prisma.familyMember.findMany({
         where: {
@@ -63,6 +64,7 @@ export class ContributionCapabilityResolverService {
           family: { select: { id: true, delegationEnabled: true } },
         },
       });
+      inChoirFamily = familyRows.length > 0;
 
       for (const row of familyRows) {
         const familyId = row.familyId;
@@ -140,12 +142,13 @@ export class ContributionCapabilityResolverService {
       select: { id: true },
     });
     if (choirMembership) {
-        caps.push({ id: 'choir.contribution.view@self' });
+      caps.push({ id: 'choir.contribution.view@self' });
       if (
         hasEffectivePermission(
           resolved.permissions,
           'choir.contribution.submit',
-        )
+        ) ||
+        inChoirFamily
       ) {
         caps.push({ id: 'choir.contribution.submit@self' });
       }

@@ -8,7 +8,7 @@ import {
   memberPortalApi,
 } from '@/lib/api'
 import { buildMemberObligations, obligationToneDotClass } from '@/lib/choir/member-obligations'
-import { membershipOfficePath } from '@/lib/choir/membership-office'
+import { membershipOfficePath, membershipProfilePath } from '@/lib/choir/membership-office'
 import { Card, SkeletonCard } from '@/components/shared'
 import { formatDate, formatTime } from '@/lib/utils/format'
 import { CheckCircle2, ChevronRight } from 'lucide-react'
@@ -49,7 +49,7 @@ export function MemberObligationQueue({ choirId }: Props) {
           : nextEventRaw.date
             ? formatDate(String(nextEventRaw.date))
             : '',
-        href: membershipOfficePath(choirId, 'attendance'),
+        href: membershipProfilePath(choirId, 'attendance'),
       }
     : undefined
 
@@ -81,7 +81,7 @@ export function MemberObligationQueue({ choirId }: Props) {
             No payments or follow-ups need your attention right now.
           </p>
           <Link
-            href={membershipOfficePath(choirId, 'giving')}
+            href={membershipProfilePath(choirId, 'giving')}
             className="inline-block mt-6 text-sm font-semibold text-primary-600"
           >
             View giving history →

@@ -1,4 +1,5 @@
 import type { SearchResult } from '@/lib/api/modules/search'
+import { INTERNAL_CHOIR_MEMBERSHIP, MEMBER_ONBOARDING_SEGMENT } from '@/lib/choir/membership-intake'
 
 /** Shape returned by GET /api/v1/search */
 export type BackendSearchResponse = {
@@ -93,7 +94,9 @@ function linkFor(type: string, id: string): string {
     case 'broadcast':
       return '/portal'
     case 'joinRequest':
-      return '/choir/join-requests'
+      return INTERNAL_CHOIR_MEMBERSHIP
+        ? `/choir/${MEMBER_ONBOARDING_SEGMENT}`
+        : '/choir/join-requests'
     case 'invitation':
       return '/portal/protocol'
     case 'operationalUnit':

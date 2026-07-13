@@ -1,7 +1,7 @@
 'use client'
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { useEffect } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { financeApi } from '@/lib/api'
 import { useChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
@@ -25,12 +25,13 @@ type Props = {
 
 export function FamilyOfficeShell({ choirId, kind, children }: Props) {
   const pathname = usePathname()
+  const router = useRouter()
   const { context: choirCtx } = useChoirDashboardCtx()
   const config = FAMILY_OFFICES[kind]
   const activeSegment = familyOfficeActiveSegment(pathname, choirId, kind)
   const themeKey = familyOfficeThemeKey(kind)
 
-  const { data: context, isLoading } = useQuery({
+  const { data: context, isLoading, isError } = useQuery({
     queryKey: ['family-leadership-context'],
     queryFn: () => financeApi.getFamilyContributionContext(),
   })
@@ -44,6 +45,15 @@ export function FamilyOfficeShell({ choirId, kind, children }: Props) {
           : 'SECRETARY'
     return f.role === expected
   }) ?? context?.families?.[0]
+
+  const hasOffice = !!myFamily?.familyId
+
+  useEffect(() => {
+    if (isLoading) return
+    if (isError || !hasOffice) {
+      router.replace(membershipOfficePath(choirId))
+    }
+  }, [isLoading, isError, hasOffice, router, choirId])
 
   const { data: dashboard } = useQuery({
     queryKey: ['family-contribution-dashboard', myFamily?.familyId],
@@ -71,30 +81,10 @@ export function FamilyOfficeShell({ choirId, kind, children }: Props) {
         : 'Approval authority: Support only — confirmations go to your family head.'
       : null
 
-  if (isLoading) {
+  if (isLoading || isError || !hasOffice) {
     return (
       <div className="max-w-6xl mx-auto pb-10">
         <SkeletonCard rows={6} />
-      </div>
-    )
-  }
-
-  if (!myFamily?.familyId) {
-    return (
-      <div className="max-w-2xl mx-auto pb-10">
-        <Card padding="md">
-          <p className="text-sm text-text-muted text-center py-8">
-            No family leadership role assigned for this office.
-          </p>
-          <p className="text-center">
-            <Link
-              href={membershipOfficePath(choirId)}
-              className="text-sm font-semibold text-primary-600"
-            >
-              ← Back to my membership
-            </Link>
-          </p>
-        </Card>
       </div>
     )
   }

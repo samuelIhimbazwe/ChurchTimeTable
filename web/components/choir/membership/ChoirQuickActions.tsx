@@ -11,7 +11,8 @@ import {
   Music,
   Users,
 } from 'lucide-react'
-import { membershipOfficePath } from '@/lib/choir/membership-office'
+import { membershipAnnouncementsHref, membershipOfficePath, membershipProfilePath } from '@/lib/choir/membership-office'
+import { useUiCapability } from '@/lib/hooks/useCapability'
 import { choirPath } from '@/lib/choir/paths'
 import { cn } from '@/lib/utils'
 
@@ -30,6 +31,8 @@ type Props = {
 }
 
 export function ChoirQuickActions({ choirId, todoCount = 0, className }: Props) {
+  const canManageAnnouncements = useUiCapability('comms-announcements-manage', choirId)
+
   const actions: Action[] = [
     {
       id: 'todo',
@@ -54,7 +57,7 @@ export function ChoirQuickActions({ choirId, todoCount = 0, className }: Props) 
       id: 'schedule',
       label: 'My schedule',
       icon: Calendar,
-      href: membershipOfficePath(choirId, 'attendance'),
+      href: membershipProfilePath(choirId, 'attendance'),
     },
     {
       id: 'music',
@@ -66,13 +69,13 @@ export function ChoirQuickActions({ choirId, todoCount = 0, className }: Props) 
       id: 'family',
       label: 'My family',
       icon: Users,
-      href: membershipOfficePath(choirId, 'family'),
+      href: membershipProfilePath(choirId, 'family'),
     },
     {
       id: 'announcements',
       label: 'Announcements',
       icon: Megaphone,
-      href: membershipOfficePath(choirId, 'announcements'),
+      href: membershipAnnouncementsHref(choirId, { canManage: canManageAnnouncements }),
     },
     {
       id: 'scheduling',

@@ -1,6 +1,6 @@
 import type { ContributionClaim } from '@/lib/api'
 import type { MemberContributionGoal } from '@/lib/api/modules/finance'
-import { membershipOfficePath } from '@/lib/choir/membership-office'
+import { membershipProfilePath } from '@/lib/choir/membership-office'
 import { resolveMemberDisplayStatus } from '@/lib/contribution/member-display'
 import { formatCurrency, relativeTime } from '@/lib/utils/format'
 
@@ -32,7 +32,7 @@ export function buildMemberObligations({
   goals,
   nextEvent,
 }: BuildMemberObligationsInput): MemberObligation[] {
-  const givingPath = membershipOfficePath(choirId, 'giving')
+  const givingPath = membershipProfilePath(choirId, 'giving')
   const items: MemberObligation[] = []
 
   for (const claim of claims) {
@@ -78,7 +78,7 @@ export function buildMemberObligations({
           title: `Complete ${goal.typeName ?? goal.name ?? 'giving'}`,
           subtitle: `${formatCurrency(remaining)} remaining`,
           priority: 3,
-          href: `${givingPath}?tab=submit`,
+          href: membershipProfilePath(choirId, 'submit'),
           tone: 'info',
         })
       }

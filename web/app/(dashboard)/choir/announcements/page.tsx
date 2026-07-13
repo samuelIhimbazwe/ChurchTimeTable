@@ -11,9 +11,7 @@ import {
 } from '@/lib/api'
 import type { ChoirAnnouncementAudience } from '@/lib/api/modules/choir-operations'
 import { toast } from '@/components/shared/Toast'
-import {
-  Card, CardHeader, CardTitle, SkeletonCard, Badge, EmptyState, CapabilityGate,
-} from '@/components/shared'
+import { Card, CardHeader, CardTitle, SkeletonCard, Badge, EmptyState, CapabilityGate, AccessRedirectGate } from '@/components/shared'
 import { FormField, Input, Select, Textarea } from '@/components/shared/form'
 import { AnnouncementMemberPreview } from '@/components/choir/AnnouncementMemberPreview'
 import { announcementFormSchema, type AnnouncementFormValues } from '@/lib/validation/schemas'
@@ -126,14 +124,8 @@ export default function AnnouncementsPage() {
   })
 
   return (
-    <CapabilityGate
+    <AccessRedirectGate
       uiCapability="comms-announcements-hub"
-      fallback={
-        <EmptyState
-          title="Announcements not available"
-          description="You do not have permission to view choir announcements."
-        />
-      }
     >
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between">
@@ -311,6 +303,6 @@ export default function AnnouncementsPage() {
         </div>
       )}
     </div>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

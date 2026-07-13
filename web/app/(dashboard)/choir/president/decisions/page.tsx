@@ -1,38 +1,27 @@
 'use client'
 
-import Link from 'next/link'
-import { ChoirPositionHubShell } from '@/components/choir/ChoirPositionHubShell'
-import { PresidentDecisionConsole } from '@/components/choir/committee/PresidentDecisionConsole'
-import { CapabilityGate } from '@/components/shared'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useResolvedChoirScope } from '@/lib/hooks'
+import { INTERNAL_CHOIR_MEMBERSHIP, memberOnboardingHref } from '@/lib/choir/membership-intake'
 
 export default function PresidentDecisionsPage() {
+  const router = useRouter()
   const { choirLink } = useResolvedChoirScope()
 
-  return (
-    <CapabilityGate
-      uiCapability="president-hub"
-      fallback={
-        <div className="flex items-center justify-center h-64">
-          <p className="text-text-muted">You do not have access to presidential decisions.</p>
-        </div>
-      }
-    >
-    <ChoirPositionHubShell
-      roleKey="president"
-      subtitle="Review join requests in one place — approve, send requirements, or reject."
-      tabs={[]}
-      activeTab=""
-      onTabChange={() => {}}
-    >
-      <Link
-        href={choirLink('president')}
-        className="inline-block text-sm font-semibold text-primary-600 hover:underline mb-4"
-      >
-        ← Back to command
-      </Link>
-      <PresidentDecisionConsole />
-    </ChoirPositionHubShell>
-    </CapabilityGate>
-  )
+  useEffect(() => {
+    if (INTERNAL_CHOIR_MEMBERSHIP) {
+      router.replace(memberOnboardingHref(choirLink))
+    }
+  }, [router, choirLink])
+
+  if (INTERNAL_CHOIR_MEMBERSHIP) {
+    return (
+      <p className="text-sm text-text-muted text-center py-12">
+        Member onboarding replaces join-request decisions for internal choirs.
+      </p>
+    )
+  }
+
+  return null
 }

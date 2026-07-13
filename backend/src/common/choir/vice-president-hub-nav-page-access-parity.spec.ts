@@ -51,7 +51,7 @@ describe('vice president hub nav ↔ page access parity', () => {
     expect(legacyVicePresidentHubLinkVisible([])).toBe(false);
   });
 
-  it('getChoirNavForUser includes vice president hub when capability router grants access', () => {
+  it('getChoirNavForUser does not inject vice president hub from capabilities alone', () => {
     const check = buildCapabilityRouterFromAuths(vpAuths);
     const sections = getChoirNavForUser(
       'MEMBER',
@@ -61,8 +61,8 @@ describe('vice president hub nav ↔ page access parity', () => {
     );
     const roleSection = sections.find((s) => s.section === 'My choir role');
     expect(
-      roleSection?.items.some((i) => i.path === LEGACY_VICE_PRESIDENT_HUB_PATH),
-    ).toBe(true);
+      roleSection?.items.some((i) => i.path === LEGACY_VICE_PRESIDENT_HUB_PATH) ?? false,
+    ).toBe(false);
   });
 
   it('getChoirNavForUser omits vice president hub without caps or legacy permissions', () => {

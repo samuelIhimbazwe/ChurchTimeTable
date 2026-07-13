@@ -3,9 +3,9 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import {
-  Home, ClipboardList, Bell, MoreHorizontal, Music, Heart, Users, X, Briefcase,
+  Home, ClipboardList, Bell, MoreHorizontal, Music, Heart, X, Briefcase,
 } from 'lucide-react'
-import { membershipOfficePath } from '@/lib/choir/membership-office'
+import { membershipOfficePath, membershipProfilePath } from '@/lib/choir/membership-office'
 import { cn } from '@/lib/utils'
 
 type OfficeLink = { label: string; href: string }
@@ -19,15 +19,13 @@ type Props = {
 }
 
 const PRIMARY_TABS = [
-  { segment: '', label: 'Week', icon: Home },
+  { segment: '', label: 'Home', icon: Home },
   { segment: 'obligations', label: 'To do', icon: ClipboardList, showTodoBadge: true },
   { segment: 'notifications', label: 'Inbox', icon: Bell },
 ] as const
 
 const MORE_LINKS = [
-  { segment: 'attendance', label: 'Attendance', icon: Users },
-  { segment: 'giving', label: 'Giving', icon: Heart },
-  { segment: 'family', label: 'Family', icon: Users },
+  { segment: 'profile', label: 'My membership', icon: Heart },
   { segment: 'music', label: 'Music', icon: Music },
 ] as const
 
@@ -40,7 +38,9 @@ export function MemberBottomTabBar({
 }: Props) {
   const [moreOpen, setMoreOpen] = useState(false)
 
-  const moreActive = MORE_LINKS.some((l) => l.segment === activeSegment)
+  const moreActive =
+    MORE_LINKS.some((l) => l.segment === activeSegment)
+    || ['giving', 'family', 'attendance'].includes(activeSegment)
   const officeActive = offices.some(
     (o) => pathname === o.href || pathname.startsWith(`${o.href}/`),
   )

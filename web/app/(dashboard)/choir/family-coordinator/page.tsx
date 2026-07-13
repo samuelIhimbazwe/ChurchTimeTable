@@ -4,9 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { familiesApi, choirActivityApi } from '@/lib/api'
-import {
-  Card, Badge, SkeletonCard, CapabilityGate, EmptyState,
-} from '@/components/shared'
+import { Card, Badge, SkeletonCard, CapabilityGate, AccessRedirectGate } from '@/components/shared'
 import { ChoirPositionHubShell, HubQuickLink } from '@/components/choir/ChoirPositionHubShell'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { ContributionTreasuryPanel } from '@/components/choir/ContributionTreasuryPanel'
@@ -40,14 +38,9 @@ export default function FamilyCoordinatorHubPage() {
   })
 
   return (
-    <CapabilityGate
+    <AccessRedirectGate
       uiCapability="family-coordinator-hub"
-      fallback={
-        <EmptyState
-          title="Family coordinator hub not available"
-          description="You do not have permission to access the family coordinator workspace."
-        />
-      }
+      requirePosition="family_coordinator"
     >
     <ChoirPositionHubShell roleKey="family_coordinator" tabs={TABS} activeTab={tab} onTabChange={setTab}>
       {tab === 'overview' && (
@@ -157,6 +150,6 @@ export default function FamilyCoordinatorHubPage() {
         </div>
       )}
     </ChoirPositionHubShell>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

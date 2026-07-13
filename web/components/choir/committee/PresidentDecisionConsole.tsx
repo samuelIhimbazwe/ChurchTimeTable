@@ -430,13 +430,7 @@ export function PresidentDecisionConsole({
   return (
     <CapabilityGate
       uiCapability="join-requests-review"
-      fallback={
-        <Card padding="md">
-          <p className="text-sm text-text-muted text-center py-8">
-            You do not have permission to review join requests.
-          </p>
-        </Card>
-      }
+      fallback={null}
     >
       <SplitQueueConsole
         title="Decision console"

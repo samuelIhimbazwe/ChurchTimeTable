@@ -11,9 +11,7 @@ import {
   auditApi,
   assetsApi,
 } from '@/lib/api'
-import {
-  Card, HubTabs, SkeletonCard, Badge, CapabilityGate,
-} from '@/components/shared'
+import { Card, HubTabs, SkeletonCard, Badge, AccessRedirectGate } from '@/components/shared'
 import { formatDate } from '@/lib/utils/format'
 import {
   FileText, Music, Calendar, Package, Users, ScrollText,
@@ -94,13 +92,9 @@ export default function RecordsHubPage() {
   }
 
   return (
-    <CapabilityGate
+    <AccessRedirectGate
       uiCapability="records-hub"
-      fallback={
-        <div className="flex items-center justify-center h-64">
-          <p className="text-text-muted">You do not have access to the records hub.</p>
-        </div>
-      }
+      requirePosition="secretary"
     >
     <div className="space-y-6 max-w-5xl mx-auto pb-8">
       <div>
@@ -227,6 +221,6 @@ export default function RecordsHubPage() {
         </div>
       )}
     </div>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

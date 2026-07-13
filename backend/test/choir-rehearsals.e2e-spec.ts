@@ -8,6 +8,7 @@ import { AppModule } from '../src/app.module';
 import { ResponseInterceptor } from '../src/common/interceptors/response.interceptor';
 import { ROLES, PERMISSIONS } from '../src/common/constants/roles';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { deleteE2eSong } from './helpers/e2e-music-cleanup';
 
 describe('Choir rehearsals (e2e)', () => {
   let app: INestApplication<App>;
@@ -81,7 +82,11 @@ describe('Choir rehearsals (e2e)', () => {
     token = login.body.data.accessToken;
 
     const song = await prisma.song.create({
-      data: { title: 'Rehearsal Song', active: true },
+      data: {
+        title: '[e2e] Ni Wewe Mana (rehearsal)',
+        language: 'rw',
+        active: true,
+      },
     });
     songId = song.id;
 
@@ -98,6 +103,12 @@ describe('Choir rehearsals (e2e)', () => {
   });
 
   afterAll(async () => {
+    const prisma = app.get(PrismaService);
+    if (songId) await deleteE2eSong(prisma, songId);
+    if (eventId) {
+      await prisma.rehearsalPlan.deleteMany({ where: { choirActivityId: eventId } }).catch(() => {});
+      await prisma.event.delete({ where: { id: eventId } }).catch(() => {});
+    }
     await app.close();
   });
 

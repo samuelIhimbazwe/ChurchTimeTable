@@ -246,8 +246,8 @@ export default function ChoirDetailPage() {
             ) : (
               <Card padding="md" accent="info">
                 <p className="text-sm text-text-secondary">
-                  Choir membership is managed internally. Contact your choir administrator
-                  for an invite or login credentials.
+                  Choir membership and sponsorship are managed by leadership. Contact your
+                  choir administrator for an invite or login credentials.
                 </p>
               </Card>
             )

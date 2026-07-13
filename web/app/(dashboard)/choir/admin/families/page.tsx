@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { FamilyAdminPanel } from '@/components/choir/FamilyAdminPanel'
 import { memberPortalApi } from '@/lib/api/modules/memberPortal'
 import { useResolvedChoirScope } from '@/lib/hooks'
-import { CapabilityGate, EmptyState } from '@/components/shared'
+import { AccessRedirectGate } from '@/components/shared'
 
 export default function ChoirAdminFamiliesPage() {
   const { choirId, choirLink } = useResolvedChoirScope()
@@ -17,14 +17,8 @@ export default function ChoirAdminFamiliesPage() {
   })
 
   return (
-    <CapabilityGate
+    <AccessRedirectGate
       uiCapability="family-hub"
-      fallback={
-        <EmptyState
-          title="Families structure not available"
-          description="You do not have permission to view choir family structure."
-        />
-      }
     >
       <div className="space-y-6 max-w-5xl mx-auto pb-8">
         <div>
@@ -45,6 +39,6 @@ export default function ChoirAdminFamiliesPage() {
           myFamilyId={myFamily?.family?.id ?? null}
         />
       </div>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

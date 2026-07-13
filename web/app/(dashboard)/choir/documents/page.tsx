@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { documentsApi } from '@/lib/api'
-import { Card, Badge, SkeletonCard, EmptyState, CapabilityGate } from '@/components/shared'
+import { Card, Badge, SkeletonCard, AccessRedirectGate } from '@/components/shared'
 import { FileText, ExternalLink } from 'lucide-react'
 import { formatDate } from '@/lib/utils/format'
 
@@ -13,14 +13,8 @@ export default function DocumentsPage() {
   })
 
   return (
-    <CapabilityGate
+    <AccessRedirectGate
       uiCapability="logistics-documents-hub"
-      fallback={
-        <EmptyState
-          title="Documents not available"
-          description="You do not have permission to view choir documents."
-        />
-      }
     >
     <div className="space-y-6 max-w-4xl mx-auto">
       <div>
@@ -74,6 +68,6 @@ export default function DocumentsPage() {
         </div>
       )}
     </div>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

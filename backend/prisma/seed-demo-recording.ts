@@ -23,8 +23,8 @@ const DEMO = {
   choirDescription:
     'Primary church choir — worship, recordings, and Sunday service ministry.',
   churchDisplayName: 'ADEPR Kacyiru Parish',
-  familyAlphaName: 'Umuryango wa Habimana',
-  familyBetaName: 'Umuryango wa Mukamana',
+  familyAlphaName: 'Shalom Family',
+  familyBetaName: 'Shiloh Family',
   campaignId: 'demo-campaign-umusanzu-2026',
   budgetRecordingId: 'demo-budget-recording-2026',
   budgetConcertId: 'demo-budget-concert-2026',

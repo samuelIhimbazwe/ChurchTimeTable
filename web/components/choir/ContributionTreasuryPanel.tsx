@@ -87,13 +87,7 @@ export function ContributionTreasuryPanel({ compact = false }: { compact?: boole
   return (
     <CapabilityGate
       anyOf={[...CHOIR_TREASURY_VIEW_ANY]}
-      fallback={
-        compact ? null : (
-          <div className="flex items-center justify-center py-12">
-            <p className="text-text-muted text-sm">You do not have access to treasury data.</p>
-          </div>
-        )
-      }
+      fallback={null}
     >
     <>
       <div className={compact ? 'space-y-4' : 'space-y-6'}>
@@ -306,12 +300,10 @@ export function StewardshipDashboard() {
     queryFn: () => financeApi.getContributionRankings({ period: 'year' }),
   })
 
-  const { data: families, isLoading: loadingFamilies } = useQuery({
-    queryKey: ['families'],
-    queryFn: () => familiesApi.getAll(),
-  })
-
-  const rankingList = Array.isArray(rankings) ? rankings : []
+  const rankingList = Array.isArray(rankings)
+    ? rankings
+    : ((rankings as { topFamilies?: Array<Record<string, unknown>> } | undefined)
+        ?.topFamilies ?? [])
 
   return (
     <div className="space-y-6">
@@ -322,14 +314,20 @@ export function StewardshipDashboard() {
           <p className="font-semibold">Family rankings</p>
           <p className="text-xs text-text-muted mb-3">By total confirmed contributions</p>
         </div>
-        {loadingRankings && loadingFamilies ? (
+        {loadingRankings ? (
           <p className="text-sm text-text-muted px-5 pb-5">Loading…</p>
+        ) : rankingList.length === 0 ? (
+          <p className="text-sm text-text-muted px-5 pb-5">
+            No confirmed family giving yet — rankings appear after family heads confirm payments.
+          </p>
         ) : (
           <ul className="divide-y divide-border">
-            {(rankingList.length ? rankingList : families ?? []).slice(0, 12).map((f, i) => {
+            {rankingList.slice(0, 12).map((f, i) => {
               const row = f as Record<string, unknown>
               const name = String(row.familyName ?? row.name ?? 'Family')
-              const total = Number(row.totalAmount ?? row.totalContributions ?? 0)
+              const total = Number(
+                row.effectiveTotal ?? row.totalAmount ?? row.totalContributions ?? 0,
+              )
               return (
                 <li key={String(row.familyId ?? row.id ?? i)} className="flex items-center gap-4 px-5 py-3">
                   <span className="font-display font-bold text-2xl text-text-muted w-8 text-right">

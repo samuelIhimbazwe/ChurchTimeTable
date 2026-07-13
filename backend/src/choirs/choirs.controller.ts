@@ -16,6 +16,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ChoirDiscoveryService } from '../member-portal/choir-discovery.service';
 import { ChoirJoinRequestsService } from '../member-portal/choir-join-requests.service';
 import { ChoirSponsorRequestsService } from '../member-portal/choir-sponsor-requests.service';
+import { ChoirSponsorsService } from './choir-sponsors.service';
 import { ChoirMembershipRulesService } from '../member-portal/choir-membership-rules.service';
 import { ChoirMembersService } from './choir-members.service';
 import { ChoirGovernanceService } from './choir-governance.service';
@@ -24,6 +25,7 @@ import { UpdatePresidentDelegationDto } from './dto/update-president-delegation.
 import { UpsertChoirExecutivePulseDto } from './dto/upsert-choir-executive-pulse.dto';
 import { DeactivateChoirMemberDto } from './dto/deactivate-choir-member.dto';
 import { ProvisionChoirMemberDto } from './dto/provision-choir-member.dto';
+import { ProvisionChoirSponsorDto } from './dto/provision-choir-sponsor.dto';
 
 import { IsString } from 'class-validator';
 
@@ -41,6 +43,7 @@ export class ChoirsController {
     private discovery: ChoirDiscoveryService,
     private joinRequests: ChoirJoinRequestsService,
     private sponsorRequests: ChoirSponsorRequestsService,
+    private choirSponsors: ChoirSponsorsService,
     private rules: ChoirMembershipRulesService,
     private choirMembers: ChoirMembersService,
     private choirGovernance: ChoirGovernanceService,
@@ -192,6 +195,22 @@ export class ChoirsController {
     @Body() dto: ProvisionChoirMemberDto,
   ) {
     return this.choirMembers.provisionMember(user.sub, dto);
+  }
+
+  @Get('sponsors')
+  listSponsors(
+    @CurrentUser() user: JwtPayload,
+    @Query('choirId') choirId: string,
+  ) {
+    return this.choirSponsors.listForChoir(user.sub, choirId);
+  }
+
+  @Post('sponsors/provision')
+  provisionSponsor(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: ProvisionChoirSponsorDto,
+  ) {
+    return this.choirSponsors.provisionSponsor(user.sub, dto);
   }
 
   @Post('join-requests')

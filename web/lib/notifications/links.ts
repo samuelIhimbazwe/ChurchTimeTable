@@ -74,18 +74,18 @@ export function linkFromNotificationData(
       return '/choir/activities'
     case 'choir_join_review':
       if (data.choirId) {
-        return `/choir/${String(data.choirId)}/president/decisions`
+        return `/choir/${String(data.choirId)}/member-onboarding`
       }
-      return '/choir/join-requests'
+      return '/choir/member-onboarding'
     case 'choir_devotion':
       return '/portal/devotion'
     case 'choir_join_request_admin':
       if (data.choirId) {
         return data.requestId
-          ? `/choir/${String(data.choirId)}/president/decisions?requestId=${String(data.requestId)}`
-          : `/choir/${String(data.choirId)}/president/decisions`
+          ? `/choir/${String(data.choirId)}/member-onboarding?highlight=${String(data.requestId)}`
+          : `/choir/${String(data.choirId)}/member-onboarding`
       }
-      return '/choir/join-requests'
+      return '/choir/member-onboarding'
     case 'protocol_assignment':
       if (data.occurrenceId) {
         return `/protocol/teams/${String(data.occurrenceId)}`

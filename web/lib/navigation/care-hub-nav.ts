@@ -103,10 +103,8 @@ export function augmentCareHubNavSections(
 
 export function composeCareHubAwareNav(
   sections: NavSection[],
-  choirId: string | null | undefined,
+  _choirId: string | null | undefined,
   check: (capabilityId: string) => boolean,
 ): NavSection[] {
-  const withOverrides = applyCareHubNavOverrides(sections, check);
-  if (!choirId) return withOverrides;
-  return augmentCareHubNavSections(withOverrides, choirId, check);
+  return applyCareHubNavOverrides(sections, check);
 }

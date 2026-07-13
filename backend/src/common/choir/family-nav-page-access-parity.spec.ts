@@ -67,7 +67,7 @@ describe('family coordinator hub nav ↔ page access parity', () => {
     expect(legacyFamilyCoordinatorHubLinkVisible([])).toBe(false);
   });
 
-  it('getChoirNavForUser includes family coordinator hub when capability router grants access', () => {
+  it('getChoirNavForUser does not inject family coordinator hub from capabilities alone', () => {
     const check = buildCapabilityRouterFromAuths(coordinatorAuth);
     const sections = getChoirNavForUser(
       'MEMBER',
@@ -77,8 +77,8 @@ describe('family coordinator hub nav ↔ page access parity', () => {
     );
     const roleSection = sections.find((s) => s.section === 'My choir role');
     expect(
-      roleSection?.items.some((i) => i.path === LEGACY_FAMILY_COORDINATOR_HUB_PATH),
-    ).toBe(true);
+      roleSection?.items.some((i) => i.path === LEGACY_FAMILY_COORDINATOR_HUB_PATH) ?? false,
+    ).toBe(false);
   });
 
   it('getChoirNavForUser omits family coordinator hub without caps or legacy permissions', () => {
@@ -115,24 +115,65 @@ describe('family head hub nav ↔ page access parity', () => {
   });
 
   it('member without caps falls back to legacy permissions only', () => {
-    expect(legacyFamilyHeadHubLinkVisible(['choir.family.view'])).toBe(true);
-    expect(legacyFamilyHeadHubLinkVisible(['family:view'])).toBe(true);
-    expect(legacyFamilyHeadHubLinkVisible(['attendance.mark'])).toBe(true);
+    expect(
+      legacyFamilyHeadHubLinkVisible(['choir.contribution.view.family']),
+    ).toBe(true);
+    expect(
+      legacyFamilyHeadHubLinkVisible(['choir.contribution.approve.family']),
+    ).toBe(true);
+    expect(legacyFamilyHeadHubLinkVisible(['choir.family.view'])).toBe(false);
+    expect(legacyFamilyHeadHubLinkVisible(['family:view'])).toBe(false);
+    expect(legacyFamilyHeadHubLinkVisible(['attendance.mark'])).toBe(false);
     expect(legacyFamilyHeadHubLinkVisible([])).toBe(false);
   });
 
-  it('getChoirNavForUser includes family head hub when capability router grants access', () => {
+  it('choir-wide member/ops caps do not open family head hub', () => {
+    const presidentLike = {
+      contributionAuth: {
+        userId: 'pres',
+        choirId: PILOT_CHOIR,
+        capabilities: [
+          { id: 'choir.contribution.view@choir' },
+          { id: 'choir.contribution.view@family' },
+        ],
+      } satisfies ResolvedAuth,
+    };
+    const check = buildCapabilityRouterFromAuths(presidentLike);
+    expect(legacyFamilyHeadHubLinkVisible([], check, presidentLike.contributionAuth)).toBe(
+      false,
+    );
+    expect(
+      familyNavItemVisibleWithCheck(
+        choirPath(PILOT_CHOIR, 'family-leadership'),
+        check,
+        presidentLike.contributionAuth,
+      ),
+    ).toBe(false);
+  });
+
+  it('scoped family office grant opens family leadership routes', () => {
+    const check = buildCapabilityRouterFromAuths(familyHeadAuths);
+    expect(
+      familyNavItemVisibleWithCheck(
+        choirPath(PILOT_CHOIR, 'family-leadership'),
+        check,
+        familyHeadAuths.contributionAuth,
+      ),
+    ).toBe(true);
+  });
+
+  it('getChoirNavForUser does not inject family head from choir-wide permissions', () => {
     const check = buildCapabilityRouterFromAuths(familyHeadAuths);
     const sections = getChoirNavForUser(
       'MEMBER',
       { canAccessChoirArea: true, isChoirMember: true },
-      [],
+      ['choir.contribution.view.family'],
       check,
     );
     const roleSection = sections.find((s) => s.section === 'My choir role');
-    expect(roleSection?.items.some((i) => i.path === LEGACY_FAMILY_HEAD_HUB_PATH)).toBe(
-      true,
-    );
+    expect(
+      roleSection?.items.some((i) => i.path === LEGACY_FAMILY_HEAD_HUB_PATH) ?? false,
+    ).toBe(false);
   });
 
   it('getChoirNavForUser omits family head hub without caps or legacy permissions', () => {

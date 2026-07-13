@@ -3,9 +3,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { welfareApi } from '@/lib/api'
-import {
-  StatTile, SkeletonStatTile, SkeletonCard, CapabilityGate,
-} from '@/components/shared'
+import { StatTile, SkeletonStatTile, SkeletonCard, CapabilityGate, AccessRedirectGate } from '@/components/shared'
 import { Heart } from 'lucide-react'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { WelfareCasesWorkspace } from '@/components/choir/welfare/WelfareCasesWorkspace'
@@ -42,13 +40,8 @@ export default function WelfarePage() {
   const active = cases?.filter((c) => c.status !== 'RESOLVED') ?? []
 
   return (
-    <CapabilityGate
+    <AccessRedirectGate
       uiCapability="welfare-desk"
-      fallback={
-        <div className="flex items-center justify-center h-64">
-          <p className="text-text-muted">You do not have access to welfare cases.</p>
-        </div>
-      }
     >
     <ChoirInsightsShell
       title="Welfare Cases"
@@ -96,6 +89,6 @@ export default function WelfarePage() {
       )}
     </div>
     </ChoirInsightsShell>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

@@ -103,10 +103,8 @@ export function augmentAdvisorHubNavSections(
 
 export function composeAdvisorHubAwareNav(
   sections: NavSection[],
-  choirId: string | null | undefined,
+  _choirId: string | null | undefined,
   check: (capabilityId: string) => boolean,
 ): NavSection[] {
-  const withOverrides = applyAdvisorHubNavOverrides(sections, check);
-  if (!choirId) return withOverrides;
-  return augmentAdvisorHubNavSections(withOverrides, choirId, check);
+  return applyAdvisorHubNavOverrides(sections, check);
 }

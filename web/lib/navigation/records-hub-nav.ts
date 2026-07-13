@@ -103,10 +103,8 @@ export function augmentRecordsHubNavSections(
 
 export function composeRecordsHubAwareNav(
   sections: NavSection[],
-  choirId: string | null | undefined,
+  _choirId: string | null | undefined,
   check: (capabilityId: string) => boolean,
 ): NavSection[] {
-  const withOverrides = applyRecordsHubNavOverrides(sections, check);
-  if (!choirId) return withOverrides;
-  return augmentRecordsHubNavSections(withOverrides, choirId, check);
+  return applyRecordsHubNavOverrides(sections, check);
 }

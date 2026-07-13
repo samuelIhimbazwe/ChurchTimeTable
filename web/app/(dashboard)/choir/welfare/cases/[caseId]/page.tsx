@@ -6,9 +6,7 @@ import { useParams } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { welfareApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
-import {
-  Card, Badge, Avatar, CapabilityGate, SkeletonCard,
-} from '@/components/shared'
+import { Card, Badge, Avatar, CapabilityGate, SkeletonCard, AccessRedirectGate } from '@/components/shared'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { formatDate } from '@/lib/utils/format'
 import { EntityTimeline } from '@/components/workflow/EntityTimeline'
@@ -102,13 +100,8 @@ export default function WelfareCaseDetailPage() {
   })
 
   return (
-    <CapabilityGate
+    <AccessRedirectGate
       uiCapability="welfare-case-detail"
-      fallback={
-        <div className="flex items-center justify-center h-64">
-          <p className="text-text-muted">You do not have access to this welfare case.</p>
-        </div>
-      }
     >
     <div className="max-w-3xl mx-auto space-y-6 pb-8">
       <Link
@@ -205,6 +198,6 @@ export default function WelfareCaseDetailPage() {
         .
       </p>
     </div>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

@@ -3,9 +3,7 @@
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { financeApi } from '@/lib/api'
-import {
-  StatTile, CapabilityGate, SkeletonStatTile,
-} from '@/components/shared'
+import { StatTile, CapabilityGate, SkeletonStatTile, AccessRedirectGate } from '@/components/shared'
 import { StewardshipDashboard } from '@/components/choir/ContributionTreasuryPanel'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { useTreasurerOfficeShellActive } from '@/lib/hooks/useTreasurerOfficeShellActive'
@@ -24,11 +22,9 @@ export default function StewardshipPage() {
   const total = Number(analytics?.contributionsMtd ?? analytics?.totalContributions ?? 0)
 
   return (
-    <CapabilityGate uiCapability="contribution-stewardship" fallback={
-      <div className="flex items-center justify-center h-64">
-        <p className="text-text-muted">You do not have access to stewardship data.</p>
-      </div>
-    }>
+    <AccessRedirectGate
+      uiCapability="contribution-stewardship"
+    >
       <div className="space-y-6 max-w-5xl mx-auto">
         {!inTreasurerShell && (
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -63,6 +59,6 @@ export default function StewardshipPage() {
 
         <StewardshipDashboard />
       </div>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

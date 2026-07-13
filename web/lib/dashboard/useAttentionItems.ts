@@ -6,17 +6,20 @@ import { choirApi, choirSchedulingApi, welfareApi } from '@/lib/api'
 import { useResolvedChoirId } from '@/lib/hooks'
 import { useAuthStore } from '@/stores/index'
 import { choirPath } from '@/lib/choir/paths'
+import { INTERNAL_CHOIR_MEMBERSHIP } from '@/lib/choir/membership-intake'
 import type { LeadershipAttentionItem } from '@/components/shared/office/LeadershipAttentionPanel'
 
 export function useAttentionItems() {
   const choirId = useResolvedChoirId()
   const hasAnyPermission = useAuthStore((s) => s.hasAnyPermission)
 
-  const canReviewJoins = hasAnyPermission([
-    'choir.join.review',
-    'member:manage',
-    'choir.operations.manage',
-  ])
+  const canReviewJoins =
+    !INTERNAL_CHOIR_MEMBERSHIP
+    && hasAnyPermission([
+      'choir.join.review',
+      'member:manage',
+      'choir.operations.manage',
+    ])
 
   const { data: joinRequests } = useQuery({
     queryKey: ['choir-join-requests-count', choirId],
@@ -41,16 +44,18 @@ export function useAttentionItems() {
 
     if (!choirId) return list
 
-    const pendingJoins = (joinRequests ?? []).filter(
-      (r) => r.status === 'PENDING' || r.status === 'NEEDS_INFO',
-    )
-    if (pendingJoins.length > 0) {
-      list.push({
-        id: 'joins',
-        label: `${pendingJoins.length} join request${pendingJoins.length === 1 ? '' : 's'} pending`,
-        href: choirPath(choirId, 'president/decisions'),
-        tone: 'warning',
-      })
+    if (!INTERNAL_CHOIR_MEMBERSHIP) {
+      const pendingJoins = (joinRequests ?? []).filter(
+        (r) => r.status === 'PENDING' || r.status === 'NEEDS_INFO',
+      )
+      if (pendingJoins.length > 0) {
+        list.push({
+          id: 'joins',
+          label: `${pendingJoins.length} join request${pendingJoins.length === 1 ? '' : 's'} pending`,
+          href: choirPath(choirId, 'president/decisions'),
+          tone: 'warning',
+        })
+      }
     }
 
     const h = leaderDash as Record<string, unknown> | undefined

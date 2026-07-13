@@ -5,6 +5,7 @@ import { can, hasAnyCapability } from '@/lib/choir/capability-can';
 import { routeChoirCapability } from '@/lib/choir/capability-router';
 import type { ResolvedAuth } from '@/lib/choir/capability.types';
 import { uiCapabilityVisible as contributionUiVisible } from '@/lib/choir/contribution-ui-capability-registry';
+import { hasScopedFamilyOfficeAccess } from '@/lib/choir/family-office-access';
 import {
   uiCapabilityVisible as welfareUiVisible,
   isWelfareUiCapability,
@@ -476,6 +477,9 @@ export function useUiCapability(uiId: string, scopeId?: string): boolean {
   }
   if (isWelfareUiCapability(uiId)) {
     return welfareUiVisible(uiId, (capId) => can(welfareAuth, capId));
+  }
+  if (uiId === 'family-head-hub') {
+    return hasScopedFamilyOfficeAccess(contributionAuth);
   }
   return contributionUiVisible(
     uiId,

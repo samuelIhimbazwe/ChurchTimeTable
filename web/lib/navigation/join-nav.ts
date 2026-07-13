@@ -1,6 +1,7 @@
 import { UserPlus } from 'lucide-react'
 import { can } from '../choir/capability-can'
 import type { ResolvedAuth } from '../choir/capability.types'
+import { INTERNAL_CHOIR_MEMBERSHIP } from '../choir/membership-intake'
 import { uiCapabilityVisible } from '../choir/join-ui-capability-registry'
 import { joinRouteTailFromPath } from '../choir/join-routes'
 import { choirPath } from '../choir/paths'
@@ -87,6 +88,7 @@ export function composeJoinAwareNav(
   choirId: string | null | undefined,
   auth: ResolvedAuth | undefined,
 ): NavSection[] {
+  if (INTERNAL_CHOIR_MEMBERSHIP) return sections
   const withOverrides = applyJoinNavOverrides(sections, auth)
   if (!choirId) return withOverrides
   return augmentJoinNavSections(withOverrides, choirId, auth)

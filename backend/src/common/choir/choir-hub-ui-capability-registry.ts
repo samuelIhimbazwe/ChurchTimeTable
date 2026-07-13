@@ -28,10 +28,9 @@ export const CHOIR_HUB_UI_CAPABILITY_REGISTRY: ChoirHubUiCapabilityDefinition[] 
     },
     {
       id: 'hub-pending-approvals',
-      label: 'Pending join approvals',
+      label: 'Member onboarding',
       routeSegments: [],
       requireAnyOf: [
-        'choir.join.review@choir',
         'choir.member.manage@choir',
         'choir.ops.manage@choir',
       ],

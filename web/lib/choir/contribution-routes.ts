@@ -1,5 +1,6 @@
 /** Choir-relative path tails for contribution capability surfaces. */
 export const CONTRIBUTION_ROUTE_TAILS = [
+  'membership/profile',
   'membership/giving',
   'family-leadership/contributions',
   'budget/verify',

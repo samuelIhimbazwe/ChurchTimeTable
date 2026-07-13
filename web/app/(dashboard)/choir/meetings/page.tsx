@@ -6,9 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { choirApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
-import {
-  Card, CardHeader, CardTitle, SkeletonCard, Badge, EmptyState, CapabilityGate,
-} from '@/components/shared'
+import { Card, CardHeader, CardTitle, SkeletonCard, Badge, EmptyState, CapabilityGate, AccessRedirectGate } from '@/components/shared'
 import { FormField, Input, Textarea } from '@/components/shared/form'
 import { meetingFormSchema, type MeetingFormValues } from '@/lib/validation/schemas'
 import { CalendarDays } from 'lucide-react'
@@ -55,14 +53,8 @@ export default function MeetingsPage() {
   const list = (meetings ?? []) as Record<string, unknown>[]
 
   return (
-    <CapabilityGate
+    <AccessRedirectGate
       uiCapability="comms-meetings-hub"
-      fallback={
-        <EmptyState
-          title="Meetings not available"
-          description="You do not have permission to view choir meetings."
-        />
-      }
     >
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between">
@@ -159,6 +151,6 @@ export default function MeetingsPage() {
         </div>
       )}
     </div>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

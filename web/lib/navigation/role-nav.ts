@@ -14,55 +14,15 @@ import {
   ClipboardCheck,
   UserCog,
   KeyRound,
-  BookOpen,
   UserPlus,
   Crown,
   Mic2,
-  Scale,
 } from 'lucide-react'
 import type { ChoirAccessState } from '@/lib/choir/access'
 import type { ActiveChoirMembership } from '@/lib/choir/membership-display'
 import { choirMemberHome } from '@/lib/choir/paths'
 import { parseChoirIdFromPath } from '@/lib/choir/paths'
 import { CHOIR_LEADERSHIP } from '@/lib/roles'
-import {
-  legacyCareHubLinkVisible,
-  LEGACY_CARE_HUB_PATH,
-} from '@/lib/navigation/care-hub-nav'
-import {
-  legacySpiritualHubLinkVisible,
-  LEGACY_SPIRITUAL_HUB_PATH,
-} from '@/lib/navigation/devotion-nav'
-import {
-  legacyBudgetHubLinkVisible,
-  LEGACY_BUDGET_HUB_PATH,
-} from '@/lib/navigation/contribution-nav'
-import {
-  legacyRecordsHubLinkVisible,
-  LEGACY_RECORDS_HUB_PATH,
-} from '@/lib/navigation/records-hub-nav'
-import {
-  legacyPresidentHubLinkVisible,
-  LEGACY_PRESIDENT_HUB_PATH,
-} from '@/lib/navigation/president-hub-nav'
-import {
-  legacyVicePresidentHubLinkVisible,
-  LEGACY_VICE_PRESIDENT_HUB_PATH,
-} from '@/lib/navigation/vice-president-hub-nav'
-import {
-  legacyMusicDirectionHubLinkVisible,
-  LEGACY_MUSIC_DIRECTION_HUB_PATH,
-} from '@/lib/navigation/music-nav'
-import {
-  legacyFamilyCoordinatorHubLinkVisible,
-  LEGACY_FAMILY_COORDINATOR_HUB_PATH,
-  legacyFamilyHeadHubLinkVisible,
-  LEGACY_FAMILY_HEAD_HUB_PATH,
-} from '@/lib/navigation/family-nav'
-import {
-  legacyAdvisorHubLinkVisible,
-  LEGACY_ADVISOR_HUB_PATH,
-} from '@/lib/navigation/advisor-hub-nav'
 import { filterRoleNavSections } from '@/lib/navigation/role-nav-capability'
 
 const CHOIR_LEADERSHIP_ROLE_SET = CHOIR_LEADERSHIP
@@ -100,16 +60,6 @@ const CHOIR_ADMIN_TOOLS: NavSection = {
   ],
 }
 
-const CHOIR_OFFICER_HUBS: NavSection = {
-  section: 'Officer hubs',
-  items: [
-    { label: 'Care & discipline', icon: Heart,      path: '/choir/care' },
-    { label: 'Spiritual life',  icon: BookOpen,   path: '/choir/spiritual' },
-    { label: 'Budget',          icon: DollarSign, path: '/choir/budget' },
-    { label: 'Records',         icon: FileText,   path: '/choir/records' },
-  ],
-}
-
 const CHOIR_PRESIDENT_HUB: NavSection = {
   section: 'President',
   items: [{ label: 'President hub', icon: Crown, path: '/choir/president' }],
@@ -129,18 +79,12 @@ const CHOIR_FAMILY_COORD_HUB: NavSection = {
   section: 'Families',
   items: [
     { label: 'Family coordinator', icon: Users, path: '/choir/family-coordinator' },
-    { label: 'Family head',        icon: Users, path: '/choir/family-head' },
   ],
-}
-
-const CHOIR_ADVISOR_HUB: NavSection = {
-  section: 'Advisor',
-  items: [{ label: 'Advisor oversight', icon: Scale, path: '/choir/advisor' }],
 }
 
 const CHOIR_MEMBER_HUB: NavSection = {
   section: 'Choir',
-  items: [{ label: 'My membership', icon: Music, path: '/choir/member' }],
+  items: [{ label: 'Home', icon: Music, path: '/choir/member' }],
 }
 
 const CHOIR_LEADERSHIP_NAV: NavSection = {
@@ -210,10 +154,6 @@ export const NAV_BY_ROLE: Record<string, NavSection[]> = {
     CHOIR_PRESIDENT_HUB,
     CHOIR_OPERATIONS,
     CHOIR_ADMIN_TOOLS,
-    CHOIR_OFFICER_HUBS,
-    CHOIR_MUSIC_HUB,
-    CHOIR_FAMILY_COORD_HUB,
-    CHOIR_ADVISOR_HUB,
     CHOIR_LEADERSHIP_NAV,
   ],
 
@@ -222,7 +162,6 @@ export const NAV_BY_ROLE: Record<string, NavSection[]> = {
     CHOIR_PRESIDENT_HUB,
     CHOIR_OPERATIONS,
     CHOIR_ADMIN_TOOLS,
-    CHOIR_OFFICER_HUBS,
     CHOIR_LEADERSHIP_NAV,
   ],
 
@@ -231,7 +170,6 @@ export const NAV_BY_ROLE: Record<string, NavSection[]> = {
     CHOIR_VP_HUB,
     CHOIR_OPERATIONS,
     CHOIR_ADMIN_TOOLS,
-    CHOIR_OFFICER_HUBS,
     {
       section: 'Leadership',
       items: [
@@ -289,8 +227,6 @@ export const NAV_BY_ROLE: Record<string, NavSection[]> = {
     CHOIR_DASHBOARD,
     CHOIR_OPERATIONS,
     CHOIR_ADMIN_TOOLS,
-    CHOIR_OFFICER_HUBS,
-    CHOIR_ADVISOR_HUB,
     {
       section: 'Committee',
       items: [
@@ -306,7 +242,6 @@ export const NAV_BY_ROLE: Record<string, NavSection[]> = {
     CHOIR_PRESIDENT_HUB,
     CHOIR_OPERATIONS,
     CHOIR_ADMIN_TOOLS,
-    CHOIR_OFFICER_HUBS,
     CHOIR_LEADERSHIP_NAV,
   ],
 
@@ -354,84 +289,9 @@ export function getNavForRole(role?: string): NavSection[] {
   return NAV_BY_ROLE[role ?? 'MEMBER'] ?? NAV_BY_ROLE.MEMBER
 }
 
-const CHOIR_POSITION_HUB_LINKS: NavItem[] = [
-  { label: 'President hub',       icon: Crown,      path: '/choir/president' },
-  { label: 'Vice President hub',  icon: UserCog,    path: '/choir/vice-president' },
-  { label: 'Music direction',     icon: Mic2,       path: '/choir/music-direction' },
-  { label: 'Family coordinator',  icon: Users,      path: '/choir/family-coordinator' },
-  { label: 'Family head',         icon: Users,      path: '/choir/family-head' },
-  { label: 'Advisor',             icon: Scale,      path: '/choir/advisor' },
-  { label: 'Care & discipline',   icon: Heart,      path: '/choir/care' },
-  { label: 'Spiritual life',      icon: BookOpen,   path: '/choir/spiritual' },
-  { label: 'Budget',              icon: DollarSign, path: '/choir/budget' },
-  { label: 'Records',             icon: FileText,   path: '/choir/records' },
-]
-
-const HUB_PERMISSIONS: Record<string, string[]> = {
-  '/choir/president': ['choir.join.review', 'member:manage', 'choir.oversight', 'choir.operations.manage'],
-  '/choir/vice-president': ['choir.ops.view', 'choir.ops.manage', 'event:write'],
-  '/choir/music-direction': ['choir.music.manage', 'choir.rehearsal.manage'],
-  '/choir/family-coordinator': ['choir.family.manage', 'family:manage'],
-  '/choir/family-head': ['choir.family.view', 'family:view', 'attendance.mark'],
-  '/choir/advisor': ['choir.reports.view', 'discipline:read_all', 'event:read'],
-  '/choir/care': ['discipline:manage', 'choir.welfare.manage', 'choir.rules.manage'],
-  '/choir/spiritual': ['choir.devotion.manage', 'choir.intercession.manage', 'choir.spiritual.program.manage'],
-  '/choir/budget': ['choir.finance.manage', 'choir.finance.view'],
-  '/choir/records': ['choir.records.view', 'audit:read', 'choir.document.manage'],
-}
-
-function officerHubLinkVisible(
-  link: NavItem,
-  permissions: string[],
-  capabilityCheck?: (capId: string) => boolean,
-): boolean {
-  if (link.path === LEGACY_CARE_HUB_PATH) {
-    return legacyCareHubLinkVisible(permissions, capabilityCheck);
-  }
-  if (link.path === LEGACY_SPIRITUAL_HUB_PATH) {
-    return legacySpiritualHubLinkVisible(permissions, capabilityCheck);
-  }
-  if (link.path === LEGACY_BUDGET_HUB_PATH) {
-    return legacyBudgetHubLinkVisible(permissions, capabilityCheck);
-  }
-  if (link.path === LEGACY_RECORDS_HUB_PATH) {
-    return legacyRecordsHubLinkVisible(permissions, capabilityCheck);
-  }
-  if (link.path === LEGACY_PRESIDENT_HUB_PATH) {
-    return legacyPresidentHubLinkVisible(permissions, capabilityCheck);
-  }
-  if (link.path === LEGACY_VICE_PRESIDENT_HUB_PATH) {
-    return legacyVicePresidentHubLinkVisible(permissions, capabilityCheck);
-  }
-  if (link.path === LEGACY_MUSIC_DIRECTION_HUB_PATH) {
-    return legacyMusicDirectionHubLinkVisible(permissions, capabilityCheck);
-  }
-  if (link.path === LEGACY_FAMILY_COORDINATOR_HUB_PATH) {
-    return legacyFamilyCoordinatorHubLinkVisible(permissions, capabilityCheck);
-  }
-  if (link.path === LEGACY_FAMILY_HEAD_HUB_PATH) {
-    return legacyFamilyHeadHubLinkVisible(permissions, capabilityCheck);
-  }
-  if (link.path === LEGACY_ADVISOR_HUB_PATH) {
-    return legacyAdvisorHubLinkVisible(permissions, capabilityCheck);
-  }
-  const required = HUB_PERMISSIONS[link.path];
-  if (!required?.length) return false;
-  return required.some((p) => permissions.includes(p));
-}
-
-function officerHubsForPermissions(
-  permissions: string[],
-  capabilityCheck?: (capId: string) => boolean,
-): NavItem[] {
-  return CHOIR_POSITION_HUB_LINKS.filter((link) =>
-    officerHubLinkVisible(link, permissions, capabilityCheck),
-  );
-}
-
 const CHOIR_DASHBOARD_ENTRY = (choir: ActiveChoirMembership): NavSection => ({
   section: choir.name,
-  items: [{ label: 'My membership', icon: Music, path: choirMemberHome(choir.id) }],
+  items: [{ label: 'Home', icon: Music, path: choirMemberHome(choir.id) }],
 })
 
 const BACK_TO_PORTAL: NavSection = {
@@ -505,11 +365,6 @@ export function getChoirNavForUser(
 
   if (choirAccess.isChoirMember) {
     sections.push(CHOIR_MEMBER_HUB)
-  }
-
-  const hubs = officerHubsForPermissions(permissions, capabilityCheck)
-  if (hubs.length > 0) {
-    sections.push({ section: 'My choir role', items: hubs })
   }
 
   return sections

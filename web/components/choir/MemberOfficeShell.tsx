@@ -9,9 +9,14 @@ import { buildMemberObligations } from '@/lib/choir/member-obligations'
 import { useChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
 import {
   MEMBERSHIP_OFFICE_NAV,
+  isMembershipHomeSegment,
+  membershipAnnouncementsHref,
   membershipNavActiveSegment,
   membershipOfficePath,
+  membershipProfilePath,
+  membershipOfficeSubtitle,
 } from '@/lib/choir/membership-office'
+import { useUiCapability } from '@/lib/hooks/useCapability'
 import { resolveMemberLeadershipOffices } from '@/lib/choir/member-leadership-offices'
 import { MemberAttentionStrip } from '@/components/choir/membership/MemberAttentionStrip'
 import { MemberRecognitionStrip } from '@/components/choir/membership/MemberRecognitionStrip'
@@ -29,6 +34,12 @@ export function MemberOfficeShell({ choirId, children }: Props) {
   const { context } = useChoirDashboardCtx()
   const choirName = context?.choir.name ?? 'Choir'
   const activeSegment = membershipNavActiveSegment(pathname, choirId)
+  const isMembershipHome = isMembershipHomeSegment(activeSegment)
+  const canManageAnnouncements = useUiCapability('comms-announcements-manage', choirId)
+
+  const activeNavItem = MEMBERSHIP_OFFICE_NAV.find((item) => item.segment === activeSegment)
+  const shellTitle = isMembershipHome ? 'Home' : (activeNavItem?.label ?? 'Home')
+  const shellSubtitle = membershipOfficeSubtitle(activeSegment)
 
   const { data: totals } = useQuery({
     queryKey: ['member-contribution-totals'],
@@ -67,7 +78,7 @@ export function MemberOfficeShell({ choirId, children }: Props) {
       ? {
           title: String(nextEventRaw.title ?? 'Choir event'),
           when: '',
-          href: membershipOfficePath(choirId, 'attendance'),
+          href: membershipProfilePath(choirId, 'attendance'),
         }
       : undefined,
   }).length
@@ -91,7 +102,10 @@ export function MemberOfficeShell({ choirId, children }: Props) {
     const membershipEntries = MEMBERSHIP_OFFICE_NAV.map((item) => ({
       id: item.id,
       label: item.label,
-      href: membershipOfficePath(choirId, item.segment || undefined),
+      href:
+        item.id === 'announcements'
+          ? membershipAnnouncementsHref(choirId, { canManage: canManageAnnouncements })
+          : membershipOfficePath(choirId, item.segment || undefined),
       active: activeSegment === item.segment,
       badge: item.id === 'obligations' ? obligationCount : undefined,
       kind: 'membership' as const,
@@ -110,7 +124,7 @@ export function MemberOfficeShell({ choirId, children }: Props) {
 
     const [week, ...rest] = membershipEntries
     return [week, ...officeEntries, ...rest]
-  }, [choirId, activeSegment, obligationCount, leadershipOffices, pathname])
+  }, [choirId, activeSegment, obligationCount, leadershipOffices, pathname, canManageAnnouncements])
 
   const meta = (memberHeader || myFamily?.family) ? (
     <>
@@ -133,13 +147,13 @@ export function MemberOfficeShell({ choirId, children }: Props) {
     </>
   ) : undefined
 
-  const alerts = <MemberAttentionStrip choirId={choirId} />
+  const alerts = isMembershipHome ? <MemberAttentionStrip choirId={choirId} /> : null
 
-  const aside = (
+  const aside = isMembershipHome ? (
     <>
       {myFamily?.family && (
         <Link
-          href={membershipOfficePath(choirId, 'family')}
+          href={membershipProfilePath(choirId, 'family')}
           className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
         >
           <div className="rounded-xl border border-border bg-surface-raised p-4 space-y-2 shadow-sm transition-all duration-fast hover:shadow-raised hover:-translate-y-0.5">
@@ -160,7 +174,7 @@ export function MemberOfficeShell({ choirId, children }: Props) {
       )}
       {(totals?.byCampaign?.length ?? 0) > 0 && (
         <Link
-          href={membershipOfficePath(choirId, 'giving')}
+          href={membershipProfilePath(choirId, 'giving')}
           className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
         >
           <div className="rounded-xl border border-border bg-surface p-4 space-y-2 transition-all duration-fast hover:shadow-raised hover:-translate-y-0.5">
@@ -179,26 +193,28 @@ export function MemberOfficeShell({ choirId, children }: Props) {
         </Link>
       )}
     </>
-  )
+  ) : undefined
 
   return (
     <OfficeShellFrame
       themeKey="membership"
       choirName={choirName}
-      title="My membership"
-      subtitle="Your rehearsals, giving, and team — in one place."
+      title={shellTitle}
+      subtitle={shellSubtitle}
       meta={meta}
       navItems={navItems}
       navLabel="Membership office"
       alerts={
-        <>
-          <SeasonalAccentRibbon className="-mx-3 xs:-mx-4 sm:-mx-6 mb-3 rounded-none" />
-          {alerts}
-        </>
+        isMembershipHome ? (
+          <>
+            <SeasonalAccentRibbon className="-mx-3 xs:-mx-4 sm:-mx-6 mb-3 rounded-none" />
+            {alerts}
+          </>
+        ) : undefined
       }
       aside={aside}
     >
-      <MemberRecognitionStrip choirId={choirId} />
+      {isMembershipHome ? <MemberRecognitionStrip choirId={choirId} /> : null}
       {children}
       <MemberBottomTabBar
         choirId={choirId}

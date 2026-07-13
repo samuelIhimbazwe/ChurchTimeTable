@@ -186,12 +186,16 @@ export const CONTRIBUTION_UI_CAPABILITY_REGISTRY: ContributionUiCapabilityDefini
   {
     id: 'family-head-hub',
     label: 'Family head hub',
-    routeSegments: ['family-head', 'family-leadership'],
+    routeSegments: [
+      'family-head',
+      'family-leadership',
+      'family-deputy',
+      'family-coordination',
+    ],
+    /** Only family-scoped contribution grants — not choir-wide member/ops caps. */
     requireAnyOf: [
       'choir.contribution.view@family',
       'choir.contribution.approve@family',
-      'choir.ops.attendance@choir',
-      'choir.member.view@choir',
     ],
     mode: 'any',
   },

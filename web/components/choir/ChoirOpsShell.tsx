@@ -16,6 +16,7 @@ import {
   opsNavActiveSegment,
 } from '@/lib/choir/ops-office'
 import { choirPath } from '@/lib/choir/paths'
+import { INTERNAL_CHOIR_MEMBERSHIP } from '@/lib/choir/membership-intake'
 import { useResolvedChoirId } from '@/lib/hooks'
 import { useAuthStore } from '@/stores/index'
 
@@ -35,11 +36,13 @@ export function ChoirOpsShell({ title, subtitle, meta, breadcrumbs, children }: 
   const activeSegment = opsNavActiveSegment(pathname, choirId)
   const hasAnyPermission = useAuthStore((s) => s.hasAnyPermission)
 
-  const canReviewJoins = hasAnyPermission([
-    'choir.join.review',
-    'member:manage',
-    'choir.operations.manage',
-  ])
+  const canReviewJoins =
+    !INTERNAL_CHOIR_MEMBERSHIP
+    && hasAnyPermission([
+      'choir.join.review',
+      'member:manage',
+      'choir.operations.manage',
+    ])
 
   const { data: joinRequests } = useQuery({
     queryKey: ['choir-join-requests-count', choirId],
@@ -77,7 +80,7 @@ export function ChoirOpsShell({ title, subtitle, meta, breadcrumbs, children }: 
       tone?: 'warning' | 'default'
     }> = []
 
-    if (pendingJoins > 0 && canReviewJoins) {
+    if (!INTERNAL_CHOIR_MEMBERSHIP && pendingJoins > 0 && canReviewJoins) {
       items.push({
         id: 'joins',
         label: `${pendingJoins} join request${pendingJoins === 1 ? '' : 's'} pending`,

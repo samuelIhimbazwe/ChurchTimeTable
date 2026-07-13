@@ -20,6 +20,10 @@ import {
 import { computeCareCaseSla } from '../welfare/welfare-care-desk.util';
 import { ACTIVE_WELFARE_STATUSES } from '../welfare/welfare-case.util';
 import { choirContributionScopeWhere } from '../finance/contribution-treasury-period.util';
+import {
+  INTERNAL_CHOIR_MEMBERSHIP,
+  SLA_OFFICERS_HIDDEN_INTERNAL,
+} from '../common/choir/membership-intake.constants';
 import { resolvePulseWeekStart } from '../common/pulse/pulse-week.util';
 import type { UpsertChoirExecutivePulseDto } from './dto/upsert-choir-executive-pulse.dto';
 
@@ -194,14 +198,31 @@ export class ChoirExecutiveDashboardService {
       }),
     ];
 
-    const breachCount = officers.reduce((sum, item) => sum + item.breachCount, 0);
-    const staleCount = officers.reduce((sum, item) => sum + item.staleCount, 0);
-    const attentionCount = officers.filter((item) => item.status !== 'ok').length;
+    const visibleOfficers = INTERNAL_CHOIR_MEMBERSHIP
+      ? officers.filter(
+          (item) =>
+            !(SLA_OFFICERS_HIDDEN_INTERNAL as readonly string[]).includes(
+              item.id,
+            ),
+        )
+      : officers;
+
+    const breachCount = visibleOfficers.reduce(
+      (sum, item) => sum + item.breachCount,
+      0,
+    );
+    const staleCount = visibleOfficers.reduce(
+      (sum, item) => sum + item.staleCount,
+      0,
+    );
+    const attentionCount = visibleOfficers.filter(
+      (item) => item.status !== 'ok',
+    ).length;
 
     return {
       choirId,
       generatedAt: new Date().toISOString(),
-      officers,
+      officers: visibleOfficers,
       totals: {
         breachCount,
         staleCount,

@@ -19,6 +19,7 @@ const CONTRIBUTION_ROUTES = [
   'finance',
   'budget',
   'budget/verify',
+  'membership/profile',
   'membership/giving',
   'family-leadership/contributions',
 ] as const;
@@ -138,7 +139,7 @@ describe('contribution nav ↔ page access parity', () => {
     expect(legacyBudgetHubLinkVisible([])).toBe(false);
   });
 
-  it('getChoirNavForUser includes budget hub when capability router grants access', () => {
+  it('getChoirNavForUser does not inject budget hub from capabilities alone', () => {
     const check = buildCapabilityRouterFromAuths({ contributionAuth: treasurerAuth });
     const sections = getChoirNavForUser(
       'MEMBER',
@@ -147,7 +148,7 @@ describe('contribution nav ↔ page access parity', () => {
       check,
     );
     const roleSection = sections.find((s) => s.section === 'My choir role');
-    expect(roleSection?.items.some((i) => i.path === LEGACY_BUDGET_HUB_PATH)).toBe(true);
+    expect(roleSection?.items.some((i) => i.path === LEGACY_BUDGET_HUB_PATH) ?? false).toBe(false);
   });
 
   it('getChoirNavForUser omits budget hub without caps or legacy permissions', () => {

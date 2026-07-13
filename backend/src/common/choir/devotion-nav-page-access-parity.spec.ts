@@ -93,7 +93,7 @@ describe('devotion nav ↔ page access parity', () => {
     expect(legacySpiritualHubLinkVisible([])).toBe(false);
   });
 
-  it('getChoirNavForUser includes spiritual hub when capability router grants access', () => {
+  it('getChoirNavForUser does not inject spiritual hub from capabilities alone', () => {
     const check = buildCapabilityRouterFromAuths(devotionOfficerAuths);
     const sections = getChoirNavForUser(
       'MEMBER',
@@ -103,8 +103,8 @@ describe('devotion nav ↔ page access parity', () => {
     );
     const roleSection = sections.find((s) => s.section === 'My choir role');
     expect(
-      roleSection?.items.some((i) => i.path === LEGACY_SPIRITUAL_HUB_PATH),
-    ).toBe(true);
+      roleSection?.items.some((i) => i.path === LEGACY_SPIRITUAL_HUB_PATH) ?? false,
+    ).toBe(false);
   });
 
   it('getChoirNavForUser omits spiritual hub without caps or legacy permissions', () => {

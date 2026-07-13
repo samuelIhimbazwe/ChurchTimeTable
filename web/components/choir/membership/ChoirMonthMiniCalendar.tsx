@@ -7,7 +7,7 @@ import { memberPortalApi } from '@/lib/api'
 import { MonthCalendarGrid, CalendarLegend, type CalendarDayEvent } from '@/components/calendar'
 import { classifyPersonalCalendarEvent } from '@/lib/calendar/event-types'
 import { groupByDayKey, monthBoundsFromOffset } from '@/lib/calendar/month-utils'
-import { membershipOfficePath } from '@/lib/choir/membership-office'
+import { membershipProfilePath } from '@/lib/choir/membership-office'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/shared'
 import { formatDate, formatTime } from '@/lib/utils/format'
 
@@ -68,7 +68,7 @@ export function ChoirMonthMiniCalendar({ choirId }: Props) {
             <CardDescription>Rehearsals and services for your choir</CardDescription>
           </div>
           <Link
-            href={membershipOfficePath(choirId, 'attendance')}
+            href={membershipProfilePath(choirId, 'attendance')}
             className="text-xs font-semibold text-primary-600 shrink-0"
           >
             Full schedule →
@@ -89,7 +89,7 @@ export function ChoirMonthMiniCalendar({ choirId }: Props) {
           {dayItems.map((item) => (
             <li key={item.id}>
               <Link
-                href={membershipOfficePath(choirId, 'attendance')}
+                href={membershipProfilePath(choirId, 'attendance')}
                 className="block text-sm rounded-lg px-2 py-1.5 hover:bg-surface-raised transition-colors"
               >
                 <p className="font-medium text-text-primary">{item.title}</p>

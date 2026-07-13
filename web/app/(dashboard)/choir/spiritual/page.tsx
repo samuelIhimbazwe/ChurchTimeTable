@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { devotionsApi, memberPortalApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import {
-  Card, Badge, HubTabs, SkeletonCard, EmptyState, CapabilityGate,
+  Card, Badge, HubTabs, SkeletonCard, EmptyState, CapabilityGate, AccessRedirectGate,
 } from '@/components/shared'
 import { useDevotionUiCapability } from '@/lib/hooks/useCapability'
 import { formatDate } from '@/lib/utils/format'
@@ -111,6 +111,7 @@ export default function SpiritualHubPage() {
     'w-full px-3 py-2.5 rounded-lg text-sm bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold-500'
 
   return (
+    <AccessRedirectGate uiCapability="devotion-spiritual-content" requirePosition="spiritual_leader">
     <div className="space-y-6 max-w-5xl mx-auto pb-8">
       <div>
         <h1 className="font-display text-3xl text-text-primary">Spiritual life</h1>
@@ -185,13 +186,7 @@ export default function SpiritualHubPage() {
       {tab === 'programs' && (
         <CapabilityGate
           uiCapability="devotion-prayer-programs"
-          fallback={
-            <EmptyState
-              icon={Sparkles}
-              title="Prayer programs not available"
-              description="You need spiritual program or devotion publish permissions to manage fasting and prayer guides."
-            />
-          }
+          fallback={null}
         >
           <Card padding="md">
             <div className="flex items-start gap-3 mb-4">
@@ -242,12 +237,7 @@ export default function SpiritualHubPage() {
       {tab === 'devotions' && (
         <CapabilityGate
           uiCapability="devotion-spiritual-content"
-          fallback={
-            <EmptyState
-              title="Devotions not available"
-              description="You do not have permission to view choir devotions."
-            />
-          }
+          fallback={null}
         >
         <div className="space-y-4">
           <CapabilityGate uiCapability="devotion-publish-form">
@@ -313,5 +303,6 @@ export default function SpiritualHubPage() {
         </CapabilityGate>
       )}
     </div>
+    </AccessRedirectGate>
   )
 }

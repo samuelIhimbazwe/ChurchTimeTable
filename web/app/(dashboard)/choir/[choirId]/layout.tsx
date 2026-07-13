@@ -162,7 +162,7 @@ export default function ChoirScopedLayout({ children }: { children: React.ReactN
                   href={choirMemberHome(choirId)}
                   className="font-medium text-text-secondary hover:text-text-primary transition-colors"
                 >
-                  My membership
+                  Home
                 </Link>
                 {!loadingPortalAccess && isDualMember && (
                   <Link

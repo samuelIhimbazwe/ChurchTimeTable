@@ -3,7 +3,7 @@
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { musicApi, type SongAsset } from '@/lib/api'
-import { Card, CardHeader, CardTitle, Badge, SkeletonCard, CapabilityGate, EmptyState } from '@/components/shared'
+import { Card, CardHeader, CardTitle, Badge, SkeletonCard, AccessRedirectGate } from '@/components/shared'
 import { ChevronLeft, Music, FileText, Headphones, ExternalLink } from 'lucide-react'
 
 function assetLabel(type: SongAsset['assetType']) {
@@ -104,14 +104,8 @@ export default function SongDetailPage() {
   const assets = song?.assets ?? []
 
   return (
-    <CapabilityGate
+    <AccessRedirectGate
       uiCapability="music-library-hub"
-      fallback={
-        <EmptyState
-          title="Song not available"
-          description="You do not have permission to view choir music."
-        />
-      }
     >
     <div className="space-y-6 max-w-3xl mx-auto pb-8">
       <div>
@@ -182,6 +176,6 @@ export default function SongDetailPage() {
         </Card>
       )}
     </div>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

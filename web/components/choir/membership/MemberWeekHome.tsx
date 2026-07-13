@@ -10,7 +10,8 @@ import {
   choirServiceOpsApi,
 } from '@/lib/api'
 import { buildMemberObligations } from '@/lib/choir/member-obligations'
-import { membershipOfficePath } from '@/lib/choir/membership-office'
+import { membershipAnnouncementsHref, membershipOfficePath, membershipProfilePath } from '@/lib/choir/membership-office'
+import { useUiCapability } from '@/lib/hooks/useCapability'
 import { SkeletonCard } from '@/components/shared'
 import { formatDate, formatTime } from '@/lib/utils/format'
 import { choirOperationsApi } from '@/lib/api/modules/choir-operations'
@@ -45,6 +46,10 @@ function upcomingPrepRange() {
 export function MemberWeekHome({ choirId }: Props) {
   const prepRange = useMemo(() => upcomingPrepRange(), [])
   const qc = useQueryClient()
+  const canManageAnnouncements = useUiCapability('comms-announcements-manage', choirId)
+  const announcementsHref = membershipAnnouncementsHref(choirId, {
+    canManage: canManageAnnouncements,
+  })
 
   const { data: totals, isLoading: loadingTotals } = useQuery({
     queryKey: ['member-contribution-totals'],
@@ -93,7 +98,7 @@ export function MemberWeekHome({ choirId }: Props) {
           : nextEventRaw.date
             ? formatDate(String(nextEventRaw.date))
             : '',
-        href: membershipOfficePath(choirId, 'attendance'),
+        href: membershipProfilePath(choirId, 'attendance'),
       }
     : undefined
 
@@ -126,7 +131,7 @@ export function MemberWeekHome({ choirId }: Props) {
           title: String(raw.title ?? 'Choir event'),
           startAt: String(raw.startAt ?? raw.date ?? new Date().toISOString()),
           location: raw.location ?? null,
-          href: membershipOfficePath(choirId, 'attendance'),
+          href: membershipProfilePath(choirId, 'attendance'),
           kind: 'rehearsal' as const,
         }
       }),
@@ -213,7 +218,7 @@ export function MemberWeekHome({ choirId }: Props) {
           />
           <ShareLinkButton
             title={nextTimeline.title}
-            url={typeof window !== 'undefined' ? `${window.location.origin}${membershipOfficePath(choirId, 'attendance')}` : membershipOfficePath(choirId, 'attendance')}
+            url={typeof window !== 'undefined' ? `${window.location.origin}${membershipProfilePath(choirId, 'attendance')}` : membershipProfilePath(choirId, 'attendance')}
           />
         </div>
       )}
@@ -240,7 +245,7 @@ export function MemberWeekHome({ choirId }: Props) {
           </p>
           <ProgressRing value={givingPct} label={primaryGoal?.name ?? 'Campaign'} />
           <Link
-            href={membershipOfficePath(choirId, 'giving')}
+            href={membershipProfilePath(choirId, 'giving')}
             className="text-xs font-semibold text-primary-600 hover:text-primary-800"
           >
             View giving →
@@ -263,8 +268,8 @@ export function MemberWeekHome({ choirId }: Props) {
           }))}
           max={3}
           compact
-          allHref={membershipOfficePath(choirId, 'announcements')}
-          itemHref={() => membershipOfficePath(choirId, 'announcements')}
+          allHref={announcementsHref}
+          itemHref={() => announcementsHref}
         />
       )}
     </div>

@@ -10,6 +10,7 @@ import { ChoirJoinRequestsService } from '../member-portal/choir-join-requests.s
 import { ChoirJoinAccessService } from '../member-portal/choir-join-access.service';
 import { ChoirSponsorAccessService } from '../member-portal/choir-sponsor-access.service';
 import { ChoirSponsorRequestsService } from '../member-portal/choir-sponsor-requests.service';
+import { ChoirSponsorsService } from './choir-sponsors.service';
 import { ChoirMembershipRulesService } from '../member-portal/choir-membership-rules.service';
 import { MemberPortalNotificationsService } from '../member-portal/member-portal-notifications.service';
 import { ChoirMembersService } from './choir-members.service';
@@ -42,6 +43,7 @@ import { MemberNumberModule } from '../members/member-number.module';
     ChoirJoinAccessService,
     ChoirSponsorAccessService,
     ChoirSponsorRequestsService,
+    ChoirSponsorsService,
     ChoirMembershipRulesService,
     MemberPortalNotificationsService,
     ChoirMembersService,

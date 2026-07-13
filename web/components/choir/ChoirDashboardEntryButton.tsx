@@ -16,7 +16,7 @@ type Props = {
 export function ChoirDashboardEntryButton({
   choirId,
   className = '',
-  label = 'My membership',
+  label = 'Home',
   variant = 'primary',
 }: Props) {
   const { data: context, isLoading } = useChoirDashboardContext(choirId)

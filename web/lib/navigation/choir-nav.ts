@@ -23,7 +23,6 @@ const CHOIR_POSITION_HUB_LINKS: NavItem[] = [
   { label: 'Vice President hub',  icon: UserCog,    path: 'vice-president' },
   { label: 'Music direction',     icon: Mic2,       path: 'music-direction' },
   { label: 'Family coordinator',  icon: Users,      path: 'family-coordinator' },
-  { label: 'Family leadership',   icon: Users,      path: 'family-leadership' },
   { label: 'Advisor',             icon: Scale,      path: 'advisor' },
   { label: 'Care & discipline',   icon: Heart,      path: 'care' },
   { label: 'Spiritual life',      icon: BookOpen,   path: 'spiritual' },
@@ -37,7 +36,7 @@ const COMMITTEE_ROLE_TO_HUB: Record<string, string> = {
   vice_president: 'vice-president',
   music_director: 'music-direction',
   family_coordinator: 'family-coordinator',
-  family_head: 'family-leadership',
+  // family_head → only via familyOffices (real FamilyMember assignment)
   advisor: 'advisor',
   secretary: 'records',
   treasurer: 'budget',
@@ -238,7 +237,7 @@ export function getComposedChoirNav(
   sections.push({
     section: choirName,
     items: [
-      { label: 'My membership', icon: Music, path: choirMemberHome(choirId) },
+      { label: 'Home', icon: Music, path: choirMemberHome(choirId) },
     ],
   })
 
@@ -252,8 +251,7 @@ export function getComposedChoirNav(
   sections.push({
     section: 'Quick links',
     items: [
-      { label: 'My giving', icon: DollarSign, path: choirPath(choirId, 'membership/giving') },
-      { label: 'My family', icon: Users, path: choirPath(choirId, 'membership/family') },
+      { label: 'My membership', icon: Users, path: choirPath(choirId, 'membership/profile') },
       { label: 'Music library', icon: Music, path: choirPath(choirId, 'music') },
       { label: 'Scheduling', icon: Calendar, path: choirPath(choirId, 'scheduling') },
       { label: 'Activities', icon: Calendar, path: choirPath(choirId, 'activities') },

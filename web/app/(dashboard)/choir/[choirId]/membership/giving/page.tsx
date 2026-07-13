@@ -1,11 +1,13 @@
-'use client'
+import { redirect } from 'next/navigation'
+import { membershipProfilePath } from '@/lib/choir/membership-office'
 
-import { useParams } from 'next/navigation'
-import { MemberGivingConsole } from '@/components/choir/membership/MemberGivingConsole'
-
-export default function MembershipGivingPage() {
-  const params = useParams()
-  const choirId = String(params.choirId)
-
-  return <MemberGivingConsole choirId={choirId} />
+export default function LegacyMembershipGivingPage({
+  params,
+  searchParams,
+}: {
+  params: { choirId: string }
+  searchParams: { tab?: string }
+}) {
+  const tab = searchParams.tab === 'submit' ? 'submit' : 'giving'
+  redirect(membershipProfilePath(params.choirId, tab))
 }

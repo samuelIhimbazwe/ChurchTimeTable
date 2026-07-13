@@ -3,10 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { reportsApi } from '@/lib/api'
 import { useResolvedChoirScope } from '@/lib/hooks'
-import {
-  Card, CardHeader, CardTitle, CardDescription,
-  StatTile, CapabilityGate, SkeletonStatTile, SkeletonCard, Badge, EmptyState,
-} from '@/components/shared'
+import { Card, CardHeader, CardTitle, CardDescription, StatTile, CapabilityGate, SkeletonStatTile, SkeletonCard, Badge, AccessRedirectGate } from '@/components/shared'
 import { Download, Activity, Heart, Users } from 'lucide-react'
 import { toast } from '@/components/shared/Toast'
 
@@ -72,14 +69,8 @@ export default function ChoirReportsPage() {
   const membership = s?.membership
 
   return (
-    <CapabilityGate
+    <AccessRedirectGate
       uiCapability="ops-reports-hub"
-      fallback={
-        <EmptyState
-          title="Reports not available"
-          description="You do not have permission to view choir reports."
-        />
-      }
     >
     <div className="space-y-6 max-w-5xl mx-auto">
       <div className="flex items-start justify-between gap-4">
@@ -257,6 +248,6 @@ export default function ChoirReportsPage() {
         )}
       </Card>
     </div>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

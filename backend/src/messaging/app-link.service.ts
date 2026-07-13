@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { MEMBER_ONBOARDING_SEGMENT } from '../common/choir/membership-intake.constants';
 
 @Injectable()
 export class AppLinkService {
@@ -33,7 +34,7 @@ export class AppLinkService {
   }
 
   choirJoinRequests(choirId: string, requestId?: string): string {
-    const base = `${this.baseUrl()}/choir/${choirId}/president/decisions`;
-    return requestId ? `${base}?requestId=${requestId}` : base;
+    const base = `${this.baseUrl()}/choir/${choirId}/${MEMBER_ONBOARDING_SEGMENT}`;
+    return requestId ? `${base}?highlight=${encodeURIComponent(requestId)}` : base;
   }
 }

@@ -30,6 +30,7 @@ import {
   DEFAULT_LEADERSHIP_POSITIONS as DEFAULT_UNIT_POSITIONS,
   DEFAULT_OPERATIONAL_UNITS,
 } from '../src/operational-units/operational-unit.constants';
+import { seedPilotSongCatalog } from './pilot-songs';
 
 const prisma = new PrismaClient();
 
@@ -746,67 +747,10 @@ async function main() {
     update: { name: 'Worship' },
   });
 
-  const ijwiLyrics = `Ijwi ry'Umwami riravuga\nKo Yesu ari Umwami wacu\nTuri abana b'Ubwami\nDuhimbaze izina rye\n\nIjwi ry'Umwami riravuga\nKo twizere mu mutima\nTuri abasangirwa na We\nDuhimbaze Umwami wacu`;
-
-  await prisma.song.upsert({
-    where: { id: 'pilot-song-ijwi-ry-umwami' },
-    create: {
-      id: 'pilot-song-ijwi-ry-umwami',
-      choirId: MAIN_CHOIR_ID,
-      title: "Ijwi ry'Umwami",
-      lyricist: 'Pastor Emmanuel N.',
-      composer: 'ADEPR Choir Collective',
-      voiceParts: 'SATB',
-      language: 'rw',
-      categoryId: worshipCategory.id,
-      lyricsText: ijwiLyrics,
-      notes: 'Practice SATB — sopranos carry the melody in verse 1.',
-      active: true,
-    },
-    update: {
-      lyricsText: ijwiLyrics,
-      active: true,
-    },
-  });
-
-  await prisma.song.upsert({
-    where: { id: 'pilot-song-coming-soon' },
-    create: {
-      id: 'pilot-song-coming-soon',
-      choirId: MAIN_CHOIR_ID,
-      title: "Urukundo rw'Imana (Coming soon)",
-      lyricist: 'Grace M.',
-      composer: 'Choir Arrangers Team',
-      language: 'rw',
-      categoryId: worshipCategory.id,
-      lyricsText:
-        "Urukundo rw'Imana ruruta ibyo dushaka\nRutugeraho amahoro\nTegereza gutangazwa mu mpera z'uyu mwaka",
-      active: true,
-    },
-    update: { active: true },
-  });
-
-  await prisma.songAsset.deleteMany({
-    where: { songId: 'pilot-song-ijwi-ry-umwami' },
-  });
-  await prisma.songAsset.createMany({
-    data: [
-      {
-        songId: 'pilot-song-ijwi-ry-umwami',
-        assetType: 'PDF',
-        fileName: "Ijwi ry'Umwami — SATB score.pdf",
-        fileUrl:
-          'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-        mimeType: 'application/pdf',
-      },
-      {
-        songId: 'pilot-song-ijwi-ry-umwami',
-        assetType: 'AUDIO',
-        fileName: "Ijwi ry'Umwami — practice track.mp3",
-        fileUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-        mimeType: 'audio/mpeg',
-      },
-    ],
+  await seedPilotSongCatalog(prisma, {
+    choirId: MAIN_CHOIR_ID,
+    categoryId: worshipCategory.id,
+    withAssets: false,
   });
 
   for (const entry of DEFAULT_PROTOCOL_CONTRIBUTION_TYPE_CATALOG) {

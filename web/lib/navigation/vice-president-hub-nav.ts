@@ -103,10 +103,8 @@ export function augmentVicePresidentHubNavSections(
 
 export function composeVicePresidentHubAwareNav(
   sections: NavSection[],
-  choirId: string | null | undefined,
+  _choirId: string | null | undefined,
   check: (capabilityId: string) => boolean,
 ): NavSection[] {
-  const withOverrides = applyVicePresidentHubNavOverrides(sections, check);
-  if (!choirId) return withOverrides;
-  return augmentVicePresidentHubNavSections(withOverrides, choirId, check);
+  return applyVicePresidentHubNavOverrides(sections, check);
 }

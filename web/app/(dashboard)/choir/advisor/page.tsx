@@ -5,9 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { choirSchedulingApi, documentsApi, assetsApi } from '@/lib/api'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { useAnyCapability } from '@/lib/hooks/useCapability'
-import {
-  Card, StatTile, SkeletonStatTile, CapabilityGate,
-} from '@/components/shared'
+import { Card, StatTile, SkeletonStatTile, CapabilityGate, AccessRedirectGate } from '@/components/shared'
 import { ChoirPositionHubShell } from '@/components/choir/ChoirPositionHubShell'
 import { AdvisorCapabilityPanel } from '@/components/choir/AdvisorCapabilityPanel'
 import { Calendar, Shield, DollarSign } from 'lucide-react'
@@ -67,13 +65,9 @@ export default function AdvisorHubPage() {
   const eq = equipment as Record<string, unknown> | undefined
 
   return (
-    <CapabilityGate
+    <AccessRedirectGate
       uiCapability="advisor-hub"
-      fallback={
-        <div className="flex items-center justify-center h-64">
-          <p className="text-text-muted">You do not have access to the advisor hub.</p>
-        </div>
-      }
+      requirePosition="advisor"
     >
     <ChoirPositionHubShell
       roleKey="advisor"
@@ -149,6 +143,6 @@ export default function AdvisorHubPage() {
         </div>
       )}
     </ChoirPositionHubShell>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

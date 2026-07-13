@@ -6,19 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { musicApi } from '@/lib/api'
 import { useResolvedChoirScope } from '@/lib/hooks'
-import {
-  Badge,
-  Card,
-  DataTable,
-  DataTableSearch,
-  DataTableToolbar,
-  type DataTableColumn,
-  EmptyState,
-  PageContainer,
-  PageHeader,
-  SkeletonCard,
-  CapabilityGate,
-} from '@/components/shared'
+import { Badge, Card, DataTable, DataTableSearch, DataTableToolbar, type DataTableColumn, EmptyState, PageContainer, PageHeader, SkeletonCard, AccessRedirectGate } from '@/components/shared'
 import { Music } from 'lucide-react'
 
 type SongRow = {
@@ -137,16 +125,8 @@ export default function MusicPage() {
   )
 
   return (
-    <CapabilityGate
+    <AccessRedirectGate
       uiCapability="music-library-hub"
-      fallback={
-        <PageContainer>
-          <EmptyState
-            title="Music library not available"
-            description="You do not have permission to browse the choir music library."
-          />
-        </PageContainer>
-      }
     >
     <PageContainer>
       <div className="space-y-6">
@@ -221,6 +201,6 @@ export default function MusicPage() {
         )}
       </div>
     </PageContainer>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

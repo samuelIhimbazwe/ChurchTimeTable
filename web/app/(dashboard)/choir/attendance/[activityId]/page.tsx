@@ -15,6 +15,7 @@ import {
 } from '@/components/shared'
 import { ChoirOpsShell } from '@/components/choir/ChoirOpsShell'
 import { useResolvedChoirId, useResolvedChoirScope } from '@/lib/hooks'
+import { memberOnboardingHref } from '@/lib/choir/membership-intake'
 import { legacyOrScopedChoirPath } from '@/lib/choir/paths'
 import {
   groupAttendanceByFamily,
@@ -194,9 +195,9 @@ export default function AttendancePage() {
           <EmptyState
             icon={Users}
             title="No members to mark"
-            description="Approve join requests or add members to the roster before taking attendance."
-            actionHref={choirLink('president/decisions')}
-            actionLabel="Review join requests"
+            description="Add members to the roster via member onboarding before taking attendance."
+            actionHref={memberOnboardingHref(choirLink)}
+            actionLabel="Member onboarding"
             className="py-12"
           />
         ) : (

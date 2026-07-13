@@ -104,7 +104,7 @@ describe('music nav ↔ page access parity', () => {
     expect(legacyMusicDirectionHubLinkVisible([])).toBe(false);
   });
 
-  it('getChoirNavForUser includes music direction hub when capability router grants access', () => {
+  it('getChoirNavForUser does not inject music direction hub from capabilities alone', () => {
     const check = buildCapabilityRouterFromAuths({ musicAuth: directorAuth });
     const sections = getChoirNavForUser(
       'MEMBER',
@@ -114,8 +114,8 @@ describe('music nav ↔ page access parity', () => {
     );
     const roleSection = sections.find((s) => s.section === 'My choir role');
     expect(
-      roleSection?.items.some((i) => i.path === LEGACY_MUSIC_DIRECTION_HUB_PATH),
-    ).toBe(true);
+      roleSection?.items.some((i) => i.path === LEGACY_MUSIC_DIRECTION_HUB_PATH) ?? false,
+    ).toBe(false);
   });
 
   it('getChoirNavForUser omits music direction hub without caps or legacy permissions', () => {

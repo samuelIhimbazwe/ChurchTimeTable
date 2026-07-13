@@ -1,12 +1,13 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { financeApi } from '@/lib/api'
 import { useChoirDashboardCtx } from '@/components/choir/ChoirDashboardProvider'
 import { OfficeNavCard } from '@/components/choir/OfficeNavCard'
-import { Card } from '@/components/shared'
 import { resolveMemberLeadershipOffices } from '@/lib/choir/member-leadership-offices'
+import { membershipOfficePath } from '@/lib/choir/membership-office'
 import { Briefcase } from 'lucide-react'
 
 type Props = {
@@ -14,6 +15,7 @@ type Props = {
 }
 
 export function MemberLeadershipOfficePage({ choirId }: Props) {
+  const router = useRouter()
   const { context } = useChoirDashboardCtx()
 
   const { data: familyCtx } = useQuery({
@@ -37,14 +39,14 @@ export function MemberLeadershipOfficePage({ choirId }: Props) {
   const choirOffices = offices.filter((o) => o.group === 'choir')
   const familyOffices = offices.filter((o) => o.group === 'family')
 
+  useEffect(() => {
+    if (offices.length === 0) {
+      router.replace(membershipOfficePath(choirId))
+    }
+  }, [offices.length, choirId, router])
+
   if (offices.length === 0) {
-    return (
-      <Card padding="md">
-        <p className="text-sm text-text-muted text-center py-8">
-          No leadership desk is assigned to your account in this choir.
-        </p>
-      </Card>
-    )
+    return null
   }
 
   return (

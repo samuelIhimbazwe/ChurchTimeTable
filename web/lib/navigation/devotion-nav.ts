@@ -126,10 +126,9 @@ export function augmentDevotionNavSections(
 
 export function composeDevotionAwareNav(
   sections: NavSection[],
-  choirId: string | null | undefined,
+  _choirId: string | null | undefined,
   capabilityCheck: (capabilityId: string) => boolean,
 ): NavSection[] {
-  const withOverrides = applyDevotionNavOverrides(sections, capabilityCheck)
-  if (!choirId) return withOverrides
-  return augmentDevotionNavSections(withOverrides, choirId, capabilityCheck)
+  // Filter only — Spiritual life office comes from positions, not view caps.
+  return applyDevotionNavOverrides(sections, capabilityCheck)
 }

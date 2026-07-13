@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { contributionsApi } from '@/lib/api'
 import { useChoirAccess } from '@/lib/hooks/useChoirAccess'
-import { choirPath } from '@/lib/choir/paths'
+import { membershipProfilePath } from '@/lib/choir/membership-office'
 import { Card } from '@/components/shared'
 import { ChevronRight } from 'lucide-react'
 
@@ -22,7 +22,7 @@ export default function PortalContributionsPage() {
 
   useEffect(() => {
     if (isLoading || loadingChoir || ctx?.mode === 'sponsor' || !choirId) return
-    router.replace(choirPath(choirId, 'membership/giving'))
+    router.replace(membershipProfilePath(choirId, 'giving'))
   }, [isLoading, loadingChoir, ctx?.mode, choirId, router])
 
   if (isLoading || loadingChoir) {

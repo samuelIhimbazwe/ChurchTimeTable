@@ -10,7 +10,6 @@ const TAIL_TO_UI: Record<string, string> = {
 
 /** Legacy permission fallback for `/choir/president` (see role-nav HUB_PERMISSIONS). */
 export const LEGACY_PRESIDENT_HUB_PERMISSIONS = [
-  'choir.join.review',
   'member:manage',
   'choir.oversight',
   'choir.operations.manage',
@@ -104,10 +103,9 @@ export function augmentPresidentHubNavSections(
 
 export function composePresidentHubAwareNav(
   sections: NavSection[],
-  choirId: string | null | undefined,
+  _choirId: string | null | undefined,
   check: (capabilityId: string) => boolean,
 ): NavSection[] {
-  const withOverrides = applyPresidentHubNavOverrides(sections, check);
-  if (!choirId) return withOverrides;
-  return augmentPresidentHubNavSections(withOverrides, choirId, check);
+  // Filter only — do not inject from loose caps; My offices comes from positions.
+  return applyPresidentHubNavOverrides(sections, check);
 }

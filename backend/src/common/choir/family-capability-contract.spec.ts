@@ -37,8 +37,17 @@ describe('family UI capability contract', () => {
     const headHub = CONTRIBUTION_UI_CAPABILITY_REGISTRY.find(
       (d) => d.id === 'family-head-hub',
     );
-    expect(headHub?.requireAnyOf).toEqual(
-      expect.arrayContaining(['choir.contribution.view@family']),
+    expect(headHub?.requireAnyOf).toEqual([
+      'choir.contribution.view@family',
+      'choir.contribution.approve@family',
+    ]);
+    expect(headHub?.routeSegments).toEqual(
+      expect.arrayContaining([
+        'family-head',
+        'family-leadership',
+        'family-deputy',
+        'family-coordination',
+      ]),
     );
   });
 });

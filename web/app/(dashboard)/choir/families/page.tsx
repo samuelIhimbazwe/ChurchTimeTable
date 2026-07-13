@@ -1,18 +1,12 @@
 'use client'
 
 import { FamilyAdminPanel } from '@/components/choir/FamilyAdminPanel'
-import { CapabilityGate, EmptyState } from '@/components/shared'
+import { AccessRedirectGate } from '@/components/shared'
 
 export default function FamiliesPage() {
   return (
-    <CapabilityGate
+    <AccessRedirectGate
       uiCapability="family-hub"
-      fallback={
-        <EmptyState
-          title="Families not available"
-          description="You do not have permission to view choir families."
-        />
-      }
     >
       <div className="space-y-6 max-w-5xl mx-auto pb-8">
         <div>
@@ -24,6 +18,6 @@ export default function FamiliesPage() {
 
         <FamilyAdminPanel />
       </div>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

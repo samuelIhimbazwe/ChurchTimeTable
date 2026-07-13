@@ -6,10 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { protocolApi } from '@/lib/api'
 import { toast } from '@/components/shared/Toast'
 import { ApiError } from '@/lib/api/client'
-import {
-  Card, CardHeader, CardTitle, Badge, CapabilityGate, SkeletonCard,
-  PageContainer, PageHeader,
-} from '@/components/shared'
+import { Card, CardHeader, CardTitle, Badge, SkeletonCard, PageContainer, PageHeader, AccessRedirectGate } from '@/components/shared'
 import { formatDate, formatTime } from '@/lib/utils/format'
 import { ProtocolOccurrenceCalendarPicker } from '@/components/protocol/ProtocolOccurrenceCalendarPicker'
 import { ProtocolTeamDragBuilder } from '@/components/protocol/ProtocolTeamDragBuilder'
@@ -180,13 +177,8 @@ export default function GenerateTeamPage() {
   }
 
   return (
-    <CapabilityGate
+    <AccessRedirectGate
       platformUiCapability="protocol-team-manage"
-      fallback={
-        <div className="flex items-center justify-center h-64">
-          <p className="text-text-muted">You do not have permission to build teams.</p>
-        </div>
-      }
     >
       <PageContainer>
         <div className="space-y-6">
@@ -360,6 +352,6 @@ export default function GenerateTeamPage() {
           )}
         </div>
       </PageContainer>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }

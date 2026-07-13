@@ -3,9 +3,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { familiesApi, choirActivityApi, financeApi } from '@/lib/api'
-import {
-  Card, StatTile, Badge, SkeletonCard, CapabilityGate,
-} from '@/components/shared'
+import { Card, StatTile, Badge, SkeletonCard, AccessRedirectGate } from '@/components/shared'
 import { ChoirPositionHubShell, HubQuickLink } from '@/components/choir/ChoirPositionHubShell'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { FamilyRankingsPanel } from '@/components/choir/FamilyRankingsPanel'
@@ -57,13 +55,8 @@ export default function FamilyHeadHubPage() {
   })
 
   return (
-    <CapabilityGate
+    <AccessRedirectGate
       uiCapability="family-head-hub"
-      fallback={
-        <div className="flex items-center justify-center h-64">
-          <p className="text-text-muted">You do not have access to the family head hub.</p>
-        </div>
-      }
     >
     <ChoirPositionHubShell roleKey="family_head" tabs={TABS} activeTab={tab} onTabChange={setTab}>
       {tab === 'overview' && (
@@ -242,6 +235,6 @@ export default function FamilyHeadHubPage() {
         </div>
       )}
     </ChoirPositionHubShell>
-    </CapabilityGate>
+    </AccessRedirectGate>
   )
 }
