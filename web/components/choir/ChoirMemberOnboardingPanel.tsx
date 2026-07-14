@@ -24,7 +24,20 @@ function copyText(text: string, label: string) {
 function onboardingErrorMessage(err: unknown, fallback: string): string {
   if (err instanceof ApiError) {
     if (err.status === 404) {
-      return `${err.message} If this persists after deploy, run demo seed on the API server.`
+      const hint =
+        err.message.includes('Choir not found') ||
+        err.message.includes('demo seed')
+          ? ''
+          : ' If this persists after deploy, run demo seed on the API server.'
+      return `${err.message}${hint}`
+    }
+    if (err.status === 403) {
+      return `${err.message} Only choir officers (president, admin, vice president) can send invites.`
+    }
+    if (err.status === 409) {
+      return err.message.includes('already')
+        ? err.message
+        : `${err.message} Revoke the pending invite or use a different email.`
     }
     return err.message
   }
@@ -39,7 +52,7 @@ export function ChoirMemberOnboardingPanel() {
       ? params.choirId
       : ''
   const { choirId: resolvedChoirId, choirName } = useResolvedChoirScope()
-  const choirId = scopedChoirId || resolvedChoirId
+  const choirId = resolvedChoirId || scopedChoirId
   const [tab, setTab] = useState<Tab>('officer')
 
   const [officerForm, setOfficerForm] = useState({
@@ -229,6 +242,10 @@ export function ChoirMemberOnboardingPanel() {
             className="space-y-3"
             onSubmit={(e) => {
               e.preventDefault()
+              if (!choirId) {
+                toast.error('Choir context missing. Open member onboarding from your choir dashboard.')
+                return
+              }
               if (!officerForm.assignedRoleId) {
                 toast.error('Select a choir position')
                 return

@@ -23,6 +23,7 @@ import { MemberMinistryScopeService } from '../member-portal/member-ministry-sco
 import { RosterCapabilityModule } from '../common/choir/roster-capability.module';
 import { ChoirCustomRolesModule } from '../choir-custom-roles/choir-custom-roles.module';
 import { MemberNumberModule } from '../members/member-number.module';
+import { AccountInvitesModule } from '../account-invites/account-invites.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { MemberNumberModule } from '../members/member-number.module';
     RosterCapabilityModule,
     ChoirCustomRolesModule,
     MemberNumberModule,
+    AccountInvitesModule,
   ],
   controllers: [ChoirsController],
   providers: [

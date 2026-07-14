@@ -58,13 +58,14 @@ export class AccountInvitesService {
 
   async create(actorUserId: string, dto: CreateAccountInviteDto) {
     const email = dto.email.trim().toLowerCase();
-    const resolvedChoirId = await this.resolveInviteChoirId(
-      actorUserId,
-      dto.choirId,
-    );
-    const inviteDto = resolvedChoirId
-      ? { ...dto, choirId: resolvedChoirId }
-      : dto;
+    const inviteDto =
+      dto.inviteType === AccountInviteType.CHOIR ||
+      dto.inviteType === AccountInviteType.DUAL
+        ? {
+            ...dto,
+            choirId: await this.resolveInviteChoirId(actorUserId, dto.choirId),
+          }
+        : dto;
 
     const existingUser = await this.prisma.user.findUnique({
       where: { email },
@@ -576,7 +577,7 @@ export class AccountInvitesService {
   private async resolveInviteChoirId(
     actorUserId: string,
     choirId?: string,
-  ): Promise<string | undefined> {
+  ): Promise<string> {
     const trimmed = choirId?.trim();
     if (trimmed) {
       const direct = await this.prisma.choir.findFirst({
@@ -599,7 +600,9 @@ export class AccountInvitesService {
       if (fallback) return fallback.id;
     }
 
-    return trimmed || undefined;
+    throw new NotFoundException(
+      'Choir not found. Run demo seed on the API server (npm run prisma:seed:pilot), then retry from your choir dashboard.',
+    );
   }
 
   private async assertCanCreateInvite(
@@ -698,6 +701,7 @@ export class AccountInvitesService {
   private shouldExposeDevLink(): boolean {
     return (
       process.env.INVITE_EXPOSE_LINK === 'true' ||
+      process.env.PILOT_EXPOSE_INVITE_LINKS === 'true' ||
       process.env.NODE_ENV === 'test' ||
       process.env.NODE_ENV === 'development'
     );

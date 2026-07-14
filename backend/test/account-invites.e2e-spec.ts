@@ -2,6 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { bootstrapPilotE2eApp } from './pilot-ready-e2e.helper';
+import { MAIN_CHOIR_ID } from '../src/common/constants/choir.constants';
 
 describe('Account invites (e2e)', () => {
   let app: INestApplication<App>;
@@ -11,6 +12,17 @@ describe('Account invites (e2e)', () => {
     const boot = await bootstrapPilotE2eApp();
     app = boot.app;
     adminToken = boot.adminToken;
+    await boot.prisma.choir.upsert({
+      where: { id: MAIN_CHOIR_ID },
+      create: {
+        id: MAIN_CHOIR_ID,
+        code: 'MAIN_CHOIR',
+        name: 'Main Choir',
+        isActive: true,
+        isPublicJoinable: true,
+      },
+      update: { isActive: true },
+    });
   });
 
   afterAll(async () => {
@@ -19,14 +31,19 @@ describe('Account invites (e2e)', () => {
 
   it('creates a choir invite, accepts it, and routes login to choir home', async () => {
     const stamp = Date.now();
-    const choirs = await request(app.getHttpServer())
-      .get('/api/v1/choirs')
-      .set('Authorization', `Bearer ${adminToken}`);
-    expect(choirs.status).toBe(200);
-    const choirId = choirs.body.data?.[0]?.id;
-    expect(choirId).toBeTruthy();
+    const choirId = MAIN_CHOIR_ID;
 
     const email = `invite-choir-${stamp}@test.local`;
+    const roles = await request(app.getHttpServer())
+      .get(`/api/v1/choirs/position-roles?choirId=${choirId}`)
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(roles.status).toBe(200);
+    const officerRole =
+      roles.body.data?.find(
+        (role: { name: string }) => role.name !== 'choir_member',
+      ) ?? roles.body.data?.[0];
+    expect(officerRole?.id).toBeTruthy();
+
     const created = await request(app.getHttpServer())
       .post('/api/v1/invites')
       .set('Authorization', `Bearer ${adminToken}`)
@@ -36,6 +53,7 @@ describe('Account invites (e2e)', () => {
         lastName: 'Singer',
         inviteType: 'CHOIR',
         choirId,
+        assignedRoleId: officerRole.id,
       });
     expect(created.status).toBe(201);
     expect(created.body.data.inviteUrl).toMatch(/accept-invite\?token=/);

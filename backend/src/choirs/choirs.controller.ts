@@ -26,6 +26,8 @@ import { UpsertChoirExecutivePulseDto } from './dto/upsert-choir-executive-pulse
 import { DeactivateChoirMemberDto } from './dto/deactivate-choir-member.dto';
 import { ProvisionChoirMemberDto } from './dto/provision-choir-member.dto';
 import { ProvisionChoirSponsorDto } from './dto/provision-choir-sponsor.dto';
+import { AccountInvitesService } from '../account-invites/account-invites.service';
+import { CreateAccountInviteDto } from '../account-invites/dto/create-account-invite.dto';
 
 import { IsString } from 'class-validator';
 
@@ -49,6 +51,7 @@ export class ChoirsController {
     private choirMembers: ChoirMembersService,
     private choirGovernance: ChoirGovernanceService,
     private executiveDashboard: ChoirExecutiveDashboardService,
+    private accountInvites: AccountInvitesService,
   ) {}
 
   @Get()
@@ -138,6 +141,14 @@ export class ChoirsController {
       dto.choirId,
       dto.memberId,
     );
+  }
+
+  @Post('invites')
+  createOfficerInvite(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: CreateAccountInviteDto,
+  ) {
+    return this.accountInvites.create(user.sub, dto);
   }
 
   @Post('members/provision')
