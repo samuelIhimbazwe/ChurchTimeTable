@@ -119,6 +119,12 @@ export const financeApi = {
       { params: { scope: 'own' } },
     ),
 
+  getChoirContributionTotals: (params?: { from?: string; to?: string }) =>
+    apiClient.get<never, ChoirContributionTotals>(
+      '/finance/contributions/totals',
+      { params: { scope: 'choir', ...params } },
+    ),
+
   getFamilyContributionDashboard: (params?: { familyId?: string; campaignId?: string }) =>
     apiClient.get<never, FamilyContributionDashboard>(
       '/finance/contributions/family/dashboard',
@@ -267,4 +273,29 @@ export type MemberContributionTotals = {
   rejected: { count: number }
   confirmed: { count: number; effectiveTotal: number }
   byCampaign?: MemberContributionGoal[]
+}
+
+export type ChoirCampaignTotals = {
+  campaignId: string
+  name: string
+  status: string
+  contributionTypeCatalogId: string
+  typeName: string
+  typeCode: string
+  goalAmount: number
+  memberGoalAmount: number | null
+  familyGoalAmount?: number | null
+  confirmedEffective: number
+  progressPct: number
+  memberProgressPct: number
+  memberRemaining: number | null
+}
+
+export type ChoirContributionTotals = {
+  scope: string
+  pending: { count: number; claimedTotal: number }
+  rejected: { count: number }
+  confirmed: { count: number; effectiveTotal: number }
+  byCampaign?: ChoirCampaignTotals[]
+  byFamily?: Array<{ familyId: string; confirmedEffective: number }>
 }
