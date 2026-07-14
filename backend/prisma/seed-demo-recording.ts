@@ -117,6 +117,91 @@ async function ensurePresentationBranding() {
   });
 }
 
+function daysAgo(now: Date, days: number): Date {
+  const d = new Date(now);
+  d.setDate(d.getDate() - days);
+  return d;
+}
+
+async function upsertContributionRecord(input: {
+  ref: string;
+  memberId: string;
+  familyId: string | null;
+  typeId: string;
+  campaignId?: string;
+  claimedAmount: number;
+  confirmedAmount?: number | null;
+  status: ContributionStatus;
+  daysAgo?: number;
+  paymentChannel?: PaymentChannel;
+  notes?: string;
+  familyApprovedByMemberId?: string | null;
+  familyApprovedAt?: Date | null;
+  confirmedById?: string | null;
+  confirmedAt?: Date | null;
+  discrepancyReason?: string | null;
+}) {
+  const paymentAt = daysAgo(new Date(), input.daysAgo ?? 0);
+  const confirmedAmount =
+    input.confirmedAmount === undefined
+      ? input.status === ContributionStatus.CONFIRMED
+        ? input.claimedAmount
+        : null
+      : input.confirmedAmount;
+  const amount = confirmedAmount ?? input.claimedAmount;
+
+  await prisma.contributionRecord.upsert({
+    where: { referenceNumber: input.ref },
+    create: {
+      referenceNumber: input.ref,
+      memberId: input.memberId,
+      familyId: input.familyId,
+      choirId: MAIN_CHOIR_ID,
+      contributionTypeCatalogId: input.typeId,
+      contributionCampaignId: input.campaignId ?? null,
+      contributionType: 'OTHER',
+      claimedAmount: rwf(input.claimedAmount),
+      confirmedAmount: confirmedAmount != null ? rwf(confirmedAmount) : null,
+      amount: rwf(amount),
+      status: input.status,
+      paymentChannel: input.paymentChannel ?? PaymentChannel.MOMO,
+      paymentAt,
+      notes: input.notes ?? null,
+      familyApprovedAt: input.familyApprovedAt ?? null,
+      familyApprovedByMemberId: input.familyApprovedByMemberId ?? null,
+      confirmedAt: input.confirmedAt ?? null,
+      confirmedById: input.confirmedById ?? null,
+      discrepancyAmount:
+        confirmedAmount != null && confirmedAmount !== input.claimedAmount
+          ? rwf(confirmedAmount - input.claimedAmount)
+          : null,
+      discrepancyReason: input.discrepancyReason ?? null,
+    },
+    update: {
+      memberId: input.memberId,
+      familyId: input.familyId,
+      contributionTypeCatalogId: input.typeId,
+      contributionCampaignId: input.campaignId ?? null,
+      claimedAmount: rwf(input.claimedAmount),
+      confirmedAmount: confirmedAmount != null ? rwf(confirmedAmount) : null,
+      amount: rwf(amount),
+      status: input.status,
+      paymentAt,
+      notes: input.notes ?? null,
+      familyApprovedAt: input.familyApprovedAt ?? null,
+      familyApprovedByMemberId: input.familyApprovedByMemberId ?? null,
+      confirmedAt: input.confirmedAt ?? null,
+      confirmedById: input.confirmedById ?? null,
+      financeTransactionId: null,
+      discrepancyAmount:
+        confirmedAmount != null && confirmedAmount !== input.claimedAmount
+          ? rwf(confirmedAmount - input.claimedAmount)
+          : null,
+      discrepancyReason: input.discrepancyReason ?? null,
+    },
+  });
+}
+
 async function ensureTreasuryDemoData() {
   const { start, end } = monthBounds();
   const now = new Date();
@@ -135,8 +220,20 @@ async function ensureTreasuryDemoData() {
     where: { email: 'choir.treasurer@church.local' },
     select: { id: true },
   });
-  const familyHead = await prisma.user.findUnique({
+  const alphaHead = await prisma.user.findUnique({
     where: { email: 'member1@church.local' },
+    include: { member: true },
+  });
+  const alphaSecretary = await prisma.user.findUnique({
+    where: { email: 'member2@church.local' },
+    include: { member: true },
+  });
+  const betaHead = await prisma.user.findUnique({
+    where: { email: 'choir.familyhead@church.local' },
+    include: { member: true },
+  });
+  const betaAsst = await prisma.user.findUnique({
+    where: { email: 'choir.asstfamily@church.local' },
     include: { member: true },
   });
   const singer = await prisma.user.findUnique({
@@ -147,15 +244,22 @@ async function ensureTreasuryDemoData() {
     where: { email: 'sponsor@church.local' },
     include: { member: true },
   });
-  if (!treasurerUser || !familyHead?.member || !singer?.member) {
+  if (
+    !treasurerUser ||
+    !alphaHead?.member ||
+    !alphaSecretary?.member ||
+    !betaHead?.member ||
+    !betaAsst?.member ||
+    !singer?.member
+  ) {
     throw new Error('Treasury demo users missing — run seed-pilot.ts first');
   }
 
   const umusanzuType = await prisma.contributionTypeCatalog.findFirst({
-    where: { code: 'umusanzu', ministryScope: 'CHOIR' },
+    where: { code: 'umusanzu', ministryScope: 'CHOIR', choirId: MAIN_CHOIR_ID },
   });
   const concertType = await prisma.contributionTypeCatalog.findFirst({
-    where: { code: 'concert', ministryScope: 'CHOIR' },
+    where: { code: 'concert', ministryScope: 'CHOIR', choirId: MAIN_CHOIR_ID },
   });
   const sponsorType = await prisma.contributionTypeCatalog.findFirst({
     where: { code: 'sponsor_support', ministryScope: 'CHOIR' },
@@ -163,6 +267,10 @@ async function ensureTreasuryDemoData() {
   if (!umusanzuType || !concertType) {
     throw new Error('Contribution catalog missing — run seed.ts first');
   }
+
+  const choirGoal = 400_000;
+  const familyGoal = 25_000;
+  const memberGoal = 5_000;
 
   await prisma.budget.upsert({
     where: { id: DEMO.budgetRecordingId },
@@ -234,9 +342,9 @@ async function ensureTreasuryDemoData() {
       contributionTypeId: umusanzuType.id,
       name: 'Umusanzu — July 2026',
       description: 'Monthly choir contribution for all families.',
-      goalAmount: rwf(3_600_000),
-      memberGoalAmount: rwf(5_000),
-      familyGoalAmount: rwf(25_000),
+      goalAmount: rwf(choirGoal),
+      memberGoalAmount: rwf(memberGoal),
+      familyGoalAmount: rwf(familyGoal),
       status: ContributionCampaignStatus.ACTIVE,
       periodStart: start,
       periodEnd: end,
@@ -244,165 +352,192 @@ async function ensureTreasuryDemoData() {
     },
     update: {
       name: 'Umusanzu — July 2026',
-      goalAmount: rwf(3_600_000),
+      goalAmount: rwf(choirGoal),
+      memberGoalAmount: rwf(memberGoal),
+      familyGoalAmount: rwf(familyGoal),
       status: ContributionCampaignStatus.ACTIVE,
       periodStart: start,
       periodEnd: end,
     },
   });
 
-  const confirmedRows: Array<{
-    ref: string;
-    memberId: string;
-    familyId: string;
-    amount: number;
-    typeId: string;
-    daysAgo: number;
-  }> = [
-    {
-      ref: 'DEMO-CONF-001',
-      memberId: singer.member.id,
-      familyId: familyBeta.id,
-      amount: 5_000,
-      typeId: umusanzuType.id,
-      daysAgo: 4,
-    },
-    {
-      ref: 'DEMO-CONF-002',
-      memberId: familyHead.member.id,
-      familyId: familyAlpha.id,
-      amount: 10_000,
-      typeId: umusanzuType.id,
-      daysAgo: 6,
-    },
-    {
-      ref: 'DEMO-CONF-003',
-      memberId: singer.member.id,
-      familyId: familyBeta.id,
-      amount: 15_000,
-      typeId: concertType.id,
-      daysAgo: 2,
-    },
-    {
-      ref: 'DEMO-CONF-004',
-      memberId: familyHead.member.id,
-      familyId: familyAlpha.id,
-      amount: 8_000,
-      typeId: umusanzuType.id,
-      daysAgo: 1,
-    },
-  ];
+  const campaignId = DEMO.campaignId;
+  const treasurerId = treasurerUser.id;
 
-  for (const row of confirmedRows) {
-    const confirmedAt = new Date(now);
-    confirmedAt.setDate(confirmedAt.getDate() - row.daysAgo);
-    await prisma.contributionRecord.upsert({
-      where: { referenceNumber: row.ref },
-      create: {
-        referenceNumber: row.ref,
-        memberId: row.memberId,
-        familyId: row.familyId,
-        choirId: MAIN_CHOIR_ID,
-        contributionTypeCatalogId: row.typeId,
-        contributionCampaignId: DEMO.campaignId,
-        contributionType: 'OTHER',
-        claimedAmount: rwf(row.amount),
-        confirmedAmount: rwf(row.amount),
-        amount: rwf(row.amount),
-        status: ContributionStatus.CONFIRMED,
-        paymentChannel: PaymentChannel.MOMO,
-        paymentAt: confirmedAt,
-        familyApprovedAt: confirmedAt,
-        familyApprovedByMemberId: familyHead.member.id,
-        confirmedAt,
-        confirmedById: treasurerUser.id,
-      },
-      update: {
-        status: ContributionStatus.CONFIRMED,
-        confirmedAmount: rwf(row.amount),
-        amount: rwf(row.amount),
-        confirmedAt,
-        confirmedById: treasurerUser.id,
-      },
+  // Shalom family — above family goal (~52k umusanzu)
+  for (const [ref, memberId, amount, days] of [
+    ['DEMO-CONF-A01', alphaHead.member.id, 18_000, 8],
+    ['DEMO-CONF-A02', alphaSecretary.member.id, 15_000, 6],
+    ['DEMO-CONF-A03', alphaHead.member.id, 22_000, 4],
+    ['DEMO-CONF-A04', alphaSecretary.member.id, 12_000, 2],
+    ['DEMO-CONF-A05', alphaHead.member.id, 10_000, 1],
+  ] as const) {
+    const confirmedAt = daysAgo(now, days);
+    await upsertContributionRecord({
+      ref,
+      memberId,
+      familyId: familyAlpha.id,
+      typeId: umusanzuType.id,
+      campaignId,
+      claimedAmount: amount,
+      status: ContributionStatus.CONFIRMED,
+      daysAgo: days,
+      familyApprovedByMemberId: alphaHead.member.id,
+      familyApprovedAt: confirmedAt,
+      confirmedById: treasurerId,
+      confirmedAt,
     });
   }
 
-  await prisma.contributionRecord.upsert({
-    where: { referenceNumber: 'DEMO-VERIFY-001' },
-    create: {
-      referenceNumber: 'DEMO-VERIFY-001',
-      memberId: singer.member.id,
+  // Shiloh family — near family goal (~23k umusanzu)
+  for (const [ref, memberId, amount, days, approverId] of [
+    ['DEMO-CONF-B01', betaHead.member.id, 16_000, 7, betaHead.member.id],
+    ['DEMO-CONF-B02', singer.member.id, 8_000, 5, betaHead.member.id],
+    ['DEMO-CONF-B03', betaAsst.member.id, 12_000, 3, betaHead.member.id],
+  ] as const) {
+    const confirmedAt = daysAgo(now, days);
+    await upsertContributionRecord({
+      ref,
+      memberId,
       familyId: familyBeta.id,
-      choirId: MAIN_CHOIR_ID,
-      contributionTypeCatalogId: umusanzuType.id,
-      contributionCampaignId: DEMO.campaignId,
-      contributionType: 'OTHER',
-      claimedAmount: rwf(5_000),
-      confirmedAmount: rwf(5_000),
-      amount: rwf(5_000),
-      status: ContributionStatus.SUBMITTED,
-      paymentChannel: PaymentChannel.MOMO,
-      paymentAt: now,
-      familyApprovedAt: now,
-      familyApprovedByMemberId: familyHead.member.id,
-      notes: 'July umusanzu — ready for treasurer verification',
-    },
-    update: {
-      status: ContributionStatus.SUBMITTED,
-      familyApprovedAt: now,
-      financeTransactionId: null,
-      notes: 'July umusanzu — ready for treasurer verification',
-    },
+      typeId: umusanzuType.id,
+      campaignId,
+      claimedAmount: amount,
+      status: ContributionStatus.CONFIRMED,
+      daysAgo: days,
+      familyApprovedByMemberId: approverId,
+      familyApprovedAt: confirmedAt,
+      confirmedById: treasurerId,
+      confirmedAt,
+    });
+  }
+
+  // Concert gifts — visible in all-contributions list
+  for (const [ref, memberId, familyId, amount, days, approverId] of [
+    ['DEMO-CONF-C01', alphaSecretary.member.id, familyAlpha.id, 20_000, 3, alphaHead.member.id],
+    ['DEMO-CONF-C02', singer.member.id, familyBeta.id, 15_000, 2, betaHead.member.id],
+  ] as const) {
+    const confirmedAt = daysAgo(now, days);
+    await upsertContributionRecord({
+      ref,
+      memberId,
+      familyId,
+      typeId: concertType.id,
+      claimedAmount: amount,
+      status: ContributionStatus.CONFIRMED,
+      daysAgo: days,
+      familyApprovedByMemberId: approverId,
+      familyApprovedAt: confirmedAt,
+      confirmedById: treasurerId,
+      confirmedAt,
+    });
+  }
+
+  // Amount mismatch — family confirmed less than claimed
+  const discAt = daysAgo(now, 5);
+  await upsertContributionRecord({
+    ref: 'DEMO-DISC-001',
+    memberId: betaAsst.member.id,
+    familyId: familyBeta.id,
+    typeId: umusanzuType.id,
+    campaignId,
+    claimedAmount: 10_000,
+    confirmedAmount: 7_500,
+    status: ContributionStatus.CONFIRMED,
+    daysAgo: 5,
+    familyApprovedByMemberId: betaHead.member.id,
+    familyApprovedAt: discAt,
+    confirmedById: treasurerId,
+    confirmedAt: discAt,
+    discrepancyReason: 'MoMo fee deducted — head confirmed net received',
   });
 
-  await prisma.contributionRecord.upsert({
-    where: { referenceNumber: 'DEMO-VERIFY-002' },
-    create: {
-      referenceNumber: 'DEMO-VERIFY-002',
-      memberId: familyHead.member.id,
-      familyId: familyAlpha.id,
-      choirId: MAIN_CHOIR_ID,
-      contributionTypeCatalogId: concertType.id,
-      contributionType: 'OTHER',
-      claimedAmount: rwf(20_000),
-      confirmedAmount: rwf(20_000),
-      amount: rwf(20_000),
-      status: ContributionStatus.SUBMITTED,
-      paymentChannel: PaymentChannel.MOMO,
-      paymentAt: now,
-      familyApprovedAt: now,
-      familyApprovedByMemberId: familyHead.member.id,
-      notes: 'Concert pledge — family head approved',
-    },
-    update: {
-      status: ContributionStatus.SUBMITTED,
-      familyApprovedAt: now,
-      financeTransactionId: null,
-    },
+  // Awaiting family head — submitted, not yet approved by head
+  await upsertContributionRecord({
+    ref: 'DEMO-PEND-FH-001',
+    memberId: alphaSecretary.member.id,
+    familyId: familyAlpha.id,
+    typeId: umusanzuType.id,
+    campaignId,
+    claimedAmount: 5_000,
+    status: ContributionStatus.SUBMITTED,
+    daysAgo: 1,
+    notes: 'July umusanzu — waiting on Shalom family head',
+  });
+  await upsertContributionRecord({
+    ref: 'DEMO-PEND-FH-002',
+    memberId: singer.member.id,
+    familyId: familyBeta.id,
+    typeId: umusanzuType.id,
+    campaignId,
+    claimedAmount: 5_000,
+    status: ContributionStatus.SUBMITTED,
+    daysAgo: 0,
+    notes: 'July umusanzu — waiting on Shiloh family head',
+  });
+  await upsertContributionRecord({
+    ref: 'DEMO-PEND-FH-003',
+    memberId: betaAsst.member.id,
+    familyId: familyBeta.id,
+    typeId: umusanzuType.id,
+    campaignId,
+    claimedAmount: 3_000,
+    status: ContributionStatus.SUBMITTED,
+    daysAgo: 2,
+    notes: 'Top-up pledge — family head review pending',
+  });
+
+  // Family-approved — awaiting treasurer verification
+  const verifyAt = daysAgo(now, 0);
+  await upsertContributionRecord({
+    ref: 'DEMO-VERIFY-001',
+    memberId: singer.member.id,
+    familyId: familyBeta.id,
+    typeId: umusanzuType.id,
+    campaignId,
+    claimedAmount: 5_000,
+    status: ContributionStatus.SUBMITTED,
+    daysAgo: 0,
+    familyApprovedByMemberId: betaHead.member.id,
+    familyApprovedAt: verifyAt,
+    notes: 'July umusanzu — ready for treasurer verification',
+  });
+  await upsertContributionRecord({
+    ref: 'DEMO-VERIFY-002',
+    memberId: alphaHead.member.id,
+    familyId: familyAlpha.id,
+    typeId: concertType.id,
+    claimedAmount: 20_000,
+    status: ContributionStatus.SUBMITTED,
+    daysAgo: 0,
+    familyApprovedByMemberId: alphaHead.member.id,
+    familyApprovedAt: verifyAt,
+    notes: 'Concert pledge — family head approved',
   });
 
   if (sponsorUser?.member && sponsorType) {
-    await prisma.contributionRecord.upsert({
-      where: { referenceNumber: 'DEMO-SPONSOR-001' },
-      create: {
-        referenceNumber: 'DEMO-SPONSOR-001',
-        memberId: sponsorUser.member.id,
-        familyId: null,
-        choirId: MAIN_CHOIR_ID,
-        contributionTypeCatalogId: sponsorType.id,
-        contributionType: 'OTHER',
-        claimedAmount: rwf(50_000),
-        confirmedAmount: rwf(50_000),
-        amount: rwf(50_000),
-        status: ContributionStatus.SUBMITTED,
-        paymentChannel: PaymentChannel.MOMO,
-        paymentAt: now,
-        notes: 'Sponsor gift — awaiting treasurer post',
-      },
-      update: {
-        status: ContributionStatus.SUBMITTED,
-        financeTransactionId: null,
-      },
+    await upsertContributionRecord({
+      ref: 'DEMO-SPONSOR-001',
+      memberId: sponsorUser.member.id,
+      familyId: null,
+      typeId: sponsorType.id,
+      claimedAmount: 50_000,
+      status: ContributionStatus.SUBMITTED,
+      daysAgo: 0,
+      notes: 'Sponsor gift — awaiting treasurer post',
+    });
+    const sponsorConfirmedAt = daysAgo(now, 4);
+    await upsertContributionRecord({
+      ref: 'DEMO-SPONSOR-002',
+      memberId: sponsorUser.member.id,
+      familyId: null,
+      typeId: sponsorType.id,
+      claimedAmount: 100_000,
+      status: ContributionStatus.CONFIRMED,
+      daysAgo: 4,
+      confirmedById: treasurerId,
+      confirmedAt: sponsorConfirmedAt,
+      notes: 'Confirmed sponsor gift — Easter support',
     });
   }
 }
@@ -607,7 +742,7 @@ export async function seedDemoRecordingData() {
   await ensurePresentationBranding();
   console.log('  ✓ Branding & labels');
   await ensureTreasuryDemoData();
-  console.log('  ✓ Treasury (budgets, campaign, verify queue, MTD totals)');
+  console.log('  ✓ Treasury (campaign, confirmed giving, pending queues, discrepancies, sponsor gifts)');
   await ensureProtocolDemoExtras();
   console.log('  ✓ Protocol (draft team, replacement queue, rankings)');
   console.log('');
