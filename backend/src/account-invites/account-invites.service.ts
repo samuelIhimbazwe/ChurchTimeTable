@@ -58,6 +58,14 @@ export class AccountInvitesService {
 
   async create(actorUserId: string, dto: CreateAccountInviteDto) {
     const email = dto.email.trim().toLowerCase();
+    const resolvedChoirId = await this.resolveInviteChoirId(
+      actorUserId,
+      dto.choirId,
+    );
+    const inviteDto = resolvedChoirId
+      ? { ...dto, choirId: resolvedChoirId }
+      : dto;
+
     const existingUser = await this.prisma.user.findUnique({
       where: { email },
     });
@@ -68,32 +76,38 @@ export class AccountInvitesService {
       });
     }
 
-    await this.assertCanCreateInvite(actorUserId, dto.inviteType, dto.choirId);
+    await this.assertCanCreateInvite(
+      actorUserId,
+      inviteDto.inviteType,
+      inviteDto.choirId,
+    );
 
     if (
-      dto.inviteType === AccountInviteType.CHOIR ||
-      dto.inviteType === AccountInviteType.DUAL
+      inviteDto.inviteType === AccountInviteType.CHOIR ||
+      inviteDto.inviteType === AccountInviteType.DUAL
     ) {
-      if (!dto.choirId) {
+      if (!inviteDto.choirId) {
         throw new BadRequestException('choirId is required for choir invites');
       }
       const choir = await this.prisma.choir.findFirst({
-        where: { id: dto.choirId, isActive: true },
+        where: { id: inviteDto.choirId, isActive: true },
       });
       if (!choir) {
-        throw new NotFoundException('Choir not found');
+        throw new NotFoundException(
+          'Choir not found. Open member onboarding from your choir dashboard, or ask an admin to run demo seed on the server.',
+        );
       }
     }
 
     let assignedRoleId: string | null = null;
-    if (dto.inviteType === AccountInviteType.CHOIR) {
-      if (!dto.assignedRoleId) {
+    if (inviteDto.inviteType === AccountInviteType.CHOIR) {
+      if (!inviteDto.assignedRoleId) {
         throw new BadRequestException(
           'assignedRoleId is required for choir officer invites',
         );
       }
       const role = await this.prisma.choirCommitteeRole.findFirst({
-        where: { id: dto.assignedRoleId, choirId: dto.choirId! },
+        where: { id: inviteDto.assignedRoleId, choirId: inviteDto.choirId! },
       });
       if (!role) {
         throw new BadRequestException('Invalid choir position role');
@@ -143,7 +157,7 @@ export class AccountInvitesService {
         lastName: dto.lastName.trim(),
         phone: dto.phone?.trim() || null,
         inviteType: dto.inviteType,
-        choirId: dto.choirId ?? null,
+        choirId: inviteDto.choirId ?? null,
         assignedRoleId,
         assignedProtocolRoleId,
         tokenHash,
@@ -557,6 +571,35 @@ export class AccountInvitesService {
     if (!canList) {
       throw new ForbiddenException('Not allowed to manage invites');
     }
+  }
+
+  private async resolveInviteChoirId(
+    actorUserId: string,
+    choirId?: string,
+  ): Promise<string | undefined> {
+    const trimmed = choirId?.trim();
+    if (trimmed) {
+      const direct = await this.prisma.choir.findFirst({
+        where: { id: trimmed, isActive: true },
+        select: { id: true },
+      });
+      if (direct) return direct.id;
+    }
+
+    const actorMembership = await this.prisma.choirMembership.findFirst({
+      where: { userId: actorUserId, isActive: true },
+      orderBy: { joinedAt: 'asc' },
+      select: { choirId: true },
+    });
+    if (actorMembership) {
+      const fallback = await this.prisma.choir.findFirst({
+        where: { id: actorMembership.choirId, isActive: true },
+        select: { id: true },
+      });
+      if (fallback) return fallback.id;
+    }
+
+    return trimmed || undefined;
   }
 
   private async assertCanCreateInvite(

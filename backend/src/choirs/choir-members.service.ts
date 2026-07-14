@@ -272,7 +272,8 @@ export class ChoirMembersService {
       phone?: string;
     },
   ) {
-    await this.rosterAccess.requireManageRoster(actorUserId, data.choirId);
+    const choirId = await this.resolveProvisionChoirId(actorUserId, data.choirId);
+    await this.rosterAccess.requireManageRoster(actorUserId, choirId);
 
     const email = data.email.trim().toLowerCase();
     const existingUser = await this.prisma.user.findUnique({
@@ -281,10 +282,12 @@ export class ChoirMembersService {
     });
 
     const choir = await this.prisma.choir.findFirst({
-      where: { id: data.choirId, isActive: true },
+      where: { id: choirId, isActive: true },
     });
     if (!choir) {
-      throw new NotFoundException('Choir not found');
+      throw new NotFoundException(
+        'Choir not found. Open member onboarding from your choir dashboard, or ask an admin to run demo seed on the server.',
+      );
     }
 
     const temporaryPassword = generateTemporaryPassword();
@@ -301,7 +304,7 @@ export class ChoirMembersService {
       const activeMembership = await this.prisma.choirMembership.findFirst({
         where: {
           userId: existingUser.id,
-          choirId: data.choirId,
+          choirId,
           isActive: true,
         },
       });
@@ -313,11 +316,11 @@ export class ChoirMembersService {
       }
       await this.membershipRules.validateNewMembership(
         existingUser.id,
-        data.choirId,
+        choirId,
       );
       await this.choirContext.ensureMembership(
         existingUser.id,
-        data.choirId,
+        choirId,
         ROLES.MEMBER,
       );
       if (existingUser.member) {
@@ -327,8 +330,8 @@ export class ChoirMembersService {
         userId: actorUserId,
         action: 'CHOIR_MEMBER_PROVISIONED_EXISTING',
         entity: 'ChoirMembership',
-        entityId: data.choirId,
-        newValue: { email, choirId: data.choirId },
+        entityId: choirId,
+        newValue: { email, choirId },
       });
       return {
         email,
@@ -367,7 +370,7 @@ export class ChoirMembersService {
       await tx.choirMembership.create({
         data: {
           userId: created.id,
-          choirId: data.choirId,
+          choirId,
           role: ROLES.MEMBER,
           isActive: true,
         },
@@ -391,7 +394,7 @@ export class ChoirMembersService {
       action: 'CHOIR_MEMBER_PROVISIONED',
       entity: 'User',
       entityId: user.id,
-      newValue: { email, choirId: data.choirId, delivery },
+      newValue: { email, choirId, delivery },
     });
 
     return {
@@ -403,5 +406,37 @@ export class ChoirMembersService {
         'Share these credentials securely. The member must change their password on first login.',
       delivery,
     };
+  }
+
+  /** Resolve pilot/workspace choir id when UI sends a stale or portal-only id. */
+  private async resolveProvisionChoirId(
+    actorUserId: string,
+    choirId: string,
+  ): Promise<string> {
+    const trimmed = choirId?.trim();
+    if (trimmed) {
+      const direct = await this.prisma.choir.findFirst({
+        where: { id: trimmed, isActive: true },
+        select: { id: true },
+      });
+      if (direct) return direct.id;
+    }
+
+    const actorMembership = await this.prisma.choirMembership.findFirst({
+      where: { userId: actorUserId, isActive: true },
+      orderBy: { joinedAt: 'asc' },
+      select: { choirId: true },
+    });
+    if (actorMembership) {
+      const fallback = await this.prisma.choir.findFirst({
+        where: { id: actorMembership.choirId, isActive: true },
+        select: { id: true },
+      });
+      if (fallback) return fallback.id;
+    }
+
+    throw new NotFoundException(
+      'Choir not found. Open member onboarding from your choir dashboard, or ask an admin to run demo seed on the server.',
+    );
   }
 }

@@ -1,14 +1,17 @@
 'use client'
 
+import { useParams } from 'next/navigation'
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { choirApi, invitesApi } from '@/lib/api'
+import { ApiError } from '@/lib/api/client'
 import { toast } from '@/components/shared/Toast'
 import { Card, Badge } from '@/components/shared'
 import { choirPositionLabel } from '@/lib/constants/choir-positions'
 import { ChoirPositionGuide } from '@/components/choir/ChoirPositionGuide'
 import { useResolvedChoirScope } from '@/lib/hooks'
 import { Copy, KeyRound, Link2, UserPlus, Users } from 'lucide-react'
+import { isChoirIdSegment } from '@/lib/choir/paths'
 import { formatDate } from '@/lib/utils/format'
 
 type Tab = 'officer' | 'member' | 'invites'
@@ -18,9 +21,25 @@ function copyText(text: string, label: string) {
   toast.success(`${label} copied`)
 }
 
+function onboardingErrorMessage(err: unknown, fallback: string): string {
+  if (err instanceof ApiError) {
+    if (err.status === 404) {
+      return `${err.message} If this persists after deploy, run demo seed on the API server.`
+    }
+    return err.message
+  }
+  return err instanceof Error ? err.message : fallback
+}
+
 export function ChoirMemberOnboardingPanel() {
   const qc = useQueryClient()
-  const { choirId, choirName } = useResolvedChoirScope()
+  const params = useParams()
+  const scopedChoirId =
+    typeof params.choirId === 'string' && isChoirIdSegment(params.choirId)
+      ? params.choirId
+      : ''
+  const { choirId: resolvedChoirId, choirName } = useResolvedChoirScope()
+  const choirId = scopedChoirId || resolvedChoirId
   const [tab, setTab] = useState<Tab>('officer')
 
   const [officerForm, setOfficerForm] = useState({
@@ -98,8 +117,7 @@ export function ChoirMemberOnboardingPanel() {
       qc.invalidateQueries({ queryKey: ['account-invites'] })
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : 'Could not create invite'
-      toast.error(msg)
+      toast.error(onboardingErrorMessage(err, 'Could not create invite'))
     },
   })
 
@@ -132,8 +150,7 @@ export function ChoirMemberOnboardingPanel() {
       qc.invalidateQueries({ queryKey: ['choir-members'] })
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : 'Could not create account'
-      toast.error(msg)
+      toast.error(onboardingErrorMessage(err, 'Could not create account'))
     },
   })
 

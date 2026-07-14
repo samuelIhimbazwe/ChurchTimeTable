@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import {
   ChoirJoinRequestStatus,
@@ -34,6 +34,7 @@ export class SwitchChoirDto {
   choirId!: string;
 }
 
+/** Static choir routes must be registered before `:choirId/*` param routes. */
 @Controller('choirs')
 @UseGuards(JwtAuthGuard, PhoneOperationalGuard)
 export class ChoirsController {
@@ -95,68 +96,18 @@ export class ChoirsController {
     return this.rules.describeMembershipRules(user.sub);
   }
 
-  @Get(':choirId/executive/officer-sla')
-  getOfficerSla(
-    @CurrentUser() user: JwtPayload,
-    @Param('choirId') choirId: string,
-  ) {
-    return this.executiveDashboard.getOfficerSla(user.sub, choirId);
-  }
-
-  @Get(':choirId/executive/pulse')
-  getExecutivePulse(
-    @CurrentUser() user: JwtPayload,
-    @Param('choirId') choirId: string,
-    @Query('weekStart') weekStart?: string,
-  ) {
-    return this.executiveDashboard.getExecutivePulse(user.sub, choirId, weekStart);
-  }
-
-  @Post(':choirId/executive/pulse')
-  upsertExecutivePulse(
-    @CurrentUser() user: JwtPayload,
-    @Param('choirId') choirId: string,
-    @Body() dto: UpsertChoirExecutivePulseDto,
-  ) {
-    return this.executiveDashboard.upsertExecutivePulse(user.sub, choirId, dto);
-  }
-
-  @Get(':choirId/executive/export/pdf')
-  async exportExecutivePack(
-    @CurrentUser() user: JwtPayload,
-    @Param('choirId') choirId: string,
-    @Res() res: Response,
-  ) {
-    const exported = await this.executiveDashboard.exportExecutivePackPdf(
-      user.sub,
-      choirId,
-    );
-    res.setHeader('Content-Type', exported.mimeType);
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${exported.filename}"`,
-    );
-    res.send(exported.buffer);
-  }
-
-  @Get(':choirId/governance/president-delegation')
-  getPresidentDelegation(@Param('choirId') choirId: string) {
-    return this.choirGovernance.getPresidentDelegation(choirId);
-  }
-
-  @Patch(':choirId/governance/president-delegation')
-  updatePresidentDelegation(
-    @CurrentUser() user: JwtPayload,
-    @Param('choirId') choirId: string,
-    @Body() dto: UpdatePresidentDelegationDto,
-  ) {
-    return this.choirGovernance.updatePresidentDelegation(user.sub, choirId, dto);
-  }
-
   @Get('position-roles')
   listPositionRoles(
     @CurrentUser() user: JwtPayload,
     @Query('choirId') choirId: string,
+  ) {
+    return this.joinRequests.listPositionRoles(user.sub, choirId);
+  }
+
+  @Get(':choirId/position-roles')
+  listPositionRolesScoped(
+    @CurrentUser() user: JwtPayload,
+    @Param('choirId') choirId: string,
   ) {
     return this.joinRequests.listPositionRoles(user.sub, choirId);
   }
@@ -195,6 +146,15 @@ export class ChoirsController {
     @Body() dto: ProvisionChoirMemberDto,
   ) {
     return this.choirMembers.provisionMember(user.sub, dto);
+  }
+
+  @Post(':choirId/members/provision')
+  provisionMemberScoped(
+    @CurrentUser() user: JwtPayload,
+    @Param('choirId') choirId: string,
+    @Body() dto: ProvisionChoirMemberDto,
+  ) {
+    return this.choirMembers.provisionMember(user.sub, { ...dto, choirId });
   }
 
   @Get('sponsors')
@@ -297,6 +257,64 @@ export class ChoirsController {
       status: body.status!,
       reviewNotes: body.reviewNotes,
     });
+  }
+
+  @Get(':choirId/executive/officer-sla')
+  getOfficerSla(
+    @CurrentUser() user: JwtPayload,
+    @Param('choirId') choirId: string,
+  ) {
+    return this.executiveDashboard.getOfficerSla(user.sub, choirId);
+  }
+
+  @Get(':choirId/executive/pulse')
+  getExecutivePulse(
+    @CurrentUser() user: JwtPayload,
+    @Param('choirId') choirId: string,
+    @Query('weekStart') weekStart?: string,
+  ) {
+    return this.executiveDashboard.getExecutivePulse(user.sub, choirId, weekStart);
+  }
+
+  @Post(':choirId/executive/pulse')
+  upsertExecutivePulse(
+    @CurrentUser() user: JwtPayload,
+    @Param('choirId') choirId: string,
+    @Body() dto: UpsertChoirExecutivePulseDto,
+  ) {
+    return this.executiveDashboard.upsertExecutivePulse(user.sub, choirId, dto);
+  }
+
+  @Get(':choirId/executive/export/pdf')
+  async exportExecutivePack(
+    @CurrentUser() user: JwtPayload,
+    @Param('choirId') choirId: string,
+    @Res() res: Response,
+  ) {
+    const exported = await this.executiveDashboard.exportExecutivePackPdf(
+      user.sub,
+      choirId,
+    );
+    res.setHeader('Content-Type', exported.mimeType);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${exported.filename}"`,
+    );
+    res.send(exported.buffer);
+  }
+
+  @Get(':choirId/governance/president-delegation')
+  getPresidentDelegation(@Param('choirId') choirId: string) {
+    return this.choirGovernance.getPresidentDelegation(choirId);
+  }
+
+  @Patch(':choirId/governance/president-delegation')
+  updatePresidentDelegation(
+    @CurrentUser() user: JwtPayload,
+    @Param('choirId') choirId: string,
+    @Body() dto: UpdatePresidentDelegationDto,
+  ) {
+    return this.choirGovernance.updatePresidentDelegation(user.sub, choirId, dto);
   }
 
   @Get(':choirId/members')

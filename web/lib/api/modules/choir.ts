@@ -148,8 +148,7 @@ export const choirApi = {
 
   getPositionRoles: (choirId: string) =>
     apiClient.get<never, ChoirPositionRole[]>(
-      '/choirs/position-roles',
-      { params: { choirId } },
+      `/choirs/${choirId}/position-roles`,
     ),
 
   assignMemberPosition: (data: {
@@ -188,7 +187,7 @@ export const choirApi = {
         temporaryPassword: string | null
         message: string
       }
-    >('/choirs/members/provision', data),
+    >(`/choirs/${data.choirId}/members/provision`, data),
 
   getPresidentDelegation: (choirId: string) =>
     apiClient.get<

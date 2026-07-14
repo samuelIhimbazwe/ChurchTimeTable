@@ -627,6 +627,21 @@ async function main() {
   ];
 
   for (const entry of portalChoirs) {
+    if (entry.code === 'IJWI_RY_UMWAMI') {
+      await prisma.choir.update({
+        where: { id: MAIN_CHOIR_ID },
+        data: {
+          name: entry.name,
+          code: entry.code,
+          choirKind: entry.choirKind,
+          leaderDisplayName: entry.leaderDisplayName,
+          isPublicJoinable: true,
+          isActive: true,
+          description: `${entry.name} — church choir`,
+        },
+      });
+      continue;
+    }
     await prisma.choir.upsert({
       where: { code: entry.code },
       create: {

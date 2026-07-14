@@ -16,13 +16,13 @@ function toActivityDto(
     location: string | null;
     occurrenceId: string | null;
     choir?: { name: string } | null;
-    _count?: { attendance?: number };
+    _count?: { attendances?: number };
   },
   memberCount = 0,
 ) {
   const startAt = row.startAt;
   const endAt = row.endAt;
-  const attendanceCount = row._count?.attendance ?? 0;
+  const attendanceCount = row._count?.attendances ?? 0;
   const now = Date.now();
   const windowStart = startAt.getTime() - 6 * 60 * 60 * 1000;
   const windowEnd = endAt.getTime() + 12 * 60 * 60 * 1000;
@@ -93,7 +93,7 @@ export class ChoirActivitiesService {
       },
       include: {
         choir: { select: { name: true } },
-        _count: { select: { attendance: true } },
+        _count: { select: { attendances: true } },
       },
     });
 
@@ -114,7 +114,7 @@ export class ChoirActivitiesService {
       where: { id: activityId },
       include: {
         choir: { select: { name: true } },
-        _count: { select: { attendance: true } },
+        _count: { select: { attendances: true } },
       },
     });
     if (!activity) throw new NotFoundException('Activity not found');
@@ -148,7 +148,7 @@ export class ChoirActivitiesService {
       },
       include: {
         choir: { select: { id: true, name: true, code: true } },
-        _count: { select: { attendance: true } },
+        _count: { select: { attendances: true } },
       },
       orderBy: { startAt: 'desc' },
       take: 200,

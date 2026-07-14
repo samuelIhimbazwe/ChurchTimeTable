@@ -38,6 +38,7 @@ import { MemberPortalModule } from './member-portal/member-portal.module';
 import { PilotReadyModule } from './pilot-ready/pilot-ready.module';
 import { AuthUxModule } from './auth-ux/auth-ux.module';
 import { MessagingModule } from './messaging/messaging.module';
+import { AccountInvitesModule } from './account-invites/account-invites.module';
 import { ChoirContextMiddleware } from './common/middleware/choir-context.middleware';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -76,6 +77,7 @@ import { AppService } from './app.service';
     SyncModule,
     ReportsModule,
     MessagingModule,
+    AccountInvitesModule,
   ],
   controllers: [AppController],
   providers: [

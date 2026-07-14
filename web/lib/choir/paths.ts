@@ -29,6 +29,7 @@ export const LEGACY_CHOIR_ROUTE_SEGMENTS = new Set([
   'my-family',
   'contributions',
   'members',
+  'member-onboarding',
   'music',
   'music-direction',
   'notifications',
