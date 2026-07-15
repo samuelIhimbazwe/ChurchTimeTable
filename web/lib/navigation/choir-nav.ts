@@ -97,7 +97,6 @@ const ELEVATED_COMMITTEE_ROLE_KEYS = new Set([
   'vice_president',
   'music_director',
   'family_coordinator',
-  'treasurer',
   'secretary',
   'advisor',
   'discipline_social_welfare',

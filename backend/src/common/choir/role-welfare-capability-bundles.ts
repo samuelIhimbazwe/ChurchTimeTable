@@ -12,6 +12,7 @@ export const ROLE_WELFARE_CAPABILITY_BUNDLES: Record<
   [ROLES.CHOIR_ADMIN]: [VIEW, MANAGE],
   [ROLES.CHOIR_PRESIDENT]: [VIEW, MANAGE],
   [ROLES.CHOIR_VICE_PRESIDENT]: [VIEW, MANAGE],
-  [ROLES.CHOIR_TREASURER]: [VIEW, MANAGE],
+  /** Finance desk may see welfare spend context; care manage stays with care officers. */
+  [ROLES.CHOIR_TREASURER]: [VIEW],
   [ROLES.CHOIR_COMMITTEE]: [VIEW],
 };

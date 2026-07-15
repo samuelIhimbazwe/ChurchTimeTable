@@ -96,15 +96,17 @@ export default function Sidebar({
     ? activeChoirMemberships.find((m) => m.id === choirId)
     : undefined
 
+  const treasurerPrimary = Boolean(
+    choirId
+    && membershipForPath
+    && isPrimaryTreasurerRole(choirCtx?.positions ?? [], authRole),
+  )
+
   const rawSections = (() => {
     if (loadingChoirAccess || loadingPortalAccess || (inProtocolArea && loadingProtocolCtx)) {
       return getPortalNavForUser(authRole, { canAccessChoirArea: false, isChoirMember: false }, [], { isDualMember: false, primaryChoirId: null })
     }
     if (choirId && (choirCtx || membershipForPath) && membershipForPath) {
-      const treasurerPrimary = isPrimaryTreasurerRole(
-        choirCtx?.positions ?? [],
-        authRole,
-      )
       if (treasurerPrimary) {
         return getTreasurerSovereignNav(
           choirId,
@@ -143,88 +145,95 @@ export default function Sidebar({
     )
   })()
 
-  const capabilityAwareSections = composeAdminHubAwareNav(
-    composeCareHubAwareNav(
-      composeRolesAwareNav(
-        composeAdvisorHubAwareNav(
-          composeFamilyAwareNav(
-        composeRecordsHubAwareNav(
-          composeDevotionAwareNav(
-            composeLogisticsAwareNav(
-              composeVoiceAwareNav(
-                composeCommsAwareNav(
-                  composeRosterAwareNav(
-                    composeMusicAwareNav(
-                      composeSponsorAwareNav(
-                        composeJoinAwareNav(
-                          composeVicePresidentHubAwareNav(
-                            composePresidentHubAwareNav(
-                              composeOpsAwareNav(
-                              composeDisciplineAwareNav(
-                                composeWelfareAwareNav(
-                                  composeContributionAwareNav(
-                                    rawSections,
+  // Sovereign treasurer desk stays finance-only — do not run Leadership/Ops injectors.
+  const capabilityAwareSections = treasurerPrimary
+    ? composeContributionAwareNav(
+        rawSections,
+        contextChoirId ?? choirId,
+        contributionAuth,
+      )
+    : composeAdminHubAwareNav(
+        composeCareHubAwareNav(
+          composeRolesAwareNav(
+            composeAdvisorHubAwareNav(
+              composeFamilyAwareNav(
+                composeRecordsHubAwareNav(
+                  composeDevotionAwareNav(
+                    composeLogisticsAwareNav(
+                      composeVoiceAwareNav(
+                        composeCommsAwareNav(
+                          composeRosterAwareNav(
+                            composeMusicAwareNav(
+                              composeSponsorAwareNav(
+                                composeJoinAwareNav(
+                                  composeVicePresidentHubAwareNav(
+                                    composePresidentHubAwareNav(
+                                      composeOpsAwareNav(
+                                        composeDisciplineAwareNav(
+                                          composeWelfareAwareNav(
+                                            composeContributionAwareNav(
+                                              rawSections,
+                                              contextChoirId ?? choirId,
+                                              contributionAuth,
+                                            ),
+                                            contextChoirId ?? choirId,
+                                            welfareAuth,
+                                          ),
+                                          contextChoirId ?? choirId,
+                                          disciplineAuth,
+                                        ),
+                                        contextChoirId ?? choirId,
+                                        opsAuth,
+                                      ),
+                                      contextChoirId ?? choirId,
+                                      capabilityCheck,
+                                    ),
                                     contextChoirId ?? choirId,
-                                    contributionAuth,
+                                    capabilityCheck,
                                   ),
                                   contextChoirId ?? choirId,
-                                  welfareAuth,
+                                  joinAuth,
                                 ),
                                 contextChoirId ?? choirId,
-                                disciplineAuth,
+                                sponsorAuth,
                               ),
                               contextChoirId ?? choirId,
-                              opsAuth,
+                              musicAuth,
                             ),
                             contextChoirId ?? choirId,
-                            capabilityCheck,
+                            rosterAuth,
                           ),
                           contextChoirId ?? choirId,
-                          capabilityCheck,
-                        ),
-                          contextChoirId ?? choirId,
-                          joinAuth,
+                          commsAuth,
                         ),
                         contextChoirId ?? choirId,
-                        sponsorAuth,
+                        voiceAuth,
                       ),
                       contextChoirId ?? choirId,
-                      musicAuth,
+                      logisticsAuth,
                     ),
                     contextChoirId ?? choirId,
-                    rosterAuth,
+                    capabilityCheck,
                   ),
                   contextChoirId ?? choirId,
-                  commsAuth,
+                  capabilityCheck,
                 ),
                 contextChoirId ?? choirId,
-                voiceAuth,
+                capabilityCheck,
+                contributionAuth,
               ),
               contextChoirId ?? choirId,
-              logisticsAuth,
+              capabilityCheck,
             ),
             contextChoirId ?? choirId,
-            capabilityCheck,
+            rolesAuth,
           ),
           contextChoirId ?? choirId,
           capabilityCheck,
         ),
-          contextChoirId ?? choirId,
-          capabilityCheck,
-          contributionAuth,
-        ),
-          contextChoirId ?? choirId,
-          capabilityCheck,
-        ),
         contextChoirId ?? choirId,
-        rolesAuth,
-      ),
-      contextChoirId ?? choirId,
-      capabilityCheck,
-    ),
-    contextChoirId ?? choirId,
-    capabilityCheck,
-  )
+        capabilityCheck,
+      )
 
   const sections = useMemo(
     () => translateNavSections(capabilityAwareSections, locale),
